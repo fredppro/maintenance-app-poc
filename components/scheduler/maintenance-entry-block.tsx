@@ -34,8 +34,7 @@ export function MaintenanceEntryBlock({
   isDragging,
 }: MaintenanceEntryBlockProps) {
   const [detailsOpen, setDetailsOpen] = useState(false)
-  const [workerName, setWorkerName] = useState(entry.assignedWorkerName || '')
-  const [workerEmail, setWorkerEmail] = useState(entry.assignedWorkerEmail || '')
+  const [assignedTo, setAssignedTo] = useState(entry.assignedTo || '')
   const [isNotifying, setIsNotifying] = useState(false)
   
   const { equipment, removeEntry, updateEntry } = useSchedulerStore()
@@ -44,32 +43,9 @@ export function MaintenanceEntryBlock({
 
   useEffect(() => {
     if (detailsOpen) {
-      setWorkerName(entry.assignedWorkerName || '')
-      setWorkerEmail(entry.assignedWorkerEmail || '')
+      setAssignedTo(entry.assignedTo || '')
     }
-  }, [detailsOpen, entry.assignedWorkerName, entry.assignedWorkerEmail])
-
-  const getTypeIcon = () => {
-    switch (entry.type) {
-      case 'preventive':
-        return <Wrench className="w-3 h-3" />
-      case 'inspection':
-        return <Search className="w-3 h-3" />
-      case 'corrective':
-        return <AlertTriangle className="w-3 h-3" />
-    }
-  }
-
-  const getTypeColor = () => {
-    switch (entry.type) {
-      case 'preventive':
-        return 'bg-chart-1/20 border-chart-1/40 text-chart-1'
-      case 'inspection':
-        return 'bg-chart-2/20 border-chart-2/40 text-chart-2'
-      case 'corrective':
-        return 'bg-chart-3/20 border-chart-3/40 text-chart-3'
-    }
-  }
+  }, [detailsOpen, entry.assignedTo])
 
   const getStatusBadge = () => {
     switch (entry.status) {
@@ -79,6 +55,8 @@ export function MaintenanceEntryBlock({
         return <Badge className="bg-chart-3/20 text-chart-3 border-chart-3/40 text-xs">In Progress</Badge>
       case 'completed':
         return <Badge className="bg-chart-1/20 text-chart-1 border-chart-1/40 text-xs">Completed</Badge>
+      default:
+        return <Badge variant="outline" className="text-xs">{entry.status}</Badge>
     }
   }
 
@@ -92,25 +70,37 @@ export function MaintenanceEntryBlock({
     setDetailsOpen(true)
   }
 
-  const handleDelete = () => {
-    removeEntry(entry.id)
-    setDetailsOpen(false)
+  const handleDelete = async () => {
+    try {
+      await removeEntry(entry.id)
+      setDetailsOpen(false)
+      toast.success('Entry deleted')
+    } catch (error) {
+      toast.error('Failed to delete entry')
+    }
   }
 
-  const handleStatusChange = (newStatus: MaintenanceEntry['status']) => {
-    updateEntry(entry.id, { status: newStatus })
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      await updateEntry(entry.id, { status: newStatus })
+    } catch (error) {
+      toast.error('Failed to update status')
+    }
   }
 
-  const handleUpdateWorker = () => {
-    updateEntry(entry.id, {
-      assignedWorkerName: workerName.trim() || undefined,
-      assignedWorkerEmail: workerEmail.trim() || undefined,
-    })
-    toast.success('Worker details updated')
+  const handleUpdateWorker = async () => {
+    try {
+      await updateEntry(entry.id, {
+        assignedTo: assignedTo.trim(),
+      })
+      toast.success('Worker details updated')
+    } catch (error) {
+      toast.error('Failed to update worker details')
+    }
   }
 
   const handleNotifyWorker = async () => {
-    if (!workerEmail.trim()) {
+    if (!assignedTo.trim()) {
       toast.error('Worker email is required to send notification')
       return
     }
@@ -122,7 +112,7 @@ export function MaintenanceEntryBlock({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           event: entry,
-          worker: { name: workerName, email: workerEmail },
+          worker: { email: assignedTo },
           equipment: equip
         }),
       })
@@ -151,12 +141,12 @@ export function MaintenanceEntryBlock({
           'rounded-md border px-2 py-1 cursor-grab active:cursor-grabbing',
           'flex items-center gap-1 overflow-hidden transition-all',
           'hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:ring-offset-background',
-          getTypeColor(),
+          'bg-primary/10 border-primary/20 text-primary',
           isDragging && 'opacity-50 scale-95'
         )}
       >
         <GripVertical className="w-3 h-3 flex-shrink-0 opacity-50" />
-        {getTypeIcon()}
+        <Wrench className="w-3 h-3 flex-shrink-0" />
         <span className="text-xs font-medium truncate">{entry.title}</span>
       </div>
 
@@ -164,11 +154,11 @@ export function MaintenanceEntryBlock({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {getTypeIcon()}
+              <Wrench className="w-4 h-4" />
               {entry.title}
             </DialogTitle>
             <DialogDescription>
-              {equip?.name} - {equip?.category}
+              {equip?.name} {equip?.category ? `- ${equip.category}` : ''}
             </DialogDescription>
           </DialogHeader>
 
@@ -179,18 +169,13 @@ export function MaintenanceEntryBlock({
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Type</span>
-              <Badge variant="outline" className="capitalize">{entry.type}</Badge>
+              <span className="text-sm text-muted-foreground">Start Time</span>
+              <span className="text-sm">{format(new Date(entry.startTime), 'PPp')}</span>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Start Date</span>
-              <span className="text-sm">{format(entry.startDate, 'PPp')}</span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">End Date</span>
-              <span className="text-sm">{format(entry.endDate, 'PPp')}</span>
+              <span className="text-sm text-muted-foreground">End Time</span>
+              <span className="text-sm">{format(new Date(entry.endTime), 'PPp')}</span>
             </div>
 
             {entry.description && (
@@ -202,28 +187,16 @@ export function MaintenanceEntryBlock({
 
             <div className="border-t pt-4 space-y-3">
               <h4 className="text-sm font-medium">Assigned Worker</h4>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="worker-name" className="text-xs">Name</Label>
-                  <Input
-                    id="worker-name"
-                    value={workerName}
-                    onChange={(e) => setWorkerName(e.target.value)}
-                    placeholder="John Doe"
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="worker-email" className="text-xs">Email</Label>
-                  <Input
-                    id="worker-email"
-                    type="email"
-                    value={workerEmail}
-                    onChange={(e) => setWorkerEmail(e.target.value)}
-                    placeholder="john@example.com"
-                    className="h-8 text-sm"
-                  />
-                </div>
+              <div className="space-y-1">
+                <Label htmlFor="worker-email" className="text-xs">Email</Label>
+                <Input
+                  id="worker-email"
+                  type="email"
+                  value={assignedTo}
+                  onChange={(e) => setAssignedTo(e.target.value)}
+                  placeholder="john@example.com"
+                  className="h-8 text-sm"
+                />
               </div>
               <div className="flex gap-2">
                 <Button 
@@ -239,7 +212,7 @@ export function MaintenanceEntryBlock({
                   variant="outline" 
                   className="w-full gap-2"
                   onClick={handleNotifyWorker}
-                  disabled={isNotifying || !workerEmail.trim()}
+                  disabled={isNotifying || !assignedTo.trim()}
                 >
                   <Mail className="w-3 h-3" />
                   {isNotifying ? 'Sending...' : 'Notify Worker'}

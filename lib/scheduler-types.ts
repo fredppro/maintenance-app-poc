@@ -1,24 +1,10 @@
+import { Equipment as PrismaEquipment, MaintenanceTask as PrismaTask } from '@prisma/client'
+
 export type ViewMode = 'day' | 'week' | 'month' | 'year'
 
-export interface Equipment {
-  id: string
-  name: string
-  category: string
-  status: 'active' | 'maintenance' | 'inactive'
-}
+export type Equipment = PrismaEquipment
 
-export interface MaintenanceEntry {
-  id: string
-  equipmentId: string
-  title: string
-  description?: string
-  startDate: Date
-  endDate: Date
-  type: 'preventive' | 'corrective' | 'inspection'
-  status: 'scheduled' | 'in-progress' | 'completed'
-  assignedWorkerName?: string
-  assignedWorkerEmail?: string
-}
+export type MaintenanceEntry = PrismaTask
 
 export interface TimelineCell {
   date: Date

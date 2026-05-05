@@ -25,6 +25,7 @@ import {
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { MaintenanceEntryBlock } from './maintenance-entry-block'
 import { AddEntryDialog } from './add-entry-dialog'
+import { Box } from 'lucide-react'
 
 export function TimelineGrid() {
   const {
@@ -94,33 +95,17 @@ export function TimelineGrid() {
     [entries]
   )
 
-  const isEntryInSlot = (entry: MaintenanceEntry, slot: Date): boolean => {
-    const slotStart = viewMode === 'day' ? startOfHour(slot) : startOfDay(slot)
-    
-    switch (viewMode) {
-      case 'day':
-        return isSameHour(entry.startDate, slot)
-      case 'week':
-      case 'month':
-        return isSameDay(entry.startDate, slot) || 
-          (isWithinInterval(slot, { start: entry.startDate, end: entry.endDate }) && isSameDay(slot, entry.startDate) === false && isSameDay(entry.startDate, slot))
-      case 'year':
-        return isSameMonth(entry.startDate, slot)
-      default:
-        return false
-    }
-  }
-
   const getEntryStartSlotIndex = (entry: MaintenanceEntry): number => {
+    const entryStart = new Date(entry.startTime)
     return timeSlots.findIndex(slot => {
       switch (viewMode) {
         case 'day':
-          return isSameHour(entry.startDate, slot)
+          return isSameHour(entryStart, slot)
         case 'week':
         case 'month':
-          return isSameDay(entry.startDate, slot)
+          return isSameDay(entryStart, slot)
         case 'year':
-          return isSameMonth(entry.startDate, slot)
+          return isSameMonth(entryStart, slot)
         default:
           return false
       }
@@ -128,18 +113,21 @@ export function TimelineGrid() {
   }
 
   const getEntrySpan = (entry: MaintenanceEntry): number => {
+    const entryStart = new Date(entry.startTime)
+    const entryEnd = new Date(entry.endTime)
+    
     switch (viewMode) {
       case 'day': {
-        const hours = Math.ceil((entry.endDate.getTime() - entry.startDate.getTime()) / (1000 * 60 * 60))
+        const hours = Math.ceil((entryEnd.getTime() - entryStart.getTime()) / (1000 * 60 * 60))
         return Math.max(1, hours)
       }
       case 'week':
       case 'month': {
-        const days = differenceInDays(entry.endDate, entry.startDate) + 1
+        const days = differenceInDays(entryEnd, entryStart) + 1
         return Math.max(1, days)
       }
       case 'year': {
-        const months = entry.endDate.getMonth() - entry.startDate.getMonth() + 1
+        const months = entryEnd.getMonth() - entryStart.getMonth() + 1
         return Math.max(1, months)
       }
       default:
@@ -223,19 +211,14 @@ export function TimelineGrid() {
               <div key={equip.id} className="flex border-b border-border last:border-b-0 group">
                 {/* Equipment name cell */}
                 <div className="w-48 min-w-48 sticky left-0 z-10 bg-card border-r border-border p-3 flex items-center gap-2">
-                  <div
-                    className={cn(
-                      'w-2 h-2 rounded-full',
-                      equip.status === 'active' && 'bg-chart-1',
-                      equip.status === 'maintenance' && 'bg-chart-3',
-                      equip.status === 'inactive' && 'bg-muted-foreground'
-                    )}
-                  />
-                  <div>
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Box className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
                     <div className="text-sm font-medium text-foreground truncate max-w-32">
                       {equip.name}
                     </div>
-                    <div className="text-xs text-muted-foreground">{equip.category}</div>
+                    {equip.category && <div className="text-xs text-muted-foreground truncate max-w-32">{equip.category}</div>}
                   </div>
                 </div>
 
