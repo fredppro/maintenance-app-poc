@@ -123,7 +123,7 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
           <DialogTitle>Schedule Maintenance</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 -mx-4 max-h-[75vh] overflow-y-auto px-4">
           <FieldGroup>
             <Field>
               <FieldLabel>Equipment</FieldLabel>
