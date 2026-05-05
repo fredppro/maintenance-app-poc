@@ -1,0 +1,95 @@
+{
+  "Dashboard": {
+    "title": "Maintenance Scheduler",
+    "description": "Equipment service and maintenance planning",
+    "stats": {
+      "preventive": "Preventive",
+      "corrective": "Corrective",
+      "inspection": "Inspection",
+      "equipment": "Equipment",
+      "scheduled": "Scheduled",
+      "inProgress": "In Progress"
+    },
+    "footer": {
+      "clickHint": "Click on a cell to schedule maintenance",
+      "dragHint": "Drag entries to reschedule",
+      "zoomHint": "Use zoom controls to change view"
+    }
+  },
+  "Grid": {
+    "equipment": "Equipment",
+    "addEquipment": "Add Equipment",
+    "editEquipment": "Edit Equipment",
+    "equipmentName": "Equipment Name",
+    "category": "Category (optional)",
+    "noEquipment": "No equipment registered.",
+    "noTasks": "No tasks scheduled for this day.",
+    "task": "task",
+    "tasks": "tasks"
+  },
+  "Toolbar": {
+    "today": "Today",
+    "day": "Day",
+    "week": "Week",
+    "month": "Month",
+    "year": "Year"
+  },
+  "Form": {
+    "schedule": "Schedule Maintenance",
+    "edit": "Edit: {title}",
+    "status": "Status",
+    "equipment": "Equipment",
+    "selectEquipment": "Select equipment",
+    "taskType": "Task Type",
+    "selectType": "Select type",
+    "preventive": "Preventive",
+    "inspection": "Inspection",
+    "corrective": "Corrective",
+    "title": "Title",
+    "titlePlaceholder": "e.g., Monthly Inspection",
+    "startDateTime": "Start Date & Time",
+    "endDateTime": "End Date & Time",
+    "pickDate": "Pick a date",
+    "time": "Time",
+    "hours": "Hours",
+    "minutes": "Mins",
+    "description": "Description (optional)",
+    "descriptionPlaceholder": "Additional details about this maintenance task...",
+    "assignedWorkers": "Assigned Workers",
+    "selectWorkers": "Select workers...",
+    "materials": "Materials Used",
+    "addMaterial": "Add Material",
+    "itemName": "Item Name",
+    "reference": "Reference",
+    "quantity": "Qty",
+    "noMaterials": "No materials added yet.",
+    "submit": "Schedule",
+    "submitting": "Scheduling...",
+    "saving": "Saving...",
+    "saveAll": "Save All Changes",
+    "delete": "Delete Entry",
+    "statusTypes": {
+      "scheduled": "Scheduled",
+      "in-progress": "In Progress",
+      "completed": "Completed"
+    },
+    "errors": {
+      "endAfterStart": "End time must be after start time",
+      "success": "Maintenance scheduled successfully",
+      "failure": "Failed to schedule maintenance",
+      "conflict": "This equipment is already scheduled for maintenance during this time slot",
+      "updateSuccess": "Task updated successfully",
+      "updateFailure": "Failed to update task",
+      "deleteSuccess": "Entry deleted",
+      "deleteFailure": "Failed to delete entry"
+    }
+  },
+  "Common": {
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "add": "Add",
+    "remove": "Remove",
+    "edit": "Edit",
+    "settings": "Settings"
+  }
+}
