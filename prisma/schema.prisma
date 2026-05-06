@@ -23,7 +23,6 @@ model MaintenanceTask {
   description  String?
   startTime    DateTime
   endTime      DateTime
-  assignedTo   String    // Email of the worker to be notified
   equipmentId  String
   equipment    Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
   status       String    @default("scheduled") 

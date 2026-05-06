@@ -1,57 +1,70 @@
-// prisma/seeds/maintenanceTasks.ts
 import { PrismaClient } from '@prisma/client';
 
 export async function seedMaintenanceTasks(prisma: PrismaClient) {
-  console.log('🛠️ Seeding maintenance tasks...');
+  console.log('🛠️ Seeding maintenance tasks with assignments...');
 
+  // 1. Obter referências dos Equipamentos
   const hydraulicPress = await prisma.equipment.findUnique({ where: { name: "Hydraulic Press A-101" } });
   const cncLathe = await prisma.equipment.findUnique({ where: { name: "CNC Lathe (Primary)" } });
   const boiler = await prisma.equipment.findUnique({ where: { name: "Industrial Boiler #4" } });
 
-  if (!hydraulicPress || !cncLathe || !boiler) {
-    console.error("❌ Erro: Equipamentos não encontrados. Corre o seed de equipamentos primeiro.");
+  // 2. Obter referências dos Workers (baseado nos emails que definimos no seed de workers)
+  const workerInterno = await prisma.worker.findUnique({ where: { email: "carlos@empresa.com" } });
+  const workerExterno = await prisma.worker.findUnique({ where: { email: "ricardo@techfix.com" } });
+
+  if (!hydraulicPress || !cncLathe || !boiler || !workerInterno || !workerExterno) {
+    console.error("❌ Erro: Equipamentos ou Trabalhadores não encontrados. Verifica a ordem dos seeds.");
     return;
   }
 
+  // 3. Definir as tarefas (repara que removi o 'assignedTo' e preparei a estrutura para assignments)
   const tasksData = [
     {
       title: "Monthly Safety Inspection",
       description: "Check all hydraulic seals and emergency stop buttons.",
       startTime: new Date(2026, 4, 10, 9, 0),
       endTime: new Date(2026, 4, 10, 11, 0),
-      assignedTo: "worker1@factory.com",
       equipmentId: hydraulicPress.id,
-      status: "scheduled"
+      status: "scheduled",
+      assignedWorkersEmails: ["carlos@empresa.com"] // Auxiliar para o loop abaixo
     },
     {
-      title: "Oil Change & Lubrication",
-      description: "Standard lubrication of the primary spindle.",
+      title: "Full System Overhaul",
+      description: "Complex maintenance requiring internal and external experts.",
       startTime: new Date(2026, 4, 12, 14, 0),
-      endTime: new Date(2026, 4, 12, 15, 30),
-      assignedTo: "technician@factory.com",
+      endTime: new Date(2026, 4, 12, 18, 30),
       equipmentId: cncLathe.id,
-      status: "scheduled"
-    },
-    {
-      title: "Pressure Valve Calibration",
-      description: "Recalibrate the main safety valve for the industrial boiler.",
-      startTime: new Date(2026, 4, 15, 8, 30),
-      endTime: new Date(2026, 4, 15, 12, 0),
-      assignedTo: "expert@maintenance.com",
-      equipmentId: boiler.id,
-      status: "scheduled"
+      status: "scheduled",
+      assignedWorkersEmails: ["carlos@empresa.com", "ricardo@techfix.com"] // Dois trabalhadores
     }
   ];
 
-  for (const task of tasksData) {
+  for (const item of tasksData) {
+    // Destruturamos para separar o que é do modelo Task do que é auxiliar
+    const { assignedWorkersEmails, ...taskFields } = item;
+
+    // Verificar se a tarefa já existe para evitar duplicados
     const existing = await prisma.maintenanceTask.findFirst({
-      where: { title: task.title, equipmentId: task.equipmentId }
+      where: { title: taskFields.title, equipmentId: taskFields.equipmentId }
     });
 
     if (!existing) {
-      await prisma.maintenanceTask.create({ data: task });
+      await prisma.maintenanceTask.create({
+        data: {
+          ...taskFields,
+          // Criamos a ligação na tabela Many-to-Many
+          assignments: {
+            create: assignedWorkersEmails.map(email => ({
+              worker: { connect: { email: email } }
+            }))
+          }
+        }
+      });
+      console.log(`✅ Criada tarefa: ${taskFields.title}`);
+    } else {
+      console.log(`⏩ Tarefa já existe: ${taskFields.title}`);
     }
   }
 
-  console.log(`✅ ${tasksData.length} maintenance tasks seeded.`);
+  console.log('✨ Seed de tarefas concluído.');
 }
