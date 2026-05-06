@@ -2,7 +2,7 @@
 import "dotenv/config";
 import prisma from "../lib/prisma.js";
 import { seedEquipments } from "./seeds/equipment";
-import { seedMaintenanceTasks } from "./seeds/maintenance-tasks.js";
+import { seedMaintenanceTasks } from "./seeds/maintenance-task.js";
 
 async function main() {
   console.log("🌱 Starting database seeding...");
