@@ -36,11 +36,9 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
   
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [type, setType] = useState<MaintenanceEntry['type']>('preventive')
   const [equipmentId, setEquipmentId] = useState('')
   const [duration, setDuration] = useState('1')
-  const [workerName, setWorkerName] = useState('')
-  const [workerEmail, setWorkerEmail] = useState('')
+  const [assignedTo, setAssignedTo] = useState('')
   const [shouldNotify, setShouldNotify] = useState(false)
   const [isNotifying, setIsNotifying] = useState(false)
 
@@ -53,67 +51,70 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!selectedCell || !title.trim()) return
+    if (!selectedCell || !title.trim() || !equipmentId) return
 
-    const startDate = selectedCell.date
-    let endDate: Date
+    const startTime = selectedCell.date
+    let endTime: Date
 
     if (viewMode === 'day') {
-      endDate = addHours(startDate, parseInt(duration) || 1)
+      endTime = addHours(startTime, parseInt(duration) || 1)
     } else {
-      endDate = addDays(startDate, (parseInt(duration) || 1) - 1)
+      endTime = addDays(startTime, (parseInt(duration) || 1) - 1)
     }
 
-    const entryData: Omit<MaintenanceEntry, 'id'> = {
+    const entryData = {
       equipmentId,
       title: title.trim(),
       description: description.trim() || undefined,
-      startDate,
-      endDate,
-      type,
+      startTime,
+      endTime,
+      assignedTo: assignedTo.trim(),
       status: 'scheduled',
-      assignedWorkerName: workerName.trim() || undefined,
-      assignedWorkerEmail: workerEmail.trim() || undefined,
     }
 
-    addEntry(entryData)
+    try {
+      await addEntry(entryData)
 
-    if (shouldNotify && workerEmail.trim()) {
-      setIsNotifying(true)
-      try {
-        const equip = equipment.find(e => e.id === equipmentId)
-        const response = await fetch('/api/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            event: entryData,
-            worker: { name: workerName, email: workerEmail },
-            equipment: equip
-          }),
-        })
-        
-        if (response.ok) {
-          toast.success('Notification sent to worker')
-        } else {
-          toast.error('Failed to send notification')
+      if (shouldNotify && assignedTo.trim()) {
+        setIsNotifying(true)
+        try {
+          const equip = equipment.find(e => e.id === equipmentId)
+          const response = await fetch('/api/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event: entryData,
+              worker: { email: assignedTo },
+              equipment: equip
+            }),
+          })
+          
+          if (response.ok) {
+            toast.success('Notification sent to worker')
+          } else {
+            toast.error('Failed to send notification')
+          }
+        } catch (error) {
+          console.error('Failed to send notification:', error)
+          toast.error('Error sending notification')
+        } finally {
+          setIsNotifying(false)
         }
-      } catch (error) {
-        console.error('Failed to send notification:', error)
-        toast.error('Error sending notification')
-      } finally {
-        setIsNotifying(false)
       }
-    }
 
-    // Reset form
-    setTitle('')
-    setDescription('')
-    setType('preventive')
-    setDuration('1')
-    setWorkerName('')
-    setWorkerEmail('')
-    setShouldNotify(false)
-    onOpenChange(false)
+      toast.success('Maintenance scheduled successfully')
+      
+      // Reset form
+      setTitle('')
+      setDescription('')
+      setDuration('1')
+      setAssignedTo('')
+      setShouldNotify(false)
+      onOpenChange(false)
+    } catch (error) {
+      console.error('Failed to add entry:', error)
+      toast.error('Failed to schedule maintenance')
+    }
   }
 
   return (
@@ -151,20 +152,6 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
               />
             </Field>
 
-            <Field>
-              <FieldLabel>Maintenance Type</FieldLabel>
-              <Select value={type} onValueChange={(v) => setType(v as MaintenanceEntry['type'])}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="preventive">Preventive</SelectItem>
-                  <SelectItem value="corrective">Corrective</SelectItem>
-                  <SelectItem value="inspection">Inspection</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-
             <div className="grid grid-cols-2 gap-4">
               <Field>
                 <FieldLabel>Start Date</FieldLabel>
@@ -198,26 +185,16 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
               />
             </Field>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Field>
-                <FieldLabel>Worker Name</FieldLabel>
-                <Input
-                  value={workerName}
-                  onChange={(e) => setWorkerName(e.target.value)}
-                  placeholder="John Doe"
-                />
-              </Field>
-
-              <Field>
-                <FieldLabel>Worker Email</FieldLabel>
-                <Input
-                  type="email"
-                  value={workerEmail}
-                  onChange={(e) => setWorkerEmail(e.target.value)}
-                  placeholder="john@example.com"
-                />
-              </Field>
-            </div>
+            <Field>
+              <FieldLabel>Worker Email (Assigned To)</FieldLabel>
+              <Input
+                type="email"
+                value={assignedTo}
+                onChange={(e) => setAssignedTo(e.target.value)}
+                placeholder="john@example.com"
+                required
+              />
+            </Field>
 
             <div className="flex items-center space-x-2 pt-2">
               <input
@@ -226,11 +203,11 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
                 checked={shouldNotify}
                 onChange={(e) => setShouldNotify(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                disabled={!workerEmail.trim()}
+                disabled={!assignedTo.trim()}
               />
               <label
                 htmlFor="notify"
-                className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!workerEmail.trim() ? 'opacity-50' : ''}`}
+                className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!assignedTo.trim() ? 'opacity-50' : ''}`}
               >
                 Notify worker via email
               </label>
@@ -241,7 +218,7 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!title.trim() || !equipmentId || isNotifying}>
+            <Button type="submit" disabled={!title.trim() || !equipmentId || !assignedTo.trim() || isNotifying}>
               {isNotifying ? 'Scheduling...' : 'Schedule'}
             </Button>
           </DialogFooter>
