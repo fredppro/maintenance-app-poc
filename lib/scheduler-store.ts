@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Equipment, MaintenanceEntry, ViewMode } from './scheduler-types'
+import { Equipment, MaintenanceEntry, ViewMode, Worker } from './scheduler-types'
 import { addDays, addMonths, addWeeks, addYears } from 'date-fns'
 import { 
   addEquipment as dbAddEquipment, 
@@ -13,6 +13,7 @@ import {
 interface SchedulerState {
   equipment: Equipment[]
   entries: MaintenanceEntry[]
+  workers: Worker[]
   viewMode: ViewMode
   currentDate: Date
   selectedEntry: MaintenanceEntry | null
@@ -21,6 +22,7 @@ interface SchedulerState {
   // Actions
   setEquipment: (equipment: Equipment[]) => void
   setEntries: (entries: MaintenanceEntry[]) => void
+  setWorkers: (workers: Worker[]) => void
   addEquipment: (name: string, category?: string) => Promise<void>
   removeEquipment: (id: string) => Promise<void>
   addEntry: (entry: {
@@ -28,10 +30,10 @@ interface SchedulerState {
     description?: string
     startTime: Date
     endTime: Date
-    assignedTo: string
     equipmentId: string
+    workerIds: string[]
   }) => Promise<void>
-  updateEntry: (id: string, updates: Partial<MaintenanceEntry>) => Promise<void>
+  updateEntry: (id: string, updates: Partial<MaintenanceEntry & { workerIds: string[] }>) => Promise<void>
   removeEntry: (id: string) => Promise<void>
   setViewMode: (mode: ViewMode) => void
   setCurrentDate: (date: Date) => void
@@ -45,6 +47,7 @@ interface SchedulerState {
 export const useSchedulerStore = create<SchedulerState>((set, get) => ({
   equipment: [],
   entries: [],
+  workers: [],
   viewMode: 'week',
   currentDate: new Date(),
   selectedEntry: null,
@@ -52,10 +55,10 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
 
   setEquipment: (equipment) => set({ equipment }),
   setEntries: (entries) => set({ entries }),
+  setWorkers: (workers) => set({ workers }),
   setLoading: (isLoading) => set({ isLoading }),
 
   addEquipment: async (name, category) => {
-    // Optimistic update would be hard without ID
     const newEquipment = await dbAddEquipment({ name, category })
     set((state) => ({
       equipment: [...state.equipment, newEquipment],
@@ -66,7 +69,6 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
     const previousEquipment = get().equipment
     const previousEntries = get().entries
     
-    // Optimistic update
     set((state) => ({
       equipment: state.equipment.filter((e) => e.id !== id),
       entries: state.entries.filter((e) => e.equipmentId !== id),
@@ -75,7 +77,6 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
     try {
       await dbDeleteEquipment(id)
     } catch (error) {
-      // Rollback
       set({ equipment: previousEquipment, entries: previousEntries })
       console.error('Failed to delete equipment:', error)
     }
@@ -91,25 +92,25 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
   updateEntry: async (id, updates) => {
     const previousEntries = get().entries
     
-    // Optimistic update
-    set((state) => ({
-      entries: state.entries.map((e) =>
-        e.id === id ? { ...e, ...updates } : e
-      ),
-    }))
-
     try {
-      await dbUpdateTask(id, updates as any) // Simplified cast
+      // We perform the update on the server and use the returned task to update the store
+      const updatedTask = await dbUpdateTask(id, updates as any)
+      set((state) => ({
+        entries: state.entries.map((e) =>
+          e.id === id ? updatedTask : e
+        ),
+        selectedEntry: state.selectedEntry?.id === id ? updatedTask : state.selectedEntry,
+      }))
     } catch (error) {
       set({ entries: previousEntries })
       console.error('Failed to update task:', error)
+      throw error
     }
   },
 
   removeEntry: async (id) => {
     const previousEntries = get().entries
     
-    // Optimistic update
     set((state) => ({
       entries: state.entries.filter((e) => e.id !== id),
       selectedEntry: state.selectedEntry?.id === id ? null : state.selectedEntry,
@@ -198,7 +199,12 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
     }))
 
     try {
-      await dbMoveTask(entryId, newStartTime, newEndTime, newEquipmentId)
+      const updatedTask = await dbMoveTask(entryId, newStartTime, newEndTime, newEquipmentId)
+      set((state) => ({
+        entries: state.entries.map((e) =>
+          e.id === entryId ? updatedTask : e
+        ),
+      }))
     } catch (error) {
       set({ entries: previousEntries })
       console.error('Failed to move task:', error)

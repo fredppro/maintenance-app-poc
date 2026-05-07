@@ -24,6 +24,7 @@ import { format, addDays, addHours } from 'date-fns'
 import { useState, useEffect } from 'react'
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
 import { toast } from 'sonner'
+import { MultiSelect } from '@/components/ui/multi-select'
 
 interface AddEntryDialogProps {
   open: boolean
@@ -32,15 +33,14 @@ interface AddEntryDialogProps {
 }
 
 export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDialogProps) {
-  const { addEntry, equipment, viewMode } = useSchedulerStore()
+  const { addEntry, equipment, workers, viewMode } = useSchedulerStore()
   
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [equipmentId, setEquipmentId] = useState('')
   const [duration, setDuration] = useState('1')
-  const [assignedTo, setAssignedTo] = useState('')
-  const [shouldNotify, setShouldNotify] = useState(false)
-  const [isNotifying, setIsNotifying] = useState(false)
+  const [workerIds, setWorkerIds] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (selectedCell) {
@@ -51,7 +51,12 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!selectedCell || !title.trim() || !equipmentId) return
+    if (!selectedCell || !title.trim() || !equipmentId || workerIds.length === 0) {
+      if (workerIds.length === 0) {
+        toast.error('Please select at least one worker')
+      }
+      return
+    }
 
     const startTime = selectedCell.date
     let endTime: Date
@@ -68,54 +73,33 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
       description: description.trim() || undefined,
       startTime,
       endTime,
-      assignedTo: assignedTo.trim(),
+      workerIds,
       status: 'scheduled',
     }
 
+    setIsSubmitting(true)
     try {
       await addEntry(entryData)
-
-      if (shouldNotify && assignedTo.trim()) {
-        setIsNotifying(true)
-        try {
-          const equip = equipment.find(e => e.id === equipmentId)
-          const response = await fetch('/api/notify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              event: entryData,
-              worker: { email: assignedTo },
-              equipment: equip
-            }),
-          })
-          
-          if (response.ok) {
-            toast.success('Notification sent to worker')
-          } else {
-            toast.error('Failed to send notification')
-          }
-        } catch (error) {
-          console.error('Failed to send notification:', error)
-          toast.error('Error sending notification')
-        } finally {
-          setIsNotifying(false)
-        }
-      }
-
       toast.success('Maintenance scheduled successfully')
       
       // Reset form
       setTitle('')
       setDescription('')
       setDuration('1')
-      setAssignedTo('')
-      setShouldNotify(false)
+      setWorkerIds([])
       onOpenChange(false)
     } catch (error) {
       console.error('Failed to add entry:', error)
       toast.error('Failed to schedule maintenance')
+    } finally {
+      setIsSubmitting(false)
     }
   }
+
+  const workerOptions = workers.map(w => ({
+    label: `${w.name} (${w.email})`,
+    value: w.id
+  }))
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -186,40 +170,22 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
             </Field>
 
             <Field>
-              <FieldLabel>Worker Email (Assigned To)</FieldLabel>
-              <Input
-                type="email"
-                value={assignedTo}
-                onChange={(e) => setAssignedTo(e.target.value)}
-                placeholder="john@example.com"
-                required
+              <FieldLabel>Assigned Workers</FieldLabel>
+              <MultiSelect
+                options={workerOptions}
+                selected={workerIds}
+                onChange={setWorkerIds}
+                placeholder="Select workers..."
               />
             </Field>
-
-            <div className="flex items-center space-x-2 pt-2">
-              <input
-                type="checkbox"
-                id="notify"
-                checked={shouldNotify}
-                onChange={(e) => setShouldNotify(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                disabled={!assignedTo.trim()}
-              />
-              <label
-                htmlFor="notify"
-                className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!assignedTo.trim() ? 'opacity-50' : ''}`}
-              >
-                Notify worker via email
-              </label>
-            </div>
           </FieldGroup>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!title.trim() || !equipmentId || !assignedTo.trim() || isNotifying}>
-              {isNotifying ? 'Scheduling...' : 'Schedule'}
+            <Button type="submit" disabled={!title.trim() || !equipmentId || workerIds.length === 0 || isSubmitting}>
+              {isSubmitting ? 'Scheduling...' : 'Schedule'}
             </Button>
           </DialogFooter>
         </form>
