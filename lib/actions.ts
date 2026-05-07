@@ -25,12 +25,25 @@ export async function deleteEquipment(id: string) {
   revalidatePath('/')
 }
 
+// Worker Actions
+export async function getWorkers() {
+  return await prisma.worker.findMany({
+    orderBy: { name: 'asc' },
+  })
+}
+
 // Maintenance Task Actions
 export async function getTasks() {
   return await prisma.maintenanceTask.findMany({
     include: {
       equipment: true,
+      assignments: {
+        include: {
+          worker: true
+        }
+      }
     },
+    orderBy: { startTime: 'asc' }
   })
 }
 
@@ -39,12 +52,28 @@ export async function createTask(data: {
   description?: string
   startTime: Date
   endTime: Date
-  assignedTo: string
   equipmentId: string
   status?: string
+  workerIds: string[]
 }) {
+  const { workerIds, ...taskData } = data
   const task = await prisma.maintenanceTask.create({
-    data,
+    data: {
+      ...taskData,
+      assignments: {
+        create: workerIds.map(workerId => ({
+          workerId
+        }))
+      }
+    },
+    include: {
+      equipment: true,
+      assignments: {
+        include: {
+          worker: true
+        }
+      }
+    }
   })
   revalidatePath('/')
   return task
@@ -57,15 +86,45 @@ export async function updateTask(
     description: string
     startTime: Date
     endTime: Date
-    assignedTo: string
     equipmentId: string
     status: string
+    workerIds: string[]
   }>
 ) {
-  const task = await prisma.maintenanceTask.update({
-    where: { id },
-    data,
+  const { workerIds, ...taskData } = data
+  
+  const task = await prisma.$transaction(async (tx) => {
+    if (workerIds) {
+      // Remove old assignments
+      await tx.maintenanceTaskAssignment.deleteMany({
+        where: { taskId: id }
+      })
+      
+      // Add new assignments
+      if (workerIds.length > 0) {
+        await tx.maintenanceTaskAssignment.createMany({
+          data: workerIds.map(workerId => ({
+            taskId: id,
+            workerId
+          }))
+        })
+      }
+    }
+
+    return await tx.maintenanceTask.update({
+      where: { id },
+      data: taskData,
+      include: {
+        equipment: true,
+        assignments: {
+          include: {
+            worker: true
+          }
+        }
+      }
+    })
   })
+
   revalidatePath('/')
   return task
 }
@@ -90,6 +149,14 @@ export async function moveTask(
       endTime: newEndTime,
       equipmentId: newEquipmentId,
     },
+    include: {
+      equipment: true,
+      assignments: {
+        include: {
+          worker: true
+        }
+      }
+    }
   })
   revalidatePath('/')
   return task

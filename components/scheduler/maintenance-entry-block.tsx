@@ -2,7 +2,7 @@
 
 import { MaintenanceEntry } from '@/lib/scheduler-types'
 import { cn } from '@/lib/utils'
-import { Wrench, Search, AlertTriangle, GripVertical, Mail } from 'lucide-react'
+import { Wrench, Search, AlertTriangle, GripVertical, Mail, Users } from 'lucide-react'
 import { useSchedulerStore } from '@/lib/scheduler-store'
 import {
   Dialog,
@@ -14,11 +14,11 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { format } from 'date-fns'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
+import { MultiSelect } from '@/components/ui/multi-select'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 interface MaintenanceEntryBlockProps {
   entry: MaintenanceEntry
@@ -34,18 +34,19 @@ export function MaintenanceEntryBlock({
   isDragging,
 }: MaintenanceEntryBlockProps) {
   const [detailsOpen, setDetailsOpen] = useState(false)
-  const [assignedTo, setAssignedTo] = useState(entry.assignedTo || '')
-  const [isNotifying, setIsNotifying] = useState(false)
+  const [workerIds, setWorkerIds] = useState<string[]>([])
+  const [isUpdating, setIsUpdating] = useState(false)
   
-  const { equipment, removeEntry, updateEntry } = useSchedulerStore()
+  const { equipment, workers, removeEntry, updateEntry } = useSchedulerStore()
   
   const equip = equipment.find((e) => e.id === entry.equipmentId)
+  const assignedWorkers = entry.assignments?.map(a => a.worker) || []
 
   useEffect(() => {
     if (detailsOpen) {
-      setAssignedTo(entry.assignedTo || '')
+      setWorkerIds(entry.assignments?.map(a => a.workerId) || [])
     }
-  }, [detailsOpen, entry.assignedTo])
+  }, [detailsOpen, entry.assignments])
 
   const getStatusBadge = () => {
     switch (entry.status) {
@@ -88,47 +89,37 @@ export function MaintenanceEntryBlock({
     }
   }
 
-  const handleUpdateWorker = async () => {
-    try {
-      await updateEntry(entry.id, {
-        assignedTo: assignedTo.trim(),
-      })
-      toast.success('Worker details updated')
-    } catch (error) {
-      toast.error('Failed to update worker details')
-    }
-  }
-
-  const handleNotifyWorker = async () => {
-    if (!assignedTo.trim()) {
-      toast.error('Worker email is required to send notification')
+  const handleUpdateWorkers = async () => {
+    if (workerIds.length === 0) {
+      toast.error('At least one worker must be assigned')
       return
     }
 
-    setIsNotifying(true)
+    setIsUpdating(true)
     try {
-      const response = await fetch('/api/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event: entry,
-          worker: { email: assignedTo },
-          equipment: equip
-        }),
+      await updateEntry(entry.id, {
+        workerIds: workerIds,
       })
-      
-      if (response.ok) {
-        toast.success('Notification sent to worker')
-      } else {
-        toast.error('Failed to send notification')
-      }
+      toast.success('Worker assignments updated')
     } catch (error) {
-      console.error('Failed to send notification:', error)
-      toast.error('Error sending notification')
+      toast.error('Failed to update worker assignments')
     } finally {
-      setIsNotifying(false)
+      setIsUpdating(false)
     }
   }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+  }
+
+  const workerOptions = workers.map(w => ({
+    label: `${w.name} (${w.email})`,
+    value: w.id
+  }))
 
   return (
     <>
@@ -139,7 +130,7 @@ export function MaintenanceEntryBlock({
         style={style}
         className={cn(
           'rounded-md border px-2 py-1 cursor-grab active:cursor-grabbing',
-          'flex items-center gap-1 overflow-hidden transition-all',
+          'flex items-center gap-1 overflow-hidden transition-all relative',
           'hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:ring-offset-background',
           'bg-primary/10 border-primary/20 text-primary',
           isDragging && 'opacity-50 scale-95'
@@ -147,7 +138,25 @@ export function MaintenanceEntryBlock({
       >
         <GripVertical className="w-3 h-3 flex-shrink-0 opacity-50" />
         <Wrench className="w-3 h-3 flex-shrink-0" />
-        <span className="text-xs font-medium truncate">{entry.title}</span>
+        <span className="text-xs font-medium truncate flex-1">{entry.title}</span>
+        
+        {/* Initials stack */}
+        <div className="flex -space-x-2 overflow-hidden">
+          {assignedWorkers.slice(0, 2).map((worker) => (
+            <div 
+              key={worker.id}
+              className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-background bg-primary text-[8px] font-bold text-primary-foreground"
+              title={worker.name}
+            >
+              {getInitials(worker.name)}
+            </div>
+          ))}
+          {assignedWorkers.length > 2 && (
+            <div className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-background bg-muted text-[8px] font-bold text-muted-foreground">
+              +{assignedWorkers.length - 2}
+            </div>
+          )}
+        </div>
       </div>
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
@@ -186,38 +195,27 @@ export function MaintenanceEntryBlock({
             )}
 
             <div className="border-t pt-4 space-y-3">
-              <h4 className="text-sm font-medium">Assigned Worker</h4>
-              <div className="space-y-1">
-                <Label htmlFor="worker-email" className="text-xs">Email</Label>
-                <Input
-                  id="worker-email"
-                  type="email"
-                  value={assignedTo}
-                  onChange={(e) => setAssignedTo(e.target.value)}
-                  placeholder="john@example.com"
-                  className="h-8 text-sm"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  size="sm" 
-                  variant="secondary" 
-                  className="w-full"
-                  onClick={handleUpdateWorker}
-                >
-                  Update Details
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="w-full gap-2"
-                  onClick={handleNotifyWorker}
-                  disabled={isNotifying || !assignedTo.trim()}
-                >
-                  <Mail className="w-3 h-3" />
-                  {isNotifying ? 'Sending...' : 'Notify Worker'}
-                </Button>
-              </div>
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Assigned Workers
+              </h4>
+              
+              <MultiSelect
+                options={workerOptions}
+                selected={workerIds}
+                onChange={setWorkerIds}
+                placeholder="Select workers..."
+              />
+              
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                className="w-full"
+                onClick={handleUpdateWorkers}
+                disabled={isUpdating || workerIds.length === 0}
+              >
+                {isUpdating ? 'Updating...' : 'Update Assignments'}
+              </Button>
             </div>
 
             <div className="border-t pt-4 space-y-2">
