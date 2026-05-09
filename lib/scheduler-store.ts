@@ -1,201 +1,275 @@
-import { create } from 'zustand'
-import { Equipment, MaintenanceEntry, ViewMode } from './scheduler-types'
-import { addDays, addMonths, addWeeks, addYears } from 'date-fns'
+import { addDays, addMonths, addWeeks, addYears } from "date-fns";
+import { create } from "zustand";
+import { TaskType } from "../generated/prisma/enums";
+import {
+  addEquipment as dbAddEquipment,
+  updateEquipment as dbUpdateEquipment,
+  createTask as dbCreateTask,
+  deleteEquipment as dbDeleteEquipment,
+  deleteTask as dbDeleteTask,
+  moveTask as dbMoveTask,
+  updateTask as dbUpdateTask,
+} from "./actions";
+import {
+  Equipment,
+  MaintenanceEntry,
+  ViewMode,
+  Worker,
+} from "./scheduler-types";
 
 interface SchedulerState {
-  equipment: Equipment[]
-  entries: MaintenanceEntry[]
-  viewMode: ViewMode
-  currentDate: Date
-  selectedEntry: MaintenanceEntry | null
-  
+  equipment: Equipment[];
+  entries: MaintenanceEntry[];
+  workers: Worker[];
+  viewMode: ViewMode;
+  currentDate: Date;
+  selectedEntry: MaintenanceEntry | null;
+  isLoading: boolean;
+  zoomLevel: number;
+
   // Actions
-  addEquipment: (equipment: Omit<Equipment, 'id'>) => void
-  removeEquipment: (id: string) => void
-  addEntry: (entry: Omit<MaintenanceEntry, 'id'>) => void
-  updateEntry: (id: string, updates: Partial<MaintenanceEntry>) => void
-  removeEntry: (id: string) => void
-  setViewMode: (mode: ViewMode) => void
-  setCurrentDate: (date: Date) => void
-  setSelectedEntry: (entry: MaintenanceEntry | null) => void
-  navigateForward: () => void
-  navigateBackward: () => void
-  moveEntry: (entryId: string, newStartDate: Date, newEquipmentId?: string) => void
+  setEquipment: (equipment: Equipment[]) => void;
+  setEntries: (entries: MaintenanceEntry[]) => void;
+  setWorkers: (workers: Worker[]) => void;
+  addEquipment: (name: string, category?: string) => Promise<void>;
+  updateEquipment: (
+    id: string,
+    name: string,
+    category?: string,
+  ) => Promise<void>;
+  removeEquipment: (id: string) => Promise<void>;
+  addEntry: (entry: {
+    title: string;
+    description?: string;
+    type?: TaskType;
+    startTime: Date;
+    endTime: Date;
+    equipmentId: string;
+    workerIds: string[];
+  }) => Promise<void>;
+  updateEntry: (
+    id: string,
+    updates: Partial<MaintenanceEntry & { workerIds: string[] }>,
+  ) => Promise<void>;
+  removeEntry: (id: string) => Promise<void>;
+  setViewMode: (mode: ViewMode) => void;
+  setZoomLevel: (zoom: number) => void;
+  setCurrentDate: (date: Date) => void;
+  setSelectedEntry: (entry: MaintenanceEntry | null) => void;
+  navigateForward: () => void;
+  navigateBackward: () => void;
+  moveEntry: (
+    entryId: string,
+    newStartTime: Date,
+    newEquipmentId?: string,
+  ) => Promise<void>;
+  setLoading: (isLoading: boolean) => void;
 }
 
-const generateId = () => Math.random().toString(36).substring(2, 9)
-
-// Sample data
-const sampleEquipment: Equipment[] = [
-  { id: '1', name: 'CNC Machine A1', category: 'Manufacturing', status: 'active' },
-  { id: '2', name: 'Hydraulic Press B2', category: 'Manufacturing', status: 'active' },
-  { id: '3', name: 'Conveyor Belt C3', category: 'Material Handling', status: 'maintenance' },
-  { id: '4', name: 'Industrial Robot D4', category: 'Automation', status: 'active' },
-  { id: '5', name: 'Welding Station E5', category: 'Fabrication', status: 'active' },
-  { id: '6', name: 'Compressor F6', category: 'Utilities', status: 'active' },
-]
-
-const today = new Date()
-const sampleEntries: MaintenanceEntry[] = [
-  {
-    id: '1',
-    equipmentId: '1',
-    title: 'Monthly Inspection',
-    description: 'Regular monthly inspection and calibration',
-    startDate: addDays(today, 2),
-    endDate: addDays(today, 2),
-    type: 'inspection',
-    status: 'scheduled',
-  },
-  {
-    id: '2',
-    equipmentId: '2',
-    title: 'Oil Change',
-    description: 'Replace hydraulic oil and filters',
-    startDate: addDays(today, 5),
-    endDate: addDays(today, 6),
-    type: 'preventive',
-    status: 'scheduled',
-  },
-  {
-    id: '3',
-    equipmentId: '3',
-    title: 'Belt Replacement',
-    description: 'Replace worn conveyor belt sections',
-    startDate: addDays(today, 1),
-    endDate: addDays(today, 3),
-    type: 'corrective',
-    status: 'in-progress',
-  },
-  {
-    id: '4',
-    equipmentId: '4',
-    title: 'Software Update',
-    description: 'Install latest firmware and calibrate sensors',
-    startDate: addDays(today, 7),
-    endDate: addDays(today, 7),
-    type: 'preventive',
-    status: 'scheduled',
-  },
-  {
-    id: '5',
-    equipmentId: '5',
-    title: 'Annual Overhaul',
-    description: 'Complete system overhaul and safety certification',
-    startDate: addDays(today, 10),
-    endDate: addDays(today, 14),
-    type: 'preventive',
-    status: 'scheduled',
-  },
-]
-
 export const useSchedulerStore = create<SchedulerState>((set, get) => ({
-  equipment: sampleEquipment,
-  entries: sampleEntries,
-  viewMode: 'week',
+  equipment: [],
+  entries: [],
+  workers: [],
+  viewMode: "week",
   currentDate: new Date(),
   selectedEntry: null,
+  isLoading: false,
+  zoomLevel: 1,
 
-  addEquipment: (equipment) =>
+  setEquipment: (equipment) => set({ equipment }),
+  setEntries: (entries) => set({ entries }),
+  setWorkers: (workers) => set({ workers }),
+  setLoading: (isLoading) => set({ isLoading }),
+  setZoomLevel: (zoomLevel) => set({ zoomLevel }),
+
+  addEquipment: async (name, category) => {
+    const newEquipment = await dbAddEquipment({ name, category });
     set((state) => ({
-      equipment: [...state.equipment, { ...equipment, id: generateId() }],
-    })),
+      equipment: [...state.equipment, newEquipment],
+    }));
+  },
 
-  removeEquipment: (id) =>
+  updateEquipment: async (id, name, category) => {
+    const updatedEquipment = await dbUpdateEquipment(id, { name, category });
+    set((state) => ({
+      equipment: state.equipment.map((e) =>
+        e.id === id ? updatedEquipment : e,
+      ),
+    }));
+  },
+
+  removeEquipment: async (id) => {
+    const previousEquipment = get().equipment;
+    const previousEntries = get().entries;
+
     set((state) => ({
       equipment: state.equipment.filter((e) => e.id !== id),
       entries: state.entries.filter((e) => e.equipmentId !== id),
-    })),
+    }));
 
-  addEntry: (entry) =>
+    try {
+      await dbDeleteEquipment(id);
+    } catch (error) {
+      set({ equipment: previousEquipment, entries: previousEntries });
+      console.error("Failed to delete equipment:", error);
+    }
+  },
+
+  addEntry: async (entryData) => {
+    const newTask = await dbCreateTask(entryData);
     set((state) => ({
-      entries: [...state.entries, { ...entry, id: generateId() }],
-    })),
+      entries: [...state.entries, newTask],
+    }));
+  },
 
-  updateEntry: (id, updates) =>
+  updateEntry: async (id, updates) => {
+    const previousEntries = get().entries;
+    const previousSelectedEntry = get().selectedEntry;
+
+    // Optimistic update
     set((state) => ({
       entries: state.entries.map((e) =>
-        e.id === id ? { ...e, ...updates } : e
+        e.id === id ? { ...e, ...updates } : e,
       ),
-    })),
+      selectedEntry:
+        state.selectedEntry?.id === id
+          ? state.selectedEntry
+            ? { ...state.selectedEntry, ...updates }
+            : null
+          : state.selectedEntry,
+    }));
 
-  removeEntry: (id) =>
+    try {
+      const updatedTask = await dbUpdateTask(id, updates as any);
+      set((state) => ({
+        entries: state.entries.map((e) => (e.id === id ? updatedTask : e)),
+        selectedEntry:
+          state.selectedEntry?.id === id ? updatedTask : state.selectedEntry,
+      }));
+    } catch (error) {
+      set({ entries: previousEntries, selectedEntry: previousSelectedEntry });
+      console.error("Failed to update task:", error);
+      throw error;
+    }
+  },
+
+  removeEntry: async (id) => {
+    const previousEntries = get().entries;
+
     set((state) => ({
       entries: state.entries.filter((e) => e.id !== id),
-      selectedEntry: state.selectedEntry?.id === id ? null : state.selectedEntry,
-    })),
+      selectedEntry:
+        state.selectedEntry?.id === id ? null : state.selectedEntry,
+    }));
 
-  setViewMode: (mode) => set({ viewMode: mode }),
-  
+    try {
+      await dbDeleteTask(id);
+    } catch (error) {
+      set({ entries: previousEntries });
+      console.error("Failed to delete task:", error);
+    }
+  },
+
+  setViewMode: (mode) => {
+    set({ isLoading: true });
+    set({ viewMode: mode });
+    // Adjust zoomLevel based on viewMode for better defaults
+    let defaultZoom = 1;
+    switch (mode) {
+      case 'day': defaultZoom = 2; break;
+      case 'week': defaultZoom = 1; break;
+      case 'month': defaultZoom = 1.5; break;
+      case 'year': defaultZoom = 1; break;
+    }
+    set({ zoomLevel: defaultZoom });
+    setTimeout(() => set({ isLoading: false }), 300);
+  },
+
   setCurrentDate: (date) => set({ currentDate: date }),
-  
+
   setSelectedEntry: (entry) => set({ selectedEntry: entry }),
 
   navigateForward: () =>
     set((state) => {
-      const { viewMode, currentDate } = state
-      let newDate: Date
+      const { viewMode, currentDate } = state;
+      let newDate: Date;
       switch (viewMode) {
-        case 'day':
-          newDate = addDays(currentDate, 1)
-          break
-        case 'week':
-          newDate = addWeeks(currentDate, 1)
-          break
-        case 'month':
-          newDate = addMonths(currentDate, 1)
-          break
-        case 'year':
-          newDate = addYears(currentDate, 1)
-          break
+        case "day":
+          newDate = addDays(currentDate, 1);
+          break;
+        case "week":
+          newDate = addWeeks(currentDate, 1);
+          break;
+        case "month":
+          newDate = addMonths(currentDate, 1);
+          break;
+        case "year":
+          newDate = addYears(currentDate, 1);
+          break;
         default:
-          newDate = currentDate
+          newDate = currentDate;
       }
-      return { currentDate: newDate }
+      return { currentDate: newDate };
     }),
 
   navigateBackward: () =>
     set((state) => {
-      const { viewMode, currentDate } = state
-      let newDate: Date
+      const { viewMode, currentDate } = state;
+      let newDate: Date;
       switch (viewMode) {
-        case 'day':
-          newDate = addDays(currentDate, -1)
-          break
-        case 'week':
-          newDate = addWeeks(currentDate, -1)
-          break
-        case 'month':
-          newDate = addMonths(currentDate, -1)
-          break
-        case 'year':
-          newDate = addYears(currentDate, -1)
-          break
+        case "day":
+          newDate = addDays(currentDate, -1);
+          break;
+        case "week":
+          newDate = addWeeks(currentDate, -1);
+          break;
+        case "month":
+          newDate = addMonths(currentDate, -1);
+          break;
+        case "year":
+          newDate = addYears(currentDate, -1);
+          break;
         default:
-          newDate = currentDate
+          newDate = currentDate;
       }
-      return { currentDate: newDate }
+      return { currentDate: newDate };
     }),
 
-  moveEntry: (entryId, newStartDate, newEquipmentId) =>
-    set((state) => {
-      const entry = state.entries.find((e) => e.id === entryId)
-      if (!entry) return state
+  moveEntry: async (entryId, newStartTime, newEquipmentId) => {
+    const previousEntries = get().entries;
+    const entry = get().entries.find((e) => e.id === entryId);
+    if (!entry) return;
 
-      const duration = entry.endDate.getTime() - entry.startDate.getTime()
-      const newEndDate = new Date(newStartDate.getTime() + duration)
+    const duration = entry.endTime.getTime() - entry.startTime.getTime();
+    const newEndTime = new Date(newStartTime.getTime() + duration);
 
-      return {
-        entries: state.entries.map((e) =>
-          e.id === entryId
-            ? {
-                ...e,
-                startDate: newStartDate,
-                endDate: newEndDate,
-                equipmentId: newEquipmentId ?? e.equipmentId,
-              }
-            : e
-        ),
-      }
-    }),
-}))
+    // Optimistic update
+    set((state) => ({
+      entries: state.entries.map((e) =>
+        e.id === entryId
+          ? {
+              ...e,
+              startTime: newStartTime,
+              endTime: newEndTime,
+              equipmentId: newEquipmentId ?? e.equipmentId,
+            }
+          : e,
+      ),
+    }));
+
+    try {
+      const updatedTask = await dbMoveTask(
+        entryId,
+        newStartTime,
+        newEndTime,
+        newEquipmentId,
+      );
+      set((state) => ({
+        entries: state.entries.map((e) => (e.id === entryId ? updatedTask : e)),
+      }));
+    } catch (error) {
+      set({ entries: previousEntries });
+      console.error("Failed to move task:", error);
+    }
+  },
+}));

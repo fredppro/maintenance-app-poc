@@ -1,23 +1,23 @@
-'use client'
+"use client";
 
-import { SchedulerToolbar } from './scheduler-toolbar'
-import { TimelineGrid } from './timeline-grid'
-import { EquipmentPanel } from './equipment-panel'
-import { useSchedulerStore } from '@/lib/scheduler-store'
-import { Wrench, Search, AlertTriangle } from 'lucide-react'
+import { useSchedulerStore } from "@/lib/scheduler-store";
+import { Wrench } from "lucide-react";
+import { TaskType } from "../../generated/prisma/enums";
+import { SchedulerToolbar } from "./scheduler-toolbar";
+import { TimelineGrid } from "./timeline-grid";
 
 export function SchedulerDashboard() {
-  const { entries, equipment } = useSchedulerStore()
+  const { entries, equipment } = useSchedulerStore();
 
   const stats = {
     total: entries.length,
-    scheduled: entries.filter((e) => e.status === 'scheduled').length,
-    inProgress: entries.filter((e) => e.status === 'in-progress').length,
-    completed: entries.filter((e) => e.status === 'completed').length,
-    preventive: entries.filter((e) => e.type === 'preventive').length,
-    corrective: entries.filter((e) => e.type === 'corrective').length,
-    inspection: entries.filter((e) => e.type === 'inspection').length,
-  }
+    scheduled: entries.filter((e) => e.status === "scheduled").length,
+    inProgress: entries.filter((e) => e.status === "in-progress").length,
+    completed: entries.filter((e) => e.status === "completed").length,
+    preventive: entries.filter((e) => e.type === TaskType.PREVENTIVE).length,
+    corrective: entries.filter((e) => e.type === TaskType.CORRECTIVE).length,
+    inspection: entries.filter((e) => e.type === TaskType.INSPECTION).length,
+  };
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -42,36 +42,48 @@ export function SchedulerDashboard() {
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-chart-1/20 border border-chart-1/40" />
+                <div className="w-3 h-3 rounded-full bg-blue-500/20 border border-blue-500/40" />
                 <span className="text-muted-foreground">Preventive</span>
-                <span className="font-medium text-foreground">{stats.preventive}</span>
+                <span className="font-medium text-foreground">
+                  {stats.preventive}
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-chart-3/20 border border-chart-3/40" />
+                <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40" />
                 <span className="text-muted-foreground">Corrective</span>
-                <span className="font-medium text-foreground">{stats.corrective}</span>
+                <span className="font-medium text-foreground">
+                  {stats.corrective}
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-chart-2/20 border border-chart-2/40" />
+                <div className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500/40" />
                 <span className="text-muted-foreground">Inspection</span>
-                <span className="font-medium text-foreground">{stats.inspection}</span>
+                <span className="font-medium text-foreground">
+                  {stats.inspection}
+                </span>
               </div>
             </div>
-            
+
             <div className="h-8 w-px bg-border" />
-            
+
             <div className="flex items-center gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">Equipment: </span>
-                <span className="font-medium text-foreground">{equipment.length}</span>
+                <span className="font-medium text-foreground">
+                  {equipment.length}
+                </span>
               </div>
               <div>
                 <span className="text-muted-foreground">Scheduled: </span>
-                <span className="font-medium text-foreground">{stats.scheduled}</span>
+                <span className="font-medium text-foreground">
+                  {stats.scheduled}
+                </span>
               </div>
               <div>
                 <span className="text-muted-foreground">In Progress: </span>
-                <span className="font-medium text-chart-3">{stats.inProgress}</span>
+                <span className="font-medium text-chart-3">
+                  {stats.inProgress}
+                </span>
               </div>
             </div>
           </div>
@@ -87,9 +99,6 @@ export function SchedulerDashboard() {
         <div className="flex-1 flex gap-4 overflow-hidden">
           {/* Timeline Grid */}
           <TimelineGrid />
-
-          {/* Equipment Panel */}
-          <EquipmentPanel />
         </div>
       </main>
 
@@ -105,20 +114,20 @@ export function SchedulerDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
-              <Wrench className="w-3 h-3" />
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
               <span>Preventive</span>
             </div>
             <div className="flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" />
+              <div className="w-2 h-2 rounded-full bg-red-500" />
               <span>Corrective</span>
             </div>
             <div className="flex items-center gap-1">
-              <Search className="w-3 h-3" />
+              <div className="w-2 h-2 rounded-full bg-amber-500" />
               <span>Inspection</span>
             </div>
           </div>
         </div>
       </footer>
     </div>
-  )
+  );
 }

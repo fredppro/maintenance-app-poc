@@ -1,0 +1,74 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider        = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+model Equipment {
+  id           String            @id @default(cuid())
+  name         String            @unique
+  category     String?
+  tasks        MaintenanceTask[]
+  createdAt    DateTime          @default(now())
+}
+
+model MaintenanceTask {
+  id           String    @id @default(cuid())
+  title        String
+  description  String?
+  type         TaskType  @default(PREVENTIVE)
+  startTime    DateTime
+  endTime      DateTime
+  equipmentId  String
+  equipment    Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  status       String    @default("scheduled") 
+  assignments MaintenanceTaskAssignment[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum TaskType {
+  PREVENTIVE
+  INSPECTION
+  CORRECTIVE
+}
+
+model MaintenanceTaskAssignment {
+  id        String          @id @default(cuid())
+  taskId    String
+  workerId  String
+  task      MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  worker    Worker          @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  @@unique([taskId, workerId])
+}
+
+model Worker {
+  id        String      @id @default(cuid())
+  name      String
+  email     String      @unique
+  phone     String?
+  type      WorkerType  @default(INTERNAL)
+  vendorId  String?
+  vendor    Vendor?     @relation(fields: [vendorId], references: [id])
+  assignments MaintenanceTaskAssignment[]
+  createdAt DateTime @default(now())
+}
+
+model Vendor {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  contact   String?
+  email     String?
+  workers   Worker[]
+  createdAt DateTime @default(now())
+}
+
+enum WorkerType {
+  INTERNAL
+  EXTERNAL
+}

@@ -40,11 +40,11 @@ This document serves as the architectural blueprint and source of truth for the 
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 model Equipment {
@@ -65,6 +65,46 @@ model MaintenanceTask {
   equipmentId  String
   equipment    Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
   status       String    @default("scheduled") 
+  assignments MaintenanceTaskAssignment[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MaintenanceTaskAssignment {
+  id        String          @id @default(cuid())
+  taskId    String
+  workerId  String
+  
+  task      MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  worker    Worker          @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, workerId])
+}
+
+model Worker {
+  id        String      @id @default(cuid())
+  name      String
+  email     String      @unique
+  phone     String?
+  type      WorkerType  @default(INTERNAL)
+  vendorId  String?
+  vendor    Vendor?     @relation(fields: [vendorId], references: [id])
+  assignments MaintenanceTaskAssignment[]
+  createdAt DateTime @default(now())
+}
+
+model Vendor {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  contact   String?
+  email     String?
+  workers   Worker[]
+  createdAt DateTime @default(now())
+}
+
+enum WorkerType {
+  INTERNAL
+  EXTERNAL
 }
 ```
 

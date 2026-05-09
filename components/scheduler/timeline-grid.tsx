@@ -21,10 +21,30 @@ import {
   startOfHour,
   isSameHour,
   isSameMonth,
+  endOfDay,
 } from 'date-fns'
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { MaintenanceEntryBlock } from './maintenance-entry-block'
 import { AddEntryDialog } from './add-entry-dialog'
+import { Box, Loader2, Plus, MoreVertical, Settings, Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { toast } from 'sonner'
 
 export function TimelineGrid() {
   const {
@@ -32,13 +52,26 @@ export function TimelineGrid() {
     entries,
     viewMode,
     currentDate,
+    isLoading,
+    zoomLevel,
     moveEntry,
+    setViewMode,
+    setCurrentDate,
+    addEquipment,
+    updateEquipment,
+    removeEquipment,
   } = useSchedulerStore()
   
   const [draggedEntry, setDraggedEntry] = useState<MaintenanceEntry | null>(null)
   const [dragOverCell, setDragOverCell] = useState<{ date: Date; equipmentId: string } | null>(null)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [selectedCell, setSelectedCell] = useState<{ date: Date; equipmentId: string } | null>(null)
+  
+  const [addEquipDialogOpen, setAddEquipDialogOpen] = useState(false)
+  const [editingEquipment, setEditingEquipment] = useState<{id: string, name: string, category: string | null} | null>(null)
+  const [newEquipName, setNewEquipName] = useState('')
+  const [newEquipCategory, setNewEquipCategory] = useState('')
+  
   const gridRef = useRef<HTMLDivElement>(null)
 
   const timeSlots = useMemo(() => {
@@ -46,8 +79,8 @@ export function TimelineGrid() {
       case 'day': {
         const dayStart = startOfDay(currentDate)
         return eachHourOfInterval({
-          start: addHours(dayStart, 6),
-          end: addHours(dayStart, 22),
+          start: dayStart,
+          end: addHours(dayStart, 23),
         })
       }
       case 'week': {
@@ -75,7 +108,7 @@ export function TimelineGrid() {
   const formatHeader = (date: Date): string => {
     switch (viewMode) {
       case 'day':
-        return format(date, 'HH:mm')
+        return format(date, 'h aa')
       case 'week':
         return format(date, 'EEE d')
       case 'month':
@@ -87,59 +120,86 @@ export function TimelineGrid() {
     }
   }
 
+  const viewRange = useMemo(() => {
+    if (timeSlots.length === 0) return null
+    return {
+      start: timeSlots[0],
+      end: viewMode === 'day' ? endOfDay(timeSlots[timeSlots.length - 1]) : 
+            viewMode === 'year' ? endOfMonth(timeSlots[timeSlots.length - 1]) : 
+            endOfDay(timeSlots[timeSlots.length - 1]),
+    }
+  }, [timeSlots, viewMode])
+
   const getEntriesForEquipment = useCallback(
     (equipmentId: string) => {
-      return entries.filter((entry) => entry.equipmentId === equipmentId)
+      if (!viewRange) return []
+      
+      return entries.filter((entry) => {
+        if (entry.equipmentId !== equipmentId) return false
+        
+        const entryStart = new Date(entry.startTime)
+        const entryEnd = new Date(entry.endTime)
+        
+        // Overlap check: (StartA <= EndB) and (EndA >= StartB)
+        return entryStart <= viewRange.end && entryEnd >= viewRange.start
+      })
     },
-    [entries]
+    [entries, viewRange]
   )
 
-  const isEntryInSlot = (entry: MaintenanceEntry, slot: Date): boolean => {
-    const slotStart = viewMode === 'day' ? startOfHour(slot) : startOfDay(slot)
-    
-    switch (viewMode) {
-      case 'day':
-        return isSameHour(entry.startDate, slot)
-      case 'week':
-      case 'month':
-        return isSameDay(entry.startDate, slot) || 
-          (isWithinInterval(slot, { start: entry.startDate, end: entry.endDate }) && isSameDay(slot, entry.startDate) === false && isSameDay(entry.startDate, slot))
-      case 'year':
-        return isSameMonth(entry.startDate, slot)
-      default:
-        return false
-    }
-  }
-
   const getEntryStartSlotIndex = (entry: MaintenanceEntry): number => {
-    return timeSlots.findIndex(slot => {
+    const entryStart = new Date(entry.startTime)
+    
+    // Find the first slot that contains or starts after the entry start
+    let lastIndex = -1
+    for (let i = 0; i < timeSlots.length; i++) {
+      const slot = timeSlots[i]
+      let isMatch = false
+      
       switch (viewMode) {
         case 'day':
-          return isSameHour(entry.startDate, slot)
+          isMatch = isSameHour(entryStart, slot) || entryStart > slot
+          break
         case 'week':
         case 'month':
-          return isSameDay(entry.startDate, slot)
+          isMatch = isSameDay(entryStart, slot) || entryStart > slot
+          break
         case 'year':
-          return isSameMonth(entry.startDate, slot)
-        default:
-          return false
+          isMatch = isSameMonth(entryStart, slot) || entryStart > slot
+          break
       }
-    })
+      
+      if (isMatch) {
+        lastIndex = i
+      } else {
+        break
+      }
+    }
+
+    if (lastIndex === -1 && entryStart < timeSlots[0]) return 0
+    return lastIndex
   }
 
   const getEntrySpan = (entry: MaintenanceEntry): number => {
+    const entryStart = new Date(entry.startTime)
+    const entryEnd = new Date(entry.endTime)
+    
+    // Clamp start/end to view range for span calculation
+    const effectiveStart = viewRange && entryStart < viewRange.start ? viewRange.start : entryStart
+    const effectiveEnd = viewRange && entryEnd > viewRange.end ? viewRange.end : entryEnd
+
     switch (viewMode) {
       case 'day': {
-        const hours = Math.ceil((entry.endDate.getTime() - entry.startDate.getTime()) / (1000 * 60 * 60))
+        const hours = Math.ceil((effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60))
         return Math.max(1, hours)
       }
       case 'week':
       case 'month': {
-        const days = differenceInDays(entry.endDate, entry.startDate) + 1
+        const days = differenceInDays(effectiveEnd, effectiveStart) + 1
         return Math.max(1, days)
       }
       case 'year': {
-        const months = entry.endDate.getMonth() - entry.startDate.getMonth() + 1
+        const months = effectiveEnd.getMonth() - effectiveStart.getMonth() + 1
         return Math.max(1, months)
       }
       default:
@@ -150,6 +210,13 @@ export function TimelineGrid() {
   const handleCellClick = (date: Date, equipmentId: string) => {
     setSelectedCell({ date, equipmentId })
     setAddDialogOpen(true)
+  }
+
+  const handleHeaderClick = (date: Date) => {
+    if (viewMode === 'week' || viewMode === 'month') {
+      setCurrentDate(date)
+      setViewMode('day')
+    }
   }
 
   const handleDragStart = (entry: MaintenanceEntry) => {
@@ -188,24 +255,144 @@ export function TimelineGrid() {
     }
   }
 
-  const cellWidth = viewMode === 'month' ? 'min-w-[40px]' : viewMode === 'year' ? 'min-w-[80px]' : 'min-w-[100px]'
+  const handleAddEquipSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newEquipName.trim()) return
+
+    try {
+      if (editingEquipment) {
+        await updateEquipment(editingEquipment.id, newEquipName.trim(), newEquipCategory.trim() || undefined)
+        toast.success("Equipment updated")
+      } else {
+        await addEquipment(newEquipName.trim(), newEquipCategory.trim() || undefined)
+        toast.success("Equipment added")
+      }
+      setNewEquipName('')
+      setNewEquipCategory('')
+      setEditingEquipment(null)
+      setAddEquipDialogOpen(false)
+    } catch (error) {
+      toast.error(editingEquipment ? "Failed to update equipment" : "Failed to add equipment")
+    }
+  }
+
+  const handleEditEquip = (equip: any) => {
+    setEditingEquipment(equip)
+    setNewEquipName(equip.name)
+    setNewEquipCategory(equip.category || '')
+    setAddEquipDialogOpen(true)
+  }
+
+  const getPendingMaintenanceCount = (equipmentId: string) => {
+    return entries.filter(
+      (e) => e.equipmentId === equipmentId && e.status !== "completed",
+    ).length
+  }
+
+  const equipCategories = useMemo(() => [
+    ...new Set(equipment.map((e) => e.category).filter(Boolean) as string[]),
+  ], [equipment])
+
+  const getMinWidth = () => {
+    const baseWidth = 1000
+    // zoomLevel 1 should generally fit or slightly overflow on standard screens
+    switch (viewMode) {
+      case 'day': return baseWidth * 1.5 * zoomLevel
+      case 'week': return baseWidth * 0.8 * zoomLevel
+      case 'month': return baseWidth * 1.2 * zoomLevel
+      case 'year': return baseWidth * 0.8 * zoomLevel
+      default: return baseWidth * zoomLevel
+    }
+  }
+
+  const yAxisWidth = 'w-72 min-w-[18rem]'
+
+  const totalTasksInView = useMemo(() => {
+    return equipment.reduce((acc, equip) => acc + getEntriesForEquipment(equip.id).length, 0)
+  }, [equipment, getEntriesForEquipment])
 
   return (
     <>
-      <div ref={gridRef} className="flex-1 overflow-auto border border-border rounded-lg bg-card">
-        <div className="min-w-max">
+      <div ref={gridRef} className="flex-1 overflow-auto border border-border rounded-lg bg-card relative">
+        {isLoading && (
+          <div className="absolute inset-0 z-50 bg-background/50 flex items-center justify-center backdrop-blur-[1px]">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          </div>
+        )}
+
+        <div className="w-full h-full flex flex-col" style={{ minWidth: `${getMinWidth()}px` }}>
           {/* Header row */}
-          <div className="flex sticky top-0 z-20 bg-card border-b border-border">
-            <div className="w-48 min-w-48 sticky left-0 z-30 bg-card border-r border-border p-3 font-medium text-sm text-muted-foreground">
-              Equipment
+          <div className="flex sticky top-0 z-20 bg-card border-b border-border flex-shrink-0">
+            <div className={cn(yAxisWidth, "sticky left-0 z-30 bg-card border-r border-border p-3 flex items-center justify-between")}>
+              <span className="font-semibold text-sm text-foreground">Equipment</span>
+              
+              <Dialog open={addEquipDialogOpen} onOpenChange={(open) => {
+                setAddEquipDialogOpen(open)
+                if (!open) {
+                  setEditingEquipment(null)
+                  setNewEquipName('')
+                  setNewEquipCategory('')
+                }
+              }}>
+                <DialogTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
+                    setEditingEquipment(null)
+                    setNewEquipName('')
+                    setNewEquipCategory('')
+                  }}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{editingEquipment ? 'Edit Equipment' : 'Add Equipment'}</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleAddEquipSubmit} className="space-y-4">
+                    <FieldGroup>
+                      <Field>
+                        <FieldLabel>Equipment Name</FieldLabel>
+                        <Input
+                          value={newEquipName}
+                          onChange={(e) => setNewEquipName(e.target.value)}
+                          placeholder="e.g., CNC Machine G7"
+                          required
+                        />
+                      </Field>
+                      <Field>
+                        <FieldLabel>Category (optional)</FieldLabel>
+                        <Input
+                          value={newEquipCategory}
+                          onChange={(e) => setNewEquipCategory(e.target.value)}
+                          placeholder="e.g., Manufacturing"
+                          list="timeline-categories"
+                        />
+                        <datalist id="timeline-categories">
+                          {equipCategories.map((cat) => (
+                            <option key={cat} value={cat} />
+                          ))}
+                        </datalist>
+                      </Field>
+                    </FieldGroup>
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setAddEquipDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={!newEquipName.trim()}>
+                        {editingEquipment ? 'Save Changes' : 'Add Equipment'}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
-            <div className="flex">
+            <div className="flex flex-1">
               {timeSlots.map((slot, idx) => (
                 <div
                   key={idx}
+                  onClick={() => handleHeaderClick(slot)}
                   className={cn(
-                    cellWidth,
-                    'flex-1 p-2 text-center text-sm font-medium border-r border-border text-muted-foreground',
+                    'flex-1 p-2 text-center text-sm font-medium border-r border-border text-muted-foreground transition-colors min-w-0',
+                    (viewMode === 'week' || viewMode === 'month') && 'cursor-pointer hover:bg-accent hover:text-foreground',
                     isToday(slot) && 'bg-primary/10 text-primary'
                   )}
                 >
@@ -216,84 +403,139 @@ export function TimelineGrid() {
           </div>
 
           {/* Equipment rows */}
-          {equipment.map((equip) => {
-            const equipEntries = getEntriesForEquipment(equip.id)
-            
-            return (
-              <div key={equip.id} className="flex border-b border-border last:border-b-0 group">
-                {/* Equipment name cell */}
-                <div className="w-48 min-w-48 sticky left-0 z-10 bg-card border-r border-border p-3 flex items-center gap-2">
-                  <div
-                    className={cn(
-                      'w-2 h-2 rounded-full',
-                      equip.status === 'active' && 'bg-chart-1',
-                      equip.status === 'maintenance' && 'bg-chart-3',
-                      equip.status === 'inactive' && 'bg-muted-foreground'
-                    )}
-                  />
-                  <div>
-                    <div className="text-sm font-medium text-foreground truncate max-w-32">
-                      {equip.name}
+          <div className="flex-1 overflow-y-auto">
+            {equipment.length > 0 ? (
+              equipment.map((equip) => {
+                const equipEntries = getEntriesForEquipment(equip.id)
+                const pendingCount = getPendingMaintenanceCount(equip.id)
+                
+                return (
+                  <div key={equip.id} className="flex border-b border-border last:border-b-0 group">
+                    {/* Equipment name cell */}
+                    <div className={cn(yAxisWidth, "sticky left-0 z-10 bg-card border-r border-border p-3 flex items-center justify-between")}>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative">
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Box className="w-4 h-4 text-primary" />
+                          </div>
+                          <div 
+                            className={cn(
+                              "absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-card",
+                              pendingCount > 0 ? "bg-amber-500" : "bg-emerald-500"
+                            )} 
+                            title={pendingCount > 0 ? "In Maintenance" : "Active"}
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-foreground truncate max-w-[10rem]">
+                            {equip.name}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+                            {equip.category && <span className="truncate max-w-[6rem]">{equip.category}</span>}
+                            {equip.category && pendingCount > 0 && <span>•</span>}
+                            {pendingCount > 0 && (
+                              <span className="text-primary font-medium">
+                                {pendingCount} task{pendingCount !== 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem className="gap-2" onClick={() => handleEditEquip(equip)}>
+                            <Settings className="w-4 h-4" />
+                            Edit Equipment
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="gap-2 text-destructive focus:text-destructive"
+                            onClick={() => removeEquipment(equip.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Remove
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                    <div className="text-xs text-muted-foreground">{equip.category}</div>
+
+                    {/* Timeline cells */}
+                    <div className="flex-1 flex relative h-16">
+                      {timeSlots.map((slot, slotIdx) => {
+                        const isDragOver = dragOverCell && 
+                          dragOverCell.equipmentId === equip.id && 
+                          (viewMode === 'day' ? isSameHour(dragOverCell.date, slot) : isSameDay(dragOverCell.date, slot))
+
+                        return (
+                          <div
+                            key={slotIdx}
+                            className={cn(
+                              'flex-1 h-full border-r border-border cursor-pointer transition-colors relative min-w-0',
+                              'hover:bg-accent/50',
+                              isDragOver && 'bg-primary/20',
+                              isToday(slot) && 'bg-primary/5'
+                            )}
+                            onClick={() => handleCellClick(slot, equip.id)}
+                            onDragOver={(e) => handleDragOver(e, slot, equip.id)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={() => handleDrop(slot, equip.id)}
+                          />
+                        )
+                      })}
+
+                      {/* Render entries as overlay */}
+                      {!isLoading && equipEntries.map((entry) => {
+                        const startIdx = getEntryStartSlotIndex(entry)
+                        if (startIdx < 0) return null
+
+                        const span = getEntrySpan(entry)
+                        const left = (startIdx / timeSlots.length) * 100
+                        const width = (Math.min(span, timeSlots.length - startIdx) / timeSlots.length) * 100
+
+                        return (
+                          <MaintenanceEntryBlock
+                            key={entry.id}
+                            entry={entry}
+                            style={{
+                              position: 'absolute',
+                              left: `${left}%`,
+                              width: `${width}%`,
+                              paddingLeft: '2px',
+                              paddingRight: '2px',
+                              top: '4px',
+                              height: 'calc(100% - 8px)',
+                            }}
+                            onDragStart={() => handleDragStart(entry)}
+                            isDragging={draggedEntry?.id === entry.id}
+                            timeSlotsCount={timeSlots.length}
+                          />
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-
-                {/* Timeline cells */}
-                <div className="flex relative">
-                  {timeSlots.map((slot, slotIdx) => {
-                    const isDragOver = dragOverCell && 
-                      dragOverCell.equipmentId === equip.id && 
-                      (viewMode === 'day' ? isSameHour(dragOverCell.date, slot) : isSameDay(dragOverCell.date, slot))
-
-                    return (
-                      <div
-                        key={slotIdx}
-                        className={cn(
-                          cellWidth,
-                          'flex-1 h-16 border-r border-border cursor-pointer transition-colors relative',
-                          'hover:bg-accent/50',
-                          isDragOver && 'bg-primary/20',
-                          isToday(slot) && 'bg-primary/5'
-                        )}
-                        onClick={() => handleCellClick(slot, equip.id)}
-                        onDragOver={(e) => handleDragOver(e, slot, equip.id)}
-                        onDragLeave={handleDragLeave}
-                        onDrop={() => handleDrop(slot, equip.id)}
-                      />
-                    )
-                  })}
-
-                  {/* Render entries as overlay */}
-                  {equipEntries.map((entry) => {
-                    const startIdx = getEntryStartSlotIndex(entry)
-                    if (startIdx < 0) return null
-
-                    const span = getEntrySpan(entry)
-                    const cellWidthPx = viewMode === 'month' ? 40 : viewMode === 'year' ? 80 : 100
-                    const left = startIdx * cellWidthPx
-                    const width = Math.min(span, timeSlots.length - startIdx) * cellWidthPx - 4
-
-                    return (
-                      <MaintenanceEntryBlock
-                        key={entry.id}
-                        entry={entry}
-                        style={{
-                          position: 'absolute',
-                          left: `${left + 2}px`,
-                          width: `${width}px`,
-                          top: '4px',
-                          height: 'calc(100% - 8px)',
-                        }}
-                        onDragStart={() => handleDragStart(entry)}
-                        isDragging={draggedEntry?.id === entry.id}
-                      />
-                    )
-                  })}
-                </div>
+                )
+              })
+            ) : (
+              <div className="p-8 text-center text-muted-foreground italic">
+                No equipment registered.
               </div>
-            )
-          })}
+            )}
+            
+            {viewMode === 'day' && !isLoading && totalTasksInView === 0 && (
+              <div className="sticky left-0 right-0 p-4 text-center text-sm text-muted-foreground bg-muted/20 border-b border-border">
+                No tasks scheduled for this day.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
