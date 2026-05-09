@@ -21,21 +21,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
 import { TimePicker } from '@/components/ui/time-picker'
 import { useSchedulerStore } from '@/lib/scheduler-store'
 import { MaintenanceEntry } from '@/lib/scheduler-types'
 import { cn } from '@/lib/utils'
 import { addMinutes, format, set } from 'date-fns'
-import { CalendarIcon, GripVertical, Wrench } from 'lucide-react'
+import { CalendarIcon, GripVertical, Wrench, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useFieldArray, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
+import * as z from 'zod'
 import { TaskType } from '../../generated/prisma/enums'
+
+const materialSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  reference: z.string().optional(),
+  quantity: z.number().min(0.1, 'Quantity must be > 0').multipleOf(0.1, 'Only one decimal place allowed'),
+})
+
+const editFormSchema = z.object({
+  type: z.nativeEnum(TaskType),
+  startTime: z.date(),
+  endTime: z.date(),
+  workerIds: z.array(z.string()).min(1, 'Select at least one worker'),
+  materials: z.array(materialSchema).optional(),
+})
+
+type EditFormValues = z.infer<typeof editFormSchema>
 
 interface MaintenanceEntryBlockProps {
   entry: MaintenanceEntry
   style?: React.CSSProperties
   onDragStart: () => void
   isDragging?: boolean
+  timeSlotsCount: number
 }
 
 export function MaintenanceEntryBlock({
@@ -43,15 +72,9 @@ export function MaintenanceEntryBlock({
   style,
   onDragStart,
   isDragging,
+  timeSlotsCount,
 }: MaintenanceEntryBlockProps) {
   const [detailsOpen, setDetailsOpen] = useState(false)
-  const [workerIds, setWorkerIds] = useState<string[]>([])
-  const [type, setType] = useState<TaskType>(entry.type)
-  const [isUpdating, setIsUpdating] = useState(false)
-  
-  // Edit state for the dialog
-  const [editStartTime, setEditStartTime] = useState<Date>(new Date(entry.startTime))
-  const [editEndTime, setEditEndTime] = useState<Date>(new Date(entry.endTime))
   
   const { equipment, workers, removeEntry, updateEntry, viewMode } = useSchedulerStore()
   
@@ -63,14 +86,41 @@ export function MaintenanceEntryBlock({
   const [resizeOffset, setResizeOffset] = useState(0)
   const entryRef = useRef<HTMLDivElement>(null)
 
+  const form = useForm<EditFormValues>({
+    resolver: zodResolver(editFormSchema),
+    defaultValues: {
+      type: entry.type,
+      startTime: new Date(entry.startTime),
+      endTime: new Date(entry.endTime),
+      workerIds: entry.assignments?.map(a => a.workerId) || [],
+      materials: entry.materials?.map(m => ({
+        name: m.name,
+        reference: m.reference || '',
+        quantity: m.quantity
+      })) || [],
+    },
+  })
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'materials',
+  })
+
   useEffect(() => {
     if (detailsOpen) {
-      setWorkerIds(entry.assignments?.map(a => a.workerId) || [])
-      setType(entry.type)
-      setEditStartTime(new Date(entry.startTime))
-      setEditEndTime(new Date(entry.endTime))
+      form.reset({
+        type: entry.type,
+        startTime: new Date(entry.startTime),
+        endTime: new Date(entry.endTime),
+        workerIds: entry.assignments?.map(a => a.workerId) || [],
+        materials: entry.materials?.map(m => ({
+          name: m.name,
+          reference: m.reference || '',
+          quantity: m.quantity
+        })) || [],
+      })
     }
-  }, [detailsOpen, entry])
+  }, [detailsOpen, entry, form])
 
   const getStatusBadge = () => {
     switch (entry.status) {
@@ -133,30 +183,18 @@ export function MaintenanceEntryBlock({
     }
   }
 
-  const handleSaveEdit = async () => {
-    if (workerIds.length === 0) {
-      toast.error('At least one worker must be assigned')
-      return
-    }
-    if (editEndTime <= editStartTime) {
+  const onSave = async (values: EditFormValues) => {
+    if (values.endTime <= values.startTime) {
       toast.error('End time must be after start time')
       return
     }
 
-    setIsUpdating(true)
     try {
-      await updateEntry(entry.id, {
-        workerIds,
-        type,
-        startTime: editStartTime,
-        endTime: editEndTime,
-      })
+      await updateEntry(entry.id, values)
       toast.success('Task updated successfully')
       setDetailsOpen(false)
     } catch (error) {
       toast.error('Failed to update task')
-    } finally {
-      setIsUpdating(false)
     }
   }
 
@@ -169,6 +207,8 @@ export function MaintenanceEntryBlock({
     setResizeOffset(0)
 
     const startX = e.clientX
+    const containerWidth = entryRef.current?.parentElement?.getBoundingClientRect().width || 1000
+    const pixelsPerSlot = containerWidth / timeSlotsCount
 
     const onMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX
@@ -188,10 +228,10 @@ export function MaintenanceEntryBlock({
 
       // Calculate time change based on viewMode
       let pixelsPerMinute = 0
-      if (viewMode === 'day') pixelsPerMinute = 100 / 60
-      else if (viewMode === 'week') pixelsPerMinute = 100 / (24 * 60)
-      else if (viewMode === 'month') pixelsPerMinute = 40 / (24 * 60)
-      else if (viewMode === 'year') pixelsPerMinute = 80 / (30 * 24 * 60) 
+      if (viewMode === 'day') pixelsPerMinute = pixelsPerSlot / 60
+      else if (viewMode === 'week') pixelsPerMinute = pixelsPerSlot / (24 * 60)
+      else if (viewMode === 'month') pixelsPerMinute = pixelsPerSlot / (24 * 60)
+      else if (viewMode === 'year') pixelsPerMinute = pixelsPerSlot / (30 * 24 * 60) 
 
       const minutesChange = finalDeltaX / pixelsPerMinute
       
@@ -302,7 +342,7 @@ export function MaintenanceEntryBlock({
       </div>
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-xl lg:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Wrench className="w-4 h-4" />
@@ -313,13 +353,13 @@ export function MaintenanceEntryBlock({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4 max-h-[75vh] overflow-y-auto px-1">
+          <form onSubmit={form.handleSubmit(onSave)} className="space-y-4 py-4 -mx-4 max-h-[75vh] overflow-y-auto px-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground font-medium">Status</span>
               {getStatusBadge()}
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">Start Date & Time</Label>
                 <div className="flex items-center gap-2">
@@ -327,14 +367,14 @@ export function MaintenanceEntryBlock({
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal text-xs h-9">
                         <CalendarIcon className="mr-2 h-3 w-3" />
-                        {format(editStartTime, "PP")}
+                        {format(form.watch('startTime'), "PP")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                       <Calendar
                         mode="single"
-                        selected={editStartTime}
-                        onSelect={(date) => date && setEditStartTime(set(editStartTime, {
+                        selected={form.watch('startTime')}
+                        onSelect={(date) => date && form.setValue('startTime', set(form.getValues('startTime'), {
                           year: date.getFullYear(),
                           month: date.getMonth(),
                           date: date.getDate()
@@ -342,7 +382,10 @@ export function MaintenanceEntryBlock({
                       />
                     </PopoverContent>
                   </Popover>
-                  <TimePicker date={editStartTime} onChange={setEditStartTime} />
+                  <TimePicker 
+                    date={form.watch('startTime')} 
+                    onChange={(d) => form.setValue('startTime', d)} 
+                  />
                 </div>
               </div>
 
@@ -353,14 +396,14 @@ export function MaintenanceEntryBlock({
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal text-xs h-9">
                         <CalendarIcon className="mr-2 h-3 w-3" />
-                        {format(editEndTime, "PP")}
+                        {format(form.watch('endTime'), "PP")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                       <Calendar
                         mode="single"
-                        selected={editEndTime}
-                        onSelect={(date) => date && setEditEndTime(set(editEndTime, {
+                        selected={form.watch('endTime')}
+                        onSelect={(date) => date && form.setValue('endTime', set(form.getValues('endTime'), {
                           year: date.getFullYear(),
                           month: date.getMonth(),
                           date: date.getDate()
@@ -368,14 +411,20 @@ export function MaintenanceEntryBlock({
                       />
                     </PopoverContent>
                   </Popover>
-                  <TimePicker date={editEndTime} onChange={setEditEndTime} />
+                  <TimePicker 
+                    date={form.watch('endTime')} 
+                    onChange={(d) => form.setValue('endTime', d)} 
+                  />
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold">Task Type</Label>
-              <Select value={type} onValueChange={(v) => setType(v as TaskType)}>
+              <Select 
+                value={form.watch('type')} 
+                onValueChange={(v) => form.setValue('type', v as TaskType)}
+              >
                 <SelectTrigger className="h-9 text-xs">
                   <SelectValue />
                 </SelectTrigger>
@@ -391,10 +440,94 @@ export function MaintenanceEntryBlock({
               <Label className="text-xs font-semibold">Assigned Workers</Label>
               <MultiSelect
                 options={workerOptions}
-                selected={workerIds}
-                onChange={setWorkerIds}
+                selected={form.watch('workerIds')}
+                onChange={(v) => form.setValue('workerIds', v)}
                 placeholder="Select workers..."
               />
+            </div>
+
+            <div className="pt-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-bold">Materials Used</Label>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 gap-1"
+                  onClick={() => append({ name: '', reference: '', quantity: 1 })}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Material
+                </Button>
+              </div>
+
+              {fields.length > 0 ? (
+                <div className="border rounded-md overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-muted/50">
+                      <TableRow>
+                        <TableHead className="w-[45%]">Item Name</TableHead>
+                        <TableHead className="w-[25%]">Reference</TableHead>
+                        <TableHead className="w-[20%] text-right">Qty</TableHead>
+                        <TableHead className="w-[10%]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {fields.map((field, index) => (
+                        <TableRow key={field.id} className="group">
+                          <TableCell className="p-2">
+                            <Input
+                              {...form.register(`materials.${index}.name` as const)}
+                              placeholder="Item name"
+                              className="h-8 text-xs"
+                            />
+                            {form.formState.errors.materials?.[index]?.name && (
+                              <p className="text-[10px] text-destructive mt-1">
+                                {form.formState.errors.materials[index]?.name?.message}
+                              </p>
+                            )}
+                          </TableCell>
+                          <TableCell className="p-2">
+                            <Input
+                              {...form.register(`materials.${index}.reference` as const)}
+                              placeholder="Ref #"
+                              className="h-8 text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="p-2 text-right">
+                            <Input
+                              type="number"
+                              step="0.1"
+                              {...form.register(`materials.${index}.quantity` as const, { valueAsNumber: true })}
+                              className="h-8 text-xs text-right"
+                            />
+                            {form.formState.errors.materials?.[index]?.quantity && (
+                              <p className="text-[10px] text-destructive mt-1">
+                                {form.formState.errors.materials[index]?.quantity?.message}
+                              </p>
+                            )}
+                          </TableCell>
+                          <TableCell className="p-2 text-center">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => remove(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center p-6 border border-dashed rounded-md bg-muted/20">
+                  <p className="text-xs text-muted-foreground">No materials added yet.</p>
+                </div>
+              )}
             </div>
 
             <div className="border-t pt-4 space-y-2">
@@ -403,6 +536,7 @@ export function MaintenanceEntryBlock({
                 {['scheduled', 'in-progress', 'completed'].map((status) => (
                   <Button
                     key={status}
+                    type="button"
                     size="sm"
                     className="flex-1 capitalize text-xs h-8"
                     variant={entry.status === status ? 'default' : 'outline'}
@@ -415,14 +549,14 @@ export function MaintenanceEntryBlock({
             </div>
 
             <Button 
+              type="submit"
               size="sm" 
               className="w-full h-10 mt-4"
-              onClick={handleSaveEdit}
-              disabled={isUpdating}
+              disabled={form.formState.isSubmitting}
             >
-              {isUpdating ? 'Saving...' : 'Save All Changes'}
+              {form.formState.isSubmitting ? 'Saving...' : 'Save All Changes'}
             </Button>
-          </div>
+          </form>
 
           <DialogFooter className="flex gap-2 sm:gap-0 mt-4 border-t pt-4">
             <Button variant="destructive" size="sm" onClick={handleDelete}>

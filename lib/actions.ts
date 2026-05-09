@@ -55,6 +55,7 @@ export async function getTasks() {
           worker: true,
         },
       },
+      materials: true,
     },
     orderBy: { startTime: "asc" },
   });
@@ -69,14 +70,22 @@ export async function createTask(data: {
   equipmentId: string;
   status?: string;
   workerIds: string[];
+  materials?: { name: string; reference?: string; quantity: number }[];
 }) {
-  const { workerIds, ...taskData } = data;
+  const { workerIds, materials, ...taskData } = data;
   const task = await prisma.maintenanceTask.create({
     data: {
       ...taskData,
       assignments: {
         create: workerIds.map((workerId) => ({
           workerId,
+        })),
+      },
+      materials: {
+        create: materials?.map((m) => ({
+          name: m.name,
+          reference: m.reference,
+          quantity: m.quantity,
         })),
       },
     },
@@ -87,6 +96,7 @@ export async function createTask(data: {
           worker: true,
         },
       },
+      materials: true,
     },
   });
   revalidatePath("/");
@@ -104,9 +114,10 @@ export async function updateTask(
     equipmentId: string;
     status: string;
     workerIds: string[];
+    materials: { name: string; reference?: string; quantity: number }[];
   }>,
 ) {
-  const { workerIds, ...taskData } = data;
+  const { workerIds, materials, ...taskData } = data;
 
   const task = await prisma.$transaction(async (tx) => {
     if (workerIds) {
@@ -126,6 +137,25 @@ export async function updateTask(
       }
     }
 
+    if (materials) {
+      // Remove old materials
+      await tx.materialConsumed.deleteMany({
+        where: { taskId: id },
+      });
+
+      // Add new materials
+      if (materials.length > 0) {
+        await tx.materialConsumed.createMany({
+          data: materials.map((m) => ({
+            taskId: id,
+            name: m.name,
+            reference: m.reference,
+            quantity: m.quantity,
+          })),
+        });
+      }
+    }
+
     return await tx.maintenanceTask.update({
       where: { id },
       data: taskData,
@@ -136,6 +166,7 @@ export async function updateTask(
             worker: true,
           },
         },
+        materials: true,
       },
     });
   });
