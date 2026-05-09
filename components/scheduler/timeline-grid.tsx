@@ -392,7 +392,7 @@ export function TimelineGrid() {
           </div>
 
           {/* Equipment rows */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1">
             {equipment.length > 0 ? (
               equipment.map((equip) => {
                 const equipEntries = getEntriesForEquipment(equip.id)
