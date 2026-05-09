@@ -57,6 +57,7 @@ export function TimelineGrid() {
     setViewMode,
     setCurrentDate,
     addEquipment,
+    updateEquipment,
     removeEquipment,
   } = useSchedulerStore()
   
@@ -64,7 +65,9 @@ export function TimelineGrid() {
   const [dragOverCell, setDragOverCell] = useState<{ date: Date; equipmentId: string } | null>(null)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [selectedCell, setSelectedCell] = useState<{ date: Date; equipmentId: string } | null>(null)
+  
   const [addEquipDialogOpen, setAddEquipDialogOpen] = useState(false)
+  const [editingEquipment, setEditingEquipment] = useState<{id: string, name: string, category: string | null} | null>(null)
   const [newEquipName, setNewEquipName] = useState('')
   const [newEquipCategory, setNewEquipCategory] = useState('')
   
@@ -256,14 +259,27 @@ export function TimelineGrid() {
     if (!newEquipName.trim()) return
 
     try {
-      await addEquipment(newEquipName.trim(), newEquipCategory.trim() || undefined)
+      if (editingEquipment) {
+        await updateEquipment(editingEquipment.id, newEquipName.trim(), newEquipCategory.trim() || undefined)
+        toast.success("Equipment updated")
+      } else {
+        await addEquipment(newEquipName.trim(), newEquipCategory.trim() || undefined)
+        toast.success("Equipment added")
+      }
       setNewEquipName('')
       setNewEquipCategory('')
+      setEditingEquipment(null)
       setAddEquipDialogOpen(false)
-      toast.success("Equipment added")
     } catch (error) {
-      toast.error("Failed to add equipment")
+      toast.error(editingEquipment ? "Failed to update equipment" : "Failed to add equipment")
     }
+  }
+
+  const handleEditEquip = (equip: any) => {
+    setEditingEquipment(equip)
+    setNewEquipName(equip.name)
+    setNewEquipCategory(equip.category || '')
+    setAddEquipDialogOpen(true)
   }
 
   const getPendingMaintenanceCount = (equipmentId: string) => {
@@ -298,15 +314,26 @@ export function TimelineGrid() {
             <div className={cn(yAxisWidth, "sticky left-0 z-30 bg-card border-r border-border p-3 flex items-center justify-between")}>
               <span className="font-semibold text-sm text-foreground">Equipment</span>
               
-              <Dialog open={addEquipDialogOpen} onOpenChange={setAddEquipDialogOpen}>
+              <Dialog open={addEquipDialogOpen} onOpenChange={(open) => {
+                setAddEquipDialogOpen(open)
+                if (!open) {
+                  setEditingEquipment(null)
+                  setNewEquipName('')
+                  setNewEquipCategory('')
+                }
+              }}>
                 <DialogTrigger asChild>
-                  <Button size="icon" variant="ghost" className="h-7 w-7">
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
+                    setEditingEquipment(null)
+                    setNewEquipName('')
+                    setNewEquipCategory('')
+                  }}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Add Equipment</DialogTitle>
+                    <DialogTitle>{editingEquipment ? 'Edit Equipment' : 'Add Equipment'}</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleAddEquipSubmit} className="space-y-4">
                     <FieldGroup>
@@ -339,7 +366,7 @@ export function TimelineGrid() {
                         Cancel
                       </Button>
                       <Button type="submit" disabled={!newEquipName.trim()}>
-                        Add Equipment
+                        {editingEquipment ? 'Save Changes' : 'Add Equipment'}
                       </Button>
                     </DialogFooter>
                   </form>
@@ -415,7 +442,7 @@ export function TimelineGrid() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="gap-2">
+                          <DropdownMenuItem className="gap-2" onClick={() => handleEditEquip(equip)}>
                             <Settings className="w-4 h-4" />
                             Edit Equipment
                           </DropdownMenuItem>
