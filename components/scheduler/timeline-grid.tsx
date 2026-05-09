@@ -21,11 +21,12 @@ import {
   startOfHour,
   isSameHour,
   isSameMonth,
+  endOfDay,
 } from 'date-fns'
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { MaintenanceEntryBlock } from './maintenance-entry-block'
 import { AddEntryDialog } from './add-entry-dialog'
-import { Box } from 'lucide-react'
+import { Box, Loader2 } from 'lucide-react'
 
 export function TimelineGrid() {
   const {
@@ -33,7 +34,10 @@ export function TimelineGrid() {
     entries,
     viewMode,
     currentDate,
+    isLoading,
     moveEntry,
+    setViewMode,
+    setCurrentDate,
   } = useSchedulerStore()
   
   const [draggedEntry, setDraggedEntry] = useState<MaintenanceEntry | null>(null)
@@ -47,8 +51,8 @@ export function TimelineGrid() {
       case 'day': {
         const dayStart = startOfDay(currentDate)
         return eachHourOfInterval({
-          start: addHours(dayStart, 6),
-          end: addHours(dayStart, 22),
+          start: dayStart,
+          end: addHours(dayStart, 23),
         })
       }
       case 'week': {
@@ -76,7 +80,7 @@ export function TimelineGrid() {
   const formatHeader = (date: Date): string => {
     switch (viewMode) {
       case 'day':
-        return format(date, 'HH:mm')
+        return format(date, 'h aa')
       case 'week':
         return format(date, 'EEE d')
       case 'month':
@@ -88,46 +92,86 @@ export function TimelineGrid() {
     }
   }
 
+  const viewRange = useMemo(() => {
+    if (timeSlots.length === 0) return null
+    return {
+      start: timeSlots[0],
+      end: viewMode === 'day' ? endOfDay(timeSlots[timeSlots.length - 1]) : 
+            viewMode === 'year' ? endOfMonth(timeSlots[timeSlots.length - 1]) : 
+            endOfDay(timeSlots[timeSlots.length - 1]),
+    }
+  }, [timeSlots, viewMode])
+
   const getEntriesForEquipment = useCallback(
     (equipmentId: string) => {
-      return entries.filter((entry) => entry.equipmentId === equipmentId)
+      if (!viewRange) return []
+      
+      return entries.filter((entry) => {
+        if (entry.equipmentId !== equipmentId) return false
+        
+        const entryStart = new Date(entry.startTime)
+        const entryEnd = new Date(entry.endTime)
+        
+        // Overlap check: (StartA <= EndB) and (EndA >= StartB)
+        return entryStart <= viewRange.end && entryEnd >= viewRange.start
+      })
     },
-    [entries]
+    [entries, viewRange]
   )
 
   const getEntryStartSlotIndex = (entry: MaintenanceEntry): number => {
     const entryStart = new Date(entry.startTime)
-    return timeSlots.findIndex(slot => {
+    
+    // Find the first slot that contains or starts after the entry start
+    let lastIndex = -1
+    for (let i = 0; i < timeSlots.length; i++) {
+      const slot = timeSlots[i]
+      let isMatch = false
+      
       switch (viewMode) {
         case 'day':
-          return isSameHour(entryStart, slot)
+          isMatch = isSameHour(entryStart, slot) || entryStart > slot
+          break
         case 'week':
         case 'month':
-          return isSameDay(entryStart, slot)
+          isMatch = isSameDay(entryStart, slot) || entryStart > slot
+          break
         case 'year':
-          return isSameMonth(entryStart, slot)
-        default:
-          return false
+          isMatch = isSameMonth(entryStart, slot) || entryStart > slot
+          break
       }
-    })
+      
+      if (isMatch) {
+        lastIndex = i
+      } else {
+        break
+      }
+    }
+
+    if (lastIndex === -1 && entryStart < timeSlots[0]) return 0
+    return lastIndex
   }
 
   const getEntrySpan = (entry: MaintenanceEntry): number => {
     const entryStart = new Date(entry.startTime)
     const entryEnd = new Date(entry.endTime)
     
+    // Clamp start/end to view range for span calculation
+    const effectiveStart = viewRange && entryStart < viewRange.start ? viewRange.start : entryStart
+    const effectiveEnd = viewRange && entryEnd > viewRange.end ? viewRange.end : entryEnd
+
     switch (viewMode) {
       case 'day': {
-        const hours = Math.ceil((entryEnd.getTime() - entryStart.getTime()) / (1000 * 60 * 60))
+        const hours = Math.ceil((effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60))
         return Math.max(1, hours)
       }
       case 'week':
       case 'month': {
-        const days = differenceInDays(entryEnd, entryStart) + 1
+        const days = differenceInDays(effectiveEnd, effectiveStart) + 1
         return Math.max(1, days)
       }
       case 'year': {
-        const months = entryEnd.getMonth() - entryStart.getMonth() + 1
+        const months = effectiveEnd.getMonth() - effectiveStart.getMonth() + 1
         return Math.max(1, months)
       }
       default:
@@ -138,6 +182,13 @@ export function TimelineGrid() {
   const handleCellClick = (date: Date, equipmentId: string) => {
     setSelectedCell({ date, equipmentId })
     setAddDialogOpen(true)
+  }
+
+  const handleHeaderClick = (date: Date) => {
+    if (viewMode === 'week' || viewMode === 'month') {
+      setCurrentDate(date)
+      setViewMode('day')
+    }
   }
 
   const handleDragStart = (entry: MaintenanceEntry) => {
@@ -178,12 +229,22 @@ export function TimelineGrid() {
 
   const cellWidth = viewMode === 'month' ? 'min-w-[40px]' : viewMode === 'year' ? 'min-w-[80px]' : 'min-w-[100px]'
 
+  const totalTasksInView = useMemo(() => {
+    return equipment.reduce((acc, equip) => acc + getEntriesForEquipment(equip.id).length, 0)
+  }, [equipment, getEntriesForEquipment])
+
   return (
     <>
-      <div ref={gridRef} className="flex-1 overflow-auto border border-border rounded-lg bg-card">
-        <div className="min-w-max">
+      <div ref={gridRef} className="flex-1 overflow-auto border border-border rounded-lg bg-card relative">
+        {isLoading && (
+          <div className="absolute inset-0 z-50 bg-background/50 flex items-center justify-center backdrop-blur-[1px]">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          </div>
+        )}
+
+        <div className="min-w-max h-full flex flex-col">
           {/* Header row */}
-          <div className="flex sticky top-0 z-20 bg-card border-b border-border">
+          <div className="flex sticky top-0 z-20 bg-card border-b border-border flex-shrink-0">
             <div className="w-48 min-w-48 sticky left-0 z-30 bg-card border-r border-border p-3 font-medium text-sm text-muted-foreground">
               Equipment
             </div>
@@ -191,9 +252,11 @@ export function TimelineGrid() {
               {timeSlots.map((slot, idx) => (
                 <div
                   key={idx}
+                  onClick={() => handleHeaderClick(slot)}
                   className={cn(
                     cellWidth,
-                    'flex-1 p-2 text-center text-sm font-medium border-r border-border text-muted-foreground',
+                    'flex-1 p-2 text-center text-sm font-medium border-r border-border text-muted-foreground transition-colors',
+                    (viewMode === 'week' || viewMode === 'month') && 'cursor-pointer hover:bg-accent hover:text-foreground',
                     isToday(slot) && 'bg-primary/10 text-primary'
                   )}
                 >
@@ -204,79 +267,93 @@ export function TimelineGrid() {
           </div>
 
           {/* Equipment rows */}
-          {equipment.map((equip) => {
-            const equipEntries = getEntriesForEquipment(equip.id)
-            
-            return (
-              <div key={equip.id} className="flex border-b border-border last:border-b-0 group">
-                {/* Equipment name cell */}
-                <div className="w-48 min-w-48 sticky left-0 z-10 bg-card border-r border-border p-3 flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Box className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium text-foreground truncate max-w-32">
-                      {equip.name}
+          <div className="flex-1 overflow-y-auto">
+            {equipment.length > 0 ? (
+              equipment.map((equip) => {
+                const equipEntries = getEntriesForEquipment(equip.id)
+                
+                return (
+                  <div key={equip.id} className="flex border-b border-border last:border-b-0 group">
+                    {/* Equipment name cell */}
+                    <div className="w-48 min-w-48 sticky left-0 z-10 bg-card border-r border-border p-3 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Box className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-foreground truncate max-w-32">
+                          {equip.name}
+                        </div>
+                        {equip.category && <div className="text-xs text-muted-foreground truncate max-w-32">{equip.category}</div>}
+                      </div>
                     </div>
-                    {equip.category && <div className="text-xs text-muted-foreground truncate max-w-32">{equip.category}</div>}
+
+                    {/* Timeline cells */}
+                    <div className="flex relative">
+                      {timeSlots.map((slot, slotIdx) => {
+                        const isDragOver = dragOverCell && 
+                          dragOverCell.equipmentId === equip.id && 
+                          (viewMode === 'day' ? isSameHour(dragOverCell.date, slot) : isSameDay(dragOverCell.date, slot))
+
+                        return (
+                          <div
+                            key={slotIdx}
+                            className={cn(
+                              cellWidth,
+                              'flex-1 h-16 border-r border-border cursor-pointer transition-colors relative',
+                              'hover:bg-accent/50',
+                              isDragOver && 'bg-primary/20',
+                              isToday(slot) && 'bg-primary/5'
+                            )}
+                            onClick={() => handleCellClick(slot, equip.id)}
+                            onDragOver={(e) => handleDragOver(e, slot, equip.id)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={() => handleDrop(slot, equip.id)}
+                          />
+                        )
+                      })}
+
+                      {/* Render entries as overlay */}
+                      {!isLoading && equipEntries.map((entry) => {
+                        const startIdx = getEntryStartSlotIndex(entry)
+                        if (startIdx < 0) return null
+
+                        const span = getEntrySpan(entry)
+                        const cellWidthPx = viewMode === 'month' ? 40 : viewMode === 'year' ? 80 : 100
+                        const left = startIdx * cellWidthPx
+                        const width = Math.min(span, timeSlots.length - startIdx) * cellWidthPx - 4
+
+                        return (
+                          <MaintenanceEntryBlock
+                            key={entry.id}
+                            entry={entry}
+                            style={{
+                              position: 'absolute',
+                              left: `${left + 2}px`,
+                              width: `${width}px`,
+                              top: '4px',
+                              height: 'calc(100% - 8px)',
+                            }}
+                            onDragStart={() => handleDragStart(entry)}
+                            isDragging={draggedEntry?.id === entry.id}
+                          />
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-
-                {/* Timeline cells */}
-                <div className="flex relative">
-                  {timeSlots.map((slot, slotIdx) => {
-                    const isDragOver = dragOverCell && 
-                      dragOverCell.equipmentId === equip.id && 
-                      (viewMode === 'day' ? isSameHour(dragOverCell.date, slot) : isSameDay(dragOverCell.date, slot))
-
-                    return (
-                      <div
-                        key={slotIdx}
-                        className={cn(
-                          cellWidth,
-                          'flex-1 h-16 border-r border-border cursor-pointer transition-colors relative',
-                          'hover:bg-accent/50',
-                          isDragOver && 'bg-primary/20',
-                          isToday(slot) && 'bg-primary/5'
-                        )}
-                        onClick={() => handleCellClick(slot, equip.id)}
-                        onDragOver={(e) => handleDragOver(e, slot, equip.id)}
-                        onDragLeave={handleDragLeave}
-                        onDrop={() => handleDrop(slot, equip.id)}
-                      />
-                    )
-                  })}
-
-                  {/* Render entries as overlay */}
-                  {equipEntries.map((entry) => {
-                    const startIdx = getEntryStartSlotIndex(entry)
-                    if (startIdx < 0) return null
-
-                    const span = getEntrySpan(entry)
-                    const cellWidthPx = viewMode === 'month' ? 40 : viewMode === 'year' ? 80 : 100
-                    const left = startIdx * cellWidthPx
-                    const width = Math.min(span, timeSlots.length - startIdx) * cellWidthPx - 4
-
-                    return (
-                      <MaintenanceEntryBlock
-                        key={entry.id}
-                        entry={entry}
-                        style={{
-                          position: 'absolute',
-                          left: `${left + 2}px`,
-                          width: `${width}px`,
-                          top: '4px',
-                          height: 'calc(100% - 8px)',
-                        }}
-                        onDragStart={() => handleDragStart(entry)}
-                        isDragging={draggedEntry?.id === entry.id}
-                      />
-                    )
-                  })}
-                </div>
+                )
+              })
+            ) : (
+              <div className="p-8 text-center text-muted-foreground italic">
+                No equipment registered.
               </div>
-            )
-          })}
+            )}
+            
+            {viewMode === 'day' && !isLoading && totalTasksInView === 0 && (
+              <div className="sticky left-0 right-0 p-4 text-center text-sm text-muted-foreground bg-muted/20 border-b border-border">
+                No tasks scheduled for this day.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
