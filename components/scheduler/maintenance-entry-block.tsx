@@ -1,27 +1,27 @@
 'use client'
 
-import { MaintenanceEntry } from '@/lib/scheduler-types'
-import { cn } from '@/lib/utils'
-import { Wrench, Search, AlertTriangle, GripVertical, Mail, Users, CalendarIcon } from 'lucide-react'
-import { useSchedulerStore } from '@/lib/scheduler-store'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { format, set, addMinutes } from 'date-fns'
-import { useState, useEffect, useRef } from 'react'
-import { toast } from 'sonner'
-import { MultiSelect } from '@/components/ui/multi-select'
-import { TimePicker } from '@/components/ui/time-picker'
-import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Label } from '@/components/ui/label'
+import { MultiSelect } from '@/components/ui/multi-select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { TimePicker } from '@/components/ui/time-picker'
+import { useSchedulerStore } from '@/lib/scheduler-store'
+import { MaintenanceEntry } from '@/lib/scheduler-types'
+import { cn } from '@/lib/utils'
+import { addMinutes, format, set } from 'date-fns'
+import { CalendarIcon, GripVertical, Wrench } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 interface MaintenanceEntryBlockProps {
   entry: MaintenanceEntry
