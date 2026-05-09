@@ -14,6 +14,13 @@ import {
 import { Label } from '@/components/ui/label'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { TimePicker } from '@/components/ui/time-picker'
 import { useSchedulerStore } from '@/lib/scheduler-store'
 import { MaintenanceEntry } from '@/lib/scheduler-types'
@@ -22,6 +29,7 @@ import { addMinutes, format, set } from 'date-fns'
 import { CalendarIcon, GripVertical, Wrench } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { TaskType } from '../../generated/prisma/enums'
 
 interface MaintenanceEntryBlockProps {
   entry: MaintenanceEntry
@@ -38,6 +46,7 @@ export function MaintenanceEntryBlock({
 }: MaintenanceEntryBlockProps) {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [workerIds, setWorkerIds] = useState<string[]>([])
+  const [type, setType] = useState<TaskType>(entry.type)
   const [isUpdating, setIsUpdating] = useState(false)
   
   // Edit state for the dialog
@@ -57,6 +66,7 @@ export function MaintenanceEntryBlock({
   useEffect(() => {
     if (detailsOpen) {
       setWorkerIds(entry.assignments?.map(a => a.workerId) || [])
+      setType(entry.type)
       setEditStartTime(new Date(entry.startTime))
       setEditEndTime(new Date(entry.endTime))
     }
@@ -72,6 +82,19 @@ export function MaintenanceEntryBlock({
         return <Badge className="bg-chart-1/20 text-chart-1 border-chart-1/40 text-xs">Completed</Badge>
       default:
         return <Badge variant="outline" className="text-xs">{entry.status}</Badge>
+    }
+  }
+
+  const getTypeStyles = () => {
+    switch (entry.type) {
+      case TaskType.PREVENTIVE:
+        return 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400'
+      case TaskType.INSPECTION:
+        return 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400'
+      case TaskType.CORRECTIVE:
+        return 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400'
+      default:
+        return 'bg-primary/10 border-primary/20 text-primary'
     }
   }
 
@@ -124,6 +147,7 @@ export function MaintenanceEntryBlock({
     try {
       await updateEntry(entry.id, {
         workerIds,
+        type,
         startTime: editStartTime,
         endTime: editEndTime,
       })
@@ -237,7 +261,7 @@ export function MaintenanceEntryBlock({
           'rounded-md border px-2 py-1 cursor-grab active:cursor-grabbing group select-none',
           'flex items-center gap-1 overflow-hidden transition-[background-color,border-color,ring]',
           'hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:ring-offset-background',
-          'bg-primary/10 border-primary/20 text-primary',
+          getTypeStyles(),
           isDragging && 'opacity-50 scale-95',
           isResizing && 'cursor-col-resize ring-2 ring-primary border-primary/50 z-50'
         )}
@@ -347,6 +371,20 @@ export function MaintenanceEntryBlock({
                   <TimePicker date={editEndTime} onChange={setEditEndTime} />
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Task Type</Label>
+              <Select value={type} onValueChange={(v) => setType(v as TaskType)}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TaskType.PREVENTIVE}>Preventive</SelectItem>
+                  <SelectItem value={TaskType.INSPECTION}>Inspection</SelectItem>
+                  <SelectItem value={TaskType.CORRECTIVE}>Corrective</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

@@ -1,18 +1,19 @@
 'use client'
 
-import { useSchedulerStore } from '@/lib/scheduler-store'
-import { MaintenanceEntry } from '@/lib/scheduler-types'
+import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { MultiSelect } from '@/components/ui/multi-select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -20,16 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { format, addDays, addHours, set } from 'date-fns'
-import { useState, useEffect } from 'react'
-import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
-import { toast } from 'sonner'
-import { MultiSelect } from '@/components/ui/multi-select'
-import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { CalendarIcon, Clock } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Textarea } from '@/components/ui/textarea'
 import { TimePicker } from '@/components/ui/time-picker'
+import { useSchedulerStore } from '@/lib/scheduler-store'
+import { cn } from '@/lib/utils'
+import { TaskType } from '../../generated/prisma/enums'
+import { addHours, format, set } from 'date-fns'
+import { CalendarIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 interface AddEntryDialogProps {
   open: boolean
@@ -42,6 +42,7 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
   
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [type, setType] = useState<TaskType>(TaskType.PREVENTIVE)
   const [equipmentId, setEquipmentId] = useState('')
   const [startTime, setStartTime] = useState<Date>(new Date())
   const [endTime, setEndTime] = useState<Date>(new Date())
@@ -76,6 +77,7 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
       equipmentId,
       title: title.trim(),
       description: description.trim() || undefined,
+      type,
       startTime,
       endTime,
       workerIds,
@@ -90,6 +92,7 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
       // Reset form
       setTitle('')
       setDescription('')
+      setType(TaskType.PREVENTIVE)
       setWorkerIds([])
       onOpenChange(false)
     } catch (error) {
@@ -138,6 +141,20 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
                 placeholder="e.g., Monthly Inspection"
                 required
               />
+            </Field>
+
+            <Field>
+              <FieldLabel>Task Type</FieldLabel>
+              <Select value={type} onValueChange={(v) => setType(v as TaskType)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TaskType.PREVENTIVE}>Preventive</SelectItem>
+                  <SelectItem value={TaskType.INSPECTION}>Inspection</SelectItem>
+                  <SelectItem value={TaskType.CORRECTIVE}>Corrective</SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
 
             <div className="grid grid-cols-1 gap-4">

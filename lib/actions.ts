@@ -1,35 +1,36 @@
-'use server'
+"use server";
 
-import prisma from './prisma'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath } from "next/cache";
+import { TaskType } from "../generated/prisma/enums";
+import prisma from "./prisma";
 
 // Equipment Actions
 export async function getEquipment() {
   return await prisma.equipment.findMany({
-    orderBy: { name: 'asc' },
-  })
+    orderBy: { name: "asc" },
+  });
 }
 
 export async function addEquipment(data: { name: string; category?: string }) {
   const equipment = await prisma.equipment.create({
     data,
-  })
-  revalidatePath('/')
-  return equipment
+  });
+  revalidatePath("/");
+  return equipment;
 }
 
 export async function deleteEquipment(id: string) {
   await prisma.equipment.delete({
     where: { id },
-  })
-  revalidatePath('/')
+  });
+  revalidatePath("/");
 }
 
 // Worker Actions
 export async function getWorkers() {
   return await prisma.worker.findMany({
-    orderBy: { name: 'asc' },
-  })
+    orderBy: { name: "asc" },
+  });
 }
 
 // Maintenance Task Actions
@@ -39,75 +40,77 @@ export async function getTasks() {
       equipment: true,
       assignments: {
         include: {
-          worker: true
-        }
-      }
+          worker: true,
+        },
+      },
     },
-    orderBy: { startTime: 'asc' }
-  })
+    orderBy: { startTime: "asc" },
+  });
 }
 
 export async function createTask(data: {
-  title: string
-  description?: string
-  startTime: Date
-  endTime: Date
-  equipmentId: string
-  status?: string
-  workerIds: string[]
+  title: string;
+  description?: string;
+  type?: TaskType;
+  startTime: Date;
+  endTime: Date;
+  equipmentId: string;
+  status?: string;
+  workerIds: string[];
 }) {
-  const { workerIds, ...taskData } = data
+  const { workerIds, ...taskData } = data;
   const task = await prisma.maintenanceTask.create({
     data: {
       ...taskData,
       assignments: {
-        create: workerIds.map(workerId => ({
-          workerId
-        }))
-      }
+        create: workerIds.map((workerId) => ({
+          workerId,
+        })),
+      },
     },
     include: {
       equipment: true,
       assignments: {
         include: {
-          worker: true
-        }
-      }
-    }
-  })
-  revalidatePath('/')
-  return task
+          worker: true,
+        },
+      },
+    },
+  });
+  revalidatePath("/");
+  return task;
 }
 
 export async function updateTask(
   id: string,
   data: Partial<{
-    title: string
-    description: string
-    startTime: Date
-    endTime: Date
-    equipmentId: string
-    status: string
-    workerIds: string[]
-  }>
+    title: string;
+    description: string;
+    type: TaskType;
+    startTime: Date;
+    endTime: Date;
+    equipmentId: string;
+    status: string;
+    workerIds: string[];
+  }>,
 ) {
-  const { workerIds, ...taskData } = data
-  
+  const { workerIds, ...taskData } = data;
+
   const task = await prisma.$transaction(async (tx) => {
     if (workerIds) {
       // Remove old assignments
       await tx.maintenanceTaskAssignment.deleteMany({
-        where: { taskId: id }
-      })
-      
+        where: { taskId: id },
+      });
+
       // Add new assignments
       if (workerIds.length > 0) {
         await tx.maintenanceTaskAssignment.createMany({
-          data: workerIds.map(workerId => ({
+          data: workerIds.map((workerId) => ({
             taskId: id,
-            workerId
-          }))
-        })
+            workerId,
+          })),
+        });
       }
     }
 
@@ -118,29 +121,29 @@ export async function updateTask(
         equipment: true,
         assignments: {
           include: {
-            worker: true
-          }
-        }
-      }
-    })
-  })
+            worker: true,
+          },
+        },
+      },
+    });
+  });
 
-  revalidatePath('/')
-  return task
+  revalidatePath("/");
+  return task;
 }
 
 export async function deleteTask(id: string) {
   await prisma.maintenanceTask.delete({
     where: { id },
-  })
-  revalidatePath('/')
+  });
+  revalidatePath("/");
 }
 
 export async function moveTask(
   taskId: string,
   newStartTime: Date,
   newEndTime: Date,
-  newEquipmentId?: string
+  newEquipmentId?: string,
 ) {
   const task = await prisma.maintenanceTask.update({
     where: { id: taskId },
@@ -153,11 +156,11 @@ export async function moveTask(
       equipment: true,
       assignments: {
         include: {
-          worker: true
-        }
-      }
-    }
-  })
-  revalidatePath('/')
-  return task
+          worker: true,
+        },
+      },
+    },
+  });
+  revalidatePath("/");
+  return task;
 }

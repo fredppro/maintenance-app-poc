@@ -1,18 +1,28 @@
-import { PrismaClient, WorkerType } from '@prisma/client';
+import { PrismaClient, WorkerType } from "../../generated/prisma/client";
 
 export async function seedWorkers(prisma: PrismaClient) {
-  console.log('👷 Seeding workers...');
+  console.log("👷 Seeding workers...");
 
-  const vendor = await prisma.vendor.findFirst({ where: { name: "TechFix Solutions" } });
+  const vendor = await prisma.vendor.findFirst({
+    where: { name: "TechFix Solutions" },
+  });
 
   const workers = [
-    { name: "Carlos Interno", email: "carlos@empresa.com", type: WorkerType.INTERNAL },
-    { name: "Ana Técnica", email: "ana@empresa.com", type: WorkerType.INTERNAL },
-    { 
-      name: "Ricardo Externo", 
-      email: "ricardo@techfix.com", 
+    {
+      name: "Carlos Interno",
+      email: "carlos@empresa.com",
+      type: WorkerType.INTERNAL,
+    },
+    {
+      name: "Ana Técnica",
+      email: "ana@empresa.com",
+      type: WorkerType.INTERNAL,
+    },
+    {
+      name: "Ricardo Externo",
+      email: "ricardo@techfix.com",
       type: WorkerType.EXTERNAL,
-      vendorId: vendor?.id 
+      vendorId: vendor?.id,
     },
   ];
 

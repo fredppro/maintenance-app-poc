@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "../../generated/prisma/client";
 
 export async function seedMaintenanceTasks(prisma: PrismaClient) {
   console.log('🛠️ Seeding maintenance tasks with assignments...');
