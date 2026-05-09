@@ -496,6 +496,7 @@ export function TimelineGrid() {
                           <MaintenanceEntryBlock
                             key={entry.id}
                             entry={entry}
+                            timeSlotsCount={timeSlots.length}
                             style={{
                               position: 'absolute',
                               left: `${left + 2}px`,
