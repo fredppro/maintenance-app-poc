@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "../../generated/prisma/client";
 
 export async function seedEquipments(prisma: PrismaClient) {
   const equipmentData = [
@@ -6,10 +6,10 @@ export async function seedEquipments(prisma: PrismaClient) {
     { name: "CNC Lathe (Primary)", category: "Precision Tools" },
     { name: "Industrial Boiler #4", category: "Infrastructure" },
     { name: "Conveyor Belt - Main Line", category: "Logistics" },
-    { name: "HVAC Unit (South Wing)", category: "Facilities" }
+    { name: "HVAC Unit (South Wing)", category: "Facilities" },
   ];
 
-  console.log('🚀 Seeding equipment...');
+  console.log("🚀 Seeding equipment...");
 
   for (const item of equipmentData) {
     await prisma.equipment.upsert({

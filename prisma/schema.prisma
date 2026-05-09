@@ -5,8 +5,8 @@ datasource db {
 }
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider        = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 model Equipment {
@@ -21,6 +21,7 @@ model MaintenanceTask {
   id           String    @id @default(cuid())
   title        String
   description  String?
+  type         TaskType  @default(PREVENTIVE)
   startTime    DateTime
   endTime      DateTime
   equipmentId  String
@@ -29,6 +30,12 @@ model MaintenanceTask {
   assignments MaintenanceTaskAssignment[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+enum TaskType {
+  PREVENTIVE
+  INSPECTION
+  CORRECTIVE
 }
 
 model MaintenanceTaskAssignment {

@@ -3,7 +3,7 @@ import {
   MaintenanceTask as PrismaTask,
   Worker as PrismaWorker,
   MaintenanceTaskAssignment as PrismaAssignment
-} from '@prisma/client'
+} from '../generated/prisma/client'
 
 export type ViewMode = 'day' | 'week' | 'month' | 'year'
 
