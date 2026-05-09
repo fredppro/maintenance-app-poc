@@ -2,7 +2,7 @@
 
 import { MaintenanceEntry } from '@/lib/scheduler-types'
 import { cn } from '@/lib/utils'
-import { Wrench, Search, AlertTriangle, GripVertical, Mail, Users } from 'lucide-react'
+import { Wrench, Search, AlertTriangle, GripVertical, Mail, Users, CalendarIcon } from 'lucide-react'
 import { useSchedulerStore } from '@/lib/scheduler-store'
 import {
   Dialog,
@@ -14,11 +14,14 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { format } from 'date-fns'
-import { useState, useEffect } from 'react'
+import { format, set, addMinutes } from 'date-fns'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { MultiSelect } from '@/components/ui/multi-select'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { TimePicker } from '@/components/ui/time-picker'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Label } from '@/components/ui/label'
 
 interface MaintenanceEntryBlockProps {
   entry: MaintenanceEntry
@@ -37,16 +40,27 @@ export function MaintenanceEntryBlock({
   const [workerIds, setWorkerIds] = useState<string[]>([])
   const [isUpdating, setIsUpdating] = useState(false)
   
-  const { equipment, workers, removeEntry, updateEntry } = useSchedulerStore()
+  // Edit state for the dialog
+  const [editStartTime, setEditStartTime] = useState<Date>(new Date(entry.startTime))
+  const [editEndTime, setEditEndTime] = useState<Date>(new Date(entry.endTime))
+  
+  const { equipment, workers, removeEntry, updateEntry, viewMode } = useSchedulerStore()
   
   const equip = equipment.find((e) => e.id === entry.equipmentId)
   const assignedWorkers = entry.assignments?.map(a => a.worker) || []
 
+  // Resize state
+  const [isResizing, setIsResizing] = useState<'start' | 'end' | null>(null)
+  const [resizeOffset, setResizeOffset] = useState(0)
+  const entryRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     if (detailsOpen) {
       setWorkerIds(entry.assignments?.map(a => a.workerId) || [])
+      setEditStartTime(new Date(entry.startTime))
+      setEditEndTime(new Date(entry.endTime))
     }
-  }, [detailsOpen, entry.assignments])
+  }, [detailsOpen, entry])
 
   const getStatusBadge = () => {
     switch (entry.status) {
@@ -62,11 +76,18 @@ export function MaintenanceEntryBlock({
   }
 
   const handleDragStart = (e: React.DragEvent) => {
+    if (isResizing) {
+      e.preventDefault()
+      return
+    }
     e.dataTransfer.effectAllowed = 'move'
     onDragStart()
   }
 
   const handleClick = (e: React.MouseEvent) => {
+    // If we were resizing, don't open the dialog
+    if (isResizing) return
+    
     e.stopPropagation()
     setDetailsOpen(true)
   }
@@ -89,23 +110,95 @@ export function MaintenanceEntryBlock({
     }
   }
 
-  const handleUpdateWorkers = async () => {
+  const handleSaveEdit = async () => {
     if (workerIds.length === 0) {
       toast.error('At least one worker must be assigned')
+      return
+    }
+    if (editEndTime <= editStartTime) {
+      toast.error('End time must be after start time')
       return
     }
 
     setIsUpdating(true)
     try {
       await updateEntry(entry.id, {
-        workerIds: workerIds,
+        workerIds,
+        startTime: editStartTime,
+        endTime: editEndTime,
       })
-      toast.success('Worker assignments updated')
+      toast.success('Task updated successfully')
+      setDetailsOpen(false)
     } catch (error) {
-      toast.error('Failed to update worker assignments')
+      toast.error('Failed to update task')
     } finally {
       setIsUpdating(false)
     }
+  }
+
+  // --- Resizing Logic ---
+  
+  const handleResizeStart = (type: 'start' | 'end', e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    setIsResizing(type)
+    setResizeOffset(0)
+
+    const startX = e.clientX
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX
+      setResizeOffset(deltaX)
+    }
+
+    const onMouseUp = async (upEvent: MouseEvent) => {
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+      
+      const finalDeltaX = upEvent.clientX - startX
+      // Keep isResizing state briefly to prevent handleClick from opening dialog
+      setTimeout(() => setIsResizing(null), 100)
+      setResizeOffset(0)
+
+      if (Math.abs(finalDeltaX) < 5) return
+
+      // Calculate time change based on viewMode
+      let pixelsPerMinute = 0
+      if (viewMode === 'day') pixelsPerMinute = 100 / 60
+      else if (viewMode === 'week') pixelsPerMinute = 100 / (24 * 60)
+      else if (viewMode === 'month') pixelsPerMinute = 40 / (24 * 60)
+      else if (viewMode === 'year') pixelsPerMinute = 80 / (30 * 24 * 60) 
+
+      const minutesChange = finalDeltaX / pixelsPerMinute
+      
+      // Snapping
+      let snappedMinutes = minutesChange
+      if (viewMode === 'day') {
+        snappedMinutes = Math.round(minutesChange / 15) * 15
+      } else {
+        snappedMinutes = Math.round(minutesChange / (24 * 60)) * (24 * 60)
+      }
+
+      if (snappedMinutes === 0) return
+
+      const newStartTime = new Date(entry.startTime)
+      const newEndTime = new Date(entry.endTime)
+
+      if (type === 'start') {
+        const potentialStart = addMinutes(newStartTime, snappedMinutes)
+        if (potentialStart < newEndTime) {
+          await updateEntry(entry.id, { startTime: potentialStart })
+        }
+      } else {
+        const potentialEnd = addMinutes(newEndTime, snappedMinutes)
+        if (potentialEnd > newStartTime) {
+          await updateEntry(entry.id, { endTime: potentialEnd })
+        }
+      }
+    }
+
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
   }
 
   const getInitials = (name: string) => {
@@ -121,21 +214,40 @@ export function MaintenanceEntryBlock({
     value: w.id
   }))
 
+  const visualStyle = {
+    ...style,
+    ...(isResizing === 'start' ? {
+      left: `calc(${style?.left || '0px'} + ${resizeOffset}px)`,
+      width: `calc(${style?.width || '0px'} - ${resizeOffset}px)`,
+    } : {}),
+    ...(isResizing === 'end' ? {
+      width: `calc(${style?.width || '0px'} + ${resizeOffset}px)`,
+    } : {}),
+  }
+
   return (
     <>
       <div
-        draggable
+        ref={entryRef}
+        draggable={!isResizing}
         onDragStart={handleDragStart}
         onClick={handleClick}
-        style={style}
+        style={visualStyle}
         className={cn(
-          'rounded-md border px-2 py-1 cursor-grab active:cursor-grabbing',
-          'flex items-center gap-1 overflow-hidden transition-all relative',
+          'rounded-md border px-2 py-1 cursor-grab active:cursor-grabbing group select-none',
+          'flex items-center gap-1 overflow-hidden transition-[background-color,border-color,ring]',
           'hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:ring-offset-background',
           'bg-primary/10 border-primary/20 text-primary',
-          isDragging && 'opacity-50 scale-95'
+          isDragging && 'opacity-50 scale-95',
+          isResizing && 'cursor-col-resize ring-2 ring-primary border-primary/50 z-50'
         )}
       >
+        {/* Left Resize Handle */}
+        <div 
+          className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/30 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+          onMouseDown={(e) => handleResizeStart('start', e)}
+        />
+
         <GripVertical className="w-3 h-3 flex-shrink-0 opacity-50" />
         <Wrench className="w-3 h-3 flex-shrink-0" />
         <span className="text-xs font-medium truncate flex-1">{entry.title}</span>
@@ -157,103 +269,128 @@ export function MaintenanceEntryBlock({
             </div>
           )}
         </div>
+
+        {/* Right Resize Handle */}
+        <div 
+          className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/30 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+          onMouseDown={(e) => handleResizeStart('end', e)}
+        />
       </div>
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Wrench className="w-4 h-4" />
-              {entry.title}
+              Edit: {entry.title}
             </DialogTitle>
             <DialogDescription>
               {equip?.name} {equip?.category ? `- ${equip.category}` : ''}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 max-h-[75vh] overflow-y-auto px-1">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Status</span>
+              <span className="text-sm text-muted-foreground font-medium">Status</span>
               {getStatusBadge()}
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Start Time</span>
-              <span className="text-sm">{format(new Date(entry.startTime), 'PPp')}</span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">End Time</span>
-              <span className="text-sm">{format(new Date(entry.endTime), 'PPp')}</span>
-            </div>
-
-            {entry.description && (
-              <div className="space-y-1">
-                <span className="text-sm text-muted-foreground">Description</span>
-                <p className="text-sm bg-muted/50 p-3 rounded-md">{entry.description}</p>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Start Date & Time</Label>
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal text-xs h-9">
+                        <CalendarIcon className="mr-2 h-3 w-3" />
+                        {format(editStartTime, "PP")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={editStartTime}
+                        onSelect={(date) => date && setEditStartTime(set(editStartTime, {
+                          year: date.getFullYear(),
+                          month: date.getMonth(),
+                          date: date.getDate()
+                        }))}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <TimePicker date={editStartTime} onChange={setEditStartTime} />
+                </div>
               </div>
-            )}
 
-            <div className="border-t pt-4 space-y-3">
-              <h4 className="text-sm font-medium flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Assigned Workers
-              </h4>
-              
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">End Date & Time</Label>
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal text-xs h-9">
+                        <CalendarIcon className="mr-2 h-3 w-3" />
+                        {format(editEndTime, "PP")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={editEndTime}
+                        onSelect={(date) => date && setEditEndTime(set(editEndTime, {
+                          year: date.getFullYear(),
+                          month: date.getMonth(),
+                          date: date.getDate()
+                        }))}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <TimePicker date={editEndTime} onChange={setEditEndTime} />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Assigned Workers</Label>
               <MultiSelect
                 options={workerOptions}
                 selected={workerIds}
                 onChange={setWorkerIds}
                 placeholder="Select workers..."
               />
-              
-              <Button 
-                size="sm" 
-                variant="secondary" 
-                className="w-full"
-                onClick={handleUpdateWorkers}
-                disabled={isUpdating || workerIds.length === 0}
-              >
-                {isUpdating ? 'Updating...' : 'Update Assignments'}
-              </Button>
             </div>
 
             <div className="border-t pt-4 space-y-2">
-              <span className="text-sm text-muted-foreground">Update Status:</span>
+              <span className="text-sm text-muted-foreground font-medium">Quick Status Update</span>
               <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  className="flex-1"
-                  variant={entry.status === 'scheduled' ? 'default' : 'outline'}
-                  onClick={() => handleStatusChange('scheduled')}
-                >
-                  Scheduled
-                </Button>
-                <Button
-                  size="sm"
-                  className="flex-1"
-                  variant={entry.status === 'in-progress' ? 'default' : 'outline'}
-                  onClick={() => handleStatusChange('in-progress')}
-                >
-                  In Progress
-                </Button>
-                <Button
-                  size="sm"
-                  className="flex-1"
-                  variant={entry.status === 'completed' ? 'default' : 'outline'}
-                  onClick={() => handleStatusChange('completed')}
-                >
-                  Completed
-                </Button>
+                {['scheduled', 'in-progress', 'completed'].map((status) => (
+                  <Button
+                    key={status}
+                    size="sm"
+                    className="flex-1 capitalize text-xs h-8"
+                    variant={entry.status === status ? 'default' : 'outline'}
+                    onClick={() => handleStatusChange(status)}
+                  >
+                    {status.replace('-', ' ')}
+                  </Button>
+                ))}
               </div>
             </div>
+
+            <Button 
+              size="sm" 
+              className="w-full h-10 mt-4"
+              onClick={handleSaveEdit}
+              disabled={isUpdating}
+            >
+              {isUpdating ? 'Saving...' : 'Save All Changes'}
+            </Button>
           </div>
 
-          <DialogFooter className="flex gap-2 sm:gap-0">
-            <Button variant="destructive" onClick={handleDelete}>
+          <DialogFooter className="flex gap-2 sm:gap-0 mt-4 border-t pt-4">
+            <Button variant="destructive" size="sm" onClick={handleDelete}>
               Delete Entry
             </Button>
-            <Button variant="outline" onClick={() => setDetailsOpen(false)}>
+            <Button variant="outline" size="sm" onClick={() => setDetailsOpen(false)}>
               Close
             </Button>
           </DialogFooter>

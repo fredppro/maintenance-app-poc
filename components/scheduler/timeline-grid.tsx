@@ -76,7 +76,7 @@ export function TimelineGrid() {
   const formatHeader = (date: Date): string => {
     switch (viewMode) {
       case 'day':
-        return format(date, 'HH:mm')
+        return format(date, 'h aa')
       case 'week':
         return format(date, 'EEE d')
       case 'month':

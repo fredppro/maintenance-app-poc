@@ -91,9 +91,19 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
 
   updateEntry: async (id, updates) => {
     const previousEntries = get().entries
+    const previousSelectedEntry = get().selectedEntry
     
+    // Optimistic update
+    set((state) => ({
+      entries: state.entries.map((e) =>
+        e.id === id ? { ...e, ...updates } : e
+      ),
+      selectedEntry: state.selectedEntry?.id === id 
+        ? (state.selectedEntry ? { ...state.selectedEntry, ...updates } : null) 
+        : state.selectedEntry,
+    }))
+
     try {
-      // We perform the update on the server and use the returned task to update the store
       const updatedTask = await dbUpdateTask(id, updates as any)
       set((state) => ({
         entries: state.entries.map((e) =>
@@ -102,7 +112,7 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
         selectedEntry: state.selectedEntry?.id === id ? updatedTask : state.selectedEntry,
       }))
     } catch (error) {
-      set({ entries: previousEntries })
+      set({ entries: previousEntries, selectedEntry: previousSelectedEntry })
       console.error('Failed to update task:', error)
       throw error
     }
@@ -124,7 +134,11 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
     }
   },
 
-  setViewMode: (mode) => set({ viewMode: mode }),
+  setViewMode: (mode) => {
+    set({ isLoading: true })
+    set({ viewMode: mode })
+    setTimeout(() => set({ isLoading: false }), 300)
+  },
   
   setCurrentDate: (date) => set({ currentDate: date }),
   
