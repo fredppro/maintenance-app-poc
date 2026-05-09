@@ -19,6 +19,18 @@ export async function addEquipment(data: { name: string; category?: string }) {
   return equipment;
 }
 
+export async function updateEquipment(
+  id: string,
+  data: { name: string; category?: string },
+) {
+  const equipment = await prisma.equipment.update({
+    where: { id },
+    data,
+  });
+  revalidatePath("/");
+  return equipment;
+}
+
 export async function deleteEquipment(id: string) {
   await prisma.equipment.delete({
     where: { id },

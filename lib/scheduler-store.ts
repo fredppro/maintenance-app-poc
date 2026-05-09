@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { TaskType } from "../generated/prisma/enums";
 import {
   addEquipment as dbAddEquipment,
+  updateEquipment as dbUpdateEquipment,
   createTask as dbCreateTask,
   deleteEquipment as dbDeleteEquipment,
   deleteTask as dbDeleteTask,
@@ -30,6 +31,11 @@ interface SchedulerState {
   setEntries: (entries: MaintenanceEntry[]) => void;
   setWorkers: (workers: Worker[]) => void;
   addEquipment: (name: string, category?: string) => Promise<void>;
+  updateEquipment: (
+    id: string,
+    name: string,
+    category?: string,
+  ) => Promise<void>;
   removeEquipment: (id: string) => Promise<void>;
   addEntry: (entry: {
     title: string;
@@ -76,6 +82,15 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
     const newEquipment = await dbAddEquipment({ name, category });
     set((state) => ({
       equipment: [...state.equipment, newEquipment],
+    }));
+  },
+
+  updateEquipment: async (id, name, category) => {
+    const updatedEquipment = await dbUpdateEquipment(id, { name, category });
+    set((state) => ({
+      equipment: state.equipment.map((e) =>
+        e.id === id ? updatedEquipment : e,
+      ),
     }));
   },
 
