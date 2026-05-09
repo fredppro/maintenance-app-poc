@@ -282,7 +282,7 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
 
             <div className="pt-4 space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-bold">Materials Used</Label>
+                <Label className="text-sm font-bold">Materials</Label>
                 <Button 
                   type="button" 
                   variant="outline" 
