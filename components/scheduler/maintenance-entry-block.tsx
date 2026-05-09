@@ -36,6 +36,7 @@ interface MaintenanceEntryBlockProps {
   style?: React.CSSProperties
   onDragStart: () => void
   isDragging?: boolean
+  timeSlotsCount: number
 }
 
 export function MaintenanceEntryBlock({
@@ -43,6 +44,7 @@ export function MaintenanceEntryBlock({
   style,
   onDragStart,
   isDragging,
+  timeSlotsCount,
 }: MaintenanceEntryBlockProps) {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [workerIds, setWorkerIds] = useState<string[]>([])
@@ -169,6 +171,8 @@ export function MaintenanceEntryBlock({
     setResizeOffset(0)
 
     const startX = e.clientX
+    const containerWidth = entryRef.current?.parentElement?.getBoundingClientRect().width || 1000
+    const pixelsPerSlot = containerWidth / timeSlotsCount
 
     const onMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX
@@ -188,10 +192,10 @@ export function MaintenanceEntryBlock({
 
       // Calculate time change based on viewMode
       let pixelsPerMinute = 0
-      if (viewMode === 'day') pixelsPerMinute = 100 / 60
-      else if (viewMode === 'week') pixelsPerMinute = 100 / (24 * 60)
-      else if (viewMode === 'month') pixelsPerMinute = 40 / (24 * 60)
-      else if (viewMode === 'year') pixelsPerMinute = 80 / (30 * 24 * 60) 
+      if (viewMode === 'day') pixelsPerMinute = pixelsPerSlot / 60
+      else if (viewMode === 'week') pixelsPerMinute = pixelsPerSlot / (24 * 60)
+      else if (viewMode === 'month') pixelsPerMinute = pixelsPerSlot / (24 * 60)
+      else if (viewMode === 'year') pixelsPerMinute = pixelsPerSlot / (30 * 24 * 60) 
 
       const minutesChange = finalDeltaX / pixelsPerMinute
       

@@ -53,6 +53,7 @@ export function TimelineGrid() {
     viewMode,
     currentDate,
     isLoading,
+    zoomLevel,
     moveEntry,
     setViewMode,
     setCurrentDate,
@@ -292,7 +293,18 @@ export function TimelineGrid() {
     ...new Set(equipment.map((e) => e.category).filter(Boolean) as string[]),
   ], [equipment])
 
-  const cellWidth = viewMode === 'month' ? 'min-w-[40px]' : viewMode === 'year' ? 'min-w-[80px]' : 'min-w-[100px]'
+  const getMinWidth = () => {
+    const baseWidth = 1000
+    // zoomLevel 1 should generally fit or slightly overflow on standard screens
+    switch (viewMode) {
+      case 'day': return baseWidth * 1.5 * zoomLevel
+      case 'week': return baseWidth * 0.8 * zoomLevel
+      case 'month': return baseWidth * 1.2 * zoomLevel
+      case 'year': return baseWidth * 0.8 * zoomLevel
+      default: return baseWidth * zoomLevel
+    }
+  }
+
   const yAxisWidth = 'w-72 min-w-[18rem]'
 
   const totalTasksInView = useMemo(() => {
@@ -308,7 +320,7 @@ export function TimelineGrid() {
           </div>
         )}
 
-        <div className="min-w-max h-full flex flex-col">
+        <div className="w-full h-full flex flex-col" style={{ minWidth: `${getMinWidth()}px` }}>
           {/* Header row */}
           <div className="flex sticky top-0 z-20 bg-card border-b border-border flex-shrink-0">
             <div className={cn(yAxisWidth, "sticky left-0 z-30 bg-card border-r border-border p-3 flex items-center justify-between")}>
@@ -373,14 +385,13 @@ export function TimelineGrid() {
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="flex">
+            <div className="flex flex-1">
               {timeSlots.map((slot, idx) => (
                 <div
                   key={idx}
                   onClick={() => handleHeaderClick(slot)}
                   className={cn(
-                    cellWidth,
-                    'flex-1 p-2 text-center text-sm font-medium border-r border-border text-muted-foreground transition-colors',
+                    'flex-1 p-2 text-center text-sm font-medium border-r border-border text-muted-foreground transition-colors min-w-0',
                     (viewMode === 'week' || viewMode === 'month') && 'cursor-pointer hover:bg-accent hover:text-foreground',
                     isToday(slot) && 'bg-primary/10 text-primary'
                   )}
@@ -458,7 +469,7 @@ export function TimelineGrid() {
                     </div>
 
                     {/* Timeline cells */}
-                    <div className="flex relative">
+                    <div className="flex-1 flex relative h-16">
                       {timeSlots.map((slot, slotIdx) => {
                         const isDragOver = dragOverCell && 
                           dragOverCell.equipmentId === equip.id && 
@@ -468,8 +479,7 @@ export function TimelineGrid() {
                           <div
                             key={slotIdx}
                             className={cn(
-                              cellWidth,
-                              'flex-1 h-16 border-r border-border cursor-pointer transition-colors relative',
+                              'flex-1 h-full border-r border-border cursor-pointer transition-colors relative min-w-0',
                               'hover:bg-accent/50',
                               isDragOver && 'bg-primary/20',
                               isToday(slot) && 'bg-primary/5'
@@ -488,9 +498,8 @@ export function TimelineGrid() {
                         if (startIdx < 0) return null
 
                         const span = getEntrySpan(entry)
-                        const cellWidthPx = viewMode === 'month' ? 40 : viewMode === 'year' ? 80 : 100
-                        const left = startIdx * cellWidthPx
-                        const width = Math.min(span, timeSlots.length - startIdx) * cellWidthPx - 4
+                        const left = (startIdx / timeSlots.length) * 100
+                        const width = (Math.min(span, timeSlots.length - startIdx) / timeSlots.length) * 100
 
                         return (
                           <MaintenanceEntryBlock
@@ -498,13 +507,16 @@ export function TimelineGrid() {
                             entry={entry}
                             style={{
                               position: 'absolute',
-                              left: `${left + 2}px`,
-                              width: `${width}px`,
+                              left: `${left}%`,
+                              width: `${width}%`,
+                              paddingLeft: '2px',
+                              paddingRight: '2px',
                               top: '4px',
                               height: 'calc(100% - 8px)',
                             }}
                             onDragStart={() => handleDragStart(entry)}
                             isDragging={draggedEntry?.id === entry.id}
+                            timeSlotsCount={timeSlots.length}
                           />
                         )
                       })}

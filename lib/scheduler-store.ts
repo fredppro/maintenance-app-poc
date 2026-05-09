@@ -25,6 +25,7 @@ interface SchedulerState {
   currentDate: Date;
   selectedEntry: MaintenanceEntry | null;
   isLoading: boolean;
+  zoomLevel: number;
 
   // Actions
   setEquipment: (equipment: Equipment[]) => void;
@@ -52,6 +53,7 @@ interface SchedulerState {
   ) => Promise<void>;
   removeEntry: (id: string) => Promise<void>;
   setViewMode: (mode: ViewMode) => void;
+  setZoomLevel: (zoom: number) => void;
   setCurrentDate: (date: Date) => void;
   setSelectedEntry: (entry: MaintenanceEntry | null) => void;
   navigateForward: () => void;
@@ -72,11 +74,13 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
   currentDate: new Date(),
   selectedEntry: null,
   isLoading: false,
+  zoomLevel: 1,
 
   setEquipment: (equipment) => set({ equipment }),
   setEntries: (entries) => set({ entries }),
   setWorkers: (workers) => set({ workers }),
   setLoading: (isLoading) => set({ isLoading }),
+  setZoomLevel: (zoomLevel) => set({ zoomLevel }),
 
   addEquipment: async (name, category) => {
     const newEquipment = await dbAddEquipment({ name, category });
@@ -169,6 +173,15 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
   setViewMode: (mode) => {
     set({ isLoading: true });
     set({ viewMode: mode });
+    // Adjust zoomLevel based on viewMode for better defaults
+    let defaultZoom = 1;
+    switch (mode) {
+      case 'day': defaultZoom = 2; break;
+      case 'week': defaultZoom = 1; break;
+      case 'month': defaultZoom = 1.5; break;
+      case 'year': defaultZoom = 1; break;
+    }
+    set({ zoomLevel: defaultZoom });
     setTimeout(() => set({ isLoading: false }), 300);
   },
 
