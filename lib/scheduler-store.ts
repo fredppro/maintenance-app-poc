@@ -41,6 +41,7 @@ interface SchedulerState {
     title: string;
     description?: string;
     type?: TaskType;
+    status?: string;
     startTime: Date;
     endTime: Date;
     equipmentId: string;
