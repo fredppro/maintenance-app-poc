@@ -3,7 +3,6 @@
 import { useSchedulerStore } from "@/lib/scheduler-store";
 import { Wrench } from "lucide-react";
 import { TaskType } from "../../generated/prisma/enums";
-import { EquipmentPanel } from "./equipment-panel";
 import { SchedulerToolbar } from "./scheduler-toolbar";
 import { TimelineGrid } from "./timeline-grid";
 
@@ -100,9 +99,6 @@ export function SchedulerDashboard() {
         <div className="flex-1 flex gap-4 overflow-hidden">
           {/* Timeline Grid */}
           <TimelineGrid />
-
-          {/* Equipment Panel */}
-          <EquipmentPanel />
         </div>
       </main>
 

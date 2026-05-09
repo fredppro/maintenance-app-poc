@@ -26,7 +26,25 @@ import {
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { MaintenanceEntryBlock } from './maintenance-entry-block'
 import { AddEntryDialog } from './add-entry-dialog'
-import { Box, Loader2 } from 'lucide-react'
+import { Box, Loader2, Plus, MoreVertical, Settings, Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { toast } from 'sonner'
 
 export function TimelineGrid() {
   const {
@@ -38,12 +56,18 @@ export function TimelineGrid() {
     moveEntry,
     setViewMode,
     setCurrentDate,
+    addEquipment,
+    removeEquipment,
   } = useSchedulerStore()
   
   const [draggedEntry, setDraggedEntry] = useState<MaintenanceEntry | null>(null)
   const [dragOverCell, setDragOverCell] = useState<{ date: Date; equipmentId: string } | null>(null)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [selectedCell, setSelectedCell] = useState<{ date: Date; equipmentId: string } | null>(null)
+  const [addEquipDialogOpen, setAddEquipDialogOpen] = useState(false)
+  const [newEquipName, setNewEquipName] = useState('')
+  const [newEquipCategory, setNewEquipCategory] = useState('')
+  
   const gridRef = useRef<HTMLDivElement>(null)
 
   const timeSlots = useMemo(() => {
@@ -227,7 +251,33 @@ export function TimelineGrid() {
     }
   }
 
+  const handleAddEquipSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newEquipName.trim()) return
+
+    try {
+      await addEquipment(newEquipName.trim(), newEquipCategory.trim() || undefined)
+      setNewEquipName('')
+      setNewEquipCategory('')
+      setAddEquipDialogOpen(false)
+      toast.success("Equipment added")
+    } catch (error) {
+      toast.error("Failed to add equipment")
+    }
+  }
+
+  const getPendingMaintenanceCount = (equipmentId: string) => {
+    return entries.filter(
+      (e) => e.equipmentId === equipmentId && e.status !== "completed",
+    ).length
+  }
+
+  const equipCategories = useMemo(() => [
+    ...new Set(equipment.map((e) => e.category).filter(Boolean) as string[]),
+  ], [equipment])
+
   const cellWidth = viewMode === 'month' ? 'min-w-[40px]' : viewMode === 'year' ? 'min-w-[80px]' : 'min-w-[100px]'
+  const yAxisWidth = 'w-72 min-w-[18rem]'
 
   const totalTasksInView = useMemo(() => {
     return equipment.reduce((acc, equip) => acc + getEntriesForEquipment(equip.id).length, 0)
@@ -245,8 +295,56 @@ export function TimelineGrid() {
         <div className="min-w-max h-full flex flex-col">
           {/* Header row */}
           <div className="flex sticky top-0 z-20 bg-card border-b border-border flex-shrink-0">
-            <div className="w-48 min-w-48 sticky left-0 z-30 bg-card border-r border-border p-3 font-medium text-sm text-muted-foreground">
-              Equipment
+            <div className={cn(yAxisWidth, "sticky left-0 z-30 bg-card border-r border-border p-3 flex items-center justify-between")}>
+              <span className="font-semibold text-sm text-foreground">Equipment</span>
+              
+              <Dialog open={addEquipDialogOpen} onOpenChange={setAddEquipDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-7 w-7">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Equipment</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleAddEquipSubmit} className="space-y-4">
+                    <FieldGroup>
+                      <Field>
+                        <FieldLabel>Equipment Name</FieldLabel>
+                        <Input
+                          value={newEquipName}
+                          onChange={(e) => setNewEquipName(e.target.value)}
+                          placeholder="e.g., CNC Machine G7"
+                          required
+                        />
+                      </Field>
+                      <Field>
+                        <FieldLabel>Category (optional)</FieldLabel>
+                        <Input
+                          value={newEquipCategory}
+                          onChange={(e) => setNewEquipCategory(e.target.value)}
+                          placeholder="e.g., Manufacturing"
+                          list="timeline-categories"
+                        />
+                        <datalist id="timeline-categories">
+                          {equipCategories.map((cat) => (
+                            <option key={cat} value={cat} />
+                          ))}
+                        </datalist>
+                      </Field>
+                    </FieldGroup>
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setAddEquipDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={!newEquipName.trim()}>
+                        Add Equipment
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
             <div className="flex">
               {timeSlots.map((slot, idx) => (
@@ -271,20 +369,65 @@ export function TimelineGrid() {
             {equipment.length > 0 ? (
               equipment.map((equip) => {
                 const equipEntries = getEntriesForEquipment(equip.id)
+                const pendingCount = getPendingMaintenanceCount(equip.id)
                 
                 return (
                   <div key={equip.id} className="flex border-b border-border last:border-b-0 group">
                     {/* Equipment name cell */}
-                    <div className="w-48 min-w-48 sticky left-0 z-10 bg-card border-r border-border p-3 flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Box className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-foreground truncate max-w-32">
-                          {equip.name}
+                    <div className={cn(yAxisWidth, "sticky left-0 z-10 bg-card border-r border-border p-3 flex items-center justify-between")}>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative">
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Box className="w-4 h-4 text-primary" />
+                          </div>
+                          <div 
+                            className={cn(
+                              "absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-card",
+                              pendingCount > 0 ? "bg-amber-500" : "bg-emerald-500"
+                            )} 
+                            title={pendingCount > 0 ? "In Maintenance" : "Active"}
+                          />
                         </div>
-                        {equip.category && <div className="text-xs text-muted-foreground truncate max-w-32">{equip.category}</div>}
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-foreground truncate max-w-[10rem]">
+                            {equip.name}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+                            {equip.category && <span className="truncate max-w-[6rem]">{equip.category}</span>}
+                            {equip.category && pendingCount > 0 && <span>•</span>}
+                            {pendingCount > 0 && (
+                              <span className="text-primary font-medium">
+                                {pendingCount} task{pendingCount !== 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem className="gap-2">
+                            <Settings className="w-4 h-4" />
+                            Edit Equipment
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="gap-2 text-destructive focus:text-destructive"
+                            onClick={() => removeEquipment(equip.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Remove
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
 
                     {/* Timeline cells */}
