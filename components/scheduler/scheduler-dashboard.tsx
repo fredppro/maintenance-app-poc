@@ -5,9 +5,12 @@ import { Wrench } from "lucide-react";
 import { TaskType } from "../../generated/prisma/enums";
 import { SchedulerToolbar } from "./scheduler-toolbar";
 import { TimelineGrid } from "./timeline-grid";
+import { useTranslations } from 'next-intl';
+import LanguageSwitcher from '@/components/language-switcher';
 
 export function SchedulerDashboard() {
   const { entries, equipment } = useSchedulerStore();
+  const t = useTranslations('Dashboard');
 
   const stats = {
     total: entries.length,
@@ -30,10 +33,10 @@ export function SchedulerDashboard() {
             </div>
             <div>
               <h1 className="text-xl font-semibold text-foreground">
-                Maintenance Scheduler
+                {t('title')}
               </h1>
               <p className="text-sm text-muted-foreground">
-                Equipment service and maintenance planning
+                {t('description')}
               </p>
             </div>
           </div>
@@ -43,21 +46,21 @@ export function SchedulerDashboard() {
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500/20 border border-blue-500/40" />
-                <span className="text-muted-foreground">Preventive</span>
+                <span className="text-muted-foreground">{t('stats.preventive')}</span>
                 <span className="font-medium text-foreground">
                   {stats.preventive}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40" />
-                <span className="text-muted-foreground">Corrective</span>
+                <span className="text-muted-foreground">{t('stats.corrective')}</span>
                 <span className="font-medium text-foreground">
                   {stats.corrective}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500/40" />
-                <span className="text-muted-foreground">Inspection</span>
+                <span className="text-muted-foreground">{t('stats.inspection')}</span>
                 <span className="font-medium text-foreground">
                   {stats.inspection}
                 </span>
@@ -68,24 +71,28 @@ export function SchedulerDashboard() {
 
             <div className="flex items-center gap-4 text-sm">
               <div>
-                <span className="text-muted-foreground">Equipment: </span>
+                <span className="text-muted-foreground">{t('stats.equipment')}: </span>
                 <span className="font-medium text-foreground">
                   {equipment.length}
                 </span>
               </div>
               <div>
-                <span className="text-muted-foreground">Scheduled: </span>
+                <span className="text-muted-foreground">{t('stats.scheduled')}: </span>
                 <span className="font-medium text-foreground">
                   {stats.scheduled}
                 </span>
               </div>
               <div>
-                <span className="text-muted-foreground">In Progress: </span>
+                <span className="text-muted-foreground">{t('stats.inProgress')}: </span>
                 <span className="font-medium text-chart-3">
                   {stats.inProgress}
                 </span>
               </div>
             </div>
+
+            <div className="h-8 w-px bg-border" />
+
+            <LanguageSwitcher />
           </div>
         </div>
       </header>
@@ -106,24 +113,24 @@ export function SchedulerDashboard() {
       <footer className="border-t border-border bg-card px-6 py-3">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-4">
-            <span>Click on a cell to schedule maintenance</span>
+            <span>{t('footer.clickHint')}</span>
             <span>•</span>
-            <span>Drag entries to reschedule</span>
+            <span>{t('footer.dragHint')}</span>
             <span>•</span>
-            <span>Use zoom controls to change view</span>
+            <span>{t('footer.zoomHint')}</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-blue-500" />
-              <span>Preventive</span>
+              <span>{t('stats.preventive')}</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-red-500" />
-              <span>Corrective</span>
+              <span>{t('stats.corrective')}</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-amber-500" />
-              <span>Inspection</span>
+              <span>{t('stats.inspection')}</span>
             </div>
           </div>
         </div>

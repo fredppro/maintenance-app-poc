@@ -1,0 +1,91 @@
+{
+  "Dashboard": {
+    "title": "Gestor de Manutenção",
+    "description": "Planeamento de serviço e manutenção de equipamentos",
+    "stats": {
+      "preventive": "Preventiva",
+      "corrective": "Corretiva",
+      "inspection": "Inspeção",
+      "equipment": "Equipamento",
+      "scheduled": "Agendado",
+      "inProgress": "Em Curso"
+    },
+    "footer": {
+      "clickHint": "Clique numa célula para agendar manutenção",
+      "dragHint": "Arraste entradas para reagendar",
+      "zoomHint": "Use controlos de zoom para mudar a vista"
+    }
+  },
+  "Grid": {
+    "equipment": "Equipamento",
+    "addEquipment": "Adicionar Equipamento",
+    "editEquipment": "Editar Equipamento",
+    "equipmentName": "Nome do Equipamento",
+    "category": "Categoria (opcional)",
+    "noEquipment": "Nenhum equipamento registado.",
+    "noTasks": "Nenhuma tarefa agendada para este dia.",
+    "task": "tarefa",
+    "tasks": "tarefas"
+  },
+  "Toolbar": {
+    "today": "Hoje",
+    "day": "Dia",
+    "week": "Semana",
+    "month": "Mês",
+    "year": "Ano"
+  },
+  "Form": {
+    "schedule": "Agendar Manutenção",
+    "edit": "Editar: {title}",
+    "status": "Estado",
+    "equipment": "Equipamento",
+    "selectEquipment": "Selecione o equipamento",
+    "taskType": "Tipo de Tarefa",
+    "selectType": "Selecione o tipo",
+    "preventive": "Preventiva",
+    "inspection": "Inspeção",
+    "corrective": "Corretiva",
+    "title": "Título",
+    "titlePlaceholder": "ex: Inspeção Mensal",
+    "startDateTime": "Data e Hora de Início",
+    "endDateTime": "Data e Hora de Fim",
+    "pickDate": "Selecione uma data",
+    "description": "Descrição (opcional)",
+    "descriptionPlaceholder": "Detalhes adicionais sobre esta tarefa de manutenção...",
+    "assignedWorkers": "Trabalhadores Atribuídos",
+    "selectWorkers": "Selecione os trabalhadores...",
+    "materials": "Materiais Usados",
+    "addMaterial": "Adicionar Material",
+    "itemName": "Nome do Item",
+    "reference": "Referência",
+    "quantity": "Qtd",
+    "noMaterials": "Nenhum material adicionado.",
+    "submit": "Agendar",
+    "submitting": "A agendar...",
+    "saving": "A guardar...",
+    "saveAll": "Guardar Todas as Alterações",
+    "delete": "Apagar Entrada",
+    "statusTypes": {
+      "scheduled": "Agendado",
+      "in-progress": "Em Curso",
+      "completed": "Concluído"
+    },
+    "errors": {
+      "endAfterStart": "A hora de fim deve ser posterior à hora de início",
+      "success": "Manutenção agendada com sucesso",
+      "failure": "Falha ao agendar manutenção",
+      "updateSuccess": "Tarefa atualizada com sucesso",
+      "updateFailure": "Falha ao atualizar tarefa",
+      "deleteSuccess": "Entrada apagada",
+      "deleteFailure": "Falha ao apagar entrada"
+    }
+  },
+  "Common": {
+    "save": "Guardar Alterações",
+    "cancel": "Cancelar",
+    "add": "Adicionar",
+    "remove": "Remover",
+    "edit": "Editar",
+    "settings": "Definições"
+  }
+}

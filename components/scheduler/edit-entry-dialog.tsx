@@ -41,12 +41,14 @@ import { MaintenanceEntry } from "@/lib/scheduler-types";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, set } from "date-fns";
+import { enUS, pt } from 'date-fns/locale'
 import { CalendarIcon, Plus, Trash2, Wrench } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { TaskType } from "../../generated/prisma/enums";
+import { useLocale, useTranslations } from 'next-intl'
 
 const materialSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -81,6 +83,13 @@ export function EditEntryDialog({
 }: EditEntryDialogProps) {
   const { equipment, workers, removeEntry, updateEntry } =
     useSchedulerStore();
+  const locale = useLocale()
+  const t = useTranslations('Form')
+  const tCommon = useTranslations('Common')
+  
+  const dateFnsLocale = useMemo(() => {
+    return locale === 'pt-pt' ? pt : enUS
+  }, [locale])
 
   const equip = equipment.find((e) => e.id === entry.equipmentId);
 
@@ -129,19 +138,19 @@ export function EditEntryDialog({
       case "scheduled":
         return (
           <Badge variant="secondary" className="text-xs">
-            Scheduled
+            {t('statusTypes.scheduled')}
           </Badge>
         );
       case "in-progress":
         return (
           <Badge className="bg-chart-3/20 text-chart-3 border-chart-3/40 text-xs">
-            In Progress
+            {t('statusTypes.in-progress')}
           </Badge>
         );
       case "completed":
         return (
           <Badge className="bg-chart-1/20 text-chart-1 border-chart-1/40 text-xs">
-            Completed
+            {t('statusTypes.completed')}
           </Badge>
         );
       default:
@@ -157,25 +166,25 @@ export function EditEntryDialog({
     try {
       await removeEntry(entry.id);
       onOpenChange(false);
-      toast.success("Entry deleted");
+      toast.success(t('errors.deleteSuccess'));
     } catch (error) {
-      toast.error("Failed to delete entry");
+      toast.error(t('errors.deleteFailure'));
     }
   };
 
   const onSave = async (values: EditFormValues) => {
     if (values.endTime <= values.startTime) {
-      toast.error("End time must be after start time");
+      toast.error(t('errors.endAfterStart'));
       return;
     }
 
     try {
       // TODO: find a better solution instead of using any
       await updateEntry(entry.id, values as any);
-      toast.success("Task updated successfully");
+      toast.success(t('errors.updateSuccess'));
       onOpenChange(false);
     } catch (error) {
-      toast.error("Failed to update task");
+      toast.error(t('errors.updateFailure'));
     }
   };
 
@@ -190,7 +199,7 @@ export function EditEntryDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wrench className="w-4 h-4" />
-            Edit: {entry.title}
+            {t('edit', { title: entry.title })}
           </DialogTitle>
           <DialogDescription className="flex items-center justify-between">
             {equip?.name} {equip?.category ? `- ${equip.category}` : ""}
@@ -208,7 +217,7 @@ export function EditEntryDialog({
           {/* Status moved to top and integrated into form state */}
           <div className="space-y-2 pb-2 border-b">
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Status
+              {t('status')}
             </Label>
             <div className="flex gap-2">
               {["scheduled", "in-progress", "completed"].map((status) => {
@@ -229,7 +238,7 @@ export function EditEntryDialog({
                       form.setValue("status", status, { shouldDirty: true })
                     }
                   >
-                    {status.replace("-", " ")}
+                    {t(`statusTypes.${status as keyof typeof t}`)}
                   </Button>
                 );
               })}
@@ -238,17 +247,17 @@ export function EditEntryDialog({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs font-semibold">Start Date & Time</Label>
+              <Label className="text-xs font-semibold">{t('startDateTime')}</Label>
               <div className="flex items-center gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 justify-start text-left font-normal text-xs h-9"
+                      className="flex-1 justify-start text-left font-normal text-xs h-9 px-2"
                     >
                       <CalendarIcon className="mr-2 h-3 w-3" />
-                      {format(form.watch("startTime"), "PP")}
+                      {format(form.watch("startTime"), "PP", { locale: dateFnsLocale })}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -266,6 +275,7 @@ export function EditEntryDialog({
                           }),
                         )
                       }
+                      locale={dateFnsLocale}
                     />
                   </PopoverContent>
                 </Popover>
@@ -277,17 +287,17 @@ export function EditEntryDialog({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold">End Date & Time</Label>
+              <Label className="text-xs font-semibold">{t('endDateTime')}</Label>
               <div className="flex items-center gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 justify-start text-left font-normal text-xs h-9"
+                      className="flex-1 justify-start text-left font-normal text-xs h-9 px-2"
                     >
                       <CalendarIcon className="mr-2 h-3 w-3" />
-                      {format(form.watch("endTime"), "PP")}
+                      {format(form.watch("endTime"), "PP", { locale: dateFnsLocale })}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -305,6 +315,7 @@ export function EditEntryDialog({
                           }),
                         )
                       }
+                      locale={dateFnsLocale}
                     />
                   </PopoverContent>
                 </Popover>
@@ -317,7 +328,7 @@ export function EditEntryDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-semibold">Task Type</Label>
+            <Label className="text-xs font-semibold">{t('taskType')}</Label>
             <Select
               value={form.watch("type")}
               onValueChange={(v) => form.setValue("type", v as TaskType)}
@@ -326,26 +337,26 @@ export function EditEntryDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={TaskType.PREVENTIVE}>Preventive</SelectItem>
-                <SelectItem value={TaskType.INSPECTION}>Inspection</SelectItem>
-                <SelectItem value={TaskType.CORRECTIVE}>Corrective</SelectItem>
+                <SelectItem value={TaskType.PREVENTIVE}>{t('preventive')}</SelectItem>
+                <SelectItem value={TaskType.INSPECTION}>{t('inspection')}</SelectItem>
+                <SelectItem value={TaskType.CORRECTIVE}>{t('corrective')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-semibold">Assigned Workers</Label>
+            <Label className="text-xs font-semibold">{t('assignedWorkers')}</Label>
             <MultiSelect
               options={workerOptions}
               selected={form.watch("workerIds")}
               onChange={(v) => form.setValue("workerIds", v)}
-              placeholder="Select workers..."
+              placeholder={t('selectWorkers')}
             />
           </div>
 
           <div className="pt-4 space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-bold">Materials Used</Label>
+              <Label className="text-sm font-bold">{t('materials')}</Label>
               <Button
                 type="button"
                 variant="outline"
@@ -354,7 +365,7 @@ export function EditEntryDialog({
                 onClick={() => append({ name: "", reference: "", quantity: 1 })}
               >
                 <Plus className="h-4 w-4" />
-                Add Material
+                {t('addMaterial')}
               </Button>
             </div>
 
@@ -363,9 +374,9 @@ export function EditEntryDialog({
                 <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
-                      <TableHead className="w-[45%]">Item Name</TableHead>
-                      <TableHead className="w-[25%]">Reference</TableHead>
-                      <TableHead className="w-[20%] text-right">Qty</TableHead>
+                      <TableHead className="w-[45%]">{t('itemName')}</TableHead>
+                      <TableHead className="w-[25%]">{t('reference')}</TableHead>
+                      <TableHead className="w-[20%] text-right">{t('quantity')}</TableHead>
                       <TableHead className="w-[10%]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -377,7 +388,7 @@ export function EditEntryDialog({
                             {...form.register(
                               `materials.${index}.name` as const,
                             )}
-                            placeholder="Item name"
+                            placeholder={t('itemName')}
                             className="h-8 text-xs"
                           />
                           {form.formState.errors.materials?.[index]?.name && (
@@ -394,7 +405,7 @@ export function EditEntryDialog({
                             {...form.register(
                               `materials.${index}.reference` as const,
                             )}
-                            placeholder="Ref #"
+                            placeholder={t('reference')}
                             className="h-8 text-xs"
                           />
                         </TableCell>
@@ -437,7 +448,7 @@ export function EditEntryDialog({
             ) : (
               <div className="text-center p-6 border border-dashed rounded-md bg-muted/20">
                 <p className="text-xs text-muted-foreground">
-                  No materials added yet.
+                  {t('noMaterials')}
                 </p>
               </div>
             )}
@@ -451,7 +462,7 @@ export function EditEntryDialog({
         <DialogFooter className="flex flex-row justify-between gap-2 sm:gap-0 mt-2 border-t pt-2">
           <Field orientation="horizontal" className="justify-end">
             <Button variant="destructive" size="sm" onClick={handleDelete}>
-              Delete Entry
+              {t('delete')}
             </Button>
             <Button
               type="submit"
@@ -462,10 +473,10 @@ export function EditEntryDialog({
               {form.formState.isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Saving...
+                  {t('saving')}
                 </span>
               ) : (
-                "Save All Changes"
+                t('saveAll')
               )}
             </Button>
           </Field>

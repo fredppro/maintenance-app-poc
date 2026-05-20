@@ -23,6 +23,7 @@ import {
   isSameMonth,
   endOfDay,
 } from 'date-fns'
+import { enUS, pt } from 'date-fns/locale'
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { MaintenanceEntryBlock } from './maintenance-entry-block'
 import { AddEntryDialog } from './add-entry-dialog'
@@ -45,8 +46,17 @@ import {
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
+import { useLocale, useTranslations } from 'next-intl'
 
 export function TimelineGrid() {
+  const locale = useLocale()
+  const t = useTranslations('Grid')
+  const tCommon = useTranslations('Common')
+  
+  const dateFnsLocale = useMemo(() => {
+    return locale === 'pt-pt' ? pt : enUS
+  }, [locale])
+
   const {
     equipment,
     entries,
@@ -107,13 +117,13 @@ export function TimelineGrid() {
   const formatHeader = (date: Date): string => {
     switch (viewMode) {
       case 'day':
-        return format(date, 'h aa')
+        return locale === 'pt-pt' ? format(date, 'HH:mm', { locale: dateFnsLocale }) : format(date, 'h aa', { locale: dateFnsLocale })
       case 'week':
-        return format(date, 'EEE d')
+        return format(date, 'EEE d', { locale: dateFnsLocale })
       case 'month':
-        return format(date, 'd')
+        return format(date, 'd', { locale: dateFnsLocale })
       case 'year':
-        return format(date, 'MMM')
+        return format(date, 'MMM', { locale: dateFnsLocale })
       default:
         return ''
     }
@@ -310,9 +320,9 @@ export function TimelineGrid() {
 
         <div className="min-w-full w-fit h-full flex flex-col">
           {/* Header row */}
-          <div className="flex sticky top-0 z-20 bg-card border-b border-border flex-shrink-0">
+          <div className="flex sticky top-0 z-20 bg-card border-b border-border flex-shrink-0 min-w-full w-fit">
             <div className={cn(yAxisWidth, "sticky left-0 z-30 bg-card border-r border-border p-3 flex items-center justify-between")}>
-              <span className="font-semibold text-sm text-foreground">Equipment</span>
+              <span className="font-semibold text-sm text-foreground">{t('equipment')}</span>
               
               <Dialog open={addEquipDialogOpen} onOpenChange={(open) => {
                 setAddEquipDialogOpen(open)
@@ -333,12 +343,12 @@ export function TimelineGrid() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>{editingEquipment ? 'Edit Equipment' : 'Add Equipment'}</DialogTitle>
+                    <DialogTitle>{editingEquipment ? t('editEquipment') : t('addEquipment')}</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleAddEquipSubmit} className="space-y-4">
                     <FieldGroup>
                       <Field>
-                        <FieldLabel>Equipment Name</FieldLabel>
+                        <FieldLabel>{t('equipmentName')}</FieldLabel>
                         <Input
                           value={newEquipName}
                           onChange={(e) => setNewEquipName(e.target.value)}
@@ -347,7 +357,7 @@ export function TimelineGrid() {
                         />
                       </Field>
                       <Field>
-                        <FieldLabel>Category (optional)</FieldLabel>
+                        <FieldLabel>{t('category')}</FieldLabel>
                         <Input
                           value={newEquipCategory}
                           onChange={(e) => setNewEquipCategory(e.target.value)}
@@ -363,10 +373,10 @@ export function TimelineGrid() {
                     </FieldGroup>
                     <DialogFooter>
                       <Button type="button" variant="outline" onClick={() => setAddEquipDialogOpen(false)}>
-                        Cancel
+                        {tCommon('cancel')}
                       </Button>
                       <Button type="submit" disabled={!newEquipName.trim()}>
-                        {editingEquipment ? 'Save Changes' : 'Add Equipment'}
+                        {editingEquipment ? tCommon('save') : t('addEquipment')}
                       </Button>
                     </DialogFooter>
                   </form>
@@ -392,14 +402,14 @@ export function TimelineGrid() {
           </div>
 
           {/* Equipment rows */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-full w-fit">
             {equipment.length > 0 ? (
               equipment.map((equip) => {
                 const equipEntries = getEntriesForEquipment(equip.id)
                 const pendingCount = getPendingMaintenanceCount(equip.id)
                 
                 return (
-                  <div key={equip.id} className="flex border-b border-border last:border-b-0 group">
+                  <div key={equip.id} className="flex border-b border-border last:border-b-0 group min-w-full w-fit">
                     {/* Equipment name cell */}
                     <div className={cn(yAxisWidth, "sticky left-0 z-10 bg-card border-r border-border p-3 flex items-center justify-between")}>
                       <div className="flex items-center gap-3 min-w-0">
@@ -424,7 +434,7 @@ export function TimelineGrid() {
                             {equip.category && pendingCount > 0 && <span>•</span>}
                             {pendingCount > 0 && (
                               <span className="text-primary font-medium">
-                                {pendingCount} task{pendingCount !== 1 ? 's' : ''}
+                                {pendingCount} {pendingCount !== 1 ? t('tasks') : t('task')}
                               </span>
                             )}
                           </div>
@@ -444,14 +454,14 @@ export function TimelineGrid() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem className="gap-2" onClick={() => handleEditEquip(equip)}>
                             <Settings className="w-4 h-4" />
-                            Edit Equipment
+                            {tCommon('settings')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="gap-2 text-destructive focus:text-destructive"
                             onClick={() => removeEquipment(equip.id)}
                           >
                             <Trash2 className="w-4 h-4" />
-                            Remove
+                            {tCommon('remove')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -515,13 +525,13 @@ export function TimelineGrid() {
               })
             ) : (
               <div className="p-8 text-center text-muted-foreground italic">
-                No equipment registered.
+                {t('noEquipment')}
               </div>
             )}
             
             {viewMode === 'day' && !isLoading && totalTasksInView === 0 && (
               <div className="sticky left-0 right-0 p-4 text-center text-sm text-muted-foreground bg-muted/20 border-b border-border">
-                No tasks scheduled for this day.
+                {t('noTasks')}
               </div>
             )}
           </div>
