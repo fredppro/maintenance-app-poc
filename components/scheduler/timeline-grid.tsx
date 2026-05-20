@@ -308,7 +308,7 @@ export function TimelineGrid() {
           </div>
         )}
 
-        <div className="min-w-max h-full flex flex-col">
+        <div className="min-w-full w-fit h-full flex flex-col">
           {/* Header row */}
           <div className="flex sticky top-0 z-20 bg-card border-b border-border flex-shrink-0">
             <div className={cn(yAxisWidth, "sticky left-0 z-30 bg-card border-r border-border p-3 flex items-center justify-between")}>
@@ -373,7 +373,7 @@ export function TimelineGrid() {
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="flex">
+            <div className="flex flex-1">
               {timeSlots.map((slot, idx) => (
                 <div
                   key={idx}
@@ -458,7 +458,7 @@ export function TimelineGrid() {
                     </div>
 
                     {/* Timeline cells */}
-                    <div className="flex relative">
+                    <div className="flex relative flex-1">
                       {timeSlots.map((slot, slotIdx) => {
                         const isDragOver = dragOverCell && 
                           dragOverCell.equipmentId === equip.id && 
@@ -488,9 +488,9 @@ export function TimelineGrid() {
                         if (startIdx < 0) return null
 
                         const span = getEntrySpan(entry)
-                        const cellWidthPx = viewMode === 'month' ? 40 : viewMode === 'year' ? 80 : 100
-                        const left = startIdx * cellWidthPx
-                        const width = Math.min(span, timeSlots.length - startIdx) * cellWidthPx - 4
+                        const totalSlots = timeSlots.length
+                        const startPercent = (startIdx / totalSlots) * 100
+                        const widthPercent = (Math.min(span, totalSlots - startIdx) / totalSlots) * 100
 
                         return (
                           <MaintenanceEntryBlock
@@ -499,8 +499,8 @@ export function TimelineGrid() {
                             timeSlotsCount={timeSlots.length}
                             style={{
                               position: 'absolute',
-                              left: `${left + 2}px`,
-                              width: `${width}px`,
+                              left: `calc(${startPercent}% + 2px)`,
+                              width: `calc(${widthPercent}% - 4px)`,
                               top: '4px',
                               height: 'calc(100% - 8px)',
                             }}
