@@ -18,9 +18,17 @@ export default async function Home({
     getWorkers(),
   ])
 
+  // Capture server-side "now" to sync with client hydration
+  const serverNow = new Date()
+
   return (
     <>
-      <StoreInitializer equipment={equipment} entries={tasks} workers={workers} />
+      <StoreInitializer 
+        equipment={equipment} 
+        entries={tasks} 
+        workers={workers} 
+        initialDate={serverNow}
+      />
       <SchedulerDashboard />
     </>
   )
