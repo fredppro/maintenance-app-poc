@@ -1,7 +1,6 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Calendar } from '@/components/ui/calendar'
 import {
   Dialog,
   DialogContent,
@@ -13,7 +12,6 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { MultiSelect } from '@/components/ui/multi-select'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -30,16 +28,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
-import { TimePicker } from '@/components/ui/time-picker'
+import { DateTimePicker } from '@/components/ui/date-time-picker'
 import { useSchedulerStore } from '@/lib/scheduler-store'
-import { cn } from '@/lib/utils'
 import { TaskType } from '../../generated/prisma/enums'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { addHours, format, set } from 'date-fns'
-import { enUS, pt } from 'date-fns/locale'
-import { CalendarIcon, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { addHours } from 'date-fns'
+import { Plus, Trash2 } from 'lucide-react'
+import { useEffect } from 'react'
+import { useFieldArray, useForm, Controller } from 'react-hook-form'
 import { toast } from 'sonner'
 import * as z from 'zod'
 import { useLocale, useTranslations } from 'next-intl'
@@ -74,10 +70,6 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
   const locale = useLocale()
   const t = useTranslations('Form')
   const tCommon = useTranslations('Common')
-  
-  const dateFnsLocale = useMemo(() => {
-    return locale === 'pt-pt' ? pt : enUS
-  }, [locale])
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -196,76 +188,34 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">{t('startDateTime')}</Label>
-                <div className="flex items-center gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "flex-1 justify-start text-left font-normal h-9 px-2",
-                          !form.watch('startTime') && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.watch('startTime') ? format(form.watch('startTime'), "PPP", { locale: dateFnsLocale }) : <span>{t('pickDate')}</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={form.watch('startTime')}
-                        onSelect={(date) => date && form.setValue('startTime', set(form.getValues('startTime'), {
-                          year: date.getFullYear(),
-                          month: date.getMonth(),
-                          date: date.getDate()
-                        }))}
-                        initialFocus
-                        locale={dateFnsLocale}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <TimePicker 
-                    date={form.watch('startTime')} 
-                    onChange={(d) => form.setValue('startTime', d)} 
-                  />
-                </div>
+                <Controller
+                  control={form.control}
+                  name="startTime"
+                  render={({ field }) => (
+                    <DateTimePicker
+                      date={field.value}
+                      setDate={field.onChange}
+                      locale={locale}
+                      placeholder={t('pickDate')}
+                    />
+                  )}
+                />
               </div>
 
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">{t('endDateTime')}</Label>
-                <div className="flex items-center gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "flex-1 justify-start text-left font-normal h-9 px-2",
-                          !form.watch('endTime') && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.watch('endTime') ? format(form.watch('endTime'), "PPP", { locale: dateFnsLocale }) : <span>{t('pickDate')}</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={form.watch('endTime')}
-                        onSelect={(date) => date && form.setValue('endTime', set(form.getValues('endTime'), {
-                          year: date.getFullYear(),
-                          month: date.getMonth(),
-                          date: date.getDate()
-                        }))}
-                        initialFocus
-                        locale={dateFnsLocale}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <TimePicker 
-                    date={form.watch('endTime')} 
-                    onChange={(d) => form.setValue('endTime', d)} 
-                  />
-                </div>
+                <Controller
+                  control={form.control}
+                  name="endTime"
+                  render={({ field }) => (
+                    <DateTimePicker
+                      date={field.value}
+                      setDate={field.onChange}
+                      locale={locale}
+                      placeholder={t('pickDate')}
+                    />
+                  )}
+                />
               </div>
             </div>
 

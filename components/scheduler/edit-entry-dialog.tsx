@@ -2,7 +2,6 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
     Dialog,
     DialogContent,
@@ -15,11 +14,6 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
 import {
     Select,
     SelectContent,
@@ -35,16 +29,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { TimePicker } from "@/components/ui/time-picker";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { useSchedulerStore } from "@/lib/scheduler-store";
 import { MaintenanceEntry } from "@/lib/scheduler-types";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, set } from "date-fns";
-import { enUS, pt } from 'date-fns/locale'
-import { CalendarIcon, Plus, Trash2, Wrench } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { Plus, Trash2, Wrench } from "lucide-react";
+import { useEffect } from "react";
+import { useFieldArray, useForm, Controller } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { TaskType } from "../../generated/prisma/enums";
@@ -87,10 +79,6 @@ export function EditEntryDialog({
   const t = useTranslations('Form')
   const tCommon = useTranslations('Common')
   
-  const dateFnsLocale = useMemo(() => {
-    return locale === 'pt-pt' ? pt : enUS
-  }, [locale])
-
   const equip = equipment.find((e) => e.id === entry.equipmentId);
 
   const form = useForm<EditFormValues>({
@@ -248,82 +236,34 @@ export function EditEntryDialog({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-xs font-semibold">{t('startDateTime')}</Label>
-              <div className="flex items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 justify-start text-left font-normal text-xs h-9 px-2"
-                    >
-                      <CalendarIcon className="mr-2 h-3 w-3" />
-                      {format(form.watch("startTime"), "PP", { locale: dateFnsLocale })}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={form.watch("startTime")}
-                      onSelect={(date) =>
-                        date &&
-                        form.setValue(
-                          "startTime",
-                          set(form.getValues("startTime"), {
-                            year: date.getFullYear(),
-                            month: date.getMonth(),
-                            date: date.getDate(),
-                          }),
-                        )
-                      }
-                      locale={dateFnsLocale}
-                    />
-                  </PopoverContent>
-                </Popover>
-                <TimePicker
-                  date={form.watch("startTime")}
-                  onChange={(d) => form.setValue("startTime", d)}
-                />
-              </div>
+              <Controller
+                control={form.control}
+                name="startTime"
+                render={({ field }) => (
+                  <DateTimePicker
+                    date={field.value}
+                    setDate={field.onChange}
+                    locale={locale}
+                    placeholder={t('pickDate')}
+                  />
+                )}
+              />
             </div>
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold">{t('endDateTime')}</Label>
-              <div className="flex items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 justify-start text-left font-normal text-xs h-9 px-2"
-                    >
-                      <CalendarIcon className="mr-2 h-3 w-3" />
-                      {format(form.watch("endTime"), "PP", { locale: dateFnsLocale })}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={form.watch("endTime")}
-                      onSelect={(date) =>
-                        date &&
-                        form.setValue(
-                          "endTime",
-                          set(form.getValues("endTime"), {
-                            year: date.getFullYear(),
-                            month: date.getMonth(),
-                            date: date.getDate(),
-                          }),
-                        )
-                      }
-                      locale={dateFnsLocale}
-                    />
-                  </PopoverContent>
-                </Popover>
-                <TimePicker
-                  date={form.watch("endTime")}
-                  onChange={(d) => form.setValue("endTime", d)}
-                />
-              </div>
+              <Controller
+                control={form.control}
+                name="endTime"
+                render={({ field }) => (
+                  <DateTimePicker
+                    date={field.value}
+                    setDate={field.onChange}
+                    locale={locale}
+                    placeholder={t('pickDate')}
+                  />
+                )}
+              />
             </div>
           </div>
 
@@ -453,10 +393,6 @@ export function EditEntryDialog({
               </div>
             )}
           </div>
-
-          {/* <pre className="text-[10px]">
-              {JSON.stringify(form.formState, null, 2)}
-            </pre> */}
         </form>
 
         <DialogFooter className="flex flex-row justify-between gap-2 sm:gap-0 mt-2 border-t pt-2">
