@@ -8,20 +8,28 @@ interface StoreInitializerProps {
   equipment: Equipment[]
   entries: MaintenanceEntry[]
   workers: Worker[]
+  initialDate?: Date
 }
 
-export function StoreInitializer({ equipment, entries, workers }: StoreInitializerProps) {
-  const initialized = useRef(false)
+export function StoreInitializer({ equipment, entries, workers, initialDate }: StoreInitializerProps) {
   const setEquipment = useSchedulerStore((state) => state.setEquipment)
   const setEntries = useSchedulerStore((state) => state.setEntries)
   const setWorkers = useSchedulerStore((state) => state.setWorkers)
+  const setCurrentDate = useSchedulerStore((state) => state.setCurrentDate)
+  
+  // Use a ref to ensure we only sync the initial date once to avoid overriding user navigation
+  const dateSynced = useRef(false)
 
-  if (!initialized.current) {
+  useEffect(() => {
     setEquipment(equipment)
     setEntries(entries)
     setWorkers(workers)
-    initialized.current = true
-  }
+    
+    if (initialDate && !dateSynced.current) {
+      setCurrentDate(new Date(initialDate))
+      dateSynced.current = true
+    }
+  }, [equipment, entries, workers, initialDate, setEquipment, setEntries, setWorkers, setCurrentDate])
 
   return null
 }

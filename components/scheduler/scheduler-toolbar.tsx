@@ -13,16 +13,26 @@ import {
   RotateCcw,
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { enUS, pt } from 'date-fns/locale'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useLocale, useTranslations } from 'next-intl'
+import { useMemo } from 'react'
 
 const viewModeOrder: ViewMode[] = ['day', 'week', 'month', 'year']
 
 export function SchedulerToolbar() {
+  const locale = useLocale()
+  const t = useTranslations('Toolbar')
+  
+  const dateFnsLocale = useMemo(() => {
+    return locale === 'pt-pt' ? pt : enUS
+  }, [locale])
+
   const {
     viewMode,
     currentDate,
@@ -35,13 +45,14 @@ export function SchedulerToolbar() {
   const formatDateRange = () => {
     switch (viewMode) {
       case 'day':
-        return format(currentDate, 'EEEE, MMMM d, yyyy')
+        return format(currentDate, 'EEEE, MMMM d, yyyy', { locale: dateFnsLocale })
       case 'week':
-        return format(currentDate, "'Week of' MMMM d, yyyy")
+        const weekPrefix = locale === 'pt-pt' ? "'Semana de' " : "'Week of' "
+        return format(currentDate, `${weekPrefix}MMMM d, yyyy`, { locale: dateFnsLocale })
       case 'month':
-        return format(currentDate, 'MMMM yyyy')
+        return format(currentDate, 'MMMM yyyy', { locale: dateFnsLocale })
       case 'year':
-        return format(currentDate, 'yyyy')
+        return format(currentDate, 'yyyy', { locale: dateFnsLocale })
     }
   }
 
@@ -87,7 +98,7 @@ export function SchedulerToolbar() {
                   <RotateCcw className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Today</TooltipContent>
+              <TooltipContent>{t('today')}</TooltipContent>
             </Tooltip>
             
             <Tooltip>
@@ -117,7 +128,7 @@ export function SchedulerToolbar() {
               onClick={() => setViewMode(mode)}
               className="capitalize"
             >
-              {mode}
+              {t(mode)}
             </Button>
           ))}
         </ButtonGroup>
@@ -136,7 +147,7 @@ export function SchedulerToolbar() {
                   <ZoomIn className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Zoom In (more detail)</TooltipContent>
+              <TooltipContent>Zoom In</TooltipContent>
             </Tooltip>
             
             <Tooltip>
@@ -150,7 +161,7 @@ export function SchedulerToolbar() {
                   <ZoomOut className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Zoom Out (less detail)</TooltipContent>
+              <TooltipContent>Zoom Out</TooltipContent>
             </Tooltip>
           </ButtonGroup>
         </div>
