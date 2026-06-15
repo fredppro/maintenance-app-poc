@@ -77,6 +77,7 @@
       "endAfterStart": "End time must be after start time",
       "success": "Maintenance scheduled successfully",
       "failure": "Failed to schedule maintenance",
+      "conflict": "This equipment is already scheduled for maintenance during this time slot",
       "updateSuccess": "Task updated successfully",
       "updateFailure": "Failed to update task",
       "deleteSuccess": "Entry deleted",

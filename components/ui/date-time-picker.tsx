@@ -21,9 +21,10 @@ interface DateTimePickerProps {
   setDate: (date: Date) => void
   locale?: string
   placeholder?: string
+  hasError?: boolean
 }
 
-export function DateTimePicker({ date, setDate, locale, placeholder }: DateTimePickerProps) {
+export function DateTimePicker({ date, setDate, locale, placeholder, hasError }: DateTimePickerProps) {
   const t = useTranslations('Form')
   const dateFnsLocale = locale === 'pt-pt' ? pt : enUS
 
@@ -94,10 +95,11 @@ export function DateTimePicker({ date, setDate, locale, placeholder }: DateTimeP
           variant="outline"
           className={cn(
             'w-full justify-start text-left font-normal h-9 px-3',
-            !date && 'text-muted-foreground'
+            !date && 'text-muted-foreground',
+            hasError && 'border-destructive text-destructive focus-visible:ring-destructive'
           )}
         >
-          <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
+          <CalendarIcon className={cn("mr-2 h-4 w-4 opacity-50", hasError && "text-destructive opacity-100")} />
           {date ? (
             format(date, 'PPP HH:mm', { locale: dateFnsLocale })
           ) : (
@@ -117,7 +119,7 @@ export function DateTimePicker({ date, setDate, locale, placeholder }: DateTimeP
             mode="single"
             selected={date}
             onSelect={handleDateSelect}
-            autoFocus
+            initialFocus
             locale={dateFnsLocale}
             captionLayout="dropdown"
             startMonth={new Date(2020, 0)}
@@ -126,29 +128,35 @@ export function DateTimePicker({ date, setDate, locale, placeholder }: DateTimeP
         </div>
         <div className="p-3 flex flex-col md:border-l border-t md:border-t-0 border-border gap-4 bg-muted/20 min-w-[120px]">
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('time')}</span>
+            <Clock className={cn("h-4 w-4 text-muted-foreground", hasError && "text-destructive")} />
+            <span className={cn("text-xs font-semibold uppercase tracking-wider text-muted-foreground", hasError && "text-destructive")}>{t('time')}</span>
           </div>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1 items-start">
-              <span className="text-[9px] text-muted-foreground uppercase font-medium px-1">{t('hours')}</span>
+              <span className={cn("text-[9px] text-muted-foreground uppercase font-medium px-1", hasError && "text-destructive")}>{t('hours')}</span>
               <Input
                 value={hours}
                 onChange={(e) => handleTimeChange('hours', e.target.value)}
                 onBlur={() => handleBlur('hours')}
                 onFocus={(e) => e.target.select()}
-                className="w-16 h-8 text-center p-0 text-xs focus-visible:ring-1 bg-background"
+                className={cn(
+                  "w-16 h-8 text-center p-0 text-xs focus-visible:ring-1 bg-background",
+                  hasError && "border-destructive text-destructive focus-visible:ring-destructive"
+                )}
                 inputMode="numeric"
               />
             </div>
             <div className="flex flex-col gap-1 items-start">
-              <span className="text-[9px] text-muted-foreground uppercase font-medium px-1">{t('minutes')}</span>
+              <span className={cn("text-[9px] text-muted-foreground uppercase font-medium px-1", hasError && "text-destructive")}>{t('minutes')}</span>
               <Input
                 value={minutes}
                 onChange={(e) => handleTimeChange('minutes', e.target.value)}
                 onBlur={() => handleBlur('minutes')}
                 onFocus={(e) => e.target.select()}
-                className="w-16 h-8 text-center p-0 text-xs focus-visible:ring-1 bg-background"
+                className={cn(
+                  "w-16 h-8 text-center p-0 text-xs focus-visible:ring-1 bg-background",
+                  hasError && "border-destructive text-destructive focus-visible:ring-destructive"
+                )}
                 inputMode="numeric"
               />
             </div>

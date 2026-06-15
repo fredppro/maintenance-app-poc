@@ -34,13 +34,14 @@ import { useSchedulerStore } from "@/lib/scheduler-store";
 import { MaintenanceEntry } from "@/lib/scheduler-types";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, Wrench } from "lucide-react";
-import { useEffect } from "react";
+import { Plus, Trash2, Wrench, AlertCircle } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import { useFieldArray, useForm, Controller } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { TaskType } from "../../generated/prisma/enums";
 import { useLocale, useTranslations } from 'next-intl'
+import { areIntervalsOverlapping } from "date-fns";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -73,7 +74,7 @@ export function EditEntryDialog({
   open,
   onOpenChange,
 }: EditEntryDialogProps) {
-  const { equipment, workers, removeEntry, updateEntry } =
+  const { equipment, workers, removeEntry, updateEntry, entries } =
     useSchedulerStore();
   const locale = useLocale()
   const t = useTranslations('Form')
@@ -102,6 +103,27 @@ export function EditEntryDialog({
     control: form.control,
     name: "materials",
   });
+
+  const watchStartTime = form.watch('startTime')
+  const watchEndTime = form.watch('endTime')
+
+  const hasConflict = useMemo(() => {
+    if (!watchStartTime || !watchEndTime || watchEndTime <= watchStartTime) {
+      return false
+    }
+
+    return entries.some((e) => {
+      // Don't conflict with itself
+      if (e.id === entry.id) return false
+      // Only check same equipment
+      if (e.equipmentId !== entry.equipmentId) return false
+      
+      return areIntervalsOverlapping(
+        { start: watchStartTime, end: watchEndTime },
+        { start: new Date(e.startTime), end: new Date(e.endTime) }
+      )
+    })
+  }, [entries, entry.id, entry.equipmentId, watchStartTime, watchEndTime])
 
   useEffect(() => {
     if (open && !form.formState.isSubmitting) {
@@ -163,6 +185,11 @@ export function EditEntryDialog({
   const onSave = async (values: EditFormValues) => {
     if (values.endTime <= values.startTime) {
       toast.error(t('errors.endAfterStart'));
+      return;
+    }
+
+    if (hasConflict) {
+      toast.error(t('errors.conflict'));
       return;
     }
 
@@ -245,6 +272,7 @@ export function EditEntryDialog({
                     setDate={field.onChange}
                     locale={locale}
                     placeholder={t('pickDate')}
+                    hasError={hasConflict}
                   />
                 )}
               />
@@ -261,11 +289,19 @@ export function EditEntryDialog({
                     setDate={field.onChange}
                     locale={locale}
                     placeholder={t('pickDate')}
+                    hasError={hasConflict}
                   />
                 )}
               />
             </div>
           </div>
+          
+          {hasConflict && (
+            <div className="flex items-center gap-1.5 p-2 rounded-md bg-destructive/10 text-destructive animate-in fade-in slide-in-from-top-1 duration-200">
+              <AlertCircle className="h-4 w-4" />
+              <p className="text-xs font-medium">{t('errors.conflict')}</p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label className="text-xs font-semibold">{t('taskType')}</Label>
@@ -404,7 +440,7 @@ export function EditEntryDialog({
               type="submit"
               form="maintenance-form"
               size="sm"
-              disabled={form.formState.isSubmitting}
+              disabled={form.formState.isSubmitting || hasConflict}
             >
               {form.formState.isSubmitting ? (
                 <span className="flex items-center gap-2">

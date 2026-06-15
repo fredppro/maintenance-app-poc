@@ -32,9 +32,9 @@ import { DateTimePicker } from '@/components/ui/date-time-picker'
 import { useSchedulerStore } from '@/lib/scheduler-store'
 import { TaskType } from '../../generated/prisma/enums'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { addHours } from 'date-fns'
-import { Plus, Trash2 } from 'lucide-react'
-import { useEffect } from 'react'
+import { addHours, areIntervalsOverlapping } from 'date-fns'
+import { Plus, Trash2, AlertCircle } from 'lucide-react'
+import { useEffect, useMemo } from 'react'
 import { useFieldArray, useForm, Controller } from 'react-hook-form'
 import { toast } from 'sonner'
 import * as z from 'zod'
@@ -66,7 +66,7 @@ interface AddEntryDialogProps {
 }
 
 export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDialogProps) {
-  const { addEntry, equipment, workers } = useSchedulerStore()
+  const { addEntry, equipment, workers, entries } = useSchedulerStore()
   const locale = useLocale()
   const t = useTranslations('Form')
   const tCommon = useTranslations('Common')
@@ -90,6 +90,25 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
     name: 'materials',
   })
 
+  const watchEquipmentId = form.watch('equipmentId')
+  const watchStartTime = form.watch('startTime')
+  const watchEndTime = form.watch('endTime')
+
+  const hasConflict = useMemo(() => {
+    if (!watchEquipmentId || !watchStartTime || !watchEndTime || watchEndTime <= watchStartTime) {
+      return false
+    }
+
+    return entries.some((entry) => {
+      if (entry.equipmentId !== watchEquipmentId) return false
+      
+      return areIntervalsOverlapping(
+        { start: watchStartTime, end: watchEndTime },
+        { start: new Date(entry.startTime), end: new Date(entry.endTime) }
+      )
+    })
+  }, [entries, watchEquipmentId, watchStartTime, watchEndTime])
+
   useEffect(() => {
     if (selectedCell && open) {
       form.setValue('equipmentId', selectedCell.equipmentId)
@@ -102,6 +121,11 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
   const onSubmit = async (values: FormValues) => {
     if (values.endTime <= values.startTime) {
       toast.error(t('errors.endAfterStart'))
+      return
+    }
+
+    if (hasConflict) {
+      toast.error(t('errors.conflict'))
       return
     }
 
@@ -140,7 +164,7 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
                   value={form.watch('equipmentId')} 
                   onValueChange={(v) => form.setValue('equipmentId', v)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={hasConflict ? "border-destructive text-destructive focus:ring-destructive" : ""}>
                     <SelectValue placeholder={t('selectEquipment')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -153,6 +177,12 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
                 </Select>
                 {form.formState.errors.equipmentId && (
                   <p className="text-xs text-destructive">{form.formState.errors.equipmentId.message}</p>
+                )}
+                {hasConflict && (
+                  <div className="flex items-center gap-1.5 mt-1.5 text-destructive animate-in fade-in slide-in-from-top-1 duration-200">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    <p className="text-xs font-medium">{t('errors.conflict')}</p>
+                  </div>
                 )}
               </Field>
 
@@ -197,6 +227,7 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
                       setDate={field.onChange}
                       locale={locale}
                       placeholder={t('pickDate')}
+                      hasError={hasConflict}
                     />
                   )}
                 />
@@ -213,6 +244,7 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
                       setDate={field.onChange}
                       locale={locale}
                       placeholder={t('pickDate')}
+                      hasError={hasConflict}
                     />
                   )}
                 />
@@ -332,7 +364,7 @@ export function AddEntryDialog({ open, onOpenChange, selectedCell }: AddEntryDia
             </Button>
             <Button 
               type="submit" 
-              disabled={form.formState.isSubmitting}
+              disabled={form.formState.isSubmitting || hasConflict}
             >
               {form.formState.isSubmitting ? t('submitting') : t('submit')}
             </Button>

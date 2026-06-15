@@ -77,6 +77,7 @@
       "endAfterStart": "A hora de fim deve ser posterior à hora de início",
       "success": "Manutenção agendada com sucesso",
       "failure": "Falha ao agendar manutenção",
+      "conflict": "Este equipamento já tem uma manutenção agendada para este período",
       "updateSuccess": "Tarefa atualizada com sucesso",
       "updateFailure": "Falha ao atualizar tarefa",
       "deleteSuccess": "Entrada apagada",
