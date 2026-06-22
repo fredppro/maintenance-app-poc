@@ -63,6 +63,7 @@ export function TimelineGrid() {
     viewMode,
     currentDate,
     isLoading,
+    zoomLevel,
     moveEntry,
     setViewMode,
     setCurrentDate,
@@ -302,7 +303,18 @@ export function TimelineGrid() {
     ...new Set(equipment.map((e) => e.category).filter(Boolean) as string[]),
   ], [equipment])
 
-  const cellWidth = viewMode === 'month' ? 'min-w-[40px]' : viewMode === 'year' ? 'min-w-[80px]' : 'min-w-[100px]'
+  const getMinWidth = () => {
+    const baseWidth = 1000
+    // zoomLevel 1 should generally fit or slightly overflow on standard screens
+    switch (viewMode) {
+      case 'day': return baseWidth * 1.5 * zoomLevel
+      case 'week': return baseWidth * 0.8 * zoomLevel
+      case 'month': return baseWidth * 1.2 * zoomLevel
+      case 'year': return baseWidth * 0.8 * zoomLevel
+      default: return baseWidth * zoomLevel
+    }
+  }
+
   const yAxisWidth = 'w-72 min-w-[18rem]'
 
   const totalTasksInView = useMemo(() => {
@@ -389,8 +401,7 @@ export function TimelineGrid() {
                   key={idx}
                   onClick={() => handleHeaderClick(slot)}
                   className={cn(
-                    cellWidth,
-                    'flex-1 p-2 text-center text-sm font-medium border-r border-border text-muted-foreground transition-colors',
+                    'flex-1 p-2 text-center text-sm font-medium border-r border-border text-muted-foreground transition-colors min-w-0',
                     (viewMode === 'week' || viewMode === 'month') && 'cursor-pointer hover:bg-accent hover:text-foreground',
                     isToday(slot) && 'bg-primary/10 text-primary'
                   )}
@@ -478,8 +489,7 @@ export function TimelineGrid() {
                           <div
                             key={slotIdx}
                             className={cn(
-                              cellWidth,
-                              'flex-1 h-16 border-r border-border cursor-pointer transition-colors relative',
+                              'flex-1 h-full border-r border-border cursor-pointer transition-colors relative min-w-0',
                               'hover:bg-accent/50',
                               isDragOver && 'bg-primary/20',
                               isToday(slot) && 'bg-primary/5'
@@ -516,6 +526,7 @@ export function TimelineGrid() {
                             }}
                             onDragStart={() => handleDragStart(entry)}
                             isDragging={draggedEntry?.id === entry.id}
+                            timeSlotsCount={timeSlots.length}
                           />
                         )
                       })}

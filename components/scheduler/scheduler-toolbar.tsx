@@ -4,6 +4,7 @@ import { useSchedulerStore } from '@/lib/scheduler-store'
 import { ViewMode } from '@/lib/scheduler-types'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
+import { Slider } from '@/components/ui/slider'
 import {
   ChevronLeft,
   ChevronRight,
@@ -36,7 +37,9 @@ export function SchedulerToolbar() {
   const {
     viewMode,
     currentDate,
+    zoomLevel,
     setViewMode,
+    setZoomLevel,
     setCurrentDate,
     navigateForward,
     navigateBackward,
@@ -57,25 +60,16 @@ export function SchedulerToolbar() {
   }
 
   const handleZoomIn = () => {
-    const currentIndex = viewModeOrder.indexOf(viewMode)
-    if (currentIndex > 0) {
-      setViewMode(viewModeOrder[currentIndex - 1])
-    }
+    setZoomLevel(Math.min(zoomLevel + 0.5, 4))
   }
 
   const handleZoomOut = () => {
-    const currentIndex = viewModeOrder.indexOf(viewMode)
-    if (currentIndex < viewModeOrder.length - 1) {
-      setViewMode(viewModeOrder[currentIndex + 1])
-    }
+    setZoomLevel(Math.max(zoomLevel - 0.5, 0.5))
   }
 
   const handleToday = () => {
     setCurrentDate(new Date())
   }
-
-  const canZoomIn = viewModeOrder.indexOf(viewMode) > 0
-  const canZoomOut = viewModeOrder.indexOf(viewMode) < viewModeOrder.length - 1
 
   return (
     <TooltipProvider>
@@ -113,7 +107,7 @@ export function SchedulerToolbar() {
 
           <div className="flex items-center gap-2 px-3">
             <Calendar className="w-4 h-4 text-muted-foreground" />
-            <span className="font-medium text-foreground min-w-48">
+            <span className="font-medium text-foreground min-w-48 text-sm">
               {formatDateRange()}
             </span>
           </div>
@@ -127,6 +121,7 @@ export function SchedulerToolbar() {
               variant={viewMode === mode ? 'default' : 'outline'}
               onClick={() => setViewMode(mode)}
               className="capitalize"
+              size="sm"
             >
               {t(mode)}
             </Button>

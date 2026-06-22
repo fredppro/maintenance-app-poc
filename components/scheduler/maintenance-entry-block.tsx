@@ -11,11 +11,11 @@ import { TaskType } from "../../generated/prisma/enums";
 import { EditEntryDialog } from "./edit-entry-dialog";
 
 interface MaintenanceEntryBlockProps {
-  entry: MaintenanceEntry;
-  style?: React.CSSProperties;
-  onDragStart: () => void;
-  isDragging?: boolean;
-  timeSlotsCount: number;
+  entry: MaintenanceEntry
+  style?: React.CSSProperties
+  onDragStart: () => void
+  isDragging?: boolean
+  timeSlotsCount: number
 }
 
 export function MaintenanceEntryBlock({
