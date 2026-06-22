@@ -14,6 +14,11 @@
       "clickHint": "Click on a cell to schedule maintenance",
       "dragHint": "Drag entries to reschedule",
       "zoomHint": "Use zoom controls to change view"
+    },
+    "menu": {
+      "account": "Account",
+      "workers": "Workers",
+      "logout": "Logout"
     }
   },
   "Grid": {
@@ -91,5 +96,37 @@
     "remove": "Remove",
     "edit": "Edit",
     "settings": "Settings"
+  },
+  "Workers": {
+    "title": "Workers",
+    "description": "Manage and update your workers here.",
+    "backToSchedule": "Back to schedule",
+    "createWorker": "Create worker",
+    "editWorker": "Edit worker",
+    "drawerDescription": "Update worker details from the sidebar.",
+    "loading": "Loading...",
+    "noWorkers": "No workers yet.",
+    "noResults": "No results.",
+    "deleteWorker": "Delete worker",
+    "deleteConfirmation": "Are you sure you want to delete {name}? This action cannot be undone.",
+    "thisWorker": "this worker",
+    "delete": "Delete",
+    "selectAll": "Select all",
+    "selectRow": "Select row",
+    "columnName": "Name",
+    "columnEmail": "Email",
+    "columnPhone": "Phone",
+    "columnType": "Type",
+    "columnCreated": "Created",
+    "fieldName": "Name",
+    "fieldEmail": "Email",
+    "fieldPhone": "Phone",
+    "fieldWorkerType": "Worker type",
+    "internal": "Internal",
+    "external": "External",
+    "failedDelete": "Failed to delete worker",
+    "failedSave": "Failed to save worker",
+    "errorNameRequired": "Name is required",
+    "errorInvalidEmail": "Invalid email"
   }
 }
