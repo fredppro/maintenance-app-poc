@@ -302,7 +302,7 @@ export function TimelineGrid() {
     ...new Set(equipment.map((e) => e.category).filter(Boolean) as string[]),
   ], [equipment])
 
-  const cellWidth = viewMode === 'month' ? 'min-w-[40px]' : viewMode === 'year' ? 'min-w-[80px]' : 'min-w-[100px]'
+  const cellWidth = viewMode === 'month' ? 'min-w-[100px]' : viewMode === 'year' ? 'min-w-[80px]' : 'min-w-[100px]'
   const yAxisWidth = 'w-72 min-w-[18rem]'
 
   const totalTasksInView = useMemo(() => {
