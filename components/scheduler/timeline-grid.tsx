@@ -407,6 +407,56 @@ export function TimelineGrid() {
               equipment.map((equip) => {
                 const equipEntries = getEntriesForEquipment(equip.id)
                 const pendingCount = getPendingMaintenanceCount(equip.id)
+
+                // Group and process overlapping entries by visual slot ranges
+                const processedEntries = equipEntries
+                  .map((entry) => {
+                    const startIdx = getEntryStartSlotIndex(entry)
+                    const span = getEntrySpan(entry)
+                    const totalSlots = timeSlots.length
+                    const effectiveSpan = Math.min(span, totalSlots - startIdx)
+                    return {
+                      entry,
+                      startIdx,
+                      effectiveSpan,
+                      endIdx: startIdx + effectiveSpan,
+                    }
+                  })
+                  .filter((item) => item.startIdx >= 0)
+
+                // Sort by startIdx ascending, then effectiveSpan descending
+                processedEntries.sort((a, b) => {
+                  if (a.startIdx !== b.startIdx) {
+                    return a.startIdx - b.startIdx
+                  }
+                  return b.effectiveSpan - a.effectiveSpan
+                })
+
+                // Assign track indices using greedy interval coloring
+                const trackEndSlots: number[] = []
+                const entryTrackMap = new Map<string, number>()
+
+                processedEntries.forEach((item) => {
+                  let assignedTrack = -1
+                  for (let i = 0; i < trackEndSlots.length; i++) {
+                    if (trackEndSlots[i] <= item.startIdx) {
+                      assignedTrack = i
+                      break
+                    }
+                  }
+
+                  if (assignedTrack === -1) {
+                    assignedTrack = trackEndSlots.length
+                    trackEndSlots.push(item.endIdx)
+                  } else {
+                    trackEndSlots[assignedTrack] = item.endIdx
+                  }
+
+                  entryTrackMap.set(item.entry.id, assignedTrack)
+                })
+
+                const numTracks = Math.max(1, trackEndSlots.length)
+                const rowHeight = numTracks > 1 ? Math.max(64, numTracks * 40) : 64
                 
                 return (
                   <div key={equip.id} className="flex border-b border-border last:border-b-0 group min-w-full w-fit">
@@ -479,11 +529,12 @@ export function TimelineGrid() {
                             key={slotIdx}
                             className={cn(
                               cellWidth,
-                              'flex-1 h-16 border-r border-border cursor-pointer transition-colors relative',
+                              'flex-1 border-r border-border cursor-pointer transition-colors relative',
                               'hover:bg-accent/50',
                               isDragOver && 'bg-primary/20',
                               isToday(slot) && 'bg-primary/5'
                             )}
+                            style={{ height: `${rowHeight}px` }}
                             onClick={() => handleCellClick(slot, equip.id)}
                             onDragOver={(e) => handleDragOver(e, slot, equip.id)}
                             onDragLeave={handleDragLeave}
@@ -493,14 +544,24 @@ export function TimelineGrid() {
                       })}
 
                       {/* Render entries as overlay */}
-                      {!isLoading && equipEntries.map((entry) => {
-                        const startIdx = getEntryStartSlotIndex(entry)
-                        if (startIdx < 0) return null
-
-                        const span = getEntrySpan(entry)
+                      {!isLoading && processedEntries.map(({ entry, startIdx, effectiveSpan }) => {
                         const totalSlots = timeSlots.length
                         const startPercent = (startIdx / totalSlots) * 100
-                        const widthPercent = (Math.min(span, totalSlots - startIdx) / totalSlots) * 100
+                        const widthPercent = (effectiveSpan / totalSlots) * 100
+
+                        // Check if this entry overlaps with any other visible entry on this equipment
+                        const hasOverlaps = processedEntries.some(other => 
+                          other.entry.id !== entry.id && 
+                          Math.max(startIdx, other.startIdx) < Math.min(startIdx + effectiveSpan, other.startIdx + other.effectiveSpan)
+                        )
+
+                        const trackIndex = entryTrackMap.get(entry.id) ?? 0
+                        const topStyle = (numTracks > 1 && hasOverlaps)
+                          ? `calc(4px + ${trackIndex} * ((100% - 4px) / ${numTracks}))`
+                          : '4px'
+                        const heightStyle = (numTracks > 1 && hasOverlaps)
+                          ? `calc((100% - 4px) / ${numTracks} - 4px)`
+                          : 'calc(100% - 8px)'
 
                         return (
                           <MaintenanceEntryBlock
@@ -511,8 +572,8 @@ export function TimelineGrid() {
                               position: 'absolute',
                               left: `calc(${startPercent}% + 2px)`,
                               width: `calc(${widthPercent}% - 4px)`,
-                              top: '4px',
-                              height: 'calc(100% - 8px)',
+                              top: topStyle,
+                              height: heightStyle,
                             }}
                             onDragStart={() => handleDragStart(entry)}
                             isDragging={draggedEntry?.id === entry.id}
