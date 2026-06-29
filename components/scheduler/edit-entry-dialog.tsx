@@ -34,8 +34,8 @@ import { useSchedulerStore } from "@/lib/scheduler-store";
 import { MaintenanceEntry } from "@/lib/scheduler-types";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, Wrench, AlertCircle } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { Plus, Trash2, Wrench, AlertCircle, Download, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm, Controller } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -79,6 +79,36 @@ export function EditEntryDialog({
   const locale = useLocale()
   const t = useTranslations('Form')
   const tCommon = useTranslations('Common')
+
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    setIsDownloading(true);
+    try {
+      const response = await fetch(`/api/tasks/${entry.id}/report?locale=${locale}`);
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const filenamePrefix = locale === 'pt-pt' ? 'Folha_de_Obra' : 'Maintenance_Report';
+      link.setAttribute('download', `${filenamePrefix}_${entry.id.substring(0, 8)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success(t('errors.downloadSuccess'));
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error(t('errors.downloadFailure'));
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   
   const equip = equipment.find((e) => e.id === entry.equipmentId);
 
@@ -431,7 +461,23 @@ export function EditEntryDialog({
           </div>
         </form>
 
-        <DialogFooter className="flex flex-row justify-between gap-2 sm:gap-0 mt-2 border-t pt-2">
+        <DialogFooter className="flex flex-row justify-between items-center gap-2 mt-2 border-t pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadPDF}
+            disabled={isDownloading}
+            className="h-8 text-xs gap-1.5"
+          >
+            {isDownloading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Download className="h-3.5 w-3.5" />
+            )}
+            {isDownloading ? t('downloadingPdf') : t('downloadPdf')}
+          </Button>
+
           <Field orientation="horizontal" className="justify-end">
             <Button variant="destructive" size="sm" onClick={handleDelete}>
               {t('delete')}

@@ -73,6 +73,8 @@
     "saving": "A guardar...",
     "saveAll": "Guardar Todas as Alterações",
     "delete": "Apagar Entrada",
+    "downloadPdf": "Descarregar PDF",
+    "downloadingPdf": "A descarregar...",
     "statusTypes": {
       "scheduled": "Agendado",
       "in-progress": "Em Curso",
@@ -86,7 +88,9 @@
       "updateSuccess": "Tarefa atualizada com sucesso",
       "updateFailure": "Falha ao atualizar tarefa",
       "deleteSuccess": "Entrada apagada",
-      "deleteFailure": "Falha ao apagar entrada"
+      "deleteFailure": "Falha ao apagar entrada",
+      "downloadSuccess": "Relatório descarregado com sucesso",
+      "downloadFailure": "Falha ao descarregar o relatório"
     }
   },
   "Common": {
@@ -128,5 +132,63 @@
     "failedSave": "Falha ao guardar o trabalhador",
     "errorNameRequired": "Nome é obrigatório",
     "errorInvalidEmail": "Email inválido"
+  },
+  "PDF": {
+    "title": "Folha de Obra",
+    "subject": "Relatório de Manutenção",
+    "tagline": "Sistemas de Manutenção",
+    "headerTitle": "FOLHA DE OBRA / RELATÓRIO DE MANUTENÇÃO",
+    "recordId": "ID DO REGISTO",
+    "issuedAt": "Emitido em",
+    "sections": {
+      "equipmentDetails": "Detalhes do Equipamento",
+      "labor": "Mão de Obra",
+      "materialsUtilized": "Materiais Utilizados",
+      "technicalOverview": "Sumário Técnico"
+    },
+    "equipment": {
+      "label": "EQUIPAMENTO",
+      "category": "CATEGORIA",
+      "code": "CÓDIGO / ID DO EQUIPAMENTO",
+      "status": "ESTADO DA INTERVENÇÃO"
+    },
+    "status": {
+      "scheduled": "AGENDADA",
+      "in-progress": "EM CURSO",
+      "completed": "CONCLUÍDA"
+    },
+    "labor": {
+      "technician": "TÉCNICO EXECUTANTE",
+      "start": "INÍCIO",
+      "end": "FIM",
+      "duration": "DURAÇÃO TOTAL",
+      "noWorkers": "Nenhum técnico executante atribuído."
+    },
+    "materials": {
+      "item": "MATERIAL / CONSUMÍVEL",
+      "reference": "REFERÊNCIA",
+      "quantity": "QTD",
+      "noMaterials": "Nenhum material ou consumível registado para esta intervenção."
+    },
+    "summary": {
+      "title": "TÍTULO DA INTERVENÇÃO",
+      "type": "TIPO DE TAREFA",
+      "notes": "DESCRIÇÃO DOS TRABALHOS / NOTAS TÉCNICAS",
+      "noNotes": "Sem notas ou observações registadas para esta intervenção."
+    },
+    "types": {
+      "PREVENTIVE": "PREVENTIVA",
+      "INSPECTION": "INSPEÇÃO",
+      "CORRECTIVE": "CORRETIVA"
+    },
+    "signatures": {
+      "technician": "Assinatura do Técnico Responsável",
+      "client": "Validação do Cliente (Nome/Assinatura)"
+    },
+    "footer": {
+      "generatedBy": "Documento gerado eletronicamente por Manusist. Todos os direitos reservados.",
+      "page": "Página",
+      "of": "de"
+    }
   }
 }

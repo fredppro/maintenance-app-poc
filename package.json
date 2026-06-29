@@ -67,6 +67,7 @@
     "next": "16.2.0",
     "next-intl": "^4.12.0",
     "next-themes": "^0.4.6",
+    "pdfkit": "^0.19.1",
     "react": "19.2.4",
     "react-day-picker": "9.13.2",
     "react-dom": "19.2.4",
@@ -84,6 +85,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.0",
     "@types/node": "^22",
+    "@types/pdfkit": "^0.17.6",
     "@types/pg": "^8.20.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
@@ -93,6 +95,6 @@
     "tailwindcss": "^4.2.0",
     "ts-node": "^10.9.2",
     "tw-animate-css": "1.3.3",
-    "typescript": "5.7.3"
+    "typescript": "5.9.2"
   }
 }
