@@ -10,6 +10,7 @@ This document serves as the architectural blueprint and source of truth for the 
 **Objective:** Build a high-performance, interactive maintenance timeline with complex drag-and-drop and zoom capabilities.
 
 ### Key Implementation Rules:
+*   **Node.js Version:** Use at least Node.js 22.15.0 for local development, CI/CD, and deployment environments. Ensure .nvmrc, Docker images, and build pipelines are aligned with this version.
 *   **State Logic:** Use **Zustand** for all non-persisted UI state (zoom levels, current date view, modal states).
 *   **Database:** Strictly use **Prisma with Neon (PostgreSQL)**. All schema changes must be followed by `npx prisma generate`.
 *   **Timeline Math:** Use **date-fns** for all X-axis calculations. Do not manually calculate milliseconds for dates to avoid timezone bugs.

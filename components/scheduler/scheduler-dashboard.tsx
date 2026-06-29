@@ -5,12 +5,23 @@ import { Wrench } from "lucide-react";
 import { TaskType } from "../../generated/prisma/enums";
 import { SchedulerToolbar } from "./scheduler-toolbar";
 import { TimelineGrid } from "./timeline-grid";
-import { useTranslations } from 'next-intl';
-import LanguageSwitcher from '@/components/language-switcher';
+import { useTranslations } from "next-intl";
+import LanguageSwitcher from "@/components/language-switcher";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useState } from "react";
+import WorkerManagementPage from "@/components/user-management/WorkerManagementPage";
 
 export function SchedulerDashboard() {
   const { entries, equipment } = useSchedulerStore();
-  const t = useTranslations('Dashboard');
+  const t = useTranslations("Dashboard");
 
   const stats = {
     total: entries.length,
@@ -21,6 +32,8 @@ export function SchedulerDashboard() {
     corrective: entries.filter((e) => e.type === TaskType.CORRECTIVE).length,
     inspection: entries.filter((e) => e.type === TaskType.INSPECTION).length,
   };
+
+  const [openWorkers, setOpenWorkers] = useState(false);
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -33,10 +46,10 @@ export function SchedulerDashboard() {
             </div>
             <div>
               <h1 className="text-xl font-semibold text-foreground">
-                {t('title')}
+                {t("title")}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {t('description')}
+                {t("description")}
               </p>
             </div>
           </div>
@@ -46,21 +59,27 @@ export function SchedulerDashboard() {
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500/20 border border-blue-500/40" />
-                <span className="text-muted-foreground">{t('stats.preventive')}</span>
+                <span className="text-muted-foreground">
+                  {t("stats.preventive")}
+                </span>
                 <span className="font-medium text-foreground">
                   {stats.preventive}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40" />
-                <span className="text-muted-foreground">{t('stats.corrective')}</span>
+                <span className="text-muted-foreground">
+                  {t("stats.corrective")}
+                </span>
                 <span className="font-medium text-foreground">
                   {stats.corrective}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500/40" />
-                <span className="text-muted-foreground">{t('stats.inspection')}</span>
+                <span className="text-muted-foreground">
+                  {t("stats.inspection")}
+                </span>
                 <span className="font-medium text-foreground">
                   {stats.inspection}
                 </span>
@@ -71,19 +90,25 @@ export function SchedulerDashboard() {
 
             <div className="flex items-center gap-4 text-sm">
               <div>
-                <span className="text-muted-foreground">{t('stats.equipment')}: </span>
+                <span className="text-muted-foreground">
+                  {t("stats.equipment")}:{" "}
+                </span>
                 <span className="font-medium text-foreground">
                   {equipment.length}
                 </span>
               </div>
               <div>
-                <span className="text-muted-foreground">{t('stats.scheduled')}: </span>
+                <span className="text-muted-foreground">
+                  {t("stats.scheduled")}:{" "}
+                </span>
                 <span className="font-medium text-foreground">
                   {stats.scheduled}
                 </span>
               </div>
               <div>
-                <span className="text-muted-foreground">{t('stats.inProgress')}: </span>
+                <span className="text-muted-foreground">
+                  {t("stats.inProgress")}:{" "}
+                </span>
                 <span className="font-medium text-chart-3">
                   {stats.inProgress}
                 </span>
@@ -92,7 +117,13 @@ export function SchedulerDashboard() {
 
             <div className="h-8 w-px bg-border" />
 
-            <LanguageSwitcher />
+            <div className="flex items-center gap-4">
+              <LanguageSwitcher />
+
+              <div>
+                <WorkerMenu setOpenWorkers={setOpenWorkers} />
+              </div>
+            </div>
           </div>
         </div>
       </header>
@@ -100,12 +131,15 @@ export function SchedulerDashboard() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col p-6 gap-4 overflow-hidden">
         {/* Toolbar */}
-        <SchedulerToolbar />
+        {openWorkers ? null : <SchedulerToolbar />}
 
         {/* Content Area */}
         <div className="flex-1 flex gap-4 overflow-hidden">
-          {/* Timeline Grid */}
-          <TimelineGrid />
+          {openWorkers ? (
+            <WorkerManagementPage onBack={() => setOpenWorkers(false)} />
+          ) : (
+            <TimelineGrid />
+          )}
         </div>
       </main>
 
@@ -113,28 +147,78 @@ export function SchedulerDashboard() {
       <footer className="border-t border-border bg-card px-6 py-3">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-4">
-            <span>{t('footer.clickHint')}</span>
+            <span>{t("footer.clickHint")}</span>
             <span>•</span>
-            <span>{t('footer.dragHint')}</span>
+            <span>{t("footer.dragHint")}</span>
             <span>•</span>
-            <span>{t('footer.zoomHint')}</span>
+            <span>{t("footer.zoomHint")}</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-blue-500" />
-              <span>{t('stats.preventive')}</span>
+              <span>{t("stats.preventive")}</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-red-500" />
-              <span>{t('stats.corrective')}</span>
+              <span>{t("stats.corrective")}</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-amber-500" />
-              <span>{t('stats.inspection')}</span>
+              <span>{t("stats.inspection")}</span>
             </div>
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function WorkerMenu({
+  setOpenWorkers,
+}: {
+  setOpenWorkers: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const t = useTranslations("Dashboard");
+
+  const handleLogout = () => {
+    // Expect an existing logout flow; fallback to a simple POST to /api/auth/logout if available
+    try {
+      fetch("/api/auth/logout", { method: "POST" });
+    } catch (e) {
+      // no-op
+    }
+    // reload to reflect logged out state
+    window.location.reload();
+  };
+
+  return (
+    <div className="flex items-center">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center gap-2 rounded-full hover:bg-accent/20 p-1">
+            <Avatar className="size-8">
+              <AvatarFallback>ME</AvatarFallback>
+            </Avatar>
+          </button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={() => {
+              /* open account */
+            }}
+          >
+            {t("menu.account")}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setOpenWorkers(true)}>
+            {t("menu.workers")}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout} variant="destructive">
+            {t("menu.logout")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

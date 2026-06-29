@@ -14,6 +14,11 @@
       "clickHint": "Clique numa célula para agendar manutenção",
       "dragHint": "Arraste entradas para reagendar",
       "zoomHint": "Use controlos de zoom para mudar a vista"
+    },
+    "menu": {
+      "account": "Conta",
+      "workers": "Trabalhadores",
+      "logout": "Sair"
     }
   },
   "Grid": {
@@ -91,5 +96,37 @@
     "remove": "Remover",
     "edit": "Editar",
     "settings": "Definições"
+  },
+  "Workers": {
+    "title": "Trabalhadores",
+    "description": "Gerencie e atualize os seus trabalhadores aqui.",
+    "backToSchedule": "Voltar para o calendário",
+    "createWorker": "Adicionar trabalhador",
+    "editWorker": "Editar trabalhador",
+    "drawerDescription": "Atualize os detalhes do trabalhador na barra lateral.",
+    "loading": "A carregar...",
+    "noWorkers": "Ainda não há trabalhadores.",
+    "noResults": "Sem resultados.",
+    "deleteWorker": "Apagar trabalhador",
+    "deleteConfirmation": "Tem certeza de que quer apagar {name}? Esta ação não pode ser desfeita.",
+    "thisWorker": "este trabalhador",
+    "delete": "Apagar",
+    "selectAll": "Selecionar todos",
+    "selectRow": "Selecionar linha",
+    "columnName": "Nome",
+    "columnEmail": "Email",
+    "columnPhone": "Telefone/Telemóvel",
+    "columnType": "Tipo",
+    "columnCreated": "Criado a",
+    "fieldName": "Nome",
+    "fieldEmail": "Email",
+    "fieldPhone": "Telefone",
+    "fieldWorkerType": "Tipo de trabalhador",
+    "internal": "Interno",
+    "external": "Externo",
+    "failedDelete": "Falha ao apagar o trabalhador",
+    "failedSave": "Falha ao guardar o trabalhador",
+    "errorNameRequired": "Nome é obrigatório",
+    "errorInvalidEmail": "Email inválido"
   }
 }

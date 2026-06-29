@@ -21,10 +21,14 @@ function DropdownMenuPortal({
 }
 
 function DropdownMenuTrigger({
+  id,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
+  const generatedId = React.useId()
+
   return (
     <DropdownMenuPrimitive.Trigger
+      id={id ?? `dropdown-menu-trigger-${generatedId}`}
       data-slot="dropdown-menu-trigger"
       {...props}
     />
