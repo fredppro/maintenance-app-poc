@@ -42,6 +42,7 @@ import * as z from "zod";
 import { TaskType } from "../../generated/prisma/enums";
 import { useLocale, useTranslations } from 'next-intl'
 import { areIntervalsOverlapping } from "date-fns";
+import { notifyReportPreviewRefresh } from "@/features/report/events";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -85,7 +86,7 @@ export function EditEntryDialog({
   const handleDownloadPDF = async () => {
     setIsDownloading(true);
     try {
-      const response = await fetch(`/api/tasks/${entry.id}/report?locale=${locale}`);
+      const response = await fetch(`/api/tasks/${entry.id}/report?locale=${locale}&mode=download`);
       if (!response.ok) {
         throw new Error('Failed to generate PDF');
       }
@@ -226,6 +227,7 @@ export function EditEntryDialog({
     try {
       // TODO: find a better solution instead of using any
       await updateEntry(entry.id, values as any);
+      notifyReportPreviewRefresh(entry.id);
       toast.success(t('errors.updateSuccess'));
       onOpenChange(false);
     } catch (error) {
