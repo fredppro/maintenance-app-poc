@@ -88,6 +88,8 @@ export function EditEntryDialog({
     try {
       const response = await fetch(`/api/tasks/${entry.id}/report?locale=${locale}&mode=download`);
       if (!response.ok) {
+        const text = await response.text();
+  console.error("PDF API error:", text);
         throw new Error('Failed to generate PDF');
       }
 

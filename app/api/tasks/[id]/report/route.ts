@@ -1,29 +1,28 @@
-import { NextResponse } from "next/server";
-import { buildReportResponse } from "../../../../../features/report/api/route";
+import { buildReportResponse } from "@/features/report/services/report.service";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id } = await params;
+  const { id } = await context.params;
 
-    const url = new URL(request.url);
-
-    const locale = url.searchParams.get("locale") ?? "en";
-
-    const mode: "preview" | "download" =
-      url.searchParams.get("mode") === "download"
-        ? "download"
-        : "preview";
-
-    return await buildReportResponse(id, locale, mode);
-  } catch (error: unknown) {
-    console.error("Error generating PDF:", error);
-
+  if (!id) {
+    console.error("Missing id");
     return NextResponse.json(
-      { success: false, message: "Erro ao gerar o relatório em PDF" },
-      { status: 500 }
+      { message: "Missing id" },
+      { status: 400 }
     );
   }
+
+  const url = new URL(request.url);
+
+  const locale = url.searchParams.get("locale") ?? "en";
+
+  const mode =
+    url.searchParams.get("mode") === "download"
+      ? "download"
+      : "preview";
+
+  return buildReportResponse(id, locale, mode);
 }
