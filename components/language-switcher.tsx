@@ -1,32 +1,34 @@
-'use client';
+"use client";
 
-import {useLocale} from 'next-intl';
-import {usePathname, useRouter} from '@/i18n/routing';
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {Button} from '@/components/ui/button';
-import {Languages} from 'lucide-react';
-import {useParams} from 'next/navigation';
+} from "@/components/ui/dropdown-menu";
+import { APPLICATION_LOCALES } from "@/i18n/config";
+import { AppLocale, getValidLocale } from "@/i18n/locale";
+import { usePathname, useRouter } from "@/i18n/routing";
+import { Languages } from "lucide-react";
+import { useLocale } from "next-intl";
 
 export default function LanguageSwitcher() {
-  const locale = useLocale();
+  const currentLocale = getValidLocale(useLocale());
   const router = useRouter();
   const pathname = usePathname();
-  const params = useParams();
 
   function onSelectChange(nextLocale: string) {
     // @ts-ignore
-    router.replace(pathname, {locale: nextLocale});
+    router.replace(pathname, { locale: nextLocale });
   }
 
-  const locales = [
-    {code: 'en', label: 'English'},
-    {code: 'pt-pt', label: 'Português (PT)'}
-  ];
+  const languages = Object.entries(APPLICATION_LOCALES).map(
+    ([code, config]) => ({
+      code: code as AppLocale,
+      label: config.label,
+    }),
+  );
 
   return (
     <DropdownMenu>
@@ -37,11 +39,11 @@ export default function LanguageSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {locales.map((l) => (
+        {languages.map((l) => (
           <DropdownMenuItem
             key={l.code}
             onClick={() => onSelectChange(l.code)}
-            className={locale === l.code ? 'bg-accent' : ''}
+            className={currentLocale === l.code ? "bg-accent" : ""}
           >
             {l.label}
           </DropdownMenuItem>

@@ -1,15 +1,13 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { getValidLocale } from "@/i18n/locale";
 import { useLocale } from "next-intl";
+import { useCallback, useState } from "react";
 import { useReportPreviewRefresh } from "../hooks/useReportPreviewRefresh";
 
-export function PreviewFrame({
-  taskId,
-}: {
-  taskId: string;
-}) {
-  const locale = useLocale();
+export function PreviewFrame({ taskId }: { taskId: string }) {
+  const locale = getValidLocale(useLocale());
+  
   const [version, setVersion] = useState(0);
 
   const refresh = useCallback(() => {

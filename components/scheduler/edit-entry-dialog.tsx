@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
   Dialog,
   DialogContent,
@@ -29,27 +30,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { notifyReportPreviewRefresh } from "@/features/report/events";
+import { getValidLocale } from "@/i18n/locale";
 import { useSchedulerStore } from "@/lib/scheduler-store";
 import { MaintenanceEntry } from "@/lib/scheduler-types";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { areIntervalsOverlapping } from "date-fns";
 import {
-  Plus,
-  Trash2,
-  Wrench,
   AlertCircle,
   Download,
   Loader2,
+  Plus,
+  Trash2,
+  Wrench,
 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import { useFieldArray, useForm, Controller } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { TaskType } from "../../generated/prisma/enums";
-import { useLocale, useTranslations } from "next-intl";
-import { areIntervalsOverlapping } from "date-fns";
-import { notifyReportPreviewRefresh } from "@/features/report/events";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -84,9 +85,9 @@ export function EditEntryDialog({
 }: EditEntryDialogProps) {
   const { equipment, workers, removeEntry, updateEntry, entries } =
     useSchedulerStore();
-  const locale = useLocale();
+
+  const locale = getValidLocale(useLocale());
   const t = useTranslations("Form");
-  const tCommon = useTranslations("Common");
 
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -131,8 +132,14 @@ export function EditEntryDialog({
     defaultValues: {
       status: entry.status,
       type: entry.type,
-      startTime: new Date(entry.startTime),
-      endTime: new Date(entry.endTime),
+      startTime:
+        typeof entry.startTime === "string"
+          ? new Date(entry.startTime)
+          : entry.startTime,
+      endTime:
+        typeof entry.endTime === "string"
+          ? new Date(entry.endTime)
+          : entry.endTime,
       workerIds: entry.assignments?.map((a) => a.workerId) || [],
       materials:
         entry.materials?.map((m) => ({
@@ -174,8 +181,14 @@ export function EditEntryDialog({
       form.reset({
         status: entry.status,
         type: entry.type,
-        startTime: new Date(entry.startTime),
-        endTime: new Date(entry.endTime),
+        startTime:
+          typeof entry.startTime === "string"
+            ? new Date(entry.startTime)
+            : entry.startTime,
+        endTime:
+          typeof entry.endTime === "string"
+            ? new Date(entry.endTime)
+            : entry.endTime,
         workerIds: entry.assignments?.map((a) => a.workerId) || [],
         materials:
           entry.materials?.map((m) => ({
@@ -513,10 +526,7 @@ export function EditEntryDialog({
             variant="outline"
             size="sm"
             onClick={() =>
-              window.open(
-                `${locale}/preview/${entry.id}`,
-                "_blank",
-              )
+              window.open(`${locale}/preview/${entry.id}`, "_blank")
             }
           >
             Preview

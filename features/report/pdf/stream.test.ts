@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createMaintenanceReportPDFStream } from "./stream";
+import { routing } from "@/i18n/routing";
 
 test("creates a PDF stream for a maintenance task", async () => {
   const entry = {
@@ -22,7 +23,7 @@ test("creates a PDF stream for a maintenance task", async () => {
     materials: [],
   } as any;
 
-  const stream = createMaintenanceReportPDFStream(entry, "en");
+  const stream = createMaintenanceReportPDFStream(entry, routing.defaultLocale);
   const chunks: Buffer[] = [];
 
   for await (const chunk of stream) {

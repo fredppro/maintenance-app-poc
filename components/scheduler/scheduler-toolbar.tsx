@@ -1,37 +1,34 @@
-'use client'
+"use client";
 
-import { useSchedulerStore } from '@/lib/scheduler-store'
-import { ViewMode } from '@/lib/scheduler-types'
-import { Button } from '@/components/ui/button'
-import { ButtonGroup } from '@/components/ui/button-group'
-import {
-  ChevronLeft,
-  ChevronRight,
-  Calendar,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
-} from 'lucide-react'
-import { format } from 'date-fns'
-import { enUS, pt } from 'date-fns/locale'
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { useLocale, useTranslations } from 'next-intl'
-import { useMemo } from 'react'
+} from "@/components/ui/tooltip";
+import { getValidLocale, LOCALE_MAP } from "@/i18n/locale";
+import { useSchedulerStore } from "@/lib/scheduler-store";
+import { ViewMode } from "@/lib/scheduler-types";
+import { format } from "date-fns";
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 
-const viewModeOrder: ViewMode[] = ['day', 'week', 'month', 'year']
+const viewModeOrder: ViewMode[] = ["day", "week", "month", "year"];
 
 export function SchedulerToolbar() {
-  const locale = useLocale()
-  const t = useTranslations('Toolbar')
-  
-  const dateFnsLocale = useMemo(() => {
-    return locale === 'pt-pt' ? pt : enUS
-  }, [locale])
+  const locale = getValidLocale(useLocale());
+  const dateFnsLocale = LOCALE_MAP[locale];
+
+  const t = useTranslations("Toolbar");
 
   const {
     viewMode,
@@ -40,42 +37,46 @@ export function SchedulerToolbar() {
     setCurrentDate,
     navigateForward,
     navigateBackward,
-  } = useSchedulerStore()
+  } = useSchedulerStore();
 
   const formatDateRange = () => {
     switch (viewMode) {
-      case 'day':
-        return format(currentDate, 'EEEE, MMMM d, yyyy', { locale: dateFnsLocale })
-      case 'week':
-        const weekPrefix = locale === 'pt-pt' ? "'Semana de' " : "'Week of' "
-        return format(currentDate, `${weekPrefix}MMMM d, yyyy`, { locale: dateFnsLocale })
-      case 'month':
-        return format(currentDate, 'MMMM yyyy', { locale: dateFnsLocale })
-      case 'year':
-        return format(currentDate, 'yyyy', { locale: dateFnsLocale })
+      case "day":
+        return format(currentDate, "EEEE, MMMM d, yyyy", {
+          locale: dateFnsLocale,
+        });
+      case "week":
+        const formattedDateToken = format(currentDate, "MMMM d, yyyy", {
+          locale: dateFnsLocale,
+        });
+        return t("weekRange", { date: formattedDateToken });
+      case "month":
+        return format(currentDate, "MMMM yyyy", { locale: dateFnsLocale });
+      case "year":
+        return format(currentDate, "yyyy", { locale: dateFnsLocale });
     }
-  }
+  };
 
   const handleZoomIn = () => {
-    const currentIndex = viewModeOrder.indexOf(viewMode)
+    const currentIndex = viewModeOrder.indexOf(viewMode);
     if (currentIndex > 0) {
-      setViewMode(viewModeOrder[currentIndex - 1])
+      setViewMode(viewModeOrder[currentIndex - 1]);
     }
-  }
+  };
 
   const handleZoomOut = () => {
-    const currentIndex = viewModeOrder.indexOf(viewMode)
+    const currentIndex = viewModeOrder.indexOf(viewMode);
     if (currentIndex < viewModeOrder.length - 1) {
-      setViewMode(viewModeOrder[currentIndex + 1])
+      setViewMode(viewModeOrder[currentIndex + 1]);
     }
-  }
+  };
 
   const handleToday = () => {
-    setCurrentDate(new Date())
-  }
+    setCurrentDate(new Date());
+  };
 
-  const canZoomIn = viewModeOrder.indexOf(viewMode) > 0
-  const canZoomOut = viewModeOrder.indexOf(viewMode) < viewModeOrder.length - 1
+  const canZoomIn = viewModeOrder.indexOf(viewMode) > 0;
+  const canZoomOut = viewModeOrder.indexOf(viewMode) < viewModeOrder.length - 1;
 
   return (
     <TooltipProvider>
@@ -85,22 +86,26 @@ export function SchedulerToolbar() {
           <ButtonGroup>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" onClick={navigateBackward}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={navigateBackward}
+                >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Previous</TooltipContent>
             </Tooltip>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="outline" size="icon" onClick={handleToday}>
                   <RotateCcw className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{t('today')}</TooltipContent>
+              <TooltipContent>{t("today")}</TooltipContent>
             </Tooltip>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="outline" size="icon" onClick={navigateForward}>
@@ -124,7 +129,7 @@ export function SchedulerToolbar() {
           {viewModeOrder.map((mode) => (
             <Button
               key={mode}
-              variant={viewMode === mode ? 'default' : 'outline'}
+              variant={viewMode === mode ? "default" : "outline"}
               onClick={() => setViewMode(mode)}
               className="capitalize"
             >
@@ -149,7 +154,7 @@ export function SchedulerToolbar() {
               </TooltipTrigger>
               <TooltipContent>Zoom In</TooltipContent>
             </Tooltip>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -167,5 +172,5 @@ export function SchedulerToolbar() {
         </div>
       </div>
     </TooltipProvider>
-  )
+  );
 }
