@@ -1,15 +1,22 @@
 import { SchedulerDashboard } from '@/components/scheduler/scheduler-dashboard'
 import { StoreInitializer } from '@/components/scheduler/store-initializer'
+import { AppLocale, localeSchema } from '@/i18n/locale';
 import { getEquipment, getTasks, getWorkers } from '@/lib/actions'
 import { setRequestLocale } from 'next-intl/server';
+import { notFound } from 'next/navigation';
 
 export default async function Home({
   params
 }: {
-  params: Promise<{locale: string}>;
+  params: Promise<{locale: AppLocale}>;
 }) {
   const {locale} = await params;
-  // Enable static rendering
+
+  const parsedLocale = localeSchema.safeParse(locale);
+  if (!parsedLocale.success) {
+    notFound();
+  }
+  
   setRequestLocale(locale);
 
   const [equipment, tasks, workers] = await Promise.all([

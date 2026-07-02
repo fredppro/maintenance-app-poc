@@ -36,6 +36,7 @@
     "today": "Hoje",
     "day": "Dia",
     "week": "Semana",
+    "weekRange": "Semana de {date}",
     "month": "Mês",
     "year": "Ano"
   },

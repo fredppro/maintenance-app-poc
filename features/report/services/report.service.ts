@@ -3,8 +3,9 @@ import { NextResponse } from "next/server";
 import { Readable } from "node:stream";
 import { getMaintenanceTask } from "../server/get-task";
 import { createMaintenanceReportPDFStream } from "../pdf/stream";
+import { AppLocale } from "@/i18n/locale";
 
-export async function buildMaintenanceReportPDF(taskId: string, locale: string) {
+export async function buildMaintenanceReportPDF(taskId: string, locale: AppLocale) {
   const task = await getMaintenanceTask(taskId);
 
   if (!task) {
@@ -21,7 +22,7 @@ export async function buildMaintenanceReportPDF(taskId: string, locale: string) 
 
 export async function buildReportResponse(
   taskId: string,
-  locale: string,
+  locale: AppLocale,
   mode: "preview" | "download"
 ) {
   const { stream, filename } = await buildMaintenanceReportPDF(taskId, locale);

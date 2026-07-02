@@ -2,8 +2,11 @@ import PDFDocument from "pdfkit";
 import { MaintenanceEntry } from "./scheduler-types";
 import enMessages from "../messages/en.json";
 import ptMessages from "../messages/pt-pt.json";
+import { AppLocale } from "@/i18n/locale";
+import { routing } from "@/i18n/routing";
+import { APPLICATION_LOCALES } from "@/i18n/config";
 
-const messagesMap: Record<string, typeof enMessages> = {
+const messagesMap: Record<AppLocale, typeof enMessages> = {
   en: enMessages,
   "pt-pt": ptMessages,
 };
@@ -19,7 +22,7 @@ function renderMaintenanceReport(
   doc: PDFKit.PDFDocument,
   entry: MaintenanceEntry,
   t: any,
-  dateLocale: string,
+  dateLocale: AppLocale,
 ) {
   // 1. Header Block (Company Information & Vector Logo)
   // Vector logo: Draw a beautiful slate-colored industrial gear
@@ -498,13 +501,9 @@ export { renderMaintenanceReport };
 
 export function createMaintenanceReportPDF(
   entry: MaintenanceEntry,
-  locale = "en",
+  locale: AppLocale = routing.defaultLocale,
 ) {
-  const normalizedLocale =
-    locale && messagesMap[locale.toLowerCase()] ? locale.toLowerCase() : "en";
-
-  const t = messagesMap[normalizedLocale].PDF;
-  const dateLocale = normalizedLocale === "pt-pt" ? "pt-PT" : "en-US";
+  const t = messagesMap[locale].PDF;
 
   const doc = new PDFDocument({
     size: "A4",
@@ -512,7 +511,7 @@ export function createMaintenanceReportPDF(
     bufferPages: true,
   });
 
-  renderMaintenanceReport(doc, entry, t, dateLocale);
+  renderMaintenanceReport(doc, entry, t, locale);
 
   doc.end();
   return doc;

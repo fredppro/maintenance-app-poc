@@ -36,6 +36,7 @@
     "today": "Today",
     "day": "Day",
     "week": "Week",
+    "weekRange": "Week of {date}",
     "month": "Month",
     "year": "Year"
   },
