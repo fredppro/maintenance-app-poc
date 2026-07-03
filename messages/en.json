@@ -68,6 +68,7 @@
     "itemName": "Item Name",
     "reference": "Reference",
     "quantity": "Qty",
+    "price": "Price",
     "noMaterials": "No materials added yet.",
     "submit": "Schedule",
     "submitting": "Scheduling...",
@@ -169,6 +170,7 @@
       "item": "MATERIAL / CONSUMABLE",
       "reference": "REFERENCE",
       "quantity": "QTY",
+      "price": "PRICE",
       "noMaterials": "No materials or consumables registered for this intervention."
     },
     "summary": {

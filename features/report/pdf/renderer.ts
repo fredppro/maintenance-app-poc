@@ -307,8 +307,12 @@ function renderMaintenanceReport(
     .font("Helvetica-Bold")
     .fontSize(7.5)
     .text(t.materials.item, 42, currentY + 3)
-    .text(t.materials.reference, 320, currentY + 3)
-    .text(t.materials.quantity, 470, currentY + 3, {
+    .text(t.materials.reference, 242, currentY + 3)
+    .text(t.materials.quantity, 392, currentY + 3, {
+      align: "right",
+      width: 80,
+    })
+    .text(t.materials.price, 472, currentY + 3, {
       align: "right",
       width: 80,
     });
@@ -328,17 +332,26 @@ function renderMaintenanceReport(
         doc.fillColor("#f8fafc").rect(36, currentY, 523, 16).fill();
       }
 
+      const formattedPrice =
+        material.price != null
+          ? (material.price as any).toFixed(2)
+          : "—";
+
       doc
         .fillColor("#0f172a")
         .font("Helvetica")
         .fontSize(8)
-        .text(material.name, 42, currentY + 4, { width: 260, lineBreak: false })
-        .text(material.reference || "-", 320, currentY + 4, {
+        .text(material.name, 42, currentY + 4, { width: 200, lineBreak: false })
+        .text(material.reference || "-", 242, currentY + 4, {
           width: 140,
           lineBreak: false,
         })
         .font("Helvetica-Bold")
-        .text(String(material.quantity), 470, currentY + 4, {
+        .text(String(material.quantity), 392, currentY + 4, {
+          align: "right",
+          width: 80,
+        })
+        .text(formattedPrice, 472, currentY + 4, {
           align: "right",
           width: 80,
         });

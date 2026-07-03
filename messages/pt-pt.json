@@ -68,6 +68,7 @@
     "itemName": "Nome do Item",
     "reference": "Referência",
     "quantity": "Qtd",
+    "price": "Preço",
     "noMaterials": "Nenhum material adicionado.",
     "submit": "Agendar",
     "submitting": "A agendar...",
@@ -169,6 +170,7 @@
       "item": "MATERIAL / CONSUMÍVEL",
       "reference": "REFERÊNCIA",
       "quantity": "QTD",
+      "price": "PREÇO",
       "noMaterials": "Nenhum material ou consumível registado para esta intervenção."
     },
     "summary": {

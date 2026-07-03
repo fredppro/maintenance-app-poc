@@ -34,7 +34,7 @@ import { notifyReportPreviewRefresh } from "@/features/report/events";
 import { getValidLocale } from "@/i18n/locale";
 import { useSchedulerStore } from "@/lib/scheduler-store";
 import { MaintenanceEntry } from "@/lib/scheduler-types";
-import { cn } from "@/lib/utils";
+import { cn, getCurrencySymbol } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { areIntervalsOverlapping } from "date-fns";
 import {
@@ -59,6 +59,20 @@ const materialSchema = z.object({
     .number()
     .min(0.1, "Quantity must be > 0")
     .multipleOf(0.1, "Only one decimal place allowed"),
+  price: z.preprocess(
+    (value) =>
+      value === '' || value === null || value === undefined || Number.isNaN(Number(value))
+        ? undefined
+        : Number(value),
+    z
+      .number()
+      .min(0, "Price must be ≥ 0")
+      .refine(
+        (value) => Math.round(value * 100) === value * 100,
+        "Only two decimal places allowed",
+      )
+      .optional(),
+  ),
 });
 
 const editFormSchema = z.object({
@@ -146,6 +160,10 @@ export function EditEntryDialog({
           name: m.name,
           reference: m.reference || "",
           quantity: m.quantity,
+          price:
+            m.price !== undefined && m.price !== null
+              ? Number(m.price)
+              : undefined,
         })) || [],
     },
   });
@@ -195,6 +213,7 @@ export function EditEntryDialog({
             name: m.name,
             reference: m.reference || "",
             quantity: m.quantity,
+            price: m.price !== undefined && m.price !== null ? Number(m.price) : undefined,
           })) || [],
       });
     }
@@ -408,7 +427,7 @@ export function EditEntryDialog({
                 variant="outline"
                 size="sm"
                 className="h-8 gap-1"
-                onClick={() => append({ name: "", reference: "", quantity: 1 })}
+                onClick={() => append({ name: "", reference: "", quantity: 1, price: undefined })}
               >
                 <Plus className="h-4 w-4" />
                 {t("addMaterial")}
@@ -420,12 +439,15 @@ export function EditEntryDialog({
                 <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
-                      <TableHead className="w-[45%]">{t("itemName")}</TableHead>
-                      <TableHead className="w-[25%]">
+                      <TableHead className="w-[35%]">{t("itemName")}</TableHead>
+                      <TableHead className="w-[20%]">
                         {t("reference")}
                       </TableHead>
-                      <TableHead className="w-[20%] text-right">
+                      <TableHead className="w-[15%] text-right">
                         {t("quantity")}
+                      </TableHead>
+                      <TableHead className="w-[20%] text-right">
+                        {t("price")} ({getCurrencySymbol(locale)})
                       </TableHead>
                       <TableHead className="w-[10%]"></TableHead>
                     </TableRow>
@@ -476,6 +498,25 @@ export function EditEntryDialog({
                                 form.formState.errors.materials[index]?.quantity
                                   ?.message
                               }
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="p-2 text-right">
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            {...form.register(
+                              `materials.${index}.price` as const,
+                              { valueAsNumber: true },
+                            )}
+                            className="h-8 text-xs text-right"
+                          />
+                          {form.formState.errors.materials?.[index]?.price && (
+                            <p className="text-[10px] text-destructive mt-1">
+                              {form.formState.errors.materials[index]?.price
+                                ?.message}
                             </p>
                           )}
                         </TableCell>

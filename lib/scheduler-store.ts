@@ -46,6 +46,7 @@ interface SchedulerState {
     endTime: Date;
     equipmentId: string;
     workerIds: string[];
+    materials?: { name: string; reference?: string; quantity: number; price?: number }[];
   }) => Promise<void>;
   updateEntry: (
     id: string,

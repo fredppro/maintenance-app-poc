@@ -118,7 +118,7 @@ export async function createTask(data: {
   equipmentId: string;
   status?: string;
   workerIds: string[];
-  materials?: { name: string; reference?: string; quantity: number }[];
+  materials?: { name: string; reference?: string; quantity: number; price?: number }[];
 }) {
   const { workerIds, materials, ...taskData } = data;
   const task = await prisma.maintenanceTask.create({
@@ -134,6 +134,7 @@ export async function createTask(data: {
           name: m.name,
           reference: m.reference,
           quantity: m.quantity,
+          price: m.price !== undefined ? m.price.toFixed(2) : undefined,
         })),
       },
     },
@@ -162,7 +163,7 @@ export async function updateTask(
     equipmentId: string;
     status: string;
     workerIds: string[];
-    materials: { name: string; reference?: string; quantity: number }[];
+    materials: { name: string; reference?: string; quantity: number; price?: number }[];
   }>,
 ) {
   const { workerIds, materials, ...taskData } = data;
@@ -187,18 +188,19 @@ export async function updateTask(
 
     if (materials) {
       // Remove old materials
-      await tx.materialConsumed.deleteMany({
+      await tx.material.deleteMany({
         where: { taskId: id },
       });
 
       // Add new materials
       if (materials.length > 0) {
-        await tx.materialConsumed.createMany({
+        await tx.material.createMany({
           data: materials.map((m) => ({
             taskId: id,
             name: m.name,
             reference: m.reference,
             quantity: m.quantity,
+            price: m.price !== undefined ? m.price.toFixed(2) : undefined,
           })),
         });
       }
