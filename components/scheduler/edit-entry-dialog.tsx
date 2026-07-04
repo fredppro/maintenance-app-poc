@@ -51,6 +51,14 @@ import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { MaterialUnit, TaskType } from "../../generated/prisma/enums";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "../ui/combobox";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -526,21 +534,28 @@ export function EditEntryDialog({
                             control={form.control}
                             name={`materials.${index}.unit` as const}
                             render={({ field }) => (
-                              <Select
+                              <Combobox
+                                items={Object.values(MaterialUnit)}
                                 value={field.value ?? MaterialUnit.PC}
                                 onValueChange={field.onChange}
                               >
-                                <SelectTrigger className="h-8 text-xs w-full min-w-[110px]">
-                                  <SelectValue placeholder={t("selectUnit")} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Object.values(MaterialUnit).map((unit) => (
-                                    <SelectItem key={unit} value={unit}>
-                                      {t(`materialUnits.${unit}`)}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                                <ComboboxInput
+                                  placeholder={t("selectUnit")}
+                                  className="h-8 text-xs w-full min-w-[110px]"
+                                />
+                                <ComboboxContent>
+                                  <ComboboxEmpty>
+                                    {t("noMaterials")}
+                                  </ComboboxEmpty>
+                                  <ComboboxList>
+                                    {(unit) => (
+                                      <ComboboxItem key={unit} value={unit}>
+                                        {t(`materialUnits.${unit}`)}
+                                      </ComboboxItem>
+                                    )}
+                                  </ComboboxList>
+                                </ComboboxContent>
+                              </Combobox>
                             )}
                           />
                         </TableCell>
