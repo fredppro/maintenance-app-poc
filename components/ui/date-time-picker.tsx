@@ -1,6 +1,6 @@
 "use client";
 
-import { format, setHours, setMinutes } from "date-fns";
+import { format, isAfter, isBefore, setHours, setMinutes } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { APPLICATION_LOCALES } from "@/i18n/config";
 import { AppLocale, LOCALE_MAP } from "@/i18n/locale";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
-import { APPLICATION_LOCALES } from "@/i18n/config";
+import { useEffect, useMemo, useState } from "react";
 
 interface DateTimePickerProps {
   date?: Date;
@@ -23,6 +23,10 @@ interface DateTimePickerProps {
   locale: AppLocale;
   placeholder?: string;
   hasError?: boolean;
+  defaultMonth?: Date;
+  disabled?: React.ComponentProps<typeof Calendar>["disabled"];
+  minDate?: Date;
+  maxDate?: Date;
 }
 
 export function DateTimePicker({
@@ -31,11 +35,18 @@ export function DateTimePicker({
   locale,
   placeholder,
   hasError,
+  defaultMonth,
+  disabled,
+  minDate,
+  maxDate,
 }: DateTimePickerProps) {
   const t = useTranslations("Form");
 
   const appLocale = APPLICATION_LOCALES[locale];
   const dateFnsLocale = LOCALE_MAP[locale];
+
+  // Safely determine our structural anchor month (Passed default > actual date > fallback today)
+  const anchorMonth = defaultMonth || date || new Date();
 
   const [hours, setHoursState] = useState(
     date ? format(date, "HH", { locale: dateFnsLocale }) : "00",
@@ -44,12 +55,31 @@ export function DateTimePicker({
     date ? format(date, "mm", { locale: dateFnsLocale }) : "00",
   );
 
+  // Keep track of what month the calendar component is viewing
+  const [currentMonth, setCurrentMonth] = useState<Date>(anchorMonth);
+
   useEffect(() => {
     if (date) {
-      setHoursState(format(date, "HH", { locale: dateFnsLocale }));
-      setMinutesState(format(date, "mm", { locale: dateFnsLocale }));
+      const parsedDate = date instanceof Date ? date : new Date(date);
+
+      if (!isNaN(parsedDate.getTime())) {
+        setHoursState(format(parsedDate, "HH", { locale: dateFnsLocale }));
+        setMinutesState(format(parsedDate, "mm", { locale: dateFnsLocale }));
+        setCurrentMonth(parsedDate);
+      }
+    } else if (defaultMonth) {
+      setCurrentMonth(defaultMonth);
     }
-  }, [date, dateFnsLocale]);
+  }, [date, defaultMonth, dateFnsLocale]);
+
+  const isTimeOutOfBounds = useMemo(() => {
+    if (!date || isNaN(date.getTime())) return false;
+    if (minDate && isBefore(date, minDate)) return true;
+    if (maxDate && isAfter(date, maxDate)) return true;
+    return false;
+  }, [date, minDate, maxDate]);
+
+  const displayError = hasError || isTimeOutOfBounds;
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
@@ -64,8 +94,8 @@ export function DateTimePicker({
     const cleanValue = value.replace(/\D/g, "");
     const val = cleanValue.slice(-2);
 
-    // Base date to modify: use current selected date or fallback to today
-    const baseDate = date ? new Date(date) : new Date();
+    // FIXED: Instead of defaulting blindly to today's date (July 2026), fall back to anchorMonth
+    const baseDate = date ? new Date(date) : new Date(anchorMonth);
 
     if (type === "hours") {
       setHoursState(val);
@@ -87,21 +117,23 @@ export function DateTimePicker({
   };
 
   const handleBlur = (type: "hours" | "minutes") => {
-    const baseDate = date ? new Date(date) : new Date();
+    const baseDate = date ? new Date(date) : new Date(anchorMonth);
+    let targetDate =
+      type === "hours"
+        ? setHours(baseDate, Math.min(Math.max(parseInt(hours) || 0, 0), 23))
+        : setMinutes(
+            baseDate,
+            Math.min(Math.max(parseInt(minutes) || 0, 0), 59),
+          );
 
-    if (type === "hours") {
-      const h = parseInt(hours) || 0;
-      const clampedH = Math.min(Math.max(h, 0), 23);
-      const finalH = clampedH.toString().padStart(2, "0");
-      setHoursState(finalH);
-      setDate(setHours(baseDate, clampedH));
-    } else {
-      const m = parseInt(minutes) || 0;
-      const clampedM = Math.min(Math.max(m, 0), 59);
-      const finalM = clampedM.toString().padStart(2, "0");
-      setMinutesState(finalM);
-      setDate(setMinutes(baseDate, clampedM));
-    }
+    // One-liner boundary enforcement (Clamping)
+    if (minDate && isBefore(targetDate, minDate))
+      targetDate = new Date(minDate);
+    if (maxDate && isAfter(targetDate, maxDate)) targetDate = new Date(maxDate);
+
+    setHoursState(format(targetDate, "HH", { locale: dateFnsLocale }));
+    setMinutesState(format(targetDate, "mm", { locale: dateFnsLocale }));
+    setDate(targetDate);
   };
 
   return (
@@ -112,14 +144,14 @@ export function DateTimePicker({
           className={cn(
             "w-full justify-start text-left font-normal h-9 px-3",
             !date && "text-muted-foreground",
-            hasError &&
+            displayError &&
               "border-destructive text-destructive focus-visible:ring-destructive",
           )}
         >
           <CalendarIcon
             className={cn(
               "mr-2 h-4 w-4 opacity-50",
-              hasError && "text-destructive opacity-100",
+              displayError && "text-destructive opacity-100",
             )}
           />
           {date ? (
@@ -141,11 +173,14 @@ export function DateTimePicker({
             mode="single"
             selected={date}
             onSelect={handleDateSelect}
-            initialFocus
+            autoFocus
+            disabled={disabled}
             locale={dateFnsLocale}
             captionLayout="dropdown"
             startMonth={new Date(2020, 0)}
             endMonth={new Date(2035, 11)}
+            month={currentMonth}
+            onMonthChange={setCurrentMonth}
           />
         </div>
         <div className="p-3 flex flex-col md:border-l border-t md:border-t-0 border-border gap-4 bg-muted/20 min-w-[120px]">
@@ -153,13 +188,13 @@ export function DateTimePicker({
             <Clock
               className={cn(
                 "h-4 w-4 text-muted-foreground",
-                hasError && "text-destructive",
+                displayError && "text-destructive",
               )}
             />
             <span
               className={cn(
                 "text-xs font-semibold uppercase tracking-wider text-muted-foreground",
-                hasError && "text-destructive",
+                displayError && "text-destructive",
               )}
             >
               {t("time")}
@@ -170,7 +205,7 @@ export function DateTimePicker({
               <span
                 className={cn(
                   "text-[9px] text-muted-foreground uppercase font-medium px-1",
-                  hasError && "text-destructive",
+                  displayError && "text-destructive",
                 )}
               >
                 {t("hours")}
@@ -182,7 +217,7 @@ export function DateTimePicker({
                 onFocus={(e) => e.target.select()}
                 className={cn(
                   "w-16 h-8 text-center p-0 text-xs focus-visible:ring-1 bg-background",
-                  hasError &&
+                  displayError &&
                     "border-destructive text-destructive focus-visible:ring-destructive",
                 )}
                 inputMode="numeric"
@@ -192,7 +227,7 @@ export function DateTimePicker({
               <span
                 className={cn(
                   "text-[9px] text-muted-foreground uppercase font-medium px-1",
-                  hasError && "text-destructive",
+                  displayError && "text-destructive",
                 )}
               >
                 {t("minutes")}
@@ -204,7 +239,7 @@ export function DateTimePicker({
                 onFocus={(e) => e.target.select()}
                 className={cn(
                   "w-16 h-8 text-center p-0 text-xs focus-visible:ring-1 bg-background",
-                  hasError &&
+                  displayError &&
                     "border-destructive text-destructive focus-visible:ring-destructive",
                 )}
                 inputMode="numeric"

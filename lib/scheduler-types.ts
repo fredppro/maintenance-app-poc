@@ -26,3 +26,16 @@ export interface TimelineCell {
   date: Date
   equipmentId: string
 }
+
+export interface WorkerLogPayload {
+  workerId: string;
+  startTime: Date;
+  endTime: Date;
+}
+
+export type UpdateEntryPayload = Partial<
+  MaintenanceEntry & {
+    workerIds: string[];
+    workerLogs: WorkerLogPayload[];
+  }
+>;

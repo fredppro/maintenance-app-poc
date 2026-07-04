@@ -118,7 +118,13 @@ export async function createTask(data: {
   equipmentId: string;
   status?: string;
   workerIds: string[];
-  materials?: { name: string; reference?: string; quantity: number; unit?: MaterialUnit; price?: number }[];
+  materials?: {
+    name: string;
+    reference?: string;
+    quantity: number;
+    unit?: MaterialUnit;
+    price?: number;
+  }[];
 }) {
   const { workerIds, materials, ...taskData } = data;
   const task = await prisma.maintenanceTask.create({
@@ -164,19 +170,41 @@ export async function updateTask(
     equipmentId: string;
     status: string;
     workerIds: string[];
-    materials: { name: string; reference?: string; quantity: number; unit?: MaterialUnit; price?: number }[];
+    workerLogs: { workerId: string; startTime: Date; endTime: Date }[];
+    materials: {
+      name: string;
+      reference?: string;
+      quantity: number;
+      unit?: MaterialUnit;
+      price?: number;
+    }[];
   }>,
 ) {
-  const { workerIds, materials, ...taskData } = data;
+  const { workerIds, workerLogs, materials, ...taskData } = data;
 
   const task = await prisma.$transaction(async (tx) => {
-    if (workerIds) {
-      // Remove old assignments
+    // If workerLogs are explicitly passed, overwrite the assignment entries with times
+    if (workerLogs) {
       await tx.maintenanceTaskAssignment.deleteMany({
         where: { taskId: id },
       });
 
-      // Add new assignments
+      if (workerLogs.length > 0) {
+        await tx.maintenanceTaskAssignment.createMany({
+          data: workerLogs.map((log) => ({
+            taskId: id,
+            workerId: log.workerId,
+            startTime: log.startTime, // ✅ Persists timestamps to the assignment table
+            endTime: log.endTime,
+          })),
+        });
+      }
+    } else if (workerIds) {
+      // Fallback for primitive updates (like simple drag-and-drop calendars)
+      await tx.maintenanceTaskAssignment.deleteMany({
+        where: { taskId: id },
+      });
+
       if (workerIds.length > 0) {
         await tx.maintenanceTaskAssignment.createMany({
           data: workerIds.map((workerId) => ({

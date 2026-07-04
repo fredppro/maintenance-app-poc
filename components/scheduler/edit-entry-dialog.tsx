@@ -59,7 +59,11 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "../ui/combobox";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "../ui/input-group";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -88,14 +92,59 @@ const materialSchema = z.object({
   ),
 });
 
-const editFormSchema = z.object({
-  status: z.string(),
-  type: z.nativeEnum(TaskType),
+const workerLogSchema = z.object({
+  workerId: z.string(),
   startTime: z.date(),
   endTime: z.date(),
-  workerIds: z.array(z.string()).min(1, "Select at least one worker"),
-  materials: z.array(materialSchema).optional(),
 });
+
+const editFormSchema = z
+  .object({
+    status: z.string(),
+    type: z.nativeEnum(TaskType),
+    startTime: z.date(),
+    endTime: z.date(),
+    workerIds: z.array(z.string()),
+    workerLogs: z.array(workerLogSchema).optional(),
+    materials: z.array(materialSchema).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.endTime <= data.startTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "End time must be after start time",
+        path: ["endTime"],
+      });
+    }
+
+    if (data.status === "completed" && data.workerLogs) {
+      data.workerLogs.forEach((log, index) => {
+        if (log.endTime <= log.startTime) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Worker end time must be after start time",
+            path: ["workerLogs", index, "endTime"],
+          });
+        }
+
+        if (log.startTime < data.startTime) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Cannot log time before the overall task starts",
+            path: ["workerLogs", index, "startTime"],
+          });
+        }
+
+        if (log.endTime > data.endTime) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Cannot log time after the overall task ends",
+            path: ["workerLogs", index, "endTime"],
+          });
+        }
+      });
+    }
+  });
 
 type EditFormValues = z.infer<typeof editFormSchema>;
 
@@ -154,20 +203,26 @@ export function EditEntryDialog({
 
   const equip = equipment.find((e) => e.id === entry.equipmentId);
 
+  const parseEntryDate = (dateVal: any) =>
+    typeof dateVal === "string" ? new Date(dateVal) : dateVal;
+
+  const initialStartTime = parseEntryDate(entry.startTime);
+  const initialEndTime = parseEntryDate(entry.endTime);
+
   const form = useForm<EditFormValues>({
     resolver: zodResolver(editFormSchema),
     defaultValues: {
       status: entry.status,
       type: entry.type,
-      startTime:
-        typeof entry.startTime === "string"
-          ? new Date(entry.startTime)
-          : entry.startTime,
-      endTime:
-        typeof entry.endTime === "string"
-          ? new Date(entry.endTime)
-          : entry.endTime,
+      startTime: initialStartTime,
+      endTime: initialEndTime,
       workerIds: entry.assignments?.map((a) => a.workerId) || [],
+      workerLogs:
+        entry.assignments?.map((a) => ({
+          workerId: a.workerId,
+          startTime: a.startTime ? new Date(a.startTime) : initialStartTime,
+          endTime: a.endTime ? new Date(a.endTime) : initialEndTime,
+        })) || [],
       materials:
         entry.materials?.map((m) => ({
           name: m.name,
@@ -182,13 +237,59 @@ export function EditEntryDialog({
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const {
+    fields: materialFields,
+    append: appendMaterial,
+    remove: removeMaterial,
+  } = useFieldArray({
     control: form.control,
     name: "materials",
   });
 
+  const { fields: workerLogFields, replace: replaceWorkerLogs } = useFieldArray(
+    {
+      control: form.control,
+      name: "workerLogs",
+    },
+  );
+
+  const watchStatus = form.watch("status");
   const watchStartTime = form.watch("startTime");
   const watchEndTime = form.watch("endTime");
+  const watchWorkerIds = form.watch("workerIds");
+
+  // Serialize IDs into a primitive string key to prevent the sync effect from tracking shallow array instances
+  const workerIdsKey = useMemo(
+    () => (watchWorkerIds || []).join(","),
+    [watchWorkerIds],
+  );
+
+  // Decoupled log sync: stops constantly running and wiping element states on every single date/time update
+  useEffect(() => {
+    const currentWorkerIds = watchWorkerIds || [];
+    const currentLogs = form.getValues("workerLogs") || [];
+
+    // Evaluate structural changes. If workers match completely, skip replaceWorkerLogs entirely
+    const needsSync =
+      currentWorkerIds.length !== currentLogs.length ||
+      currentWorkerIds.some((id, idx) => currentLogs[idx]?.workerId !== id);
+
+    if (!needsSync) return;
+
+    // Map remaining workers, or empty array if they are completely removed
+    const newLogs = currentWorkerIds.map((id) => {
+      const existingLog = currentLogs.find((log) => log.workerId === id);
+      return (
+        existingLog || {
+          workerId: id,
+          startTime: form.getValues("startTime") || initialStartTime,
+          endTime: form.getValues("endTime") || initialEndTime,
+        }
+      );
+    });
+
+    replaceWorkerLogs(newLogs);
+  }, [workerIdsKey, replaceWorkerLogs, initialStartTime, initialEndTime, form]);
 
   const hasConflict = useMemo(() => {
     if (!watchStartTime || !watchEndTime || watchEndTime <= watchStartTime) {
@@ -196,9 +297,7 @@ export function EditEntryDialog({
     }
 
     return entries.some((e) => {
-      // Don't conflict with itself
       if (e.id === entry.id) return false;
-      // Only check same equipment
       if (e.equipmentId !== entry.equipmentId) return false;
 
       return areIntervalsOverlapping(
@@ -210,18 +309,21 @@ export function EditEntryDialog({
 
   useEffect(() => {
     if (open && !form.formState.isSubmitting) {
+      const currentStartTime = parseEntryDate(entry.startTime);
+      const currentEndTime = parseEntryDate(entry.endTime);
+
       form.reset({
         status: entry.status,
         type: entry.type,
-        startTime:
-          typeof entry.startTime === "string"
-            ? new Date(entry.startTime)
-            : entry.startTime,
-        endTime:
-          typeof entry.endTime === "string"
-            ? new Date(entry.endTime)
-            : entry.endTime,
+        startTime: currentStartTime,
+        endTime: currentEndTime,
         workerIds: entry.assignments?.map((a) => a.workerId) || [],
+        workerLogs:
+          entry.assignments?.map((a) => ({
+            workerId: a.workerId,
+            startTime: a.startTime ? new Date(a.startTime) : currentStartTime,
+            endTime: a.endTime ? new Date(a.endTime) : currentEndTime,
+          })) || [],
         materials:
           entry.materials?.map((m) => ({
             name: m.name,
@@ -277,18 +379,12 @@ export function EditEntryDialog({
   };
 
   const onSave = async (values: EditFormValues) => {
-    if (values.endTime <= values.startTime) {
-      toast.error(t("errors.endAfterStart"));
-      return;
-    }
-
     if (hasConflict) {
       toast.error(t("errors.conflict"));
       return;
     }
 
     try {
-      // TODO: find a better solution instead of using any
       await updateEntry(entry.id, values as any);
       notifyReportPreviewRefresh(entry.id);
       toast.success(t("errors.updateSuccess"));
@@ -305,7 +401,7 @@ export function EditEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl lg:max-w-2xl">
+      <DialogContent className="sm:max-w-xl lg:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wrench className="w-4 h-4" />
@@ -322,16 +418,15 @@ export function EditEntryDialog({
         <form
           id="maintenance-form"
           onSubmit={form.handleSubmit(onSave)}
-          className="space-y-4 py-4 -mx-4 max-h-[50vh] overflow-y-auto px-4"
+          className="space-y-4 py-4 -mx-4 max-h-[60vh] overflow-y-auto px-4"
         >
-          {/* Status moved to top and integrated into form state */}
           <div className="space-y-2 pb-2 border-b">
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               {t("status")}
             </Label>
             <div className="flex gap-2">
               {["scheduled", "in-progress", "completed"].map((status) => {
-                const isActive = form.watch("status") === status;
+                const isActive = watchStatus === status;
                 return (
                   <Button
                     key={status}
@@ -369,10 +464,15 @@ export function EditEntryDialog({
                     setDate={field.onChange}
                     locale={locale}
                     placeholder={t("pickDate")}
-                    hasError={hasConflict}
+                    hasError={hasConflict || !!form.formState.errors.startTime}
                   />
                 )}
               />
+              {form.formState.errors.startTime && (
+                <p className="text-[10px] text-destructive font-medium mt-1">
+                  {form.formState.errors.startTime.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -388,10 +488,15 @@ export function EditEntryDialog({
                     setDate={field.onChange}
                     locale={locale}
                     placeholder={t("pickDate")}
-                    hasError={hasConflict}
+                    hasError={hasConflict || !!form.formState.errors.endTime}
                   />
                 )}
               />
+              {form.formState.errors.endTime && (
+                <p className="text-[10px] text-destructive font-medium mt-1">
+                  {form.formState.errors.endTime.message}
+                </p>
+              )}
             </div>
           </div>
 
@@ -431,11 +536,113 @@ export function EditEntryDialog({
             </Label>
             <MultiSelect
               options={workerOptions}
-              selected={form.watch("workerIds")}
-              onChange={(v) => form.setValue("workerIds", v)}
+              selected={watchWorkerIds || []}
+              onChange={(v) =>
+                form.setValue("workerIds", v, { shouldDirty: true })
+              }
               placeholder={t("selectWorkers")}
             />
           </div>
+
+          {watchStatus === "completed" && workerLogFields.length > 0 && (
+            <div className="pt-2 space-y-2 animate-in fade-in duration-200">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                {t("loggedTimeWorkers")}
+              </Label>
+              <div className="border rounded-md overflow-hidden bg-background">
+                <Table>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow>
+                      <TableHead className="w-[30%] text-xs font-semibold">
+                        {t("workerName")}
+                      </TableHead>
+                      <TableHead className="w-[35%] text-xs font-semibold">
+                        {t("startDateTime")}
+                      </TableHead>
+                      <TableHead className="w-[35%] text-xs font-semibold">
+                        {t("endDateTime")}
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {workerLogFields.map((field, index) => {
+                      const currentWorker = workers.find(
+                        (w) => w.id === field.workerId,
+                      );
+                      const startError =
+                        form.formState.errors.workerLogs?.[index]?.startTime;
+                      const endError =
+                        form.formState.errors.workerLogs?.[index]?.endTime;
+
+                      const disabledDays =
+                        watchStartTime && watchEndTime
+                          ? {
+                              before: new Date(watchStartTime),
+                              after: new Date(watchEndTime),
+                            }
+                          : undefined;
+
+                      return (
+                        <TableRow key={field.id}>
+                          <TableCell className="p-3 text-xs font-medium">
+                            {currentWorker
+                              ? currentWorker.name
+                              : "Unknown Worker"}
+                          </TableCell>
+                          <TableCell className="p-2 vertical-top">
+                            <Controller
+                              control={form.control}
+                              name={`workerLogs.${index}.startTime` as const}
+                              render={({ field: subField }) => (
+                                <DateTimePicker
+                                  date={subField.value}
+                                  setDate={subField.onChange}
+                                  locale={locale}
+                                  placeholder={t("pickDate")}
+                                  hasError={!!startError}
+                                  disabled={disabledDays}
+                                  minDate={watchStartTime}
+                                  maxDate={watchEndTime}
+                                />
+                              )}
+                            />
+                            {startError && (
+                              <p className="text-[10px] text-destructive font-medium mt-1 leading-tight">
+                                {startError.message}
+                              </p>
+                            )}
+                          </TableCell>
+                          <TableCell className="p-2 vertical-top">
+                            <Controller
+                              control={form.control}
+                              name={`workerLogs.${index}.endTime` as const}
+                              render={({ field: subField }) => (
+                                <DateTimePicker
+                                  date={subField.value}
+                                  setDate={subField.onChange}
+                                  locale={locale}
+                                  placeholder={t("pickDate")}
+                                  hasError={!!endError}
+                                  disabled={disabledDays}
+                                  minDate={watchStartTime}
+                                  maxDate={watchEndTime}
+                                />
+                              )}
+                            />
+                            {endError && (
+                              <p className="text-[10px] text-destructive font-medium mt-1 leading-tight">
+                                {endError.message}
+                              </p>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
 
           <div className="pt-4 space-y-4">
             <div className="flex items-center justify-between">
@@ -446,7 +653,7 @@ export function EditEntryDialog({
                 size="sm"
                 className="h-8 gap-1"
                 onClick={() =>
-                  append({
+                  appendMaterial({
                     name: "",
                     reference: "",
                     quantity: 1,
@@ -460,7 +667,7 @@ export function EditEntryDialog({
               </Button>
             </div>
 
-            {fields.length > 0 ? (
+            {materialFields.length > 0 ? (
               <div className="border rounded-md overflow-hidden">
                 <Table>
                   <TableHeader className="bg-muted/50">
@@ -482,7 +689,7 @@ export function EditEntryDialog({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {fields.map((field, index) => (
+                    {materialFields.map((field, index) => (
                       <TableRow key={field.id} className="group">
                         <TableCell className="p-2">
                           <Input
@@ -569,9 +776,7 @@ export function EditEntryDialog({
                               placeholder="0.00"
                               {...form.register(
                                 `materials.${index}.price` as const,
-                                {
-                                  valueAsNumber: true,
-                                },
+                                { valueAsNumber: true },
                               )}
                               className="h-8 text-xs text-right"
                             />
@@ -579,8 +784,6 @@ export function EditEntryDialog({
                               {getCurrencySymbol(locale)}
                             </InputGroupAddon>
                           </InputGroup>
-
-                          {/* Keep your existing error handling */}
                           {form.formState.errors.materials?.[index]?.price && (
                             <p className="text-[10px] text-destructive mt-1">
                               {
@@ -596,7 +799,7 @@ export function EditEntryDialog({
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => remove(index)}
+                            onClick={() => removeMaterial(index)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
