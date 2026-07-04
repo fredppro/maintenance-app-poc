@@ -42,6 +42,7 @@ import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { MaterialUnit, TaskType } from "../../generated/prisma/enums";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -375,7 +376,7 @@ export function AddEntryDialog({
                           {t("unit")}
                         </TableHead>
                         <TableHead className="w-[22%] text-right">
-                          {t("price")} ({getCurrencySymbol(locale)})
+                          {t("price")}
                         </TableHead>
                         <TableHead className="w-[10%]"></TableHead>
                       </TableRow>
@@ -455,17 +456,25 @@ export function AddEntryDialog({
                             />
                           </TableCell>
                           <TableCell className="p-2 text-right">
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              placeholder="0.00"
-                              {...form.register(
-                                `materials.${index}.price` as const,
-                                { valueAsNumber: true },
-                              )}
-                              className="h-8 text-xs text-right"
-                            />
+                            <InputGroup className="h-8">
+                              <InputGroupInput
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                                {...form.register(
+                                  `materials.${index}.price` as const,
+                                  {
+                                    valueAsNumber: true,
+                                  },
+                                )}
+                                className="h-8 text-xs text-right"
+                              />
+                              <InputGroupAddon className="px-2 text-xs text-muted-foreground border-l-0">
+                                {getCurrencySymbol(locale)}
+                              </InputGroupAddon>
+                            </InputGroup>
+
                             {form.formState.errors.materials?.[index]
                               ?.price && (
                               <p className="text-[10px] text-destructive mt-1">
