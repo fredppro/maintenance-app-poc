@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
   Dialog,
   DialogContent,
@@ -28,9 +27,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { getValidLocale } from "@/i18n/locale";
 import { useSchedulerStore } from "@/lib/scheduler-store";
+import { getCurrencySymbol } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addHours, areIntervalsOverlapping } from "date-fns";
 import { AlertCircle, Plus, Trash2 } from "lucide-react";
@@ -39,7 +41,8 @@ import { useEffect, useMemo } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import { TaskType } from "../../generated/prisma/enums";
+import { MaterialUnit, TaskType } from "../../generated/prisma/enums";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -48,6 +51,24 @@ const materialSchema = z.object({
     .number()
     .min(0.1, "Quantity must be > 0")
     .multipleOf(0.1, "Only one decimal place allowed"),
+  unit: z.nativeEnum(MaterialUnit).optional().default(MaterialUnit.PC),
+  price: z.preprocess(
+    (value) =>
+      value === "" ||
+      value === null ||
+      value === undefined ||
+      Number.isNaN(Number(value))
+        ? undefined
+        : Number(value),
+    z
+      .number()
+      .min(0, "Price must be ≥ 0")
+      .refine(
+        (value) => Math.round(value * 100) === value * 100,
+        "Only two decimal places allowed",
+      )
+      .optional(),
+  ),
 });
 
 const formSchema = z.object({
@@ -323,7 +344,13 @@ export function AddEntryDialog({
                   size="sm"
                   className="h-8 gap-1"
                   onClick={() =>
-                    append({ name: "", reference: "", quantity: 1 })
+                    append({
+                      name: "",
+                      reference: "",
+                      quantity: 1,
+                      unit: MaterialUnit.PC,
+                      price: undefined,
+                    })
                   }
                 >
                   <Plus className="h-4 w-4" />
@@ -336,14 +363,20 @@ export function AddEntryDialog({
                   <Table>
                     <TableHeader className="bg-muted/50">
                       <TableRow>
-                        <TableHead className="w-[45%]">
+                        <TableHead className="w-[24%]">
                           {t("itemName")}
                         </TableHead>
-                        <TableHead className="w-[25%]">
+                        <TableHead className="w-[16%]">
                           {t("reference")}
                         </TableHead>
-                        <TableHead className="w-[20%] text-right">
+                        <TableHead className="w-[12%] text-right">
                           {t("quantity")}
+                        </TableHead>
+                        <TableHead className="w-[18%] min-w-[120px]">
+                          {t("unit")}
+                        </TableHead>
+                        <TableHead className="w-[22%] text-right">
+                          {t("price")}
                         </TableHead>
                         <TableHead className="w-[10%]"></TableHead>
                       </TableRow>
@@ -393,6 +426,61 @@ export function AddEntryDialog({
                                 {
                                   form.formState.errors.materials[index]
                                     ?.quantity?.message
+                                }
+                              </p>
+                            )}
+                          </TableCell>
+                          <TableCell className="p-2">
+                            <Controller
+                              control={form.control}
+                              name={`materials.${index}.unit` as const}
+                              render={({ field }) => (
+                                <Select
+                                  value={field.value ?? MaterialUnit.PC}
+                                  onValueChange={field.onChange}
+                                >
+                                  <SelectTrigger className="h-8 text-xs min-w-[110px]">
+                                    <SelectValue
+                                      placeholder={t("selectUnit")}
+                                    />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Object.values(MaterialUnit).map((unit) => (
+                                      <SelectItem key={unit} value={unit}>
+                                        {t(`materialUnits.${unit}`)}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                          </TableCell>
+                          <TableCell className="p-2 text-right">
+                            <InputGroup className="h-8">
+                              <InputGroupInput
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                                {...form.register(
+                                  `materials.${index}.price` as const,
+                                  {
+                                    valueAsNumber: true,
+                                  },
+                                )}
+                                className="h-8 text-xs text-right"
+                              />
+                              <InputGroupAddon className="px-2 text-xs text-muted-foreground border-l-0">
+                                {getCurrencySymbol(locale)}
+                              </InputGroupAddon>
+                            </InputGroup>
+
+                            {form.formState.errors.materials?.[index]
+                              ?.price && (
+                              <p className="text-[10px] text-destructive mt-1">
+                                {
+                                  form.formState.errors.materials[index]?.price
+                                    ?.message
                                 }
                               </p>
                             )}

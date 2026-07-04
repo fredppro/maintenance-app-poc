@@ -28,16 +28,18 @@ model MaintenanceTask {
   equipment    Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
   status       String    @default("scheduled") 
   assignments MaintenanceTaskAssignment[]
-  materials   MaterialConsumed[]
+  materials   Material[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
-model MaterialConsumed {
+model Material {
   id        String          @id @default(cuid())
   name      String
   reference String?
   quantity  Float
+  unit      MaterialUnit    @default(PC)
+  price     Decimal?        @db.Decimal(10, 2)
   taskId    String
   task      MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
@@ -82,4 +84,34 @@ model Vendor {
 enum WorkerType {
   INTERNAL
   EXTERNAL
+}
+
+enum MaterialUnit {
+  // --- General Count & Packaging ---
+  PC        // Piece / Unit (screws, bolts, filters, valves)
+  BOX       // Box
+  SET       // Set / Pack
+  BAG       // Bag (sand, bulk fasteners, cable ties)
+  ROLL      // Roll (tape, wires, gaskets)
+  TUBE      // Tube (silicone, grease, adhesive)
+  CAN       // Can / Spray (WD-40, cleaner)
+  KIT       // Kit (O-ring repair kit, tool kit)
+  PAIR      // Pair (gloves, matching components)
+
+  // --- Volume & Fluids ---
+  L         // Liters
+  ML        // Milliliters
+  GAL       // Gallons
+  DRUM      // Drum (hydraulic oil, bulk fluids)
+
+  // --- Mass & Weight ---
+  G         // Grams
+  KG        // Kilograms
+  LB        // Pounds
+
+  // --- Length & Distance ---
+  MM        // Millimeters
+  M         // Meters
+  IN        // Inches
+  FT        // Feet
 }

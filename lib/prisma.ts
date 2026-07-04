@@ -1,5 +1,6 @@
 import { PrismaClient } from "../generated/prisma/client";
 import { PrismaNeon } from '@prisma/adapter-neon'
+import { toClientSafe } from "./serializer";
 
 export const prismaClientSingleton = () => {
   const connectionString = process.env.DATABASE_URL?.trim();
@@ -10,9 +11,20 @@ export const prismaClientSingleton = () => {
 
   const adapter = new PrismaNeon({ connectionString });
 
-  return new PrismaClient({ 
+  const client = new PrismaClient({ 
     adapter,
     log: ['query', 'error', 'warn'],
+  });
+
+  return client.$extends({
+    query: {
+      $allModels: {
+        async $allOperations({ query, args }) {
+          const result = await query(args);
+          return toClientSafe(result);
+        },
+      },
+    },
   });
 }
 

@@ -3,7 +3,7 @@ import {
   MaintenanceTask as PrismaTask,
   Worker as PrismaWorker,
   MaintenanceTaskAssignment as PrismaAssignment,
-  MaterialConsumed as PrismaMaterial
+  Material as PrismaMaterial
 } from '../generated/prisma/client'
 
 export type ViewMode = 'day' | 'week' | 'month' | 'year'
@@ -12,14 +12,14 @@ export type Equipment = PrismaEquipment
 
 export type Worker = PrismaWorker
 
-export type MaterialConsumed = PrismaMaterial
+export type Material = PrismaMaterial
 
 export type MaintenanceEntry = PrismaTask & {
   equipment?: Equipment
   assignments?: (PrismaAssignment & {
     worker: PrismaWorker
   })[]
-  materials?: MaterialConsumed[]
+  materials?: Material[]
 }
 
 export interface TimelineCell {
