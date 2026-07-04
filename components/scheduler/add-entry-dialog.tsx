@@ -28,40 +28,47 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { DateTimePicker } from '@/components/ui/date-time-picker';
-import { Textarea } from '@/components/ui/textarea';
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { Textarea } from "@/components/ui/textarea";
 import { getValidLocale } from "@/i18n/locale";
-import { useSchedulerStore } from '@/lib/scheduler-store';
-import { getCurrencySymbol } from '@/lib/utils';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { addHours, areIntervalsOverlapping } from 'date-fns';
-import { AlertCircle, Plus, Trash2 } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useMemo } from 'react';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
-import { TaskType } from '../../generated/prisma/enums';
+import { useSchedulerStore } from "@/lib/scheduler-store";
+import { getCurrencySymbol } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { addHours, areIntervalsOverlapping } from "date-fns";
+import { AlertCircle, Plus, Trash2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useMemo } from "react";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod";
+import { MaterialUnit, TaskType } from "../../generated/prisma/enums";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Name is required"),
   reference: z.string().optional(),
-  quantity: z.number().min(0.1, 'Quantity must be > 0').multipleOf(0.1, 'Only one decimal place allowed'),
+  quantity: z
+    .number()
+    .min(0.1, "Quantity must be > 0")
+    .multipleOf(0.1, "Only one decimal place allowed"),
+  unit: z.nativeEnum(MaterialUnit).optional().default(MaterialUnit.PC),
   price: z.preprocess(
     (value) =>
-      value === '' || value === null || value === undefined || Number.isNaN(Number(value))
+      value === "" ||
+      value === null ||
+      value === undefined ||
+      Number.isNaN(Number(value))
         ? undefined
         : Number(value),
     z
       .number()
-      .min(0, 'Price must be ≥ 0')
+      .min(0, "Price must be ≥ 0")
       .refine(
         (value) => Math.round(value * 100) === value * 100,
-        'Only two decimal places allowed',
+        "Only two decimal places allowed",
       )
       .optional(),
   ),
-})
+});
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -335,7 +342,15 @@ export function AddEntryDialog({
                   variant="outline"
                   size="sm"
                   className="h-8 gap-1"
-                  onClick={() => append({ name: '', reference: '', quantity: 1, price: undefined })}
+                  onClick={() =>
+                    append({
+                      name: "",
+                      reference: "",
+                      quantity: 1,
+                      unit: MaterialUnit.PC,
+                      price: undefined,
+                    })
+                  }
                 >
                   <Plus className="h-4 w-4" />
                   {t("addMaterial")}
@@ -347,11 +362,20 @@ export function AddEntryDialog({
                   <Table>
                     <TableHeader className="bg-muted/50">
                       <TableRow>
-                        <TableHead className="w-[35%]">{t('itemName')}</TableHead>
-                        <TableHead className="w-[20%]">{t('reference')}</TableHead>
-                        <TableHead className="w-[15%] text-right">{t('quantity')}</TableHead>
-                        <TableHead className="w-[20%] text-right">
-                          {t('price')} ({getCurrencySymbol(locale)})
+                        <TableHead className="w-[24%]">
+                          {t("itemName")}
+                        </TableHead>
+                        <TableHead className="w-[16%]">
+                          {t("reference")}
+                        </TableHead>
+                        <TableHead className="w-[12%] text-right">
+                          {t("quantity")}
+                        </TableHead>
+                        <TableHead className="w-[18%] min-w-[120px]">
+                          {t("unit")}
+                        </TableHead>
+                        <TableHead className="w-[22%] text-right">
+                          {t("price")} ({getCurrencySymbol(locale)})
                         </TableHead>
                         <TableHead className="w-[10%]"></TableHead>
                       </TableRow>
@@ -405,18 +429,50 @@ export function AddEntryDialog({
                               </p>
                             )}
                           </TableCell>
+                          <TableCell className="p-2">
+                            <Controller
+                              control={form.control}
+                              name={`materials.${index}.unit` as const}
+                              render={({ field }) => (
+                                <Select
+                                  value={field.value ?? MaterialUnit.PC}
+                                  onValueChange={field.onChange}
+                                >
+                                  <SelectTrigger className="h-8 text-xs min-w-[110px]">
+                                    <SelectValue
+                                      placeholder={t("selectUnit")}
+                                    />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Object.values(MaterialUnit).map((unit) => (
+                                      <SelectItem key={unit} value={unit}>
+                                        {t(`materialUnits.${unit}`)}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                          </TableCell>
                           <TableCell className="p-2 text-right">
                             <Input
                               type="number"
                               min="0"
                               step="0.01"
                               placeholder="0.00"
-                              {...form.register(`materials.${index}.price` as const, { valueAsNumber: true })}
+                              {...form.register(
+                                `materials.${index}.price` as const,
+                                { valueAsNumber: true },
+                              )}
                               className="h-8 text-xs text-right"
                             />
-                            {form.formState.errors.materials?.[index]?.price && (
+                            {form.formState.errors.materials?.[index]
+                              ?.price && (
                               <p className="text-[10px] text-destructive mt-1">
-                                {form.formState.errors.materials[index]?.price?.message}
+                                {
+                                  form.formState.errors.materials[index]?.price
+                                    ?.message
+                                }
                               </p>
                             )}
                           </TableCell>

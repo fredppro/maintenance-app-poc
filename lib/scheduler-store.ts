@@ -1,6 +1,6 @@
 import { addDays, addMonths, addWeeks, addYears } from "date-fns";
 import { create } from "zustand";
-import { TaskType } from "../generated/prisma/enums";
+import { MaterialUnit, TaskType } from "../generated/prisma/enums";
 import {
   addEquipment as dbAddEquipment,
   updateEquipment as dbUpdateEquipment,
@@ -46,7 +46,7 @@ interface SchedulerState {
     endTime: Date;
     equipmentId: string;
     workerIds: string[];
-    materials?: { name: string; reference?: string; quantity: number; price?: number }[];
+    materials?: { name: string; reference?: string; quantity: number; unit?: MaterialUnit; price?: number }[];
   }) => Promise<void>;
   updateEntry: (
     id: string,

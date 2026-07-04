@@ -308,9 +308,13 @@ function renderMaintenanceReport(
     .fontSize(7.5)
     .text(t.materials.item, 42, currentY + 3)
     .text(t.materials.reference, 242, currentY + 3)
-    .text(t.materials.quantity, 392, currentY + 3, {
+    .text(t.materials.quantity, 332, currentY + 3, {
       align: "right",
-      width: 80,
+      width: 70,
+    })
+    .text(t.materials.unit, 402, currentY + 3, {
+      align: "center",
+      width: 60,
     })
     .text(t.materials.price, 472, currentY + 3, {
       align: "right",
@@ -347,9 +351,13 @@ function renderMaintenanceReport(
           lineBreak: false,
         })
         .font("Helvetica-Bold")
-        .text(String(material.quantity), 392, currentY + 4, {
+        .text(String(material.quantity), 332, currentY + 4, {
           align: "right",
-          width: 80,
+          width: 70,
+        })
+        .text(material.unit ?? "PC", 402, currentY + 4, {
+          align: "center",
+          width: 60,
         })
         .text(formattedPrice, 472, currentY + 4, {
           align: "right",

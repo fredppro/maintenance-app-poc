@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { TaskType, WorkerType } from "../generated/prisma/enums";
+import { MaterialUnit, TaskType, WorkerType } from "../generated/prisma/enums";
 import prisma from "./prisma";
 
 // Equipment Actions
@@ -118,7 +118,7 @@ export async function createTask(data: {
   equipmentId: string;
   status?: string;
   workerIds: string[];
-  materials?: { name: string; reference?: string; quantity: number; price?: number }[];
+  materials?: { name: string; reference?: string; quantity: number; unit?: MaterialUnit; price?: number }[];
 }) {
   const { workerIds, materials, ...taskData } = data;
   const task = await prisma.maintenanceTask.create({
@@ -134,6 +134,7 @@ export async function createTask(data: {
           name: m.name,
           reference: m.reference,
           quantity: m.quantity,
+          unit: m.unit ?? MaterialUnit.PC,
           price: m.price !== undefined ? m.price.toFixed(2) : undefined,
         })),
       },
@@ -163,7 +164,7 @@ export async function updateTask(
     equipmentId: string;
     status: string;
     workerIds: string[];
-    materials: { name: string; reference?: string; quantity: number; price?: number }[];
+    materials: { name: string; reference?: string; quantity: number; unit?: MaterialUnit; price?: number }[];
   }>,
 ) {
   const { workerIds, materials, ...taskData } = data;
@@ -200,6 +201,7 @@ export async function updateTask(
             name: m.name,
             reference: m.reference,
             quantity: m.quantity,
+            unit: m.unit ?? MaterialUnit.PC,
             price: m.price !== undefined ? m.price.toFixed(2) : undefined,
           })),
         });

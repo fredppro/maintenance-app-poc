@@ -50,7 +50,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import { TaskType } from "../../generated/prisma/enums";
+import { MaterialUnit, TaskType } from "../../generated/prisma/enums";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -59,9 +59,13 @@ const materialSchema = z.object({
     .number()
     .min(0.1, "Quantity must be > 0")
     .multipleOf(0.1, "Only one decimal place allowed"),
+  unit: z.nativeEnum(MaterialUnit).optional().default(MaterialUnit.PC),
   price: z.preprocess(
     (value) =>
-      value === '' || value === null || value === undefined || Number.isNaN(Number(value))
+      value === "" ||
+      value === null ||
+      value === undefined ||
+      Number.isNaN(Number(value))
         ? undefined
         : Number(value),
     z
@@ -160,6 +164,7 @@ export function EditEntryDialog({
           name: m.name,
           reference: m.reference || "",
           quantity: m.quantity,
+          unit: m.unit ?? MaterialUnit.PC,
           price:
             m.price !== undefined && m.price !== null
               ? Number(m.price)
@@ -213,7 +218,11 @@ export function EditEntryDialog({
             name: m.name,
             reference: m.reference || "",
             quantity: m.quantity,
-            price: m.price !== undefined && m.price !== null ? Number(m.price) : undefined,
+            unit: m.unit ?? MaterialUnit.PC,
+            price:
+              m.price !== undefined && m.price !== null
+                ? Number(m.price)
+                : undefined,
           })) || [],
       });
     }
@@ -427,7 +436,15 @@ export function EditEntryDialog({
                 variant="outline"
                 size="sm"
                 className="h-8 gap-1"
-                onClick={() => append({ name: "", reference: "", quantity: 1, price: undefined })}
+                onClick={() =>
+                  append({
+                    name: "",
+                    reference: "",
+                    quantity: 1,
+                    unit: MaterialUnit.PC,
+                    price: undefined,
+                  })
+                }
               >
                 <Plus className="h-4 w-4" />
                 {t("addMaterial")}
@@ -439,14 +456,17 @@ export function EditEntryDialog({
                 <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
-                      <TableHead className="w-[35%]">{t("itemName")}</TableHead>
-                      <TableHead className="w-[20%]">
+                      <TableHead className="w-[24%]">{t("itemName")}</TableHead>
+                      <TableHead className="w-[16%]">
                         {t("reference")}
                       </TableHead>
-                      <TableHead className="w-[15%] text-right">
+                      <TableHead className="w-[12%] text-right">
                         {t("quantity")}
                       </TableHead>
-                      <TableHead className="w-[20%] text-right">
+                      <TableHead className="w-[18%] min-w-[128px]">
+                        {t("unit")}
+                      </TableHead>
+                      <TableHead className="w-[22%] text-right">
                         {t("price")} ({getCurrencySymbol(locale)})
                       </TableHead>
                       <TableHead className="w-[10%]"></TableHead>
@@ -501,6 +521,29 @@ export function EditEntryDialog({
                             </p>
                           )}
                         </TableCell>
+                        <TableCell className="p-2 min-w-[120px]">
+                          <Controller
+                            control={form.control}
+                            name={`materials.${index}.unit` as const}
+                            render={({ field }) => (
+                              <Select
+                                value={field.value ?? MaterialUnit.PC}
+                                onValueChange={field.onChange}
+                              >
+                                <SelectTrigger className="h-8 text-xs w-full min-w-[110px]">
+                                  <SelectValue placeholder={t("selectUnit")} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.values(MaterialUnit).map((unit) => (
+                                    <SelectItem key={unit} value={unit}>
+                                      {t(`materialUnits.${unit}`)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </TableCell>
                         <TableCell className="p-2 text-right">
                           <Input
                             type="number"
@@ -515,8 +558,10 @@ export function EditEntryDialog({
                           />
                           {form.formState.errors.materials?.[index]?.price && (
                             <p className="text-[10px] text-destructive mt-1">
-                              {form.formState.errors.materials[index]?.price
-                                ?.message}
+                              {
+                                form.formState.errors.materials[index]?.price
+                                  ?.message
+                              }
                             </p>
                           )}
                         </TableCell>
