@@ -55,6 +55,8 @@ model MaintenanceTaskAssignment {
   id        String          @id @default(cuid())
   taskId    String
   workerId  String
+  startTime DateTime?
+  endTime   DateTime?
   task      MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
   worker    Worker          @relation(fields: [workerId], references: [id], onDelete: Cascade)
   @@unique([taskId, workerId])

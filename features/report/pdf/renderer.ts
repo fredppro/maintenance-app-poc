@@ -258,6 +258,10 @@ function renderMaintenanceReport(
         doc.fillColor("#f8fafc").rect(36, currentY, 523, 16).fill();
       }
 
+      // Check if assignment contains specific work logs; fall back to overall timeline if null
+      const logStart = assignment.startTime ? new Date(assignment.startTime) : new Date(entry.startTime);
+      const logEnd = assignment.endTime ? new Date(assignment.endTime) : new Date(entry.endTime);
+
       doc
         .fillColor("#0f172a")
         .font("Helvetica")
@@ -266,11 +270,11 @@ function renderMaintenanceReport(
           width: 190,
           lineBreak: false,
         })
-        .text(formatDate(entry.startTime), 240, currentY + 4)
-        .text(formatDate(entry.endTime), 360, currentY + 4)
+        .text(formatDate(logStart), 240, currentY + 4)
+        .text(formatDate(logEnd), 360, currentY + 4)
         .font("Helvetica-Bold")
         .text(
-          formatDuration(entry.startTime, entry.endTime),
+          formatDuration(logStart, logEnd),
           470,
           currentY + 4,
           { align: "right", width: 80 },

@@ -13,6 +13,7 @@ import {
 import {
   Equipment,
   MaintenanceEntry,
+  UpdateEntryPayload,
   ViewMode,
   Worker,
 } from "./scheduler-types";
@@ -26,7 +27,6 @@ interface SchedulerState {
   selectedEntry: MaintenanceEntry | null;
   isLoading: boolean;
 
-  // Actions
   setEquipment: (equipment: Equipment[]) => void;
   setEntries: (entries: MaintenanceEntry[]) => void;
   setWorkers: (workers: Worker[]) => void;
@@ -48,10 +48,7 @@ interface SchedulerState {
     workerIds: string[];
     materials?: { name: string; reference?: string; quantity: number; unit?: MaterialUnit; price?: number }[];
   }) => Promise<void>;
-  updateEntry: (
-    id: string,
-    updates: Partial<MaintenanceEntry & { workerIds: string[] }>,
-  ) => Promise<void>;
+  updateEntry: (id: string, updates: UpdateEntryPayload) => Promise<void>;
   removeEntry: (id: string) => Promise<void>;
   setViewMode: (mode: ViewMode) => void;
   setCurrentDate: (date: Date) => void;
@@ -124,10 +121,10 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
     const previousEntries = get().entries;
     const previousSelectedEntry = get().selectedEntry;
 
-    // Optimistic update
+    // Optimistically project updates on the client UI layout
     set((state) => ({
       entries: state.entries.map((e) =>
-        e.id === id ? { ...e, ...updates } : e,
+        e.id === id ? { ...e, ...updates } : e
       ),
       selectedEntry:
         state.selectedEntry?.id === id
@@ -138,7 +135,38 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
     }));
 
     try {
-      const updatedTask = await dbUpdateTask(id, updates as any);
+      // 1. Destructure out layout/meta fields alongside description and materials
+      const { 
+        id: _, 
+        createdAt: __, 
+        workerLogs: ___, 
+        description, 
+        workerLogs,
+        materials, 
+        ...rest 
+      } = updates;
+
+      // 2. Re-assemble payload dynamically with absolute structural precision
+      const dbPayload: Parameters<typeof dbUpdateTask>[1] = {
+        ...rest,
+        // Normalize description null -> undefined
+        ...(description !== undefined && { description: description ?? undefined }),
+        ...(workerLogs !== undefined && { workerLogs }),
+        // Normalize materials array types cleanly
+        ...(materials !== undefined && {
+          materials: materials.map((m) => ({
+            name: m.name,
+            quantity: m.quantity,
+            unit: m.unit ?? undefined,
+            reference: m.reference ?? undefined, // Converts null to undefined
+            price: m.price != null ? Number(m.price) : undefined, // Handles Prisma Decimal / null safely
+          })),
+        }),
+      };
+
+      // 3. Fire the server action safely
+      const updatedTask = await dbUpdateTask(id, dbPayload);
+      
       set((state) => ({
         entries: state.entries.map((e) => (e.id === id ? updatedTask : e)),
         selectedEntry:
@@ -232,7 +260,6 @@ export const useSchedulerStore = create<SchedulerState>((set, get) => ({
     const duration = entry.endTime.getTime() - entry.startTime.getTime();
     const newEndTime = new Date(newStartTime.getTime() + duration);
 
-    // Optimistic update
     set((state) => ({
       entries: state.entries.map((e) =>
         e.id === entryId
