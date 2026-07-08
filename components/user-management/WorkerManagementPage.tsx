@@ -29,7 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { deleteWorker, getWorkers } from "@/lib/actions";
-import { useSchedulerStore } from "@/lib/scheduler-store";
+import { useSchedulerStore } from "@/lib/store/scheduler-provider";
 import {
   DndContext,
   KeyboardSensor,

@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getValidLocale, LOCALE_MAP } from "@/i18n/locale";
-import { useSchedulerStore } from "@/lib/scheduler-store";
+import { useSchedulerStore } from "@/lib/store/scheduler-provider";
 import { ViewMode } from "@/lib/scheduler-types";
 import { format } from "date-fns";
 import {
@@ -30,14 +30,12 @@ export function SchedulerToolbar() {
 
   const t = useTranslations("Toolbar");
 
-  const {
-    viewMode,
-    currentDate,
-    setViewMode,
-    setCurrentDate,
-    navigateForward,
-    navigateBackward,
-  } = useSchedulerStore();
+  const viewMode = useSchedulerStore((state) => state.viewMode);
+  const currentDate = useSchedulerStore((state) => state.currentDate);
+  const setViewMode = useSchedulerStore((state) => state.setViewMode);
+  const setCurrentDate = useSchedulerStore((state) => state.setCurrentDate);
+  const navigateForward = useSchedulerStore((state) => state.navigateForward);
+  const navigateBackward = useSchedulerStore((state) => state.navigateBackward);
 
   const formatDateRange = () => {
     switch (viewMode) {

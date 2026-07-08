@@ -1,7 +1,7 @@
 import { SchedulerDashboard } from '@/components/scheduler/scheduler-dashboard'
-import { StoreInitializer } from '@/components/scheduler/store-initializer'
 import { AppLocale, localeSchema } from '@/i18n/locale';
 import { getEquipment, getTasks, getWorkers } from '@/lib/actions'
+import { SchedulerStoreProvider } from '@/lib/store/scheduler-provider'
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
@@ -29,14 +29,15 @@ export default async function Home({
   const serverNow = new Date()
 
   return (
-    <>
-      <StoreInitializer 
-        equipment={equipment} 
-        entries={tasks} 
-        workers={workers} 
-        initialDate={serverNow}
-      />
+    <SchedulerStoreProvider
+      initialState={{
+        equipment,
+        entries: tasks,
+        workers,
+        currentDate: serverNow,
+      }}
+    >
       <SchedulerDashboard />
-    </>
+    </SchedulerStoreProvider>
   )
 }

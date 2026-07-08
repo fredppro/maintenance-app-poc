@@ -1,8 +1,9 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { useSchedulerStore } from "@/lib/scheduler-store";
+import { updateTask } from "@/lib/actions";
 import { MaintenanceEntry } from "@/lib/scheduler-types";
+import { useSchedulerStore } from "@/lib/store/scheduler-provider";
 import { cn } from "@/lib/utils";
 import { addMinutes } from "date-fns";
 import { GripVertical, Wrench } from "lucide-react";
@@ -27,8 +28,9 @@ export function MaintenanceEntryBlock({
 }: MaintenanceEntryBlockProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const { updateEntry, viewMode } =
-    useSchedulerStore();
+  const viewMode = useSchedulerStore((state) => state.viewMode);
+  const updateEntry = useSchedulerStore((state) => state.updateEntry);
+  const replaceEntry = useSchedulerStore((state) => state.replaceEntry);
 
   const assignedWorkers = entry.assignments?.map((a) => a.worker) || [];
 
@@ -151,12 +153,30 @@ export function MaintenanceEntryBlock({
       if (type === "start") {
         const potentialStart = addMinutes(newStartTime, snappedMinutes);
         if (potentialStart < newEndTime) {
-          await updateEntry(entry.id, { startTime: potentialStart });
+          updateEntry(entry.id, { startTime: potentialStart });
+          try {
+            const updatedTask = await updateTask(entry.id, {
+              startTime: potentialStart,
+            });
+            replaceEntry(entry.id, updatedTask);
+          } catch (error) {
+            updateEntry(entry.id, { startTime: entry.startTime });
+            console.error("Failed to resize task:", error);
+          }
         }
       } else {
         const potentialEnd = addMinutes(newEndTime, snappedMinutes);
         if (potentialEnd > newStartTime) {
-          await updateEntry(entry.id, { endTime: potentialEnd });
+          updateEntry(entry.id, { endTime: potentialEnd });
+          try {
+            const updatedTask = await updateTask(entry.id, {
+              endTime: potentialEnd,
+            });
+            replaceEntry(entry.id, updatedTask);
+          } catch (error) {
+            updateEntry(entry.id, { endTime: entry.endTime });
+            console.error("Failed to resize task:", error);
+          }
         }
       }
     };

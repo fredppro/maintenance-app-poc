@@ -31,7 +31,8 @@ import {
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { getValidLocale } from "@/i18n/locale";
-import { useSchedulerStore } from "@/lib/scheduler-store";
+import { createTask } from "@/lib/actions";
+import { useSchedulerStore } from "@/lib/store/scheduler-provider";
 import { getCurrencySymbol } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addHours, areIntervalsOverlapping } from "date-fns";
@@ -95,7 +96,10 @@ export function AddEntryDialog({
   onOpenChange,
   selectedCell,
 }: AddEntryDialogProps) {
-  const { addEntry, equipment, workers, entries } = useSchedulerStore();
+  const addEntry = useSchedulerStore((state) => state.addEntry);
+  const equipment = useSchedulerStore((state) => state.equipment);
+  const workers = useSchedulerStore((state) => state.workers);
+  const entries = useSchedulerStore((state) => state.entries);
 
   const locale = getValidLocale(useLocale());
   const t = useTranslations("Form");
@@ -165,10 +169,11 @@ export function AddEntryDialog({
     }
 
     try {
-      await addEntry({
+      const newTask = await createTask({
         ...values,
         status: "scheduled",
       });
+      addEntry(newTask);
       toast.success(t("errors.success"));
       form.reset();
       onOpenChange(false);

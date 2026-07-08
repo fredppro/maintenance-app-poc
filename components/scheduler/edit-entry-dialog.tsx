@@ -32,8 +32,9 @@ import {
 } from "@/components/ui/table";
 import { notifyReportPreviewRefresh } from "@/features/report/events";
 import { getValidLocale } from "@/i18n/locale";
-import { useSchedulerStore } from "@/lib/scheduler-store";
-import { MaintenanceEntry } from "@/lib/scheduler-types";
+import { deleteTask, updateTask } from "@/lib/actions";
+import { MaintenanceEntry, UpdateEntryPayload } from "@/lib/scheduler-types";
+import { useSchedulerStore } from "@/lib/store/scheduler-provider";
 import { cn, getCurrencySymbol } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { areIntervalsOverlapping } from "date-fns";
@@ -159,8 +160,15 @@ export function EditEntryDialog({
   open,
   onOpenChange,
 }: EditEntryDialogProps) {
-  const { equipment, workers, removeEntry, updateEntry, entries } =
-    useSchedulerStore();
+  const equipment = useSchedulerStore((state) => state.equipment);
+  const workers = useSchedulerStore((state) => state.workers);
+  const entries = useSchedulerStore((state) => state.entries);
+  const selectedEntry = useSchedulerStore((state) => state.selectedEntry);
+  const setEntries = useSchedulerStore((state) => state.setEntries);
+  const setSelectedEntry = useSchedulerStore((state) => state.setSelectedEntry);
+  const removeEntry = useSchedulerStore((state) => state.removeEntry);
+  const updateEntry = useSchedulerStore((state) => state.updateEntry);
+  const replaceEntry = useSchedulerStore((state) => state.replaceEntry);
 
   const locale = getValidLocale(useLocale());
   const t = useTranslations("Form");
@@ -203,7 +211,7 @@ export function EditEntryDialog({
 
   const equip = equipment.find((e) => e.id === entry.equipmentId);
 
-  const parseEntryDate = (dateVal: any) =>
+  const parseEntryDate = (dateVal: Date | string) =>
     typeof dateVal === "string" ? new Date(dateVal) : dateVal;
 
   const initialStartTime = parseEntryDate(entry.startTime);
@@ -369,11 +377,18 @@ export function EditEntryDialog({
   };
 
   const handleDelete = async () => {
+    const previousEntries = entries;
+    const previousSelectedEntry = selectedEntry;
+
+    removeEntry(entry.id);
+
     try {
-      await removeEntry(entry.id);
+      await deleteTask(entry.id);
       onOpenChange(false);
       toast.success(t("errors.deleteSuccess"));
     } catch (error) {
+      setEntries(previousEntries);
+      setSelectedEntry(previousSelectedEntry);
       toast.error(t("errors.deleteFailure"));
     }
   };
@@ -384,12 +399,45 @@ export function EditEntryDialog({
       return;
     }
 
+    const previousEntries = entries;
+    const previousSelectedEntry = selectedEntry;
+
+    const optimisticUpdates: UpdateEntryPayload = {
+      status: values.status,
+      type: values.type,
+      startTime: values.startTime,
+      endTime: values.endTime,
+      workerIds: values.workerIds,
+      workerLogs: values.workerLogs,
+    };
+
+    updateEntry(entry.id, optimisticUpdates);
+
     try {
-      await updateEntry(entry.id, values as any);
+      const { workerLogs, materials, ...rest } = values;
+      const updatedTask = await updateTask(entry.id, {
+        ...rest,
+        ...(workerLogs !== undefined && { workerLogs }),
+        ...(materials !== undefined && {
+          materials: materials.map((material) => ({
+            name: material.name,
+            quantity: material.quantity,
+            unit: material.unit ?? undefined,
+            reference: material.reference ?? undefined,
+            price:
+              material.price !== null && material.price !== undefined
+                ? Number(material.price)
+                : undefined,
+          })),
+        }),
+      });
+      replaceEntry(entry.id, updatedTask);
       notifyReportPreviewRefresh(entry.id);
       toast.success(t("errors.updateSuccess"));
       onOpenChange(false);
     } catch (error) {
+      setEntries(previousEntries);
+      setSelectedEntry(previousSelectedEntry);
       toast.error(t("errors.updateFailure"));
     }
   };

@@ -22,8 +22,14 @@ import {
   getValidLocale,
   LOCALE_MAP
 } from "@/i18n/locale";
-import { useSchedulerStore } from "@/lib/scheduler-store";
-import { MaintenanceEntry } from "@/lib/scheduler-types";
+import {
+  addEquipment as dbAddEquipment,
+  deleteEquipment as dbDeleteEquipment,
+  moveTask as dbMoveTask,
+  updateEquipment as dbUpdateEquipment,
+} from "@/lib/actions";
+import { Equipment, MaintenanceEntry } from "@/lib/scheduler-types";
+import { useSchedulerStore } from "@/lib/store/scheduler-provider";
 import { cn } from "@/lib/utils";
 import {
   addHours,
@@ -64,19 +70,20 @@ export function TimelineGrid() {
   const t = useTranslations("Grid");
   const tCommon = useTranslations("Common");
 
-  const {
-    equipment,
-    entries,
-    viewMode,
-    currentDate,
-    isLoading,
-    moveEntry,
-    setViewMode,
-    setCurrentDate,
-    addEquipment,
-    updateEquipment,
-    removeEquipment,
-  } = useSchedulerStore();
+  const equipment = useSchedulerStore((state) => state.equipment);
+  const entries = useSchedulerStore((state) => state.entries);
+  const viewMode = useSchedulerStore((state) => state.viewMode);
+  const currentDate = useSchedulerStore((state) => state.currentDate);
+  const isLoading = useSchedulerStore((state) => state.isLoading);
+  const setEquipment = useSchedulerStore((state) => state.setEquipment);
+  const setEntries = useSchedulerStore((state) => state.setEntries);
+  const setViewMode = useSchedulerStore((state) => state.setViewMode);
+  const setCurrentDate = useSchedulerStore((state) => state.setCurrentDate);
+  const addEquipment = useSchedulerStore((state) => state.addEquipment);
+  const updateEquipment = useSchedulerStore((state) => state.updateEquipment);
+  const removeEquipment = useSchedulerStore((state) => state.removeEquipment);
+  const moveEntry = useSchedulerStore((state) => state.moveEntry);
+  const replaceEntry = useSchedulerStore((state) => state.replaceEntry);
 
   const [draggedEntry, setDraggedEntry] = useState<MaintenanceEntry | null>(
     null,
@@ -272,9 +279,28 @@ export function TimelineGrid() {
     setDragOverCell(null);
   };
 
-  const handleDrop = (date: Date, equipmentId: string) => {
+  const handleDrop = async (date: Date, equipmentId: string) => {
     if (draggedEntry) {
+      const previousEntries = entries;
+      const duration =
+        draggedEntry.endTime.getTime() - draggedEntry.startTime.getTime();
+      const newEndTime = new Date(date.getTime() + duration);
+
       moveEntry(draggedEntry.id, date, equipmentId);
+
+      try {
+        const updatedTask = await dbMoveTask(
+          draggedEntry.id,
+          date,
+          newEndTime,
+          equipmentId,
+        );
+        replaceEntry(draggedEntry.id, updatedTask);
+      } catch (error) {
+        setEntries(previousEntries);
+        console.error("Failed to move task:", error);
+        toast.error("Failed to move task");
+      }
     }
     setDraggedEntry(null);
     setDragOverCell(null);
@@ -301,17 +327,21 @@ export function TimelineGrid() {
 
     try {
       if (editingEquipment) {
-        await updateEquipment(
+        const updatedEquipment = await dbUpdateEquipment(
           editingEquipment.id,
-          newEquipName.trim(),
-          newEquipCategory.trim() || undefined,
+          {
+            name: newEquipName.trim(),
+            category: newEquipCategory.trim() || undefined,
+          },
         );
+        updateEquipment(updatedEquipment);
         toast.success("Equipment updated");
       } else {
-        await addEquipment(
-          newEquipName.trim(),
-          newEquipCategory.trim() || undefined,
-        );
+        const newEquipment = await dbAddEquipment({
+          name: newEquipName.trim(),
+          category: newEquipCategory.trim() || undefined,
+        });
+        addEquipment(newEquipment);
         toast.success("Equipment added");
       }
       setNewEquipName("");
@@ -327,11 +357,27 @@ export function TimelineGrid() {
     }
   };
 
-  const handleEditEquip = (equip: any) => {
+  const handleEditEquip = (equip: Equipment) => {
     setEditingEquipment(equip);
     setNewEquipName(equip.name);
     setNewEquipCategory(equip.category || "");
     setAddEquipDialogOpen(true);
+  };
+
+  const handleRemoveEquipment = async (id: string) => {
+    const previousEquipment = equipment;
+    const previousEntries = entries;
+
+    removeEquipment(id);
+
+    try {
+      await dbDeleteEquipment(id);
+    } catch (error) {
+      setEquipment(previousEquipment);
+      setEntries(previousEntries);
+      console.error("Failed to delete equipment:", error);
+      toast.error("Failed to remove equipment");
+    }
   };
 
   const getPendingMaintenanceCount = (equipmentId: string) => {
@@ -611,7 +657,7 @@ export function TimelineGrid() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="gap-2 text-destructive focus:text-destructive"
-                            onClick={() => removeEquipment(equip.id)}
+                            onClick={() => handleRemoveEquipment(equip.id)}
                           >
                             <Trash2 className="w-4 h-4" />
                             {tCommon("remove")}

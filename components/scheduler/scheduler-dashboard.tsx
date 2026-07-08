@@ -1,6 +1,6 @@
 "use client";
 
-import { useSchedulerStore } from "@/lib/scheduler-store";
+import { useSchedulerStore } from "@/lib/store/scheduler-provider";
 import { Wrench } from "lucide-react";
 import { TaskType } from "../../generated/prisma/enums";
 import { SchedulerToolbar } from "./scheduler-toolbar";
@@ -20,7 +20,8 @@ import { useState } from "react";
 import WorkerManagementPage from "@/components/user-management/WorkerManagementPage";
 
 export function SchedulerDashboard() {
-  const { entries, equipment } = useSchedulerStore();
+  const entries = useSchedulerStore((state) => state.entries);
+  const equipment = useSchedulerStore((state) => state.equipment);
   const t = useTranslations("Dashboard");
 
   const stats = {
