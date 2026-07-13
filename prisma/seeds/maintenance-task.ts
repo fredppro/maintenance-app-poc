@@ -1,16 +1,16 @@
-import { PrismaClient } from "../../generated/prisma/client";
+import { DB } from "@/lib/prisma";
 
-export async function seedMaintenanceTasks(prisma: PrismaClient) {
+export async function seedMaintenanceTasks(db: DB) {
   console.log('🛠️ Seeding maintenance tasks with assignments...');
 
   // 1. Obter referências dos Equipamentos
-  const hydraulicPress = await prisma.equipment.findUnique({ where: { name: "Hydraulic Press A-101" } });
-  const cncLathe = await prisma.equipment.findUnique({ where: { name: "CNC Lathe (Primary)" } });
-  const boiler = await prisma.equipment.findUnique({ where: { name: "Industrial Boiler #4" } });
+  const hydraulicPress = await db.equipment.findUnique({ where: { name: "Hydraulic Press A-101" } });
+  const cncLathe = await db.equipment.findUnique({ where: { name: "CNC Lathe (Primary)" } });
+  const boiler = await db.equipment.findUnique({ where: { name: "Industrial Boiler #4" } });
 
   // 2. Obter referências dos Workers (baseado nos emails que definimos no seed de workers)
-  const workerInterno = await prisma.worker.findUnique({ where: { email: "carlos@empresa.com" } });
-  const workerExterno = await prisma.worker.findUnique({ where: { email: "ricardo@techfix.com" } });
+  const workerInterno = await db.worker.findUnique({ where: { email: "carlos@empresa.com" } });
+  const workerExterno = await db.worker.findUnique({ where: { email: "ricardo@techfix.com" } });
 
   if (!hydraulicPress || !cncLathe || !boiler || !workerInterno || !workerExterno) {
     console.error("❌ Erro: Equipamentos ou Trabalhadores não encontrados. Verifica a ordem dos seeds.");
@@ -44,12 +44,12 @@ export async function seedMaintenanceTasks(prisma: PrismaClient) {
     const { assignedWorkersEmails, ...taskFields } = item;
 
     // Verificar se a tarefa já existe para evitar duplicados
-    const existing = await prisma.maintenanceTask.findFirst({
+    const existing = await db.maintenanceTask.findFirst({
       where: { title: taskFields.title, equipmentId: taskFields.equipmentId }
     });
 
     if (!existing) {
-      await prisma.maintenanceTask.create({
+      await db.maintenanceTask.create({
         data: {
           ...taskFields,
           // Criamos a ligação na tabela Many-to-Many

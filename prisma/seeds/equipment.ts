@@ -1,6 +1,7 @@
-import { PrismaClient } from "../../generated/prisma/client";
+import { DB } from "@/lib/prisma";
+import { PrismaClient } from "../generated/prisma/client";
 
-export async function seedEquipments(prisma: PrismaClient) {
+export async function seedEquipments(db: DB) {
   const equipmentData = [
     { name: "Hydraulic Press A-101", category: "Heavy Machinery" },
     { name: "CNC Lathe (Primary)", category: "Precision Tools" },
@@ -12,7 +13,7 @@ export async function seedEquipments(prisma: PrismaClient) {
   console.log("🚀 Seeding equipment...");
 
   for (const item of equipmentData) {
-    await prisma.equipment.upsert({
+    await db.equipment.upsert({
       where: { name: item.name },
       update: {},
       create: item,

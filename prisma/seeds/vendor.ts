@@ -1,6 +1,7 @@
-import { PrismaClient } from "../../generated/prisma/client";
+import { DB } from "@/lib/prisma";
+import { PrismaClient } from "../generated/prisma/client";
 
-export async function seedVendors(prisma: PrismaClient) {
+export async function seedVendors(db: DB) {
   console.log('🏢 Seeding vendors...');
   
   const vendors = [
@@ -9,7 +10,7 @@ export async function seedVendors(prisma: PrismaClient) {
   ];
 
   for (const v of vendors) {
-    await prisma.vendor.upsert({
+    await db.vendor.upsert({
       where: { name: v.name },
       update: {},
       create: v,
