@@ -17,8 +17,8 @@ import type * as Prisma from "./prismaNamespace"
 
 const config: runtime.GetPrismaClientConfig = {
   "previewFeatures": [],
-  "clientVersion": "7.8.0",
-  "engineVersion": "3c6e192761c0362d496ed980de936e2f3cebcd3a",
+  "clientVersion": "7.9.1",
+  "engineVersion": "e922089b7d7502aff4249d5da3420f6fa55fc6ad",
   "activeProvider": "postgresql",
   "inlineSchema": "// prisma/schema.prisma\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"./generated/prisma\"\n}\n\nmodel Equipment {\n  id        String            @id @default(cuid())\n  name      String            @unique\n  category  String?\n  tasks     MaintenanceTask[]\n  createdAt DateTime          @default(now())\n}\n\nmodel MaintenanceTask {\n  id          String                      @id @default(cuid())\n  title       String\n  description String?\n  type        TaskType                    @default(PREVENTIVE)\n  startTime   DateTime\n  endTime     DateTime\n  equipmentId String\n  equipment   Equipment                   @relation(fields: [equipmentId], references: [id], onDelete: Cascade)\n  status      String                      @default(\"scheduled\")\n  assignments MaintenanceTaskAssignment[]\n  materials   Material[]\n  createdAt   DateTime                    @default(now())\n  updatedAt   DateTime                    @updatedAt\n}\n\nmodel Material {\n  id        String          @id @default(cuid())\n  name      String\n  reference String?\n  quantity  Float\n  unit      MaterialUnit    @default(PC)\n  price     Decimal?        @db.Decimal(10, 2)\n  taskId    String\n  task      MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)\n}\n\nenum TaskType {\n  PREVENTIVE\n  INSPECTION\n  CORRECTIVE\n}\n\nmodel MaintenanceTaskAssignment {\n  id        String          @id @default(cuid())\n  taskId    String\n  workerId  String\n  startTime DateTime?\n  endTime   DateTime?\n  task      MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  worker    Worker          @relation(fields: [workerId], references: [id], onDelete: Cascade)\n\n  @@unique([taskId, workerId])\n}\n\nmodel Worker {\n  id          String                      @id @default(cuid())\n  name        String\n  email       String                      @unique\n  phone       String?\n  type        WorkerType                  @default(INTERNAL)\n  vendorId    String?\n  vendor      Vendor?                     @relation(fields: [vendorId], references: [id])\n  assignments MaintenanceTaskAssignment[]\n  createdAt   DateTime                    @default(now())\n}\n\nmodel Vendor {\n  id        String   @id @default(cuid())\n  name      String   @unique\n  contact   String?\n  email     String?\n  workers   Worker[]\n  createdAt DateTime @default(now())\n}\n\nenum WorkerType {\n  INTERNAL\n  EXTERNAL\n}\n\nenum MaterialUnit {\n  // --- General Count & Packaging ---\n  PC // Piece / Unit (screws, bolts, filters, valves)\n  BOX // Box\n  SET // Set / Pack\n  BAG // Bag (sand, bulk fasteners, cable ties)\n  ROLL // Roll (tape, wires, gaskets)\n  TUBE // Tube (silicone, grease, adhesive)\n  CAN // Can / Spray (WD-40, cleaner)\n  KIT // Kit (O-ring repair kit, tool kit)\n  PAIR // Pair (gloves, matching components)\n\n  // --- Volume & Fluids ---\n  L // Liters\n  ML // Milliliters\n  GAL // Gallons\n  DRUM // Drum (hydraulic oil, bulk fluids)\n\n  // --- Mass & Weight ---\n  G // Grams\n  KG // Kilograms\n  LB // Pounds\n\n  // --- Length & Distance ---\n  MM // Millimeters\n  M // Meters\n  IN // Inches\n  FT // Feet\n}\n",
   "runtimeDataModel": {
@@ -82,7 +82,7 @@ export interface PrismaClientConstructor {
     LogOpts extends LogOptions<Options> = LogOptions<Options>,
     OmitOpts extends Prisma.PrismaClientOptions['omit'] = Options extends { omit: infer U } ? U : Prisma.PrismaClientOptions['omit'],
     ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs
-  >(options: Prisma.Subset<Options, Prisma.PrismaClientOptions> ): PrismaClient<LogOpts, OmitOpts, ExtArgs>
+  >(options: Prisma.PrismaClientConstructorArgs<Options>): PrismaClient<LogOpts, OmitOpts, ExtArgs>
 }
 
 /**
@@ -103,7 +103,7 @@ export interface PrismaClientConstructor {
 
 export interface PrismaClient<
   in LogOpts extends Prisma.LogLevel = never,
-  in out OmitOpts extends Prisma.PrismaClientOptions['omit'] = undefined,
+  in out OmitOpts extends Prisma.PrismaClientOptions['omit'] = Prisma.PrismaClientOptions['omit'],
   in out ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs
 > {
   [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['other'] }
