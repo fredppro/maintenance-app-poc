@@ -32,9 +32,9 @@ import {
 } from "@/components/ui/table";
 import { notifyReportPreviewRefresh } from "@/features/report/events";
 import { getValidLocale } from "src/i18n/locale";
-import { deleteTask, updateTask } from "@/lib/actions";
-import { MaintenanceEntry, UpdateEntryPayload } from "@/lib/scheduler-types";
-import { useSchedulerStore } from "@/lib/store/scheduler-provider";
+import { deleteTask, updateTask } from "../server/actions";
+import { MaintenanceEntry, UpdateEntryPayload } from "../types";
+import { useSchedulerStore } from "../store/scheduler-provider";
 import { cn, getCurrencySymbol } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { areIntervalsOverlapping } from "date-fns";
@@ -51,7 +51,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import { MaterialUnit, TaskType } from "prisma/generated/prisma/enums";
+import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
 import {
   Combobox,
   ComboboxContent,
@@ -59,12 +59,12 @@ import {
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
-} from "../ui/combobox";
+} from "@/components/ui/combobox";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from "../ui/input-group";
+} from "@/components/ui/input-group";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -800,15 +800,13 @@ export function EditEntryDialog({
                                   className="h-8 text-xs w-full min-w-[110px]"
                                 />
                                 <ComboboxContent>
-                                  <ComboboxEmpty>
-                                    {t("noMaterials")}
-                                  </ComboboxEmpty>
+                                  <ComboboxEmpty>No unit found.</ComboboxEmpty>
                                   <ComboboxList>
-                                    {(unit) => (
+                                    {Object.values(MaterialUnit).map((unit) => (
                                       <ComboboxItem key={unit} value={unit}>
                                         {t(`materialUnits.${unit}`)}
                                       </ComboboxItem>
-                                    )}
+                                    ))}
                                   </ComboboxList>
                                 </ComboboxContent>
                               </Combobox>
@@ -824,11 +822,13 @@ export function EditEntryDialog({
                               placeholder="0.00"
                               {...form.register(
                                 `materials.${index}.price` as const,
-                                { valueAsNumber: true },
+                                {
+                                  valueAsNumber: true,
+                                },
                               )}
                               className="h-8 text-xs text-right"
                             />
-                            <InputGroupAddon className="px-2 text-xs text-muted-foreground">
+                            <InputGroupAddon className="px-2 text-xs text-muted-foreground border-l-0">
                               {getCurrencySymbol(locale)}
                             </InputGroupAddon>
                           </InputGroup>
@@ -867,36 +867,42 @@ export function EditEntryDialog({
           </div>
         </form>
 
-        <DialogFooter className="flex flex-row justify-between items-center gap-2 mt-2 border-t pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadPDF}
-            disabled={isDownloading}
-            className="h-8 text-xs gap-1.5"
-          >
-            {isDownloading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Download className="h-3.5 w-3.5" />
-            )}
-            {isDownloading ? t("downloadingPdf") : t("downloadPdf")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              window.open(`${locale}/preview/${entry.id}`, "_blank")
-            }
-          >
-            Preview
-          </Button>
-
-          <Field orientation="horizontal" className="justify-end">
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
+        <DialogFooter className="flex items-center justify-between gap-2 sm:justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+              className="gap-1"
+            >
+              <Trash2 className="w-4 h-4" />
               {t("delete")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadPDF}
+              disabled={isDownloading}
+              className="gap-1.5"
+            >
+              {isDownloading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 text-muted-foreground" />
+              )}
+              {t("downloadWorkSheet")}
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+            >
+              {t("cancel")}
             </Button>
             <Button
               type="submit"
@@ -904,16 +910,9 @@ export function EditEntryDialog({
               size="sm"
               disabled={form.formState.isSubmitting || hasConflict}
             >
-              {form.formState.isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  {t("saving")}
-                </span>
-              ) : (
-                t("saveAll")
-              )}
+              {form.formState.isSubmitting ? t("saving") : t("save")}
             </Button>
-          </Field>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

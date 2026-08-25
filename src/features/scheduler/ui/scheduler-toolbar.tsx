@@ -9,8 +9,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getValidLocale, LOCALE_MAP } from "src/i18n/locale";
-import { useSchedulerStore } from "@/lib/store/scheduler-provider";
-import { ViewMode } from "@/lib/scheduler-types";
+import { useSchedulerStore } from "../store/scheduler-provider";
+import { ViewMode } from "../types";
 import { format } from "date-fns";
 import {
   Calendar,

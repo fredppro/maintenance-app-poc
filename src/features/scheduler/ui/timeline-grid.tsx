@@ -27,9 +27,9 @@ import {
   deleteEquipment as dbDeleteEquipment,
   moveTask as dbMoveTask,
   updateEquipment as dbUpdateEquipment,
-} from "@/lib/actions";
-import { Equipment, MaintenanceEntry } from "@/lib/scheduler-types";
-import { useSchedulerStore } from "@/lib/store/scheduler-provider";
+} from "../server/actions";
+import { Equipment, MaintenanceEntry } from "../types";
+import { useSchedulerStore } from "../store/scheduler-provider";
 import { cn } from "@/lib/utils";
 import {
   addHours,

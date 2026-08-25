@@ -3,7 +3,7 @@ import { AppLocale } from "src/i18n/locale";
 import { routing } from "src/i18n/routing";
 import { PassThrough } from "node:stream";
 import PDFDocument from "pdfkit";
-import { MaintenanceEntry } from "../../../lib/scheduler-types";
+import { MaintenanceEntry } from "@/features/scheduler/types";
 import enMessages from "@/i18n/messages/en.json";
 import ptMessages from "@/i18n/messages/pt-pt.json";
 import { renderMaintenanceReport } from "./renderer";

@@ -28,8 +28,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { deleteWorker, getWorkers } from "@/lib/actions";
-import { useSchedulerStore } from "@/lib/store/scheduler-provider";
+import { deleteWorker, getWorkers } from "../server/actions";
+import { useSchedulerStore } from "@/features/scheduler/store/scheduler-provider";
 import {
   DndContext,
   KeyboardSensor,
@@ -65,7 +65,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import CreateUpdateWorker from "./CreateUpdateUser";
 
 type Worker = {

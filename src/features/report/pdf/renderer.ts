@@ -1,4 +1,4 @@
-import { MaintenanceEntry } from "../../../lib/scheduler-types";
+import { MaintenanceEntry } from "@/features/scheduler/types";
 
 /**
  * PURE RENDERER

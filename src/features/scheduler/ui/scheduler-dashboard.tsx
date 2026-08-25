@@ -9,11 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import WorkerManagementPage from "@/components/user-management/WorkerManagementPage";
-import { useSchedulerStore } from "@/lib/store/scheduler-provider";
+import WorkerManagementPage from "@/features/worker/ui/WorkerManagementPage";
+import { useSchedulerStore } from "../store/scheduler-provider";
 import { Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { TaskType } from "prisma/generated/prisma/enums";
+import { TaskType } from "../../../../prisma/generated/prisma/enums";
 import { useState } from "react";
 import { SchedulerToolbar } from "./scheduler-toolbar";
 import { TimelineGrid } from "./timeline-grid";

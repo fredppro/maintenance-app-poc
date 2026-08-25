@@ -31,8 +31,8 @@ import {
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { getValidLocale } from "src/i18n/locale";
-import { createTask } from "@/lib/actions";
-import { useSchedulerStore } from "@/lib/store/scheduler-provider";
+import { createTask } from "../server/actions";
+import { useSchedulerStore } from "../store/scheduler-provider";
 import { getCurrencySymbol } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addHours, areIntervalsOverlapping } from "date-fns";
@@ -42,8 +42,8 @@ import { useEffect, useMemo } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import { MaterialUnit, TaskType } from "prisma/generated/prisma/enums";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
+import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Name is required"),

@@ -1,15 +1,15 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { updateTask } from "@/lib/actions";
-import { MaintenanceEntry } from "@/lib/scheduler-types";
-import { useSchedulerStore } from "@/lib/store/scheduler-provider";
+import { updateTask } from "../server/actions";
+import { MaintenanceEntry } from "../types";
+import { useSchedulerStore } from "../store/scheduler-provider";
 import { cn } from "@/lib/utils";
 import { addMinutes } from "date-fns";
 import { GripVertical, Wrench } from "lucide-react";
 import { useRef, useState } from "react";
 import { EditEntryDialog } from "./edit-entry-dialog";
-import { TaskType } from "prisma/generated/prisma/enums";
+import { TaskType } from "../../../../prisma/generated/prisma/enums";
 
 interface MaintenanceEntryBlockProps {
   entry: MaintenanceEntry;
