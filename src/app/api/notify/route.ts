@@ -1,23 +1,38 @@
-import { NextResponse } from 'next/server'
+import { z } from "zod";
+import { NextResponse } from "next/server";
+
+const notificationRequestSchema = z.object({
+  task: z.object({
+    id: z.string().trim().min(1),
+    title: z.string().trim().min(1),
+  }),
+  worker: z.object({
+    id: z.string().trim().min(1),
+    email: z.string().trim().email(),
+  }),
+});
 
 export async function POST(request: Request) {
+  let body: unknown;
   try {
-    const body = await request.json()
-    console.log('Notification request received:', body)
-    
-    // Simulate some work
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Notification sent successfully',
-      recipient: body.worker?.email 
-    })
-  } catch (error) {
-    console.error('Error in notify API:', error)
+    body = await request.json();
+  } catch {
     return NextResponse.json(
-      { success: false, message: 'Failed to send notification' },
-      { status: 500 }
-    )
+      { success: false, message: "Invalid JSON request body" },
+      { status: 400 },
+    );
   }
+
+  const parsedBody = notificationRequestSchema.safeParse(body);
+  if (!parsedBody.success) {
+    return NextResponse.json(
+      { success: false, message: "Invalid notification request" },
+      { status: 400 },
+    );
+  }
+
+  return NextResponse.json(
+    { success: false, message: "Notification delivery is not configured" },
+    { status: 501 },
+  );
 }

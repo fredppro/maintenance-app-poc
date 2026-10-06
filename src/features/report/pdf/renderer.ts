@@ -1,4 +1,7 @@
 import { MaintenanceEntry } from "@/features/scheduler/types";
+import enMessages from "@/i18n/messages/en.json";
+
+type ReportTranslations = typeof enMessages.PDF;
 
 /**
  * PURE RENDERER
@@ -10,7 +13,7 @@ import { MaintenanceEntry } from "@/features/scheduler/types";
 function renderMaintenanceReport(
   doc: PDFKit.PDFDocument,
   entry: MaintenanceEntry,
-  t: any,
+  t: ReportTranslations,
   dateLocale: string,
 ) {
   // 1. Header Block (Company Information & Vector Logo)
@@ -342,7 +345,7 @@ function renderMaintenanceReport(
 
       const formattedPrice =
         material.price != null
-          ? (material.price as any).toFixed(2)
+          ? material.price.toFixed(2)
           : "—";
 
       doc

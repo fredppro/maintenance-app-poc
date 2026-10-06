@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  Alert,
+  AlertDescription,
+} from "@/components/ui/alert";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -58,7 +62,7 @@ import {
 } from "@tanstack/react-table";
 import { GripVertical, MoreVertical } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +71,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import CreateUpdateWorker from "./CreateUpdateUser";
+import { toast } from "sonner";
 
 type WorkerRow = {
   id: string;
@@ -163,7 +168,8 @@ export default function WorkerManagementPage({
   const tCommon = useTranslations("Common");
 
   const [workers, setWorkers] = useState<WorkerRow[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [fetchFailed, setFetchFailed] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState<WorkerRow | undefined>(
     undefined,
   );
@@ -176,8 +182,9 @@ export default function WorkerManagementPage({
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
-  const fetchWorkers = async () => {
+  const fetchWorkers = useCallback(async () => {
     setLoading(true);
+    setFetchFailed(false);
     try {
       const data = await getWorkers();
       const normalized = (data || []).map((worker) => ({
@@ -191,14 +198,15 @@ export default function WorkerManagementPage({
       onWorkersChange(data);
     } catch (err) {
       console.error(err);
+      setFetchFailed(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, [onWorkersChange]);
 
   useEffect(() => {
     fetchWorkers();
-  }, []);
+  }, [fetchWorkers]);
 
   const handleOpenDrawer = (worker?: WorkerRow) => {
     setSelectedWorker(worker);
@@ -219,7 +227,7 @@ export default function WorkerManagementPage({
       await fetchWorkers();
     } catch (err) {
       console.error(err);
-      alert(t("failedDelete"));
+      toast.error(t("failedDelete"));
     }
   };
 
@@ -358,7 +366,7 @@ export default function WorkerManagementPage({
         enableHiding: false,
       },
     ],
-    [],
+    [t, tCommon],
   );
 
   const table = useReactTable({
@@ -420,6 +428,15 @@ export default function WorkerManagementPage({
       <div className="flex-1 overflow-hidden rounded-md border border-border bg-background">
         {loading ? (
           <div className="p-4">{t("loading")}</div>
+        ) : fetchFailed ? (
+          <Alert className="m-4" variant="destructive" role="alert">
+            <AlertDescription className="flex items-center justify-between gap-4">
+              <span>{t("failedLoad")}</span>
+              <Button variant="outline" size="sm" onClick={fetchWorkers}>
+                {t("retry")}
+              </Button>
+            </AlertDescription>
+          </Alert>
         ) : workers.length === 0 ? (
           <div className="p-4 text-muted-foreground">{t("noWorkers")}</div>
         ) : (

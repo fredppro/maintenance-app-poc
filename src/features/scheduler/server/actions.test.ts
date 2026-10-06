@@ -28,6 +28,15 @@ describe("scheduler server actions", () => {
   });
 
   describe("equipment actions", () => {
+    it("rejects invalid equipment input before writing to the database", async () => {
+      const createMock = vi.spyOn(prisma.equipment, "create");
+
+      await expect(addEquipment({ name: "  " })).rejects.toThrow();
+      expect(createMock).not.toHaveBeenCalled();
+      expect(vi.mocked(revalidatePath)).not.toHaveBeenCalled();
+      createMock.mockRestore();
+    });
+
     it("getEquipment orders by name ascending", async () => {
       const mockEquipments = [{ id: "eq-1", name: "Conveyor" }];
       const findManyMock = vi.spyOn(prisma.equipment, "findMany").mockResolvedValue(mockEquipments as any);
@@ -91,6 +100,36 @@ describe("scheduler server actions", () => {
   });
 
   describe("task actions", () => {
+    it("rejects invalid task ranges and material values before writing", async () => {
+      const createMock = vi.spyOn(prisma.maintenanceTask, "create");
+      const startTime = new Date("2026-06-01T10:00:00.000Z");
+
+      await expect(
+        createTask({
+          title: "Invalid interval",
+          startTime,
+          endTime: new Date("2026-06-01T09:00:00.000Z"),
+          equipmentId: "eq-1",
+          workerIds: [],
+        }),
+      ).rejects.toThrow();
+
+      await expect(
+        createTask({
+          title: "Invalid material",
+          startTime,
+          endTime: new Date("2026-06-01T11:00:00.000Z"),
+          equipmentId: "eq-1",
+          workerIds: [],
+          materials: [{ name: "Oil", quantity: 1, price: -1 }],
+        }),
+      ).rejects.toThrow();
+
+      expect(createMock).not.toHaveBeenCalled();
+      expect(vi.mocked(revalidatePath)).not.toHaveBeenCalled();
+      createMock.mockRestore();
+    });
+
     it("getTasks queries tasks with equipment, worker assignments, and materials ordered by startTime", async () => {
       const mockTasks = [{ id: "task-1", title: "Maintenance 1" }];
       const findManyMock = vi.spyOn(prisma.maintenanceTask, "findMany").mockResolvedValue(mockTasks as any);
@@ -280,6 +319,45 @@ describe("scheduler server actions", () => {
       }
     });
 
+    it("clears assignments and materials when explicit empty arrays are provided", async () => {
+      const deletedAssignment = vi.fn().mockResolvedValue({ count: 2 });
+      const createdAssignments = vi.fn();
+      const deletedMaterials = vi.fn().mockResolvedValue({ count: 3 });
+      const createdMaterials = vi.fn();
+      const updateTaskRecord = vi.fn().mockResolvedValue({ id: "task-123" });
+      const fakeTx = {
+        maintenanceTaskAssignment: {
+          deleteMany: deletedAssignment,
+          createMany: createdAssignments,
+        },
+        material: {
+          deleteMany: deletedMaterials,
+          createMany: createdMaterials,
+        },
+        maintenanceTask: { update: updateTaskRecord },
+      };
+      const txMock = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) => callback(fakeTx));
+
+      try {
+        await updateTask("task-123", { workerIds: [], materials: [] });
+
+        expect(deletedAssignment).toHaveBeenCalledWith({
+          where: { taskId: "task-123" },
+        });
+        expect(deletedMaterials).toHaveBeenCalledWith({
+          where: { taskId: "task-123" },
+        });
+        expect(createdAssignments).not.toHaveBeenCalled();
+        expect(createdMaterials).not.toHaveBeenCalled();
+        expect(updateTaskRecord).toHaveBeenCalledTimes(1);
+        expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/");
+      } finally {
+        txMock.mockRestore();
+      }
+    });
+
     it("deleteTask deletes task and revalidates path", async () => {
       const deleteMock = vi
         .spyOn(prisma.maintenanceTask, "delete")
@@ -316,6 +394,51 @@ describe("scheduler server actions", () => {
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
         updateMock.mockRestore();
+      }
+    });
+
+    it("rejects invalid move intervals before updating the database", async () => {
+      const updateMock = vi.spyOn(prisma.maintenanceTask, "update");
+
+      await expect(
+        moveTask(
+          "task-123",
+          new Date("2026-07-01T12:00:00.000Z"),
+          new Date("2026-07-01T10:00:00.000Z"),
+        ),
+      ).rejects.toThrow("Task end time must be after start time");
+
+      expect(updateMock).not.toHaveBeenCalled();
+      expect(vi.mocked(revalidatePath)).not.toHaveBeenCalled();
+      updateMock.mockRestore();
+    });
+
+    it("propagates transaction failures without revalidating the route", async () => {
+      const transactionError = new Error("material insert failed");
+      const fakeTx = {
+        maintenanceTaskAssignment: {
+          deleteMany: vi.fn(),
+          createMany: vi.fn(),
+        },
+        material: {
+          deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+          createMany: vi.fn().mockRejectedValue(transactionError),
+        },
+        maintenanceTask: { update: vi.fn() },
+      };
+      const txMock = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) => callback(fakeTx));
+
+      try {
+        await expect(
+          updateTask("task-123", {
+            materials: [{ name: "Bearing", quantity: 1 }],
+          }),
+        ).rejects.toBe(transactionError);
+        expect(vi.mocked(revalidatePath)).not.toHaveBeenCalled();
+      } finally {
+        txMock.mockRestore();
       }
     });
   });

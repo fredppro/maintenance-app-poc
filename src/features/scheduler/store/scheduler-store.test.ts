@@ -1,8 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSchedulerStore } from "./scheduler-store";
 import { Equipment, MaintenanceEntry, Worker } from "../types";
 
 describe("scheduler store", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   const dummyEquipment: Equipment = {
     id: "eq-1",
     name: "Conveyor Belt A",
@@ -189,6 +193,19 @@ describe("scheduler store", () => {
       );
     });
 
+    it("navigates forward across a year boundary", () => {
+      const store = createSchedulerStore({
+        currentDate: new Date("2026-12-15T12:00:00.000Z"),
+        viewMode: "month",
+      });
+
+      store.getState().navigateForward();
+
+      expect(store.getState().currentDate.toISOString()).toBe(
+        "2027-01-15T12:00:00.000Z",
+      );
+    });
+
     it("navigates forward and backward in year mode", () => {
       const initialDate = new Date("2026-05-15T12:00:00.000Z");
       const store = createSchedulerStore({
@@ -262,6 +279,22 @@ describe("scheduler store", () => {
       store.getState().setLoading(true);
       expect(store.getState().isLoading).toBe(true);
       store.getState().setLoading(false);
+      expect(store.getState().isLoading).toBe(false);
+    });
+
+    it("keeps loading until 300ms after the most recent view change", () => {
+      vi.useFakeTimers();
+      const store = createSchedulerStore();
+
+      store.getState().setViewMode("day");
+      vi.advanceTimersByTime(200);
+      store.getState().setViewMode("month");
+      vi.advanceTimersByTime(200);
+
+      expect(store.getState().isLoading).toBe(true);
+      expect(store.getState().viewMode).toBe("month");
+
+      vi.advanceTimersByTime(100);
       expect(store.getState().isLoading).toBe(false);
     });
   });

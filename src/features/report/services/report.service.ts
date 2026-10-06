@@ -4,11 +4,18 @@ import { getMaintenanceTask } from "../server/get-task";
 import { createMaintenanceReportPDFStream } from "../pdf/stream";
 import { AppLocale } from "src/i18n/locale";
 
+export class ReportTaskNotFoundError extends Error {
+  constructor(taskId: string) {
+    super(`Maintenance task not found: ${taskId}`);
+    this.name = "ReportTaskNotFoundError";
+  }
+}
+
 export async function buildMaintenanceReportPDF(taskId: string, locale: AppLocale) {
   const task = await getMaintenanceTask(taskId);
 
   if (!task) {
-    throw new Error("NOT_FOUND");
+    throw new ReportTaskNotFoundError(taskId);
   }
 
   const stream = createMaintenanceReportPDFStream(task, locale);

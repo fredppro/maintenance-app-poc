@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { WorkerType } from "../../../../prisma/generated/prisma/enums";
+import {
+  createWorkerSchema,
+  updateWorkerSchema,
+  workerIdSchema,
+} from "./schemas";
 
 export async function getWorkers() {
   return await prisma.worker.findMany({
@@ -17,13 +22,14 @@ export async function createWorker(data: {
   type?: WorkerType;
   vendorId?: string | null;
 }) {
+  const input = createWorkerSchema.parse(data);
   const worker = await prisma.worker.create({
     data: {
-      name: data.name,
-      email: data.email,
-      phone: data.phone ?? null,
-      type: data.type ?? WorkerType.INTERNAL,
-      vendorId: data.vendorId ?? null,
+      name: input.name,
+      email: input.email,
+      phone: input.phone ?? null,
+      type: input.type ?? WorkerType.INTERNAL,
+      vendorId: input.vendorId ?? null,
     },
   });
 
@@ -41,9 +47,11 @@ export async function updateWorker(
     vendorId?: string | null;
   }>,
 ) {
+  const workerId = workerIdSchema.parse(id);
+  const input = updateWorkerSchema.parse(data);
   const worker = await prisma.worker.update({
-    where: { id },
-    data,
+    where: { id: workerId },
+    data: input,
   });
 
   revalidatePath("/");
@@ -51,8 +59,9 @@ export async function updateWorker(
 }
 
 export async function deleteWorker(id: string) {
+  const workerId = workerIdSchema.parse(id);
   await prisma.worker.delete({
-    where: { id },
+    where: { id: workerId },
   });
 
   revalidatePath("/");

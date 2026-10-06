@@ -75,6 +75,8 @@ const defaultSchedulerState = (): Pick<
 });
 
 export function createSchedulerStore(initialState: SchedulerInitialState = {}) {
+  let viewModeTimer: ReturnType<typeof setTimeout> | undefined;
+
   return createStore<SchedulerState>()((set, get) => ({
     ...defaultSchedulerState(),
     ...initialState,
@@ -131,8 +133,14 @@ export function createSchedulerStore(initialState: SchedulerInitialState = {}) {
       })),
 
     setViewMode: (mode) => {
+      if (viewModeTimer) {
+        clearTimeout(viewModeTimer);
+      }
       set({ isLoading: true, viewMode: mode });
-      setTimeout(() => set({ isLoading: false }), 300);
+      viewModeTimer = setTimeout(() => {
+        viewModeTimer = undefined;
+        set({ isLoading: false });
+      }, 300);
     },
 
     setCurrentDate: (date) => set({ currentDate: date }),

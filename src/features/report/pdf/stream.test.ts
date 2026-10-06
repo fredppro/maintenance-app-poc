@@ -93,6 +93,27 @@ describe("createMaintenanceReportPDFStream", () => {
     expect(pdf.toString("latin1").startsWith("%PDF")).toBe(true);
   });
 
+  it("creates a PDF when optional equipment, assignments, and materials are absent", async () => {
+    const entry = {
+      id: "task-without-relations",
+      title: "Unassigned maintenance",
+      description: null,
+      type: "PREVENTIVE",
+      startTime: new Date("2026-06-01T08:00:00.000Z"),
+      endTime: new Date("2026-06-01T09:00:00.000Z"),
+      equipmentId: "equipment-missing",
+      status: "scheduled",
+      createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    } as any;
+
+    const pdf = await collectStream(
+      createMaintenanceReportPDFStream(entry, "en"),
+    );
+
+    expect(pdf.toString("latin1").startsWith("%PDF")).toBe(true);
+  });
+
   it("handles overflow with multiple pages and long text without throwing", async () => {
     const longDescription = "Detailed inspection log entry. ".repeat(60);
 

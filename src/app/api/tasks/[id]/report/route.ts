@@ -1,4 +1,7 @@
-import { buildReportResponse } from "@/features/report/services/report.service";
+import {
+  buildReportResponse,
+  ReportTaskNotFoundError,
+} from "@/features/report/services/report.service";
 import { getValidLocale } from "src/i18n/locale";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -20,5 +23,12 @@ export async function GET(
   const mode =
     url.searchParams.get("mode") === "download" ? "download" : "preview";
 
-  return buildReportResponse(id, locale, mode);
+  try {
+    return await buildReportResponse(id, locale, mode);
+  } catch (error) {
+    if (error instanceof ReportTaskNotFoundError) {
+      return NextResponse.json({ message: "Task not found" }, { status: 404 });
+    }
+    throw error;
+  }
 }

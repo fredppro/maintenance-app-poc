@@ -141,6 +141,8 @@
     "drawerDescription": "Atualize os detalhes do trabalhador na barra lateral.",
     "loading": "A carregar...",
     "noWorkers": "Ainda não há trabalhadores.",
+    "failedLoad": "Falha ao carregar trabalhadores.",
+    "retry": "Tentar novamente",
     "noResults": "Sem resultados.",
     "deleteWorker": "Apagar trabalhador",
     "deleteConfirmation": "Tem certeza de que quer apagar {name}? Esta ação não pode ser desfeita.",

@@ -141,6 +141,8 @@
     "drawerDescription": "Update worker details from the sidebar.",
     "loading": "Loading...",
     "noWorkers": "No workers yet.",
+    "failedLoad": "Failed to load workers.",
+    "retry": "Retry",
     "noResults": "No results.",
     "deleteWorker": "Delete worker",
     "deleteConfirmation": "Are you sure you want to delete {name}? This action cannot be undone.",

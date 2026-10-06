@@ -3,6 +3,13 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
+import {
+  equipmentIdSchema,
+  equipmentSchema,
+  equipmentUpdateSchema,
+  createTaskSchema,
+  updateTaskSchema,
+} from "./schemas";
 
 // Equipment Actions
 export async function getEquipment() {
@@ -12,8 +19,9 @@ export async function getEquipment() {
 }
 
 export async function addEquipment(data: { name: string; category?: string }) {
+  const input = equipmentSchema.parse(data);
   const equipment = await prisma.equipment.create({
-    data,
+    data: input,
   });
   revalidatePath("/");
   return equipment;
@@ -23,17 +31,20 @@ export async function updateEquipment(
   id: string,
   data: { name: string; category?: string },
 ) {
+  const equipmentId = equipmentIdSchema.parse(id);
+  const input = equipmentUpdateSchema.parse(data);
   const equipment = await prisma.equipment.update({
-    where: { id },
-    data,
+    where: { id: equipmentId },
+    data: input,
   });
   revalidatePath("/");
   return equipment;
 }
 
 export async function deleteEquipment(id: string) {
+  const equipmentId = equipmentIdSchema.parse(id);
   await prisma.equipment.delete({
-    where: { id },
+    where: { id: equipmentId },
   });
   revalidatePath("/");
 }
@@ -71,7 +82,8 @@ export async function createTask(data: {
     price?: number;
   }[];
 }) {
-  const { workerIds, materials, ...taskData } = data;
+  const input = createTaskSchema.parse(data);
+  const { workerIds, materials, ...taskData } = input;
   const task = await prisma.maintenanceTask.create({
     data: {
       ...taskData,
@@ -125,19 +137,21 @@ export async function updateTask(
     }[];
   }>,
 ) {
-  const { workerIds, workerLogs, materials, ...taskData } = data;
+  const taskId = equipmentIdSchema.parse(id);
+  const input = updateTaskSchema.parse(data);
+  const { workerIds, workerLogs, materials, ...taskData } = input;
 
   const task = await prisma.$transaction(async (tx) => {
     // If workerLogs are explicitly passed, overwrite the assignment entries with times
     if (workerLogs) {
       await tx.maintenanceTaskAssignment.deleteMany({
-        where: { taskId: id },
+        where: { taskId },
       });
 
       if (workerLogs.length > 0) {
         await tx.maintenanceTaskAssignment.createMany({
           data: workerLogs.map((log) => ({
-            taskId: id,
+            taskId,
             workerId: log.workerId,
             startTime: log.startTime,
             endTime: log.endTime,
@@ -147,13 +161,13 @@ export async function updateTask(
     } else if (workerIds) {
       // Fallback for primitive updates (like simple drag-and-drop calendars)
       await tx.maintenanceTaskAssignment.deleteMany({
-        where: { taskId: id },
+        where: { taskId },
       });
 
       if (workerIds.length > 0) {
         await tx.maintenanceTaskAssignment.createMany({
           data: workerIds.map((workerId) => ({
-            taskId: id,
+            taskId,
             workerId,
           })),
         });
@@ -163,14 +177,14 @@ export async function updateTask(
     if (materials) {
       // Remove old materials
       await tx.material.deleteMany({
-        where: { taskId: id },
+        where: { taskId },
       });
 
       // Add new materials
       if (materials.length > 0) {
         await tx.material.createMany({
           data: materials.map((m) => ({
-            taskId: id,
+            taskId,
             name: m.name,
             reference: m.reference,
             quantity: m.quantity,
@@ -182,7 +196,7 @@ export async function updateTask(
     }
 
     return await tx.maintenanceTask.update({
-      where: { id },
+      where: { id: taskId },
       data: taskData,
       include: {
         equipment: true,
@@ -201,8 +215,9 @@ export async function updateTask(
 }
 
 export async function deleteTask(id: string) {
+  const taskId = equipmentIdSchema.parse(id);
   await prisma.maintenanceTask.delete({
-    where: { id },
+    where: { id: taskId },
   });
   revalidatePath("/");
 }
@@ -213,12 +228,24 @@ export async function moveTask(
   newEndTime: Date,
   newEquipmentId?: string,
 ) {
+  const validatedTaskId = equipmentIdSchema.parse(taskId);
+  const startTime = new Date(newStartTime);
+  const endTime = new Date(newEndTime);
+  if (
+    Number.isNaN(startTime.getTime()) ||
+    Number.isNaN(endTime.getTime()) ||
+    endTime <= startTime
+  ) {
+    throw new Error("Task end time must be after start time");
+  }
   const task = await prisma.maintenanceTask.update({
-    where: { id: taskId },
+    where: { id: validatedTaskId },
     data: {
-      startTime: newStartTime,
-      endTime: newEndTime,
-      equipmentId: newEquipmentId,
+      startTime,
+      endTime,
+      ...(newEquipmentId !== undefined && {
+        equipmentId: equipmentIdSchema.parse(newEquipmentId),
+      }),
     },
     include: {
       equipment: true,

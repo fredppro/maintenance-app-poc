@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import * as getTaskModule from "../server/get-task";
-import { buildMaintenanceReportPDF, buildReportResponse } from "./report.service";
+import {
+  buildMaintenanceReportPDF,
+  buildReportResponse,
+  ReportTaskNotFoundError,
+} from "./report.service";
 
 describe("report service", () => {
   const mockTask = {
@@ -38,7 +42,9 @@ describe("report service", () => {
     const getTaskMock = vi.spyOn(getTaskModule, "getMaintenanceTask").mockResolvedValue(null);
 
     try {
-      await expect(buildMaintenanceReportPDF("nonexistent-task", "en")).rejects.toThrow("NOT_FOUND");
+      await expect(
+        buildMaintenanceReportPDF("nonexistent-task", "en"),
+      ).rejects.toBeInstanceOf(ReportTaskNotFoundError);
     } finally {
       getTaskMock.mockRestore();
     }

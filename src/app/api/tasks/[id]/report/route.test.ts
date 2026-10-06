@@ -70,4 +70,44 @@ describe("GET /api/tasks/[id]/report", () => {
       buildReportMock.mockRestore();
     }
   });
+
+  it("returns 404 when the task does not exist", async () => {
+    const buildReportMock = vi
+      .spyOn(reportService, "buildReportResponse")
+      .mockRejectedValue(
+        new reportService.ReportTaskNotFoundError("missing-task"),
+      );
+
+    try {
+      const request = new NextRequest(
+        "http://localhost:3000/api/tasks/missing-task/report",
+      );
+      const response = await GET(request, {
+        params: Promise.resolve({ id: "missing-task" }),
+      });
+
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ message: "Task not found" });
+    } finally {
+      buildReportMock.mockRestore();
+    }
+  });
+
+  it("does not hide unexpected report errors", async () => {
+    const unexpectedError = new Error("PDF renderer failed");
+    const buildReportMock = vi
+      .spyOn(reportService, "buildReportResponse")
+      .mockRejectedValue(unexpectedError);
+
+    try {
+      const request = new NextRequest(
+        "http://localhost:3000/api/tasks/task-1/report",
+      );
+      await expect(
+        GET(request, { params: Promise.resolve({ id: "task-1" }) }),
+      ).rejects.toBe(unexpectedError);
+    } finally {
+      buildReportMock.mockRestore();
+    }
+  });
 });

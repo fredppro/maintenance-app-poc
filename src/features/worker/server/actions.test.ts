@@ -22,6 +22,22 @@ describe("worker server actions", () => {
     vi.mocked(revalidatePath).mockClear();
   });
 
+  it("rejects invalid worker input and empty updates before database writes", async () => {
+    const createMock = vi.spyOn(prisma.worker, "create");
+    const updateMock = vi.spyOn(prisma.worker, "update");
+
+    await expect(
+      createWorker({ name: "Worker", email: "not-an-email" }),
+    ).rejects.toThrow();
+    await expect(updateWorker("w-3", {})).rejects.toThrow();
+
+    expect(createMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
+    expect(vi.mocked(revalidatePath)).not.toHaveBeenCalled();
+    createMock.mockRestore();
+    updateMock.mockRestore();
+  });
+
   it("getWorkers queries workers ordered by name ascending", async () => {
     const mockWorkers = [
       { id: "w-1", name: "Alice", email: "alice@example.com" },
