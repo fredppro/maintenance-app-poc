@@ -9,6 +9,15 @@ import {
 } from "./actions";
 import { WorkerType } from "../../../../prisma/generated/prisma/enums";
 
+vi.mock("@/lib/tenant-context", () => ({
+  getTenantContext: vi.fn().mockResolvedValue({
+    userId: "user-1",
+    organizationId: "org-1",
+    siteId: "site-1",
+    role: "owner",
+  }),
+}));
+
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
@@ -16,10 +25,12 @@ vi.mock("next/cache", () => ({
 describe("worker server actions", () => {
   beforeEach(() => {
     vi.mocked(revalidatePath).mockClear();
+    vi.spyOn(prisma.vendor, "findFirst").mockResolvedValue({ id: "vendor-1" } as never);
   });
 
   afterEach(() => {
     vi.mocked(revalidatePath).mockClear();
+    vi.restoreAllMocks();
   });
 
   it("rejects invalid worker input and empty updates before database writes", async () => {
@@ -50,7 +61,12 @@ describe("worker server actions", () => {
       const result = await getWorkers();
       expect(result).toEqual(mockWorkers);
       expect(findManyMock.mock.calls.length).toBe(1);
-      expect(findManyMock).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { name: "asc" } }));
+      expect(findManyMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { organizationId: "org-1" },
+          orderBy: { name: "asc" },
+        }),
+      );
     } finally {
       findManyMock.mockRestore();
     }
@@ -69,6 +85,7 @@ describe("worker server actions", () => {
       phone: null,
       type: WorkerType.INTERNAL,
       vendorId: null,
+      organizationId: "org-1",
       createdAt: new Date(),
     };
 
@@ -85,6 +102,7 @@ describe("worker server actions", () => {
             phone: null,
             type: WorkerType.INTERNAL,
             vendorId: null,
+            organizationId: "org-1",
           },
         }),
       );
@@ -115,7 +133,9 @@ describe("worker server actions", () => {
     try {
       const result = await createWorker(workerInput);
       expect(result).toEqual(created);
-      expect(createMock).toHaveBeenCalledWith(expect.objectContaining({ data: workerInput }));
+      expect(createMock).toHaveBeenCalledWith({
+        data: { ...workerInput, organizationId: "org-1" },
+      });
       expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
     } finally {
       createMock.mockRestore();
@@ -143,7 +163,10 @@ describe("worker server actions", () => {
     try {
       const result = await updateWorker("w-3", updateData);
       expect(result).toEqual(updated);
-      expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "w-3" }, data: updateData }));
+      expect(updateMock).toHaveBeenCalledWith({
+        where: { id: "w-3", organizationId: "org-1" },
+        data: updateData,
+      });
       expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
     } finally {
       updateMock.mockRestore();
@@ -156,7 +179,9 @@ describe("worker server actions", () => {
     try {
       await deleteWorker("w-3");
       expect(deleteMock.mock.calls.length).toBe(1);
-      expect(deleteMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "w-3" } }));
+      expect(deleteMock).toHaveBeenCalledWith({
+        where: { id: "w-3", organizationId: "org-1" },
+      });
       expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
     } finally {
       deleteMock.mockRestore();

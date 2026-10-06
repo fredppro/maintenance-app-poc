@@ -21,6 +21,12 @@ an existing development server.
 The global setup creates an equipment and worker fixture. Teardown removes tasks
 with the `E2E - Playwright` title prefix and removes those exact fixtures.
 
+The test logs in as `playwright@example.test`; global setup creates the test
+account, organization, and site in the E2E database. Playwright pins
+`BETTER_AUTH_URL` to `http://127.0.0.1:3000` so auth origins match the browser
+server. The E2E database must be migrated before running the suite; tests never
+use the developer or production database.
+
 GitHub Actions provisions an isolated PostgreSQL service, applies migrations,
 and runs the browser suite. The standard unit-test job does not need a database
 server.

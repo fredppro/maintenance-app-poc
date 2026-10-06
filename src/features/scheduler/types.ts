@@ -10,13 +10,13 @@ export type { Worker } from "@/features/worker/types";
 
 export type ViewMode = 'day' | 'week' | 'month' | 'year';
 
-export type Equipment = PrismaEquipment;
+export type Equipment = Omit<PrismaEquipment, "organizationId" | "siteId">;
 
-export type Material = PrismaMaterial;
+export type Material = Omit<PrismaMaterial, "organizationId">;
 
-export type MaintenanceEntry = PrismaTask & {
+export type MaintenanceEntry = Omit<PrismaTask, "organizationId"> & {
   equipment?: Equipment;
-  assignments?: (PrismaAssignment & {
+  assignments?: (Omit<PrismaAssignment, "organizationId"> & {
     worker: Worker;
   })[];
   materials?: Material[];

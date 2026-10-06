@@ -9,6 +9,8 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     env:
+      BETTER_AUTH_SECRET: test-secret-that-is-long-enough-for-builds
+      BETTER_AUTH_URL: http://localhost:3000
       DATABASE_URL: postgresql://maintenance_app:maintenance_app@localhost:5432/maintenance_app_test?schema=public
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +50,8 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
+      BETTER_AUTH_SECRET: test-secret-that-is-long-enough-for-builds
+      BETTER_AUTH_URL: http://localhost:3000
       E2E_DATABASE_URL: postgresql://maintenance_app:maintenance_app@localhost:5432/maintenance_app_test?schema=public
       DATABASE_URL: postgresql://maintenance_app:maintenance_app@localhost:5432/maintenance_app_build?schema=public
     steps:

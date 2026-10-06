@@ -31,6 +31,7 @@ export type WorkerMinAggregateOutputType = {
   phone: string | null
   type: $Enums.WorkerType | null
   vendorId: string | null
+  organizationId: string | null
   createdAt: Date | null
 }
 
@@ -41,6 +42,7 @@ export type WorkerMaxAggregateOutputType = {
   phone: string | null
   type: $Enums.WorkerType | null
   vendorId: string | null
+  organizationId: string | null
   createdAt: Date | null
 }
 
@@ -51,6 +53,7 @@ export type WorkerCountAggregateOutputType = {
   phone: number
   type: number
   vendorId: number
+  organizationId: number
   createdAt: number
   _all: number
 }
@@ -63,6 +66,7 @@ export type WorkerMinAggregateInputType = {
   phone?: true
   type?: true
   vendorId?: true
+  organizationId?: true
   createdAt?: true
 }
 
@@ -73,6 +77,7 @@ export type WorkerMaxAggregateInputType = {
   phone?: true
   type?: true
   vendorId?: true
+  organizationId?: true
   createdAt?: true
 }
 
@@ -83,6 +88,7 @@ export type WorkerCountAggregateInputType = {
   phone?: true
   type?: true
   vendorId?: true
+  organizationId?: true
   createdAt?: true
   _all?: true
 }
@@ -166,6 +172,7 @@ export type WorkerGroupByOutputType = {
   phone: string | null
   type: $Enums.WorkerType
   vendorId: string | null
+  organizationId: string
   createdAt: Date
   _count: WorkerCountAggregateOutputType | null
   _min: WorkerMinAggregateOutputType | null
@@ -197,7 +204,9 @@ export type WorkerWhereInput = {
   phone?: Prisma.StringNullableFilter<"Worker"> | string | null
   type?: Prisma.EnumWorkerTypeFilter<"Worker"> | $Enums.WorkerType
   vendorId?: Prisma.StringNullableFilter<"Worker"> | string | null
+  organizationId?: Prisma.StringFilter<"Worker"> | string
   createdAt?: Prisma.DateTimeFilter<"Worker"> | Date | string
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   vendor?: Prisma.XOR<Prisma.VendorNullableScalarRelationFilter, Prisma.VendorWhereInput> | null
   assignments?: Prisma.MaintenanceTaskAssignmentListRelationFilter
 }
@@ -209,25 +218,31 @@ export type WorkerOrderByWithRelationInput = {
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   vendorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  organization?: Prisma.OrganizationOrderByWithRelationInput
   vendor?: Prisma.VendorOrderByWithRelationInput
   assignments?: Prisma.MaintenanceTaskAssignmentOrderByRelationAggregateInput
 }
 
 export type WorkerWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  email?: string
+  id_organizationId?: Prisma.WorkerIdOrganizationIdCompoundUniqueInput
+  organizationId_email?: Prisma.WorkerOrganizationIdEmailCompoundUniqueInput
   AND?: Prisma.WorkerWhereInput | Prisma.WorkerWhereInput[]
   OR?: Prisma.WorkerWhereInput[]
   NOT?: Prisma.WorkerWhereInput | Prisma.WorkerWhereInput[]
   name?: Prisma.StringFilter<"Worker"> | string
+  email?: Prisma.StringFilter<"Worker"> | string
   phone?: Prisma.StringNullableFilter<"Worker"> | string | null
   type?: Prisma.EnumWorkerTypeFilter<"Worker"> | $Enums.WorkerType
   vendorId?: Prisma.StringNullableFilter<"Worker"> | string | null
+  organizationId?: Prisma.StringFilter<"Worker"> | string
   createdAt?: Prisma.DateTimeFilter<"Worker"> | Date | string
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   vendor?: Prisma.XOR<Prisma.VendorNullableScalarRelationFilter, Prisma.VendorWhereInput> | null
   assignments?: Prisma.MaintenanceTaskAssignmentListRelationFilter
-}, "id" | "email">
+}, "id" | "id_organizationId" | "organizationId_email">
 
 export type WorkerOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -236,6 +251,7 @@ export type WorkerOrderByWithAggregationInput = {
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   vendorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.WorkerCountOrderByAggregateInput
   _max?: Prisma.WorkerMaxOrderByAggregateInput
@@ -252,6 +268,7 @@ export type WorkerScalarWhereWithAggregatesInput = {
   phone?: Prisma.StringNullableWithAggregatesFilter<"Worker"> | string | null
   type?: Prisma.EnumWorkerTypeWithAggregatesFilter<"Worker"> | $Enums.WorkerType
   vendorId?: Prisma.StringNullableWithAggregatesFilter<"Worker"> | string | null
+  organizationId?: Prisma.StringWithAggregatesFilter<"Worker"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Worker"> | Date | string
 }
 
@@ -262,6 +279,7 @@ export type WorkerCreateInput = {
   phone?: string | null
   type?: $Enums.WorkerType
   createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutWorkersInput
   vendor?: Prisma.VendorCreateNestedOneWithoutWorkersInput
   assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutWorkerInput
 }
@@ -273,6 +291,7 @@ export type WorkerUncheckedCreateInput = {
   phone?: string | null
   type?: $Enums.WorkerType
   vendorId?: string | null
+  organizationId: string
   createdAt?: Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutWorkerInput
 }
@@ -284,6 +303,7 @@ export type WorkerUpdateInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutWorkersNestedInput
   vendor?: Prisma.VendorUpdateOneWithoutWorkersNestedInput
   assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutWorkerNestedInput
 }
@@ -295,6 +315,7 @@ export type WorkerUncheckedUpdateInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
   vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutWorkerNestedInput
 }
@@ -306,6 +327,7 @@ export type WorkerCreateManyInput = {
   phone?: string | null
   type?: $Enums.WorkerType
   vendorId?: string | null
+  organizationId: string
   createdAt?: Date | string
 }
 
@@ -325,12 +347,23 @@ export type WorkerUncheckedUpdateManyInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
   vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type WorkerScalarRelationFilter = {
   is?: Prisma.WorkerWhereInput
   isNot?: Prisma.WorkerWhereInput
+}
+
+export type WorkerIdOrganizationIdCompoundUniqueInput = {
+  id: string
+  organizationId: string
+}
+
+export type WorkerOrganizationIdEmailCompoundUniqueInput = {
+  organizationId: string
+  email: string
 }
 
 export type WorkerCountOrderByAggregateInput = {
@@ -340,6 +373,7 @@ export type WorkerCountOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   type?: Prisma.SortOrder
   vendorId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -350,6 +384,7 @@ export type WorkerMaxOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   type?: Prisma.SortOrder
   vendorId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -360,6 +395,7 @@ export type WorkerMinOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   type?: Prisma.SortOrder
   vendorId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -433,6 +469,48 @@ export type WorkerUncheckedUpdateManyWithoutVendorNestedInput = {
   deleteMany?: Prisma.WorkerScalarWhereInput | Prisma.WorkerScalarWhereInput[]
 }
 
+export type WorkerCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.WorkerCreateWithoutOrganizationInput, Prisma.WorkerUncheckedCreateWithoutOrganizationInput> | Prisma.WorkerCreateWithoutOrganizationInput[] | Prisma.WorkerUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.WorkerCreateOrConnectWithoutOrganizationInput | Prisma.WorkerCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.WorkerCreateManyOrganizationInputEnvelope
+  connect?: Prisma.WorkerWhereUniqueInput | Prisma.WorkerWhereUniqueInput[]
+}
+
+export type WorkerUncheckedCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.WorkerCreateWithoutOrganizationInput, Prisma.WorkerUncheckedCreateWithoutOrganizationInput> | Prisma.WorkerCreateWithoutOrganizationInput[] | Prisma.WorkerUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.WorkerCreateOrConnectWithoutOrganizationInput | Prisma.WorkerCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.WorkerCreateManyOrganizationInputEnvelope
+  connect?: Prisma.WorkerWhereUniqueInput | Prisma.WorkerWhereUniqueInput[]
+}
+
+export type WorkerUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkerCreateWithoutOrganizationInput, Prisma.WorkerUncheckedCreateWithoutOrganizationInput> | Prisma.WorkerCreateWithoutOrganizationInput[] | Prisma.WorkerUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.WorkerCreateOrConnectWithoutOrganizationInput | Prisma.WorkerCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.WorkerUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.WorkerUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.WorkerCreateManyOrganizationInputEnvelope
+  set?: Prisma.WorkerWhereUniqueInput | Prisma.WorkerWhereUniqueInput[]
+  disconnect?: Prisma.WorkerWhereUniqueInput | Prisma.WorkerWhereUniqueInput[]
+  delete?: Prisma.WorkerWhereUniqueInput | Prisma.WorkerWhereUniqueInput[]
+  connect?: Prisma.WorkerWhereUniqueInput | Prisma.WorkerWhereUniqueInput[]
+  update?: Prisma.WorkerUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.WorkerUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.WorkerUpdateManyWithWhereWithoutOrganizationInput | Prisma.WorkerUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.WorkerScalarWhereInput | Prisma.WorkerScalarWhereInput[]
+}
+
+export type WorkerUncheckedUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkerCreateWithoutOrganizationInput, Prisma.WorkerUncheckedCreateWithoutOrganizationInput> | Prisma.WorkerCreateWithoutOrganizationInput[] | Prisma.WorkerUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.WorkerCreateOrConnectWithoutOrganizationInput | Prisma.WorkerCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.WorkerUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.WorkerUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.WorkerCreateManyOrganizationInputEnvelope
+  set?: Prisma.WorkerWhereUniqueInput | Prisma.WorkerWhereUniqueInput[]
+  disconnect?: Prisma.WorkerWhereUniqueInput | Prisma.WorkerWhereUniqueInput[]
+  delete?: Prisma.WorkerWhereUniqueInput | Prisma.WorkerWhereUniqueInput[]
+  connect?: Prisma.WorkerWhereUniqueInput | Prisma.WorkerWhereUniqueInput[]
+  update?: Prisma.WorkerUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.WorkerUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.WorkerUpdateManyWithWhereWithoutOrganizationInput | Prisma.WorkerUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.WorkerScalarWhereInput | Prisma.WorkerScalarWhereInput[]
+}
+
 export type WorkerCreateWithoutAssignmentsInput = {
   id?: string
   name: string
@@ -440,6 +518,7 @@ export type WorkerCreateWithoutAssignmentsInput = {
   phone?: string | null
   type?: $Enums.WorkerType
   createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutWorkersInput
   vendor?: Prisma.VendorCreateNestedOneWithoutWorkersInput
 }
 
@@ -450,6 +529,7 @@ export type WorkerUncheckedCreateWithoutAssignmentsInput = {
   phone?: string | null
   type?: $Enums.WorkerType
   vendorId?: string | null
+  organizationId: string
   createdAt?: Date | string
 }
 
@@ -476,6 +556,7 @@ export type WorkerUpdateWithoutAssignmentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutWorkersNestedInput
   vendor?: Prisma.VendorUpdateOneWithoutWorkersNestedInput
 }
 
@@ -486,6 +567,7 @@ export type WorkerUncheckedUpdateWithoutAssignmentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
   vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -496,6 +578,7 @@ export type WorkerCreateWithoutVendorInput = {
   phone?: string | null
   type?: $Enums.WorkerType
   createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutWorkersInput
   assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutWorkerInput
 }
 
@@ -545,7 +628,56 @@ export type WorkerScalarWhereInput = {
   phone?: Prisma.StringNullableFilter<"Worker"> | string | null
   type?: Prisma.EnumWorkerTypeFilter<"Worker"> | $Enums.WorkerType
   vendorId?: Prisma.StringNullableFilter<"Worker"> | string | null
+  organizationId?: Prisma.StringFilter<"Worker"> | string
   createdAt?: Prisma.DateTimeFilter<"Worker"> | Date | string
+}
+
+export type WorkerCreateWithoutOrganizationInput = {
+  id?: string
+  name: string
+  email: string
+  phone?: string | null
+  type?: $Enums.WorkerType
+  createdAt?: Date | string
+  vendor?: Prisma.VendorCreateNestedOneWithoutWorkersInput
+  assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutWorkerInput
+}
+
+export type WorkerUncheckedCreateWithoutOrganizationInput = {
+  id?: string
+  name: string
+  email: string
+  phone?: string | null
+  type?: $Enums.WorkerType
+  vendorId?: string | null
+  createdAt?: Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutWorkerInput
+}
+
+export type WorkerCreateOrConnectWithoutOrganizationInput = {
+  where: Prisma.WorkerWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkerCreateWithoutOrganizationInput, Prisma.WorkerUncheckedCreateWithoutOrganizationInput>
+}
+
+export type WorkerCreateManyOrganizationInputEnvelope = {
+  data: Prisma.WorkerCreateManyOrganizationInput | Prisma.WorkerCreateManyOrganizationInput[]
+  skipDuplicates?: boolean
+}
+
+export type WorkerUpsertWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.WorkerWhereUniqueInput
+  update: Prisma.XOR<Prisma.WorkerUpdateWithoutOrganizationInput, Prisma.WorkerUncheckedUpdateWithoutOrganizationInput>
+  create: Prisma.XOR<Prisma.WorkerCreateWithoutOrganizationInput, Prisma.WorkerUncheckedCreateWithoutOrganizationInput>
+}
+
+export type WorkerUpdateWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.WorkerWhereUniqueInput
+  data: Prisma.XOR<Prisma.WorkerUpdateWithoutOrganizationInput, Prisma.WorkerUncheckedUpdateWithoutOrganizationInput>
+}
+
+export type WorkerUpdateManyWithWhereWithoutOrganizationInput = {
+  where: Prisma.WorkerScalarWhereInput
+  data: Prisma.XOR<Prisma.WorkerUpdateManyMutationInput, Prisma.WorkerUncheckedUpdateManyWithoutOrganizationInput>
 }
 
 export type WorkerCreateManyVendorInput = {
@@ -564,6 +696,7 @@ export type WorkerUpdateWithoutVendorInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutWorkersNestedInput
   assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutWorkerNestedInput
 }
 
@@ -583,6 +716,48 @@ export type WorkerUncheckedUpdateManyWithoutVendorInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type WorkerCreateManyOrganizationInput = {
+  id?: string
+  name: string
+  email: string
+  phone?: string | null
+  type?: $Enums.WorkerType
+  vendorId?: string | null
+  createdAt?: Date | string
+}
+
+export type WorkerUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  vendor?: Prisma.VendorUpdateOneWithoutWorkersNestedInput
+  assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutWorkerNestedInput
+}
+
+export type WorkerUncheckedUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
+  vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutWorkerNestedInput
+}
+
+export type WorkerUncheckedUpdateManyWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
+  vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -624,7 +799,9 @@ export type WorkerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   phone?: boolean
   type?: boolean
   vendorId?: boolean
+  organizationId?: boolean
   createdAt?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   vendor?: boolean | Prisma.Worker$vendorArgs<ExtArgs>
   assignments?: boolean | Prisma.Worker$assignmentsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkerCountOutputTypeDefaultArgs<ExtArgs>
@@ -637,7 +814,9 @@ export type WorkerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   phone?: boolean
   type?: boolean
   vendorId?: boolean
+  organizationId?: boolean
   createdAt?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   vendor?: boolean | Prisma.Worker$vendorArgs<ExtArgs>
 }, ExtArgs["result"]["worker"]>
 
@@ -648,7 +827,9 @@ export type WorkerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   phone?: boolean
   type?: boolean
   vendorId?: boolean
+  organizationId?: boolean
   createdAt?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   vendor?: boolean | Prisma.Worker$vendorArgs<ExtArgs>
 }, ExtArgs["result"]["worker"]>
 
@@ -659,25 +840,30 @@ export type WorkerSelectScalar = {
   phone?: boolean
   type?: boolean
   vendorId?: boolean
+  organizationId?: boolean
   createdAt?: boolean
 }
 
-export type WorkerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "phone" | "type" | "vendorId" | "createdAt", ExtArgs["result"]["worker"]>
+export type WorkerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "phone" | "type" | "vendorId" | "organizationId" | "createdAt", ExtArgs["result"]["worker"]>
 export type WorkerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   vendor?: boolean | Prisma.Worker$vendorArgs<ExtArgs>
   assignments?: boolean | Prisma.Worker$assignmentsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkerCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   vendor?: boolean | Prisma.Worker$vendorArgs<ExtArgs>
 }
 export type WorkerIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   vendor?: boolean | Prisma.Worker$vendorArgs<ExtArgs>
 }
 
 export type $WorkerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Worker"
   objects: {
+    organization: Prisma.$OrganizationPayload<ExtArgs>
     vendor: Prisma.$VendorPayload<ExtArgs> | null
     assignments: Prisma.$MaintenanceTaskAssignmentPayload<ExtArgs>[]
   }
@@ -688,6 +874,7 @@ export type $WorkerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     phone: string | null
     type: $Enums.WorkerType
     vendorId: string | null
+    organizationId: string
     createdAt: Date
   }, ExtArgs["result"]["worker"]>
   composites: {}
@@ -1083,6 +1270,7 @@ readonly fields: WorkerFieldRefs;
  */
 export interface Prisma__WorkerClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   vendor<T extends Prisma.Worker$vendorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Worker$vendorArgs<ExtArgs>>): Prisma.Prisma__VendorClient<runtime.Types.Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   assignments<T extends Prisma.Worker$assignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Worker$assignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1120,6 +1308,7 @@ export interface WorkerFieldRefs {
   readonly phone: Prisma.FieldRef<"Worker", 'String'>
   readonly type: Prisma.FieldRef<"Worker", 'WorkerType'>
   readonly vendorId: Prisma.FieldRef<"Worker", 'String'>
+  readonly organizationId: Prisma.FieldRef<"Worker", 'String'>
   readonly createdAt: Prisma.FieldRef<"Worker", 'DateTime'>
 }
     

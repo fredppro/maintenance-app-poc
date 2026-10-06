@@ -1,3 +1,3 @@
 import type { Worker as PrismaWorker } from "../../../prisma/generated/prisma/client";
 
-export type Worker = PrismaWorker;
+export type Worker = Omit<PrismaWorker, "organizationId">;

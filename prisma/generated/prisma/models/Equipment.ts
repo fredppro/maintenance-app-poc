@@ -28,6 +28,8 @@ export type EquipmentMinAggregateOutputType = {
   id: string | null
   name: string | null
   category: string | null
+  organizationId: string | null
+  siteId: string | null
   createdAt: Date | null
 }
 
@@ -35,6 +37,8 @@ export type EquipmentMaxAggregateOutputType = {
   id: string | null
   name: string | null
   category: string | null
+  organizationId: string | null
+  siteId: string | null
   createdAt: Date | null
 }
 
@@ -42,6 +46,8 @@ export type EquipmentCountAggregateOutputType = {
   id: number
   name: number
   category: number
+  organizationId: number
+  siteId: number
   createdAt: number
   _all: number
 }
@@ -51,6 +57,8 @@ export type EquipmentMinAggregateInputType = {
   id?: true
   name?: true
   category?: true
+  organizationId?: true
+  siteId?: true
   createdAt?: true
 }
 
@@ -58,6 +66,8 @@ export type EquipmentMaxAggregateInputType = {
   id?: true
   name?: true
   category?: true
+  organizationId?: true
+  siteId?: true
   createdAt?: true
 }
 
@@ -65,6 +75,8 @@ export type EquipmentCountAggregateInputType = {
   id?: true
   name?: true
   category?: true
+  organizationId?: true
+  siteId?: true
   createdAt?: true
   _all?: true
 }
@@ -145,6 +157,8 @@ export type EquipmentGroupByOutputType = {
   id: string
   name: string
   category: string | null
+  organizationId: string
+  siteId: string
   createdAt: Date
   _count: EquipmentCountAggregateOutputType | null
   _min: EquipmentMinAggregateOutputType | null
@@ -173,7 +187,11 @@ export type EquipmentWhereInput = {
   id?: Prisma.StringFilter<"Equipment"> | string
   name?: Prisma.StringFilter<"Equipment"> | string
   category?: Prisma.StringNullableFilter<"Equipment"> | string | null
+  organizationId?: Prisma.StringFilter<"Equipment"> | string
+  siteId?: Prisma.StringFilter<"Equipment"> | string
   createdAt?: Prisma.DateTimeFilter<"Equipment"> | Date | string
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
+  site?: Prisma.XOR<Prisma.SiteScalarRelationFilter, Prisma.SiteWhereInput>
   tasks?: Prisma.MaintenanceTaskListRelationFilter
 }
 
@@ -181,25 +199,37 @@ export type EquipmentOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   category?: Prisma.SortOrderInput | Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
+  siteId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  organization?: Prisma.OrganizationOrderByWithRelationInput
+  site?: Prisma.SiteOrderByWithRelationInput
   tasks?: Prisma.MaintenanceTaskOrderByRelationAggregateInput
 }
 
 export type EquipmentWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  name?: string
+  id_organizationId?: Prisma.EquipmentIdOrganizationIdCompoundUniqueInput
+  organizationId_name?: Prisma.EquipmentOrganizationIdNameCompoundUniqueInput
   AND?: Prisma.EquipmentWhereInput | Prisma.EquipmentWhereInput[]
   OR?: Prisma.EquipmentWhereInput[]
   NOT?: Prisma.EquipmentWhereInput | Prisma.EquipmentWhereInput[]
+  name?: Prisma.StringFilter<"Equipment"> | string
   category?: Prisma.StringNullableFilter<"Equipment"> | string | null
+  organizationId?: Prisma.StringFilter<"Equipment"> | string
+  siteId?: Prisma.StringFilter<"Equipment"> | string
   createdAt?: Prisma.DateTimeFilter<"Equipment"> | Date | string
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
+  site?: Prisma.XOR<Prisma.SiteScalarRelationFilter, Prisma.SiteWhereInput>
   tasks?: Prisma.MaintenanceTaskListRelationFilter
-}, "id" | "name">
+}, "id" | "id_organizationId" | "organizationId_name">
 
 export type EquipmentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   category?: Prisma.SortOrderInput | Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
+  siteId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.EquipmentCountOrderByAggregateInput
   _max?: Prisma.EquipmentMaxOrderByAggregateInput
@@ -213,6 +243,8 @@ export type EquipmentScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Equipment"> | string
   name?: Prisma.StringWithAggregatesFilter<"Equipment"> | string
   category?: Prisma.StringNullableWithAggregatesFilter<"Equipment"> | string | null
+  organizationId?: Prisma.StringWithAggregatesFilter<"Equipment"> | string
+  siteId?: Prisma.StringWithAggregatesFilter<"Equipment"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Equipment"> | Date | string
 }
 
@@ -221,6 +253,8 @@ export type EquipmentCreateInput = {
   name: string
   category?: string | null
   createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
+  site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
 }
 
@@ -228,6 +262,8 @@ export type EquipmentUncheckedCreateInput = {
   id?: string
   name: string
   category?: string | null
+  organizationId: string
+  siteId: string
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
 }
@@ -237,6 +273,8 @@ export type EquipmentUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
+  site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -244,6 +282,8 @@ export type EquipmentUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
 }
@@ -252,6 +292,8 @@ export type EquipmentCreateManyInput = {
   id?: string
   name: string
   category?: string | null
+  organizationId: string
+  siteId: string
   createdAt?: Date | string
 }
 
@@ -266,13 +308,27 @@ export type EquipmentUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type EquipmentIdOrganizationIdCompoundUniqueInput = {
+  id: string
+  organizationId: string
+}
+
+export type EquipmentOrganizationIdNameCompoundUniqueInput = {
+  organizationId: string
+  name: string
 }
 
 export type EquipmentCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   category?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
+  siteId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -280,6 +336,8 @@ export type EquipmentMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   category?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
+  siteId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -287,12 +345,24 @@ export type EquipmentMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   category?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
+  siteId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type EquipmentScalarRelationFilter = {
   is?: Prisma.EquipmentWhereInput
   isNot?: Prisma.EquipmentWhereInput
+}
+
+export type EquipmentListRelationFilter = {
+  every?: Prisma.EquipmentWhereInput
+  some?: Prisma.EquipmentWhereInput
+  none?: Prisma.EquipmentWhereInput
+}
+
+export type EquipmentOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -321,17 +391,105 @@ export type EquipmentUpdateOneRequiredWithoutTasksNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EquipmentUpdateToOneWithWhereWithoutTasksInput, Prisma.EquipmentUpdateWithoutTasksInput>, Prisma.EquipmentUncheckedUpdateWithoutTasksInput>
 }
 
+export type EquipmentCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutOrganizationInput, Prisma.EquipmentUncheckedCreateWithoutOrganizationInput> | Prisma.EquipmentCreateWithoutOrganizationInput[] | Prisma.EquipmentUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutOrganizationInput | Prisma.EquipmentCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.EquipmentCreateManyOrganizationInputEnvelope
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+}
+
+export type EquipmentUncheckedCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutOrganizationInput, Prisma.EquipmentUncheckedCreateWithoutOrganizationInput> | Prisma.EquipmentCreateWithoutOrganizationInput[] | Prisma.EquipmentUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutOrganizationInput | Prisma.EquipmentCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.EquipmentCreateManyOrganizationInputEnvelope
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+}
+
+export type EquipmentUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutOrganizationInput, Prisma.EquipmentUncheckedCreateWithoutOrganizationInput> | Prisma.EquipmentCreateWithoutOrganizationInput[] | Prisma.EquipmentUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutOrganizationInput | Prisma.EquipmentCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.EquipmentUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.EquipmentUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.EquipmentCreateManyOrganizationInputEnvelope
+  set?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  disconnect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  delete?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  update?: Prisma.EquipmentUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.EquipmentUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.EquipmentUpdateManyWithWhereWithoutOrganizationInput | Prisma.EquipmentUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
+}
+
+export type EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutOrganizationInput, Prisma.EquipmentUncheckedCreateWithoutOrganizationInput> | Prisma.EquipmentCreateWithoutOrganizationInput[] | Prisma.EquipmentUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutOrganizationInput | Prisma.EquipmentCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.EquipmentUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.EquipmentUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.EquipmentCreateManyOrganizationInputEnvelope
+  set?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  disconnect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  delete?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  update?: Prisma.EquipmentUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.EquipmentUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.EquipmentUpdateManyWithWhereWithoutOrganizationInput | Prisma.EquipmentUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
+}
+
+export type EquipmentCreateNestedManyWithoutSiteInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutSiteInput, Prisma.EquipmentUncheckedCreateWithoutSiteInput> | Prisma.EquipmentCreateWithoutSiteInput[] | Prisma.EquipmentUncheckedCreateWithoutSiteInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutSiteInput | Prisma.EquipmentCreateOrConnectWithoutSiteInput[]
+  createMany?: Prisma.EquipmentCreateManySiteInputEnvelope
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+}
+
+export type EquipmentUncheckedCreateNestedManyWithoutSiteInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutSiteInput, Prisma.EquipmentUncheckedCreateWithoutSiteInput> | Prisma.EquipmentCreateWithoutSiteInput[] | Prisma.EquipmentUncheckedCreateWithoutSiteInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutSiteInput | Prisma.EquipmentCreateOrConnectWithoutSiteInput[]
+  createMany?: Prisma.EquipmentCreateManySiteInputEnvelope
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+}
+
+export type EquipmentUpdateManyWithoutSiteNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutSiteInput, Prisma.EquipmentUncheckedCreateWithoutSiteInput> | Prisma.EquipmentCreateWithoutSiteInput[] | Prisma.EquipmentUncheckedCreateWithoutSiteInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutSiteInput | Prisma.EquipmentCreateOrConnectWithoutSiteInput[]
+  upsert?: Prisma.EquipmentUpsertWithWhereUniqueWithoutSiteInput | Prisma.EquipmentUpsertWithWhereUniqueWithoutSiteInput[]
+  createMany?: Prisma.EquipmentCreateManySiteInputEnvelope
+  set?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  disconnect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  delete?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  update?: Prisma.EquipmentUpdateWithWhereUniqueWithoutSiteInput | Prisma.EquipmentUpdateWithWhereUniqueWithoutSiteInput[]
+  updateMany?: Prisma.EquipmentUpdateManyWithWhereWithoutSiteInput | Prisma.EquipmentUpdateManyWithWhereWithoutSiteInput[]
+  deleteMany?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
+}
+
+export type EquipmentUncheckedUpdateManyWithoutSiteNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutSiteInput, Prisma.EquipmentUncheckedCreateWithoutSiteInput> | Prisma.EquipmentCreateWithoutSiteInput[] | Prisma.EquipmentUncheckedCreateWithoutSiteInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutSiteInput | Prisma.EquipmentCreateOrConnectWithoutSiteInput[]
+  upsert?: Prisma.EquipmentUpsertWithWhereUniqueWithoutSiteInput | Prisma.EquipmentUpsertWithWhereUniqueWithoutSiteInput[]
+  createMany?: Prisma.EquipmentCreateManySiteInputEnvelope
+  set?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  disconnect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  delete?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  update?: Prisma.EquipmentUpdateWithWhereUniqueWithoutSiteInput | Prisma.EquipmentUpdateWithWhereUniqueWithoutSiteInput[]
+  updateMany?: Prisma.EquipmentUpdateManyWithWhereWithoutSiteInput | Prisma.EquipmentUpdateManyWithWhereWithoutSiteInput[]
+  deleteMany?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
+}
+
 export type EquipmentCreateWithoutTasksInput = {
   id?: string
   name: string
   category?: string | null
   createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
+  site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutTasksInput = {
   id?: string
   name: string
   category?: string | null
+  organizationId: string
+  siteId: string
   createdAt?: Date | string
 }
 
@@ -356,9 +514,177 @@ export type EquipmentUpdateWithoutTasksInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
+  site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutTasksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type EquipmentCreateWithoutOrganizationInput = {
+  id?: string
+  name: string
+  category?: string | null
+  createdAt?: Date | string
+  site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
+  tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentUncheckedCreateWithoutOrganizationInput = {
+  id?: string
+  name: string
+  category?: string | null
+  siteId: string
+  createdAt?: Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentCreateOrConnectWithoutOrganizationInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutOrganizationInput, Prisma.EquipmentUncheckedCreateWithoutOrganizationInput>
+}
+
+export type EquipmentCreateManyOrganizationInputEnvelope = {
+  data: Prisma.EquipmentCreateManyOrganizationInput | Prisma.EquipmentCreateManyOrganizationInput[]
+  skipDuplicates?: boolean
+}
+
+export type EquipmentUpsertWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  update: Prisma.XOR<Prisma.EquipmentUpdateWithoutOrganizationInput, Prisma.EquipmentUncheckedUpdateWithoutOrganizationInput>
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutOrganizationInput, Prisma.EquipmentUncheckedCreateWithoutOrganizationInput>
+}
+
+export type EquipmentUpdateWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateWithoutOrganizationInput, Prisma.EquipmentUncheckedUpdateWithoutOrganizationInput>
+}
+
+export type EquipmentUpdateManyWithWhereWithoutOrganizationInput = {
+  where: Prisma.EquipmentScalarWhereInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateManyMutationInput, Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationInput>
+}
+
+export type EquipmentScalarWhereInput = {
+  AND?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
+  OR?: Prisma.EquipmentScalarWhereInput[]
+  NOT?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
+  id?: Prisma.StringFilter<"Equipment"> | string
+  name?: Prisma.StringFilter<"Equipment"> | string
+  category?: Prisma.StringNullableFilter<"Equipment"> | string | null
+  organizationId?: Prisma.StringFilter<"Equipment"> | string
+  siteId?: Prisma.StringFilter<"Equipment"> | string
+  createdAt?: Prisma.DateTimeFilter<"Equipment"> | Date | string
+}
+
+export type EquipmentCreateWithoutSiteInput = {
+  id?: string
+  name: string
+  category?: string | null
+  createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
+  tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentUncheckedCreateWithoutSiteInput = {
+  id?: string
+  name: string
+  category?: string | null
+  createdAt?: Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentCreateOrConnectWithoutSiteInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutSiteInput, Prisma.EquipmentUncheckedCreateWithoutSiteInput>
+}
+
+export type EquipmentCreateManySiteInputEnvelope = {
+  data: Prisma.EquipmentCreateManySiteInput | Prisma.EquipmentCreateManySiteInput[]
+  skipDuplicates?: boolean
+}
+
+export type EquipmentUpsertWithWhereUniqueWithoutSiteInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  update: Prisma.XOR<Prisma.EquipmentUpdateWithoutSiteInput, Prisma.EquipmentUncheckedUpdateWithoutSiteInput>
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutSiteInput, Prisma.EquipmentUncheckedCreateWithoutSiteInput>
+}
+
+export type EquipmentUpdateWithWhereUniqueWithoutSiteInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateWithoutSiteInput, Prisma.EquipmentUncheckedUpdateWithoutSiteInput>
+}
+
+export type EquipmentUpdateManyWithWhereWithoutSiteInput = {
+  where: Prisma.EquipmentScalarWhereInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateManyMutationInput, Prisma.EquipmentUncheckedUpdateManyWithoutSiteInput>
+}
+
+export type EquipmentCreateManyOrganizationInput = {
+  id?: string
+  name: string
+  category?: string | null
+  siteId: string
+  createdAt?: Date | string
+}
+
+export type EquipmentUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
+  tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateManyWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type EquipmentCreateManySiteInput = {
+  id?: string
+  name: string
+  category?: string | null
+  createdAt?: Date | string
+}
+
+export type EquipmentUpdateWithoutSiteInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
+  tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateWithoutSiteInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateManyWithoutSiteInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -400,7 +726,11 @@ export type EquipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   id?: boolean
   name?: boolean
   category?: boolean
+  organizationId?: boolean
+  siteId?: boolean
   createdAt?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+  site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
   tasks?: boolean | Prisma.Equipment$tasksArgs<ExtArgs>
   _count?: boolean | Prisma.EquipmentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["equipment"]>
@@ -409,40 +739,62 @@ export type EquipmentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   id?: boolean
   name?: boolean
   category?: boolean
+  organizationId?: boolean
+  siteId?: boolean
   createdAt?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+  site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["equipment"]>
 
 export type EquipmentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
   category?: boolean
+  organizationId?: boolean
+  siteId?: boolean
   createdAt?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+  site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["equipment"]>
 
 export type EquipmentSelectScalar = {
   id?: boolean
   name?: boolean
   category?: boolean
+  organizationId?: boolean
+  siteId?: boolean
   createdAt?: boolean
 }
 
-export type EquipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "category" | "createdAt", ExtArgs["result"]["equipment"]>
+export type EquipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "category" | "organizationId" | "siteId" | "createdAt", ExtArgs["result"]["equipment"]>
 export type EquipmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+  site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
   tasks?: boolean | Prisma.Equipment$tasksArgs<ExtArgs>
   _count?: boolean | Prisma.EquipmentCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type EquipmentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type EquipmentIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type EquipmentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+  site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
+}
+export type EquipmentIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+  site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
+}
 
 export type $EquipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Equipment"
   objects: {
+    organization: Prisma.$OrganizationPayload<ExtArgs>
+    site: Prisma.$SitePayload<ExtArgs>
     tasks: Prisma.$MaintenanceTaskPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
     category: string | null
+    organizationId: string
+    siteId: string
     createdAt: Date
   }, ExtArgs["result"]["equipment"]>
   composites: {}
@@ -838,6 +1190,8 @@ readonly fields: EquipmentFieldRefs;
  */
 export interface Prisma__EquipmentClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  site<T extends Prisma.SiteDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SiteDefaultArgs<ExtArgs>>): Prisma.Prisma__SiteClient<runtime.Types.Result.GetResult<Prisma.$SitePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   tasks<T extends Prisma.Equipment$tasksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$tasksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -871,6 +1225,8 @@ export interface EquipmentFieldRefs {
   readonly id: Prisma.FieldRef<"Equipment", 'String'>
   readonly name: Prisma.FieldRef<"Equipment", 'String'>
   readonly category: Prisma.FieldRef<"Equipment", 'String'>
+  readonly organizationId: Prisma.FieldRef<"Equipment", 'String'>
+  readonly siteId: Prisma.FieldRef<"Equipment", 'String'>
   readonly createdAt: Prisma.FieldRef<"Equipment", 'DateTime'>
 }
     
@@ -1126,6 +1482,10 @@ export type EquipmentCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Exten
    */
   data: Prisma.EquipmentCreateManyInput | Prisma.EquipmentCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EquipmentIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1196,6 +1556,10 @@ export type EquipmentUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Exten
    * Limit how many Equipment to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EquipmentIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

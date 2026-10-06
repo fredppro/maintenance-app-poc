@@ -1,5 +1,9 @@
 import "@testing-library/jest-dom/vitest";
 
+process.env.BETTER_AUTH_SECRET ??=
+  "vitest-secret-that-is-at-least-thirty-two-characters-long";
+process.env.BETTER_AUTH_URL ??= "http://localhost:3000";
+
 class ResizeObserverStub implements ResizeObserver {
   constructor(_callback: ResizeObserverCallback) {}
 

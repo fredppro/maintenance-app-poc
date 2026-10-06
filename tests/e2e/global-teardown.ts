@@ -11,14 +11,36 @@ export default async function globalTeardown() {
   const { default: prisma } = await import("../../src/lib/prisma");
 
   try {
+    await prisma.organization.deleteMany({
+      where: { slug: { startsWith: "e2e-onboarding-" } },
+    });
+    await prisma.user.deleteMany({
+      where: { email: { startsWith: "playwright-onboarding-" } },
+    });
+
+    const organization = await prisma.organization.findUnique({
+      where: { slug: "e2e-playwright-organization" },
+      select: { id: true },
+    });
+    if (!organization) return;
+
     await prisma.maintenanceTask.deleteMany({
-      where: { title: { startsWith: "E2E - Playwright" } },
+      where: {
+        organizationId: organization.id,
+        title: { startsWith: "E2E - Playwright" },
+      },
     });
     await prisma.equipment.deleteMany({
-      where: { name: "E2E - Playwright Equipment" },
+      where: {
+        organizationId: organization.id,
+        name: "E2E - Playwright Equipment",
+      },
     });
     await prisma.worker.deleteMany({
-      where: { email: "playwright-worker@example.test" },
+      where: {
+        organizationId: organization.id,
+        email: "playwright-worker@example.test",
+      },
     });
   } finally {
     await prisma.$disconnect();

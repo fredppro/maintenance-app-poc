@@ -14,6 +14,15 @@ import {
 } from "./actions";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
 
+vi.mock("@/lib/tenant-context", () => ({
+  getTenantContext: vi.fn().mockResolvedValue({
+    userId: "user-1",
+    organizationId: "org-1",
+    siteId: "site-1",
+    role: "owner",
+  }),
+}));
+
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
@@ -21,10 +30,14 @@ vi.mock("next/cache", () => ({
 describe("scheduler server actions", () => {
   beforeEach(() => {
     vi.mocked(revalidatePath).mockClear();
+    vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue({ id: "eq-1" } as never);
+    vi.spyOn(prisma.worker, "count").mockResolvedValue(2);
+    vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({ id: "task-123" } as never);
   });
 
   afterEach(() => {
     vi.mocked(revalidatePath).mockClear();
+    vi.restoreAllMocks();
   });
 
   describe("equipment actions", () => {
@@ -44,7 +57,12 @@ describe("scheduler server actions", () => {
       try {
         const result = await getEquipment();
         expect(result).toEqual(mockEquipments);
-        expect(findManyMock).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { name: "asc" } }));
+        expect(findManyMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { organizationId: "org-1", siteId: "site-1" },
+            orderBy: { name: "asc" },
+          }),
+        );
       } finally {
         findManyMock.mockRestore();
       }
@@ -59,7 +77,9 @@ describe("scheduler server actions", () => {
       try {
         const result = await addEquipment(newEquip);
         expect(result).toEqual(created);
-        expect(createMock).toHaveBeenCalledWith(expect.objectContaining({ data: newEquip }));
+        expect(createMock).toHaveBeenCalledWith({
+          data: { ...newEquip, organizationId: "org-1", siteId: "site-1" },
+        });
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/");
       } finally {
@@ -77,7 +97,10 @@ describe("scheduler server actions", () => {
         const result = await updateEquipment("eq-2", updateData);
         expect(result).toEqual(updated);
         expect(updateMock).toHaveBeenCalledWith(
-          expect.objectContaining({ where: { id: "eq-2" }, data: updateData }),
+          expect.objectContaining({
+            where: { id: "eq-2", organizationId: "org-1", siteId: "site-1" },
+            data: updateData,
+          }),
         );
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
@@ -91,7 +114,9 @@ describe("scheduler server actions", () => {
       try {
         await deleteEquipment("eq-2");
         expect(deleteMock.mock.calls.length).toBe(1);
-        expect(deleteMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "eq-2" } }));
+        expect(deleteMock).toHaveBeenCalledWith({
+          where: { id: "eq-2", organizationId: "org-1", siteId: "site-1" },
+        });
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
         deleteMock.mockRestore();
@@ -130,6 +155,65 @@ describe("scheduler server actions", () => {
       createMock.mockRestore();
     });
 
+    it("rejects equipment outside the active organization site", async () => {
+      const equipmentLookup = vi
+        .spyOn(prisma.equipment, "findFirst")
+        .mockResolvedValue(null);
+      const createMock = vi.spyOn(prisma.maintenanceTask, "create");
+
+      try {
+        await expect(
+          createTask({
+            title: "Cross-tenant task",
+            startTime: new Date("2026-06-01T08:00:00.000Z"),
+            endTime: new Date("2026-06-01T09:00:00.000Z"),
+            equipmentId: "foreign-equipment",
+            workerIds: [],
+          }),
+        ).rejects.toThrow("Equipment not found in the active organization site");
+        expect(equipmentLookup).toHaveBeenCalledWith({
+          where: {
+            id: "foreign-equipment",
+            organizationId: "org-1",
+            siteId: "site-1",
+          },
+          select: { id: true },
+        });
+        expect(createMock).not.toHaveBeenCalled();
+      } finally {
+        equipmentLookup.mockRestore();
+        createMock.mockRestore();
+      }
+    });
+
+    it("rejects workers outside the active organization", async () => {
+      vi.mocked(prisma.worker.count).mockResolvedValue(0);
+      const workerLookup = vi.spyOn(prisma.worker, "count");
+      const createMock = vi.spyOn(prisma.maintenanceTask, "create");
+
+      try {
+        await expect(
+          createTask({
+            title: "Cross-tenant assignment",
+            startTime: new Date("2026-06-01T08:00:00.000Z"),
+            endTime: new Date("2026-06-01T09:00:00.000Z"),
+            equipmentId: "eq-1",
+            workerIds: ["foreign-worker"],
+          }),
+        ).rejects.toThrow("One or more workers are not in the active organization");
+        expect(workerLookup).toHaveBeenCalledWith({
+          where: {
+            id: { in: ["foreign-worker"] },
+            organizationId: "org-1",
+          },
+        });
+        expect(createMock).not.toHaveBeenCalled();
+      } finally {
+        workerLookup.mockRestore();
+        createMock.mockRestore();
+      }
+    });
+
     it("getTasks queries tasks with equipment, worker assignments, and materials ordered by startTime", async () => {
       const mockTasks = [{ id: "task-1", title: "Maintenance 1" }];
       const findManyMock = vi.spyOn(prisma.maintenanceTask, "findMany").mockResolvedValue(mockTasks as any);
@@ -139,6 +223,10 @@ describe("scheduler server actions", () => {
         expect(result).toEqual(mockTasks);
         expect(findManyMock).toHaveBeenCalledWith(
           expect.objectContaining({
+            where: {
+              organizationId: "org-1",
+              equipment: { is: { siteId: "site-1" } },
+            },
             include: {
               equipment: true,
               materials: true,
@@ -184,7 +272,13 @@ describe("scheduler server actions", () => {
             data: expect.objectContaining({
               title: "Oil Change",
               equipmentId: "eq-1",
-              assignments: { create: [{ workerId: "worker-1" }, { workerId: "worker-2" }] },
+              organizationId: "org-1",
+              assignments: {
+                create: [
+                  { workerId: "worker-1" },
+                  { workerId: "worker-2" },
+                ],
+              },
               materials: {
                 create: [
                   {
@@ -206,6 +300,7 @@ describe("scheduler server actions", () => {
     });
 
     it("updateTask updates assignments when workerLogs are provided in transaction", async () => {
+      vi.mocked(prisma.worker.count).mockResolvedValue(1);
       const logStart = new Date("2026-06-01T08:30:00.000Z");
       const logEnd = new Date("2026-06-01T09:30:00.000Z");
 
@@ -250,6 +345,7 @@ describe("scheduler server actions", () => {
           {
             taskId: "task-123",
             workerId: "worker-1",
+            organizationId: "org-1",
             startTime: logStart,
             endTime: logEnd,
           },
@@ -307,6 +403,7 @@ describe("scheduler server actions", () => {
         expect(createdMaterials).toEqual([
           {
             taskId: "task-123",
+            organizationId: "org-1",
             name: "Bearing G4",
             reference: "BRG-G4",
             quantity: 2,
@@ -344,10 +441,10 @@ describe("scheduler server actions", () => {
         await updateTask("task-123", { workerIds: [], materials: [] });
 
         expect(deletedAssignment).toHaveBeenCalledWith({
-          where: { taskId: "task-123" },
+          where: { taskId: "task-123", organizationId: "org-1" },
         });
         expect(deletedMaterials).toHaveBeenCalledWith({
-          where: { taskId: "task-123" },
+          where: { taskId: "task-123", organizationId: "org-1" },
         });
         expect(createdAssignments).not.toHaveBeenCalled();
         expect(createdMaterials).not.toHaveBeenCalled();
@@ -366,7 +463,13 @@ describe("scheduler server actions", () => {
       try {
         await deleteTask("task-123");
         expect(deleteMock.mock.calls.length).toBe(1);
-        expect(deleteMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "task-123" } }));
+        expect(deleteMock).toHaveBeenCalledWith(expect.objectContaining({
+          where: {
+            id: "task-123",
+            organizationId: "org-1",
+            equipment: { is: { siteId: "site-1" } },
+          },
+        }));
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
         deleteMock.mockRestore();
@@ -386,7 +489,11 @@ describe("scheduler server actions", () => {
         expect(result.id).toBe("task-123");
         expect(updateMock).toHaveBeenCalledWith(
           expect.objectContaining({
-            where: { id: "task-123" },
+            where: {
+              id: "task-123",
+              organizationId: "org-1",
+              equipment: { is: { siteId: "site-1" } },
+            },
             data: { startTime: newStart, endTime: newEnd, equipmentId: "eq-new" },
             include: { equipment: true, assignments: { include: { worker: true } } },
           }),

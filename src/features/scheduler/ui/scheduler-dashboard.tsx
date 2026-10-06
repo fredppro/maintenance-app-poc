@@ -19,11 +19,13 @@ import { TimelineGrid } from "./timeline-grid";
 
 interface SchedulerDashboardProps {
   onOpenWorkers: () => void;
+  onSignOut: () => void;
   workersContent?: ReactNode;
 }
 
 export function SchedulerDashboard({
   onOpenWorkers,
+  onSignOut,
   workersContent,
 }: SchedulerDashboardProps) {
   const entries = useSchedulerStore((state) => state.entries);
@@ -120,14 +122,9 @@ export function SchedulerDashboard({
               </div>
             </div>
 
-            <div className="h-8 w-px bg-border" />
-
             <div className="flex items-center gap-4">
               <LanguageSwitcher />
-
-              <div>
-                <WorkerMenu onOpenWorkers={onOpenWorkers} />
-              </div>
+              <WorkerMenu onOpenWorkers={onOpenWorkers} onSignOut={onSignOut} />
             </div>
           </div>
         </div>
@@ -176,22 +173,12 @@ export function SchedulerDashboard({
 
 function WorkerMenu({
   onOpenWorkers,
+  onSignOut,
 }: {
   onOpenWorkers: () => void;
+  onSignOut: () => void;
 }) {
   const t = useTranslations("Dashboard");
-
-  const handleLogout = () => {
-    // Expect an existing logout flow; fallback to a simple POST to /api/auth/logout if available
-    try {
-      fetch("/api/auth/logout", { method: "POST" });
-    } catch (e) {
-      // no-op
-    }
-    // reload to reflect logged out state
-    window.location.reload();
-  };
-
   return (
     <div className="flex items-center">
       <DropdownMenu>
@@ -215,7 +202,7 @@ function WorkerMenu({
             {t("menu.workers")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} variant="destructive">
+          <DropdownMenuItem onClick={onSignOut} variant="destructive">
             {t("menu.logout")}
           </DropdownMenuItem>
         </DropdownMenuContent>

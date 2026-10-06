@@ -11,8 +11,13 @@ export class ReportTaskNotFoundError extends Error {
   }
 }
 
-export async function buildMaintenanceReportPDF(taskId: string, locale: AppLocale) {
-  const task = await getMaintenanceTask(taskId);
+export async function buildMaintenanceReportPDF(
+  taskId: string,
+  organizationId: string,
+  siteId: string,
+  locale: AppLocale,
+) {
+  const task = await getMaintenanceTask(taskId, organizationId, siteId);
 
   if (!task) {
     throw new ReportTaskNotFoundError(taskId);
@@ -28,10 +33,17 @@ export async function buildMaintenanceReportPDF(taskId: string, locale: AppLocal
 
 export async function buildReportResponse(
   taskId: string,
+  organizationId: string,
+  siteId: string,
   locale: AppLocale,
   mode: "preview" | "download"
 ) {
-  const { stream, filename } = await buildMaintenanceReportPDF(taskId, locale);
+  const { stream, filename } = await buildMaintenanceReportPDF(
+    taskId,
+    organizationId,
+    siteId,
+    locale,
+  );
 
   const body = Readable.toWeb(stream) as ReadableStream<Uint8Array>;
 

@@ -28,6 +28,7 @@ export type MaintenanceTaskAssignmentMinAggregateOutputType = {
   id: string | null
   taskId: string | null
   workerId: string | null
+  organizationId: string | null
   startTime: Date | null
   endTime: Date | null
 }
@@ -36,6 +37,7 @@ export type MaintenanceTaskAssignmentMaxAggregateOutputType = {
   id: string | null
   taskId: string | null
   workerId: string | null
+  organizationId: string | null
   startTime: Date | null
   endTime: Date | null
 }
@@ -44,6 +46,7 @@ export type MaintenanceTaskAssignmentCountAggregateOutputType = {
   id: number
   taskId: number
   workerId: number
+  organizationId: number
   startTime: number
   endTime: number
   _all: number
@@ -54,6 +57,7 @@ export type MaintenanceTaskAssignmentMinAggregateInputType = {
   id?: true
   taskId?: true
   workerId?: true
+  organizationId?: true
   startTime?: true
   endTime?: true
 }
@@ -62,6 +66,7 @@ export type MaintenanceTaskAssignmentMaxAggregateInputType = {
   id?: true
   taskId?: true
   workerId?: true
+  organizationId?: true
   startTime?: true
   endTime?: true
 }
@@ -70,6 +75,7 @@ export type MaintenanceTaskAssignmentCountAggregateInputType = {
   id?: true
   taskId?: true
   workerId?: true
+  organizationId?: true
   startTime?: true
   endTime?: true
   _all?: true
@@ -151,6 +157,7 @@ export type MaintenanceTaskAssignmentGroupByOutputType = {
   id: string
   taskId: string
   workerId: string
+  organizationId: string
   startTime: Date | null
   endTime: Date | null
   _count: MaintenanceTaskAssignmentCountAggregateOutputType | null
@@ -180,6 +187,7 @@ export type MaintenanceTaskAssignmentWhereInput = {
   id?: Prisma.StringFilter<"MaintenanceTaskAssignment"> | string
   taskId?: Prisma.StringFilter<"MaintenanceTaskAssignment"> | string
   workerId?: Prisma.StringFilter<"MaintenanceTaskAssignment"> | string
+  organizationId?: Prisma.StringFilter<"MaintenanceTaskAssignment"> | string
   startTime?: Prisma.DateTimeNullableFilter<"MaintenanceTaskAssignment"> | Date | string | null
   endTime?: Prisma.DateTimeNullableFilter<"MaintenanceTaskAssignment"> | Date | string | null
   task?: Prisma.XOR<Prisma.MaintenanceTaskScalarRelationFilter, Prisma.MaintenanceTaskWhereInput>
@@ -190,6 +198,7 @@ export type MaintenanceTaskAssignmentOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   taskId?: Prisma.SortOrder
   workerId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   startTime?: Prisma.SortOrderInput | Prisma.SortOrder
   endTime?: Prisma.SortOrderInput | Prisma.SortOrder
   task?: Prisma.MaintenanceTaskOrderByWithRelationInput
@@ -204,6 +213,7 @@ export type MaintenanceTaskAssignmentWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.MaintenanceTaskAssignmentWhereInput | Prisma.MaintenanceTaskAssignmentWhereInput[]
   taskId?: Prisma.StringFilter<"MaintenanceTaskAssignment"> | string
   workerId?: Prisma.StringFilter<"MaintenanceTaskAssignment"> | string
+  organizationId?: Prisma.StringFilter<"MaintenanceTaskAssignment"> | string
   startTime?: Prisma.DateTimeNullableFilter<"MaintenanceTaskAssignment"> | Date | string | null
   endTime?: Prisma.DateTimeNullableFilter<"MaintenanceTaskAssignment"> | Date | string | null
   task?: Prisma.XOR<Prisma.MaintenanceTaskScalarRelationFilter, Prisma.MaintenanceTaskWhereInput>
@@ -214,6 +224,7 @@ export type MaintenanceTaskAssignmentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   taskId?: Prisma.SortOrder
   workerId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   startTime?: Prisma.SortOrderInput | Prisma.SortOrder
   endTime?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.MaintenanceTaskAssignmentCountOrderByAggregateInput
@@ -228,6 +239,7 @@ export type MaintenanceTaskAssignmentScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"MaintenanceTaskAssignment"> | string
   taskId?: Prisma.StringWithAggregatesFilter<"MaintenanceTaskAssignment"> | string
   workerId?: Prisma.StringWithAggregatesFilter<"MaintenanceTaskAssignment"> | string
+  organizationId?: Prisma.StringWithAggregatesFilter<"MaintenanceTaskAssignment"> | string
   startTime?: Prisma.DateTimeNullableWithAggregatesFilter<"MaintenanceTaskAssignment"> | Date | string | null
   endTime?: Prisma.DateTimeNullableWithAggregatesFilter<"MaintenanceTaskAssignment"> | Date | string | null
 }
@@ -244,6 +256,7 @@ export type MaintenanceTaskAssignmentUncheckedCreateInput = {
   id?: string
   taskId: string
   workerId: string
+  organizationId: string
   startTime?: Date | string | null
   endTime?: Date | string | null
 }
@@ -260,6 +273,7 @@ export type MaintenanceTaskAssignmentUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   taskId?: Prisma.StringFieldUpdateOperationsInput | string
   workerId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -268,6 +282,7 @@ export type MaintenanceTaskAssignmentCreateManyInput = {
   id?: string
   taskId: string
   workerId: string
+  organizationId: string
   startTime?: Date | string | null
   endTime?: Date | string | null
 }
@@ -282,6 +297,7 @@ export type MaintenanceTaskAssignmentUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   taskId?: Prisma.StringFieldUpdateOperationsInput | string
   workerId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
@@ -305,6 +321,7 @@ export type MaintenanceTaskAssignmentCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   taskId?: Prisma.SortOrder
   workerId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
 }
@@ -313,6 +330,7 @@ export type MaintenanceTaskAssignmentMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   taskId?: Prisma.SortOrder
   workerId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
 }
@@ -321,6 +339,7 @@ export type MaintenanceTaskAssignmentMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   taskId?: Prisma.SortOrder
   workerId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
 }
@@ -460,6 +479,7 @@ export type MaintenanceTaskAssignmentScalarWhereInput = {
   id?: Prisma.StringFilter<"MaintenanceTaskAssignment"> | string
   taskId?: Prisma.StringFilter<"MaintenanceTaskAssignment"> | string
   workerId?: Prisma.StringFilter<"MaintenanceTaskAssignment"> | string
+  organizationId?: Prisma.StringFilter<"MaintenanceTaskAssignment"> | string
   startTime?: Prisma.DateTimeNullableFilter<"MaintenanceTaskAssignment"> | Date | string | null
   endTime?: Prisma.DateTimeNullableFilter<"MaintenanceTaskAssignment"> | Date | string | null
 }
@@ -566,6 +586,7 @@ export type MaintenanceTaskAssignmentSelect<ExtArgs extends runtime.Types.Extens
   id?: boolean
   taskId?: boolean
   workerId?: boolean
+  organizationId?: boolean
   startTime?: boolean
   endTime?: boolean
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
@@ -576,6 +597,7 @@ export type MaintenanceTaskAssignmentSelectCreateManyAndReturn<ExtArgs extends r
   id?: boolean
   taskId?: boolean
   workerId?: boolean
+  organizationId?: boolean
   startTime?: boolean
   endTime?: boolean
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
@@ -586,6 +608,7 @@ export type MaintenanceTaskAssignmentSelectUpdateManyAndReturn<ExtArgs extends r
   id?: boolean
   taskId?: boolean
   workerId?: boolean
+  organizationId?: boolean
   startTime?: boolean
   endTime?: boolean
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
@@ -596,11 +619,12 @@ export type MaintenanceTaskAssignmentSelectScalar = {
   id?: boolean
   taskId?: boolean
   workerId?: boolean
+  organizationId?: boolean
   startTime?: boolean
   endTime?: boolean
 }
 
-export type MaintenanceTaskAssignmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "taskId" | "workerId" | "startTime" | "endTime", ExtArgs["result"]["maintenanceTaskAssignment"]>
+export type MaintenanceTaskAssignmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "taskId" | "workerId" | "organizationId" | "startTime" | "endTime", ExtArgs["result"]["maintenanceTaskAssignment"]>
 export type MaintenanceTaskAssignmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
   worker?: boolean | Prisma.WorkerDefaultArgs<ExtArgs>
@@ -624,6 +648,7 @@ export type $MaintenanceTaskAssignmentPayload<ExtArgs extends runtime.Types.Exte
     id: string
     taskId: string
     workerId: string
+    organizationId: string
     startTime: Date | null
     endTime: Date | null
   }, ExtArgs["result"]["maintenanceTaskAssignment"]>
@@ -1054,6 +1079,7 @@ export interface MaintenanceTaskAssignmentFieldRefs {
   readonly id: Prisma.FieldRef<"MaintenanceTaskAssignment", 'String'>
   readonly taskId: Prisma.FieldRef<"MaintenanceTaskAssignment", 'String'>
   readonly workerId: Prisma.FieldRef<"MaintenanceTaskAssignment", 'String'>
+  readonly organizationId: Prisma.FieldRef<"MaintenanceTaskAssignment", 'String'>
   readonly startTime: Prisma.FieldRef<"MaintenanceTaskAssignment", 'DateTime'>
   readonly endTime: Prisma.FieldRef<"MaintenanceTaskAssignment", 'DateTime'>
 }

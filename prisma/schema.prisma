@@ -5,32 +5,45 @@ datasource db {
 }
 
 generator client {
-  provider        = "prisma-client"
+  provider = "prisma-client"
   output   = "./generated/prisma"
 }
 
 model Equipment {
-  id           String            @id @default(cuid())
-  name         String            @unique
-  category     String?
-  tasks        MaintenanceTask[]
-  createdAt    DateTime          @default(now())
+  id             String            @id @default(cuid())
+  name           String
+  category       String?
+  organizationId String
+  siteId         String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  site           Site              @relation(fields: [siteId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  tasks          MaintenanceTask[]
+  createdAt      DateTime          @default(now())
+
+  @@unique([id, organizationId])
+  @@unique([organizationId, name])
+  @@index([siteId, organizationId])
 }
 
 model MaintenanceTask {
-  id           String    @id @default(cuid())
-  title        String
-  description  String?
-  type         TaskType  @default(PREVENTIVE)
-  startTime    DateTime
-  endTime      DateTime
-  equipmentId  String
-  equipment    Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  status       String    @default("scheduled") 
+  id          String                      @id @default(cuid())
+  title       String
+  description String?
+  type        TaskType                    @default(PREVENTIVE)
+  startTime   DateTime
+  endTime     DateTime
+  equipmentId String
+  organizationId String
+  organization Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  equipment   Equipment                   @relation(fields: [equipmentId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  status      String                      @default("scheduled")
   assignments MaintenanceTaskAssignment[]
   materials   Material[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime                    @default(now())
+  updatedAt   DateTime                    @updatedAt
+
+  @@unique([id, organizationId])
+  @@index([organizationId, startTime])
 }
 
 model Material {
@@ -40,10 +53,10 @@ model Material {
   quantity  Float
   unit      MaterialUnit    @default(PC)
   price     Decimal?        @db.Decimal(10, 2)
-  taskId    String
-  task      MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId         String
+  organizationId String
+  task           MaintenanceTask @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
 }
-
 
 enum TaskType {
   PREVENTIVE
@@ -55,32 +68,45 @@ model MaintenanceTaskAssignment {
   id        String          @id @default(cuid())
   taskId    String
   workerId  String
+  organizationId String
   startTime DateTime?
   endTime   DateTime?
-  task      MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  worker    Worker          @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  task      MaintenanceTask @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  worker    Worker          @relation(fields: [workerId, organizationId], references: [id, organizationId], onDelete: Cascade)
+
   @@unique([taskId, workerId])
 }
 
 model Worker {
-  id        String      @id @default(cuid())
-  name      String
-  email     String      @unique
-  phone     String?
-  type      WorkerType  @default(INTERNAL)
-  vendorId  String?
-  vendor    Vendor?     @relation(fields: [vendorId], references: [id])
-  assignments MaintenanceTaskAssignment[]
-  createdAt DateTime @default(now())
+  id             String      @id @default(cuid())
+  name           String
+  email          String
+  phone          String?
+  type           WorkerType  @default(INTERNAL)
+  vendorId       String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vendor         Vendor?     @relation(fields: [vendorId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  assignments    MaintenanceTaskAssignment[]
+  createdAt      DateTime @default(now())
+
+  @@unique([id, organizationId])
+  @@unique([organizationId, email])
+  @@index([vendorId, organizationId])
 }
 
 model Vendor {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  contact   String?
-  email     String?
-  workers   Worker[]
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  name           String
+  contact        String?
+  email          String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workers        Worker[]
+  createdAt      DateTime @default(now())
+
+  @@unique([id, organizationId])
+  @@unique([organizationId, name])
 }
 
 enum WorkerType {
@@ -90,30 +116,158 @@ enum WorkerType {
 
 enum MaterialUnit {
   // --- General Count & Packaging ---
-  PC        // Piece / Unit (screws, bolts, filters, valves)
-  BOX       // Box
-  SET       // Set / Pack
-  BAG       // Bag (sand, bulk fasteners, cable ties)
-  ROLL      // Roll (tape, wires, gaskets)
-  TUBE      // Tube (silicone, grease, adhesive)
-  CAN       // Can / Spray (WD-40, cleaner)
-  KIT       // Kit (O-ring repair kit, tool kit)
-  PAIR      // Pair (gloves, matching components)
+  PC // Piece / Unit (screws, bolts, filters, valves)
+  BOX // Box
+  SET // Set / Pack
+  BAG // Bag (sand, bulk fasteners, cable ties)
+  ROLL // Roll (tape, wires, gaskets)
+  TUBE // Tube (silicone, grease, adhesive)
+  CAN // Can / Spray (WD-40, cleaner)
+  KIT // Kit (O-ring repair kit, tool kit)
+  PAIR // Pair (gloves, matching components)
 
   // --- Volume & Fluids ---
-  L         // Liters
-  ML        // Milliliters
-  GAL       // Gallons
-  DRUM      // Drum (hydraulic oil, bulk fluids)
+  L // Liters
+  ML // Milliliters
+  GAL // Gallons
+  DRUM // Drum (hydraulic oil, bulk fluids)
 
   // --- Mass & Weight ---
-  G         // Grams
-  KG        // Kilograms
-  LB        // Pounds
+  G // Grams
+  KG // Kilograms
+  LB // Pounds
 
   // --- Length & Distance ---
-  MM        // Millimeters
-  M         // Meters
-  IN        // Inches
-  FT        // Feet
+  MM // Millimeters
+  M // Meters
+  IN // Inches
+  FT // Feet
+}
+
+model User {
+  id            String       @id
+  name          String
+  email         String
+  emailVerified Boolean      @default(false)
+  image         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  members       Member[]
+  invitations   Invitation[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id                   String   @id
+  expiresAt            DateTime
+  token                String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeOrganizationId String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model Organization {
+  id          String       @id
+  name        String
+  slug        String
+  logo        String?
+  createdAt   DateTime
+  metadata    String?
+  members     Member[]
+  invitations Invitation[]
+  sites       Site[]
+  equipment   Equipment[]
+  tasks       MaintenanceTask[]
+  workers     Worker[]
+  vendors     Vendor[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model Site {
+  id             String       @id @default(cuid())
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  equipment      Equipment[]
+  createdAt      DateTime     @default(now())
+
+  @@unique([id, organizationId])
+  @@unique([organizationId, name])
+}
+
+model Member {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String       @default("member")
+  createdAt      DateTime
+
+  @@index([organizationId])
+  @@index([userId])
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String       @default("pending")
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  inviterId      String
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitation")
 }

@@ -1,16 +1,16 @@
 import { DB } from "@/lib/prisma";
 
-export async function seedMaintenanceTasks(db: DB) {
+export async function seedMaintenanceTasks(db: DB, organizationId: string) {
   console.log('🛠️ Seeding maintenance tasks with assignments...');
 
   // 1. Obter referências dos Equipamentos
-  const hydraulicPress = await db.equipment.findUnique({ where: { name: "Hydraulic Press A-101" } });
-  const cncLathe = await db.equipment.findUnique({ where: { name: "CNC Lathe (Primary)" } });
-  const boiler = await db.equipment.findUnique({ where: { name: "Industrial Boiler #4" } });
+  const hydraulicPress = await db.equipment.findFirst({ where: { organizationId, name: "Hydraulic Press A-101" } });
+  const cncLathe = await db.equipment.findFirst({ where: { organizationId, name: "CNC Lathe (Primary)" } });
+  const boiler = await db.equipment.findFirst({ where: { organizationId, name: "Industrial Boiler #4" } });
 
   // 2. Obter referências dos Workers (baseado nos emails que definimos no seed de workers)
-  const workerInterno = await db.worker.findUnique({ where: { email: "carlos@empresa.com" } });
-  const workerExterno = await db.worker.findUnique({ where: { email: "ricardo@techfix.com" } });
+  const workerInterno = await db.worker.findFirst({ where: { organizationId, email: "carlos@empresa.com" } });
+  const workerExterno = await db.worker.findFirst({ where: { organizationId, email: "ricardo@techfix.com" } });
 
   if (!hydraulicPress || !cncLathe || !boiler || !workerInterno || !workerExterno) {
     console.error("❌ Erro: Equipamentos ou Trabalhadores não encontrados. Verifica a ordem dos seeds.");
@@ -45,17 +45,26 @@ export async function seedMaintenanceTasks(db: DB) {
 
     // Verificar se a tarefa já existe para evitar duplicados
     const existing = await db.maintenanceTask.findFirst({
-      where: { title: taskFields.title, equipmentId: taskFields.equipmentId }
+      where: {
+        organizationId,
+        title: taskFields.title,
+        equipmentId: taskFields.equipmentId,
+      },
     });
 
     if (!existing) {
       await db.maintenanceTask.create({
         data: {
           ...taskFields,
+          organizationId,
           // Criamos a ligação na tabela Many-to-Many
           assignments: {
             create: assignedWorkersEmails.map(email => ({
-              worker: { connect: { email: email } }
+              worker: {
+                connect: {
+                  organizationId_email: { organizationId, email },
+                },
+              },
             }))
           }
         }

@@ -44,6 +44,7 @@ export type MaterialMinAggregateOutputType = {
   unit: $Enums.MaterialUnit | null
   price: runtime.Decimal | null
   taskId: string | null
+  organizationId: string | null
 }
 
 export type MaterialMaxAggregateOutputType = {
@@ -54,6 +55,7 @@ export type MaterialMaxAggregateOutputType = {
   unit: $Enums.MaterialUnit | null
   price: runtime.Decimal | null
   taskId: string | null
+  organizationId: string | null
 }
 
 export type MaterialCountAggregateOutputType = {
@@ -64,6 +66,7 @@ export type MaterialCountAggregateOutputType = {
   unit: number
   price: number
   taskId: number
+  organizationId: number
   _all: number
 }
 
@@ -86,6 +89,7 @@ export type MaterialMinAggregateInputType = {
   unit?: true
   price?: true
   taskId?: true
+  organizationId?: true
 }
 
 export type MaterialMaxAggregateInputType = {
@@ -96,6 +100,7 @@ export type MaterialMaxAggregateInputType = {
   unit?: true
   price?: true
   taskId?: true
+  organizationId?: true
 }
 
 export type MaterialCountAggregateInputType = {
@@ -106,6 +111,7 @@ export type MaterialCountAggregateInputType = {
   unit?: true
   price?: true
   taskId?: true
+  organizationId?: true
   _all?: true
 }
 
@@ -203,6 +209,7 @@ export type MaterialGroupByOutputType = {
   unit: $Enums.MaterialUnit
   price: runtime.Decimal | null
   taskId: string
+  organizationId: string
   _count: MaterialCountAggregateOutputType | null
   _avg: MaterialAvgAggregateOutputType | null
   _sum: MaterialSumAggregateOutputType | null
@@ -236,6 +243,7 @@ export type MaterialWhereInput = {
   unit?: Prisma.EnumMaterialUnitFilter<"Material"> | $Enums.MaterialUnit
   price?: Prisma.DecimalNullableFilter<"Material"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   taskId?: Prisma.StringFilter<"Material"> | string
+  organizationId?: Prisma.StringFilter<"Material"> | string
   task?: Prisma.XOR<Prisma.MaintenanceTaskScalarRelationFilter, Prisma.MaintenanceTaskWhereInput>
 }
 
@@ -247,6 +255,7 @@ export type MaterialOrderByWithRelationInput = {
   unit?: Prisma.SortOrder
   price?: Prisma.SortOrderInput | Prisma.SortOrder
   taskId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   task?: Prisma.MaintenanceTaskOrderByWithRelationInput
 }
 
@@ -261,6 +270,7 @@ export type MaterialWhereUniqueInput = Prisma.AtLeast<{
   unit?: Prisma.EnumMaterialUnitFilter<"Material"> | $Enums.MaterialUnit
   price?: Prisma.DecimalNullableFilter<"Material"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   taskId?: Prisma.StringFilter<"Material"> | string
+  organizationId?: Prisma.StringFilter<"Material"> | string
   task?: Prisma.XOR<Prisma.MaintenanceTaskScalarRelationFilter, Prisma.MaintenanceTaskWhereInput>
 }, "id">
 
@@ -272,6 +282,7 @@ export type MaterialOrderByWithAggregationInput = {
   unit?: Prisma.SortOrder
   price?: Prisma.SortOrderInput | Prisma.SortOrder
   taskId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   _count?: Prisma.MaterialCountOrderByAggregateInput
   _avg?: Prisma.MaterialAvgOrderByAggregateInput
   _max?: Prisma.MaterialMaxOrderByAggregateInput
@@ -290,6 +301,7 @@ export type MaterialScalarWhereWithAggregatesInput = {
   unit?: Prisma.EnumMaterialUnitWithAggregatesFilter<"Material"> | $Enums.MaterialUnit
   price?: Prisma.DecimalNullableWithAggregatesFilter<"Material"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   taskId?: Prisma.StringWithAggregatesFilter<"Material"> | string
+  organizationId?: Prisma.StringWithAggregatesFilter<"Material"> | string
 }
 
 export type MaterialCreateInput = {
@@ -310,6 +322,7 @@ export type MaterialUncheckedCreateInput = {
   unit?: $Enums.MaterialUnit
   price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   taskId: string
+  organizationId: string
 }
 
 export type MaterialUpdateInput = {
@@ -330,6 +343,7 @@ export type MaterialUncheckedUpdateInput = {
   unit?: Prisma.EnumMaterialUnitFieldUpdateOperationsInput | $Enums.MaterialUnit
   price?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   taskId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type MaterialCreateManyInput = {
@@ -340,6 +354,7 @@ export type MaterialCreateManyInput = {
   unit?: $Enums.MaterialUnit
   price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   taskId: string
+  organizationId: string
 }
 
 export type MaterialUpdateManyMutationInput = {
@@ -359,6 +374,7 @@ export type MaterialUncheckedUpdateManyInput = {
   unit?: Prisma.EnumMaterialUnitFieldUpdateOperationsInput | $Enums.MaterialUnit
   price?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   taskId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type MaterialListRelationFilter = {
@@ -379,6 +395,7 @@ export type MaterialCountOrderByAggregateInput = {
   unit?: Prisma.SortOrder
   price?: Prisma.SortOrder
   taskId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
 }
 
 export type MaterialAvgOrderByAggregateInput = {
@@ -394,6 +411,7 @@ export type MaterialMaxOrderByAggregateInput = {
   unit?: Prisma.SortOrder
   price?: Prisma.SortOrder
   taskId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
 }
 
 export type MaterialMinOrderByAggregateInput = {
@@ -404,6 +422,7 @@ export type MaterialMinOrderByAggregateInput = {
   unit?: Prisma.SortOrder
   price?: Prisma.SortOrder
   taskId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
 }
 
 export type MaterialSumOrderByAggregateInput = {
@@ -528,6 +547,7 @@ export type MaterialScalarWhereInput = {
   unit?: Prisma.EnumMaterialUnitFilter<"Material"> | $Enums.MaterialUnit
   price?: Prisma.DecimalNullableFilter<"Material"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   taskId?: Prisma.StringFilter<"Material"> | string
+  organizationId?: Prisma.StringFilter<"Material"> | string
 }
 
 export type MaterialCreateManyTaskInput = {
@@ -576,6 +596,7 @@ export type MaterialSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   unit?: boolean
   price?: boolean
   taskId?: boolean
+  organizationId?: boolean
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["material"]>
 
@@ -587,6 +608,7 @@ export type MaterialSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   unit?: boolean
   price?: boolean
   taskId?: boolean
+  organizationId?: boolean
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["material"]>
 
@@ -598,6 +620,7 @@ export type MaterialSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   unit?: boolean
   price?: boolean
   taskId?: boolean
+  organizationId?: boolean
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["material"]>
 
@@ -609,9 +632,10 @@ export type MaterialSelectScalar = {
   unit?: boolean
   price?: boolean
   taskId?: boolean
+  organizationId?: boolean
 }
 
-export type MaterialOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "reference" | "quantity" | "unit" | "price" | "taskId", ExtArgs["result"]["material"]>
+export type MaterialOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "reference" | "quantity" | "unit" | "price" | "taskId" | "organizationId", ExtArgs["result"]["material"]>
 export type MaterialInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
 }
@@ -635,6 +659,7 @@ export type $MaterialPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     unit: $Enums.MaterialUnit
     price: runtime.Decimal | null
     taskId: string
+    organizationId: string
   }, ExtArgs["result"]["material"]>
   composites: {}
 }
@@ -1066,6 +1091,7 @@ export interface MaterialFieldRefs {
   readonly unit: Prisma.FieldRef<"Material", 'MaterialUnit'>
   readonly price: Prisma.FieldRef<"Material", 'Decimal'>
   readonly taskId: Prisma.FieldRef<"Material", 'String'>
+  readonly organizationId: Prisma.FieldRef<"Material", 'String'>
 }
     
 

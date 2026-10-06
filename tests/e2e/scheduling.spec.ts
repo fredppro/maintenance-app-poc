@@ -4,6 +4,18 @@ import { expect, test } from "@playwright/test";
 test("schedule a task from the dashboard with accessible form controls", async ({
   page,
 }) => {
+  await page.goto("/en/login");
+  await page.getByLabel("Email").fill("playwright@example.test");
+  await page.getByLabel("Password").fill("playwright-e2e-password");
+  const signInResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/auth/sign-in/email") &&
+      response.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: "Sign in" }).click();
+  expect((await signInResponse).ok()).toBeTruthy();
+  await expect(page).toHaveURL(/\/en(?:\/onboarding)?$/);
+
   await page.goto("/en");
 
   await expect(

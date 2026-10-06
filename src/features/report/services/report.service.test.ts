@@ -29,7 +29,12 @@ describe("report service", () => {
     const getTaskMock = vi.spyOn(getTaskModule, "getMaintenanceTask").mockResolvedValue(mockTask);
 
     try {
-      const result = await buildMaintenanceReportPDF("task-abcdef123456", "en");
+      const result = await buildMaintenanceReportPDF(
+        "task-abcdef123456",
+        "org-1",
+        "site-1",
+        "en",
+      );
       expect(result.filename).toBe("report-task-abc.pdf");
       expect(result.stream).toBeTruthy();
       expect(getTaskMock.mock.calls.length).toBe(1);
@@ -43,7 +48,7 @@ describe("report service", () => {
 
     try {
       await expect(
-        buildMaintenanceReportPDF("nonexistent-task", "en"),
+        buildMaintenanceReportPDF("nonexistent-task", "org-1", "site-1", "en"),
       ).rejects.toBeInstanceOf(ReportTaskNotFoundError);
     } finally {
       getTaskMock.mockRestore();
@@ -54,7 +59,13 @@ describe("report service", () => {
     const getTaskMock = vi.spyOn(getTaskModule, "getMaintenanceTask").mockResolvedValue(mockTask);
 
     try {
-      const response = await buildReportResponse("task-abcdef123456", "en", "preview");
+      const response = await buildReportResponse(
+        "task-abcdef123456",
+        "org-1",
+        "site-1",
+        "en",
+        "preview",
+      );
       expect(response.headers.get("Content-Type")).toBe("application/pdf");
       expect(response.headers.get("Content-Disposition")).toBe("inline");
       expect(response.headers.get("Cache-Control")).toBe("no-store");
@@ -67,7 +78,13 @@ describe("report service", () => {
     const getTaskMock = vi.spyOn(getTaskModule, "getMaintenanceTask").mockResolvedValue(mockTask);
 
     try {
-      const response = await buildReportResponse("task-abcdef123456", "pt-pt", "download");
+      const response = await buildReportResponse(
+        "task-abcdef123456",
+        "org-1",
+        "site-1",
+        "pt-pt",
+        "download",
+      );
       expect(response.headers.get("Content-Type")).toBe("application/pdf");
       expect(response.headers.get("Content-Disposition")).toBe('attachment; filename="report-task-abc.pdf"');
       expect(response.headers.get("Cache-Control")).toBe("no-store");

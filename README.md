@@ -101,6 +101,22 @@ pnpm start
 `pnpm start` serves the built app on the Next.js default port (3000). It also
 needs a reachable database.
 
+### Account and workspace setup
+
+Open `/en/signup` to create an account. The first signed-in user can create an
+organization and its initial site during onboarding; subsequent visits use
+`/en/login`. The organization is the tenant boundary and each maintenance
+record is scoped to it (equipment is additionally scoped to the active site).
+
+For local development, set `BETTER_AUTH_SECRET` to a random value of at least
+32 characters and `BETTER_AUTH_URL` to the app's origin in `.env`. Do not reuse
+the example secret in a deployed environment. Email/password authentication is
+currently enabled without email verification or delivery configuration.
+Organization invitations, organization/site switching, billing, and
+role-based restrictions for scheduler writes are not implemented yet; do not
+treat the current onboarding flow as a production-complete SaaS access-control
+system.
+
 ## Tests
 
 Run the unit/component/API tests:
@@ -221,12 +237,23 @@ migration adds `Material.price` and worker assignment times with
 exist. Apply migrations in deployment with `pnpm prisma:migrate:deploy`; check
 `pnpm exec prisma migrate status` against an existing database before rollout.
 
+When upgrading a database that already has maintenance data, the tenant
+migration keeps those rows under an unclaimed `Legacy workspace` and creates a
+`Legacy site`. It deliberately does not grant membership to an arbitrary
+account. Existing installations therefore need a deliberate, verified process
+to assign an owner before that legacy data becomes accessible; that process is
+not automated yet. Never apply the migration to production without reviewing
+and planning this ownership transition.
+
 ## Environment variables
 
 | Variable | Required for | Description |
 | --- | --- | --- |
 | `DATABASE_URL` | Prisma client generation/configuration, database commands, and app runtime | PostgreSQL-compatible connection string. `.env.example` points to local development PostgreSQL. |
 | `E2E_DATABASE_URL` | Playwright browser tests and E2E migration command | Dedicated test database connection string. `.env.example` points to a separate local database on port 5433. The database name must end in `_test` and target a different host/port/database from `DATABASE_URL`. |
+| `BETTER_AUTH_SECRET` | App runtime and auth tests | Secret used to sign Better Auth sessions; use a random secret of at least 32 characters and keep it private. |
+| `BETTER_AUTH_URL` | App runtime and auth tests | Canonical application origin, for example `http://localhost:3000` locally or the deployed HTTPS origin. |
+| `SEED_ADMIN_EMAIL` | Optional development seeding | Email of an existing organization owner. Seeding adds sample data to that owner's first organization/site and fails if the owner or site does not exist. |
 
 Playwright reads `E2E_DATABASE_URL` for its server and fixtures. The
 `pnpm prisma:migrate:e2e` command validates and uses that URL without changing

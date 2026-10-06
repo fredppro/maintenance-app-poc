@@ -3,6 +3,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { GET } from "./route";
 import * as reportService from "@/features/report/services/report.service";
 
+vi.mock("@/lib/tenant-context", () => ({
+  AuthenticationRequiredError: class AuthenticationRequiredError extends Error {},
+  OrganizationRequiredError: class OrganizationRequiredError extends Error {},
+  SiteSetupRequiredError: class SiteSetupRequiredError extends Error {},
+  getTenantContext: vi.fn().mockResolvedValue({
+    userId: "user-1",
+    organizationId: "org-1",
+    siteId: "site-1",
+    role: "owner",
+  }),
+}));
+
 describe("GET /api/tasks/[id]/report", () => {
   it("returns 400 when id param is missing or empty", async () => {
     const request = new NextRequest("http://localhost:3000/api/tasks//report");
@@ -21,8 +33,10 @@ describe("GET /api/tasks/[id]/report", () => {
       headers: { "Content-Type": "application/pdf" },
     });
 
-    const buildReportMock = vi.spyOn(reportService, "buildReportResponse").mockImplementation(async (id: string, locale: any, mode: any) => {
+    const buildReportMock = vi.spyOn(reportService, "buildReportResponse").mockImplementation(async (id, organizationId, siteId, locale, mode) => {
       expect(id).toBe("task-999");
+      expect(organizationId).toBe("org-1");
+      expect(siteId).toBe("site-1");
       expect(locale).toBe("pt-pt");
       expect(mode).toBe("preview");
       return mockResponse;
@@ -49,8 +63,10 @@ describe("GET /api/tasks/[id]/report", () => {
       headers: { "Content-Type": "application/pdf" },
     });
 
-    const buildReportMock = vi.spyOn(reportService, "buildReportResponse").mockImplementation(async (id: string, locale: any, mode: any) => {
+    const buildReportMock = vi.spyOn(reportService, "buildReportResponse").mockImplementation(async (id, organizationId, siteId, locale, mode) => {
       expect(id).toBe("task-999");
+      expect(organizationId).toBe("org-1");
+      expect(siteId).toBe("site-1");
       expect(locale).toBe("en");
       expect(mode).toBe("download");
       return mockResponse;

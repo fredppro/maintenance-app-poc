@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
+import { getTenantContext } from "@/lib/tenant-context";
 import {
   equipmentIdSchema,
   equipmentSchema,
@@ -13,15 +14,18 @@ import {
 
 // Equipment Actions
 export async function getEquipment() {
+  const { organizationId, siteId } = await getTenantContext();
   return await prisma.equipment.findMany({
+    where: { organizationId, siteId },
     orderBy: { name: "asc" },
   });
 }
 
 export async function addEquipment(data: { name: string; category?: string }) {
+  const { organizationId, siteId } = await getTenantContext();
   const input = equipmentSchema.parse(data);
   const equipment = await prisma.equipment.create({
-    data: input,
+    data: { ...input, organizationId, siteId },
   });
   revalidatePath("/");
   return equipment;
@@ -31,10 +35,11 @@ export async function updateEquipment(
   id: string,
   data: { name: string; category?: string },
 ) {
+  const { organizationId, siteId } = await getTenantContext();
   const equipmentId = equipmentIdSchema.parse(id);
   const input = equipmentUpdateSchema.parse(data);
   const equipment = await prisma.equipment.update({
-    where: { id: equipmentId },
+    where: { id: equipmentId, organizationId, siteId },
     data: input,
   });
   revalidatePath("/");
@@ -42,16 +47,22 @@ export async function updateEquipment(
 }
 
 export async function deleteEquipment(id: string) {
+  const { organizationId, siteId } = await getTenantContext();
   const equipmentId = equipmentIdSchema.parse(id);
   await prisma.equipment.delete({
-    where: { id: equipmentId },
+    where: { id: equipmentId, organizationId, siteId },
   });
   revalidatePath("/");
 }
 
 // Maintenance Task Actions
 export async function getTasks() {
+  const { organizationId, siteId } = await getTenantContext();
   return await prisma.maintenanceTask.findMany({
+    where: {
+      organizationId,
+      equipment: { is: { siteId } },
+    },
     include: {
       equipment: true,
       assignments: {
@@ -82,11 +93,28 @@ export async function createTask(data: {
     price?: number;
   }[];
 }) {
+  const { organizationId, siteId } = await getTenantContext();
   const input = createTaskSchema.parse(data);
   const { workerIds, materials, ...taskData } = input;
+  const equipment = await prisma.equipment.findFirst({
+    where: {
+      id: taskData.equipmentId,
+      organizationId,
+      siteId,
+    },
+    select: { id: true },
+  });
+
+  if (!equipment) {
+    throw new Error("Equipment not found in the active organization site");
+  }
+
+  await assertWorkersBelongToOrganization(workerIds, organizationId);
+
   const task = await prisma.maintenanceTask.create({
     data: {
       ...taskData,
+      organizationId,
       assignments: {
         create: workerIds.map((workerId) => ({
           workerId,
@@ -137,15 +165,43 @@ export async function updateTask(
     }[];
   }>,
 ) {
+  const { organizationId, siteId } = await getTenantContext();
   const taskId = equipmentIdSchema.parse(id);
   const input = updateTaskSchema.parse(data);
   const { workerIds, workerLogs, materials, ...taskData } = input;
+
+  const currentTask = await prisma.maintenanceTask.findFirst({
+    where: {
+      id: taskId,
+      organizationId,
+      equipment: { is: { siteId } },
+    },
+    select: { id: true },
+  });
+  if (!currentTask) {
+    throw new Error("Maintenance task not found in the active organization");
+  }
+
+  if (taskData.equipmentId) {
+    const equipment = await prisma.equipment.findFirst({
+      where: { id: taskData.equipmentId, organizationId, siteId },
+      select: { id: true },
+    });
+    if (!equipment) {
+      throw new Error("Equipment not found in the active organization site");
+    }
+  }
+
+  const assignedWorkerIds = workerLogs?.map((log) => log.workerId) ?? workerIds;
+  if (assignedWorkerIds) {
+    await assertWorkersBelongToOrganization(assignedWorkerIds, organizationId);
+  }
 
   const task = await prisma.$transaction(async (tx) => {
     // If workerLogs are explicitly passed, overwrite the assignment entries with times
     if (workerLogs) {
       await tx.maintenanceTaskAssignment.deleteMany({
-        where: { taskId },
+        where: { taskId, organizationId },
       });
 
       if (workerLogs.length > 0) {
@@ -153,6 +209,7 @@ export async function updateTask(
           data: workerLogs.map((log) => ({
             taskId,
             workerId: log.workerId,
+            organizationId,
             startTime: log.startTime,
             endTime: log.endTime,
           })),
@@ -161,7 +218,7 @@ export async function updateTask(
     } else if (workerIds) {
       // Fallback for primitive updates (like simple drag-and-drop calendars)
       await tx.maintenanceTaskAssignment.deleteMany({
-        where: { taskId },
+        where: { taskId, organizationId },
       });
 
       if (workerIds.length > 0) {
@@ -169,6 +226,7 @@ export async function updateTask(
           data: workerIds.map((workerId) => ({
             taskId,
             workerId,
+            organizationId,
           })),
         });
       }
@@ -177,7 +235,7 @@ export async function updateTask(
     if (materials) {
       // Remove old materials
       await tx.material.deleteMany({
-        where: { taskId },
+        where: { taskId, organizationId },
       });
 
       // Add new materials
@@ -185,6 +243,7 @@ export async function updateTask(
         await tx.material.createMany({
           data: materials.map((m) => ({
             taskId,
+            organizationId,
             name: m.name,
             reference: m.reference,
             quantity: m.quantity,
@@ -196,7 +255,7 @@ export async function updateTask(
     }
 
     return await tx.maintenanceTask.update({
-      where: { id: taskId },
+      where: { id: taskId, organizationId },
       data: taskData,
       include: {
         equipment: true,
@@ -215,9 +274,14 @@ export async function updateTask(
 }
 
 export async function deleteTask(id: string) {
+  const { organizationId, siteId } = await getTenantContext();
   const taskId = equipmentIdSchema.parse(id);
   await prisma.maintenanceTask.delete({
-    where: { id: taskId },
+    where: {
+      id: taskId,
+      organizationId,
+      equipment: { is: { siteId } },
+    },
   });
   revalidatePath("/");
 }
@@ -228,6 +292,7 @@ export async function moveTask(
   newEndTime: Date,
   newEquipmentId?: string,
 ) {
+  const { organizationId, siteId } = await getTenantContext();
   const validatedTaskId = equipmentIdSchema.parse(taskId);
   const startTime = new Date(newStartTime);
   const endTime = new Date(newEndTime);
@@ -238,8 +303,23 @@ export async function moveTask(
   ) {
     throw new Error("Task end time must be after start time");
   }
+
+  if (newEquipmentId !== undefined) {
+    const equipment = await prisma.equipment.findFirst({
+      where: { id: equipmentIdSchema.parse(newEquipmentId), organizationId, siteId },
+      select: { id: true },
+    });
+    if (!equipment) {
+      throw new Error("Equipment not found in the active organization site");
+    }
+  }
+
   const task = await prisma.maintenanceTask.update({
-    where: { id: validatedTaskId },
+    where: {
+      id: validatedTaskId,
+      organizationId,
+      equipment: { is: { siteId } },
+    },
     data: {
       startTime,
       endTime,
@@ -258,4 +338,25 @@ export async function moveTask(
   });
   revalidatePath("/");
   return task;
+}
+
+async function assertWorkersBelongToOrganization(
+  workerIds: string[],
+  organizationId: string,
+) {
+  const uniqueWorkerIds = [...new Set(workerIds)];
+  if (uniqueWorkerIds.length === 0) {
+    return;
+  }
+
+  const count = await prisma.worker.count({
+    where: {
+      id: { in: uniqueWorkerIds },
+      organizationId,
+    },
+  });
+
+  if (count !== uniqueWorkerIds.length) {
+    throw new Error("One or more workers are not in the active organization");
+  }
 }

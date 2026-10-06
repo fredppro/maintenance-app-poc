@@ -32,6 +32,7 @@ export type MaintenanceTaskMinAggregateOutputType = {
   startTime: Date | null
   endTime: Date | null
   equipmentId: string | null
+  organizationId: string | null
   status: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -45,6 +46,7 @@ export type MaintenanceTaskMaxAggregateOutputType = {
   startTime: Date | null
   endTime: Date | null
   equipmentId: string | null
+  organizationId: string | null
   status: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -58,6 +60,7 @@ export type MaintenanceTaskCountAggregateOutputType = {
   startTime: number
   endTime: number
   equipmentId: number
+  organizationId: number
   status: number
   createdAt: number
   updatedAt: number
@@ -73,6 +76,7 @@ export type MaintenanceTaskMinAggregateInputType = {
   startTime?: true
   endTime?: true
   equipmentId?: true
+  organizationId?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -86,6 +90,7 @@ export type MaintenanceTaskMaxAggregateInputType = {
   startTime?: true
   endTime?: true
   equipmentId?: true
+  organizationId?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -99,6 +104,7 @@ export type MaintenanceTaskCountAggregateInputType = {
   startTime?: true
   endTime?: true
   equipmentId?: true
+  organizationId?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -185,6 +191,7 @@ export type MaintenanceTaskGroupByOutputType = {
   startTime: Date
   endTime: Date
   equipmentId: string
+  organizationId: string
   status: string
   createdAt: Date
   updatedAt: Date
@@ -219,9 +226,11 @@ export type MaintenanceTaskWhereInput = {
   startTime?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   endTime?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   equipmentId?: Prisma.StringFilter<"MaintenanceTask"> | string
+  organizationId?: Prisma.StringFilter<"MaintenanceTask"> | string
   status?: Prisma.StringFilter<"MaintenanceTask"> | string
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   equipment?: Prisma.XOR<Prisma.EquipmentScalarRelationFilter, Prisma.EquipmentWhereInput>
   assignments?: Prisma.MaintenanceTaskAssignmentListRelationFilter
   materials?: Prisma.MaterialListRelationFilter
@@ -235,9 +244,11 @@ export type MaintenanceTaskOrderByWithRelationInput = {
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  organization?: Prisma.OrganizationOrderByWithRelationInput
   equipment?: Prisma.EquipmentOrderByWithRelationInput
   assignments?: Prisma.MaintenanceTaskAssignmentOrderByRelationAggregateInput
   materials?: Prisma.MaterialOrderByRelationAggregateInput
@@ -245,6 +256,7 @@ export type MaintenanceTaskOrderByWithRelationInput = {
 
 export type MaintenanceTaskWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  id_organizationId?: Prisma.MaintenanceTaskIdOrganizationIdCompoundUniqueInput
   AND?: Prisma.MaintenanceTaskWhereInput | Prisma.MaintenanceTaskWhereInput[]
   OR?: Prisma.MaintenanceTaskWhereInput[]
   NOT?: Prisma.MaintenanceTaskWhereInput | Prisma.MaintenanceTaskWhereInput[]
@@ -254,13 +266,15 @@ export type MaintenanceTaskWhereUniqueInput = Prisma.AtLeast<{
   startTime?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   endTime?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   equipmentId?: Prisma.StringFilter<"MaintenanceTask"> | string
+  organizationId?: Prisma.StringFilter<"MaintenanceTask"> | string
   status?: Prisma.StringFilter<"MaintenanceTask"> | string
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   equipment?: Prisma.XOR<Prisma.EquipmentScalarRelationFilter, Prisma.EquipmentWhereInput>
   assignments?: Prisma.MaintenanceTaskAssignmentListRelationFilter
   materials?: Prisma.MaterialListRelationFilter
-}, "id">
+}, "id" | "id_organizationId">
 
 export type MaintenanceTaskOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -270,6 +284,7 @@ export type MaintenanceTaskOrderByWithAggregationInput = {
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -289,6 +304,7 @@ export type MaintenanceTaskScalarWhereWithAggregatesInput = {
   startTime?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTask"> | Date | string
   endTime?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTask"> | Date | string
   equipmentId?: Prisma.StringWithAggregatesFilter<"MaintenanceTask"> | string
+  organizationId?: Prisma.StringWithAggregatesFilter<"MaintenanceTask"> | string
   status?: Prisma.StringWithAggregatesFilter<"MaintenanceTask"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTask"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTask"> | Date | string
@@ -304,6 +320,7 @@ export type MaintenanceTaskCreateInput = {
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
   equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
   assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
   materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
@@ -317,6 +334,7 @@ export type MaintenanceTaskUncheckedCreateInput = {
   startTime: Date | string
   endTime: Date | string
   equipmentId: string
+  organizationId: string
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -334,6 +352,7 @@ export type MaintenanceTaskUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
   equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
   assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
   materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
@@ -347,6 +366,7 @@ export type MaintenanceTaskUncheckedUpdateInput = {
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -362,6 +382,7 @@ export type MaintenanceTaskCreateManyInput = {
   startTime: Date | string
   endTime: Date | string
   equipmentId: string
+  organizationId: string
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -387,6 +408,7 @@ export type MaintenanceTaskUncheckedUpdateManyInput = {
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -402,6 +424,11 @@ export type MaintenanceTaskOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type MaintenanceTaskIdOrganizationIdCompoundUniqueInput = {
+  id: string
+  organizationId: string
+}
+
 export type MaintenanceTaskCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
@@ -410,6 +437,7 @@ export type MaintenanceTaskCountOrderByAggregateInput = {
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -423,6 +451,7 @@ export type MaintenanceTaskMaxOrderByAggregateInput = {
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -436,6 +465,7 @@ export type MaintenanceTaskMinOrderByAggregateInput = {
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -520,6 +550,48 @@ export type MaintenanceTaskUpdateOneRequiredWithoutAssignmentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.MaintenanceTaskUpdateToOneWithWhereWithoutAssignmentsInput, Prisma.MaintenanceTaskUpdateWithoutAssignmentsInput>, Prisma.MaintenanceTaskUncheckedUpdateWithoutAssignmentsInput>
 }
 
+export type MaintenanceTaskCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutOrganizationInput, Prisma.MaintenanceTaskUncheckedCreateWithoutOrganizationInput> | Prisma.MaintenanceTaskCreateWithoutOrganizationInput[] | Prisma.MaintenanceTaskUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutOrganizationInput | Prisma.MaintenanceTaskCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.MaintenanceTaskCreateManyOrganizationInputEnvelope
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+}
+
+export type MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutOrganizationInput, Prisma.MaintenanceTaskUncheckedCreateWithoutOrganizationInput> | Prisma.MaintenanceTaskCreateWithoutOrganizationInput[] | Prisma.MaintenanceTaskUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutOrganizationInput | Prisma.MaintenanceTaskCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.MaintenanceTaskCreateManyOrganizationInputEnvelope
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+}
+
+export type MaintenanceTaskUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutOrganizationInput, Prisma.MaintenanceTaskUncheckedCreateWithoutOrganizationInput> | Prisma.MaintenanceTaskCreateWithoutOrganizationInput[] | Prisma.MaintenanceTaskUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutOrganizationInput | Prisma.MaintenanceTaskCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.MaintenanceTaskUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.MaintenanceTaskUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.MaintenanceTaskCreateManyOrganizationInputEnvelope
+  set?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  disconnect?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  delete?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  update?: Prisma.MaintenanceTaskUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.MaintenanceTaskUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.MaintenanceTaskUpdateManyWithWhereWithoutOrganizationInput | Prisma.MaintenanceTaskUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.MaintenanceTaskScalarWhereInput | Prisma.MaintenanceTaskScalarWhereInput[]
+}
+
+export type MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutOrganizationInput, Prisma.MaintenanceTaskUncheckedCreateWithoutOrganizationInput> | Prisma.MaintenanceTaskCreateWithoutOrganizationInput[] | Prisma.MaintenanceTaskUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutOrganizationInput | Prisma.MaintenanceTaskCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.MaintenanceTaskUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.MaintenanceTaskUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.MaintenanceTaskCreateManyOrganizationInputEnvelope
+  set?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  disconnect?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  delete?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  update?: Prisma.MaintenanceTaskUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.MaintenanceTaskUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.MaintenanceTaskUpdateManyWithWhereWithoutOrganizationInput | Prisma.MaintenanceTaskUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.MaintenanceTaskScalarWhereInput | Prisma.MaintenanceTaskScalarWhereInput[]
+}
+
 export type MaintenanceTaskCreateWithoutEquipmentInput = {
   id?: string
   title: string
@@ -530,6 +602,7 @@ export type MaintenanceTaskCreateWithoutEquipmentInput = {
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
   assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
   materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
 }
@@ -585,6 +658,7 @@ export type MaintenanceTaskScalarWhereInput = {
   startTime?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   endTime?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   equipmentId?: Prisma.StringFilter<"MaintenanceTask"> | string
+  organizationId?: Prisma.StringFilter<"MaintenanceTask"> | string
   status?: Prisma.StringFilter<"MaintenanceTask"> | string
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
@@ -600,6 +674,7 @@ export type MaintenanceTaskCreateWithoutMaterialsInput = {
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
   equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
   assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
 }
@@ -612,6 +687,7 @@ export type MaintenanceTaskUncheckedCreateWithoutMaterialsInput = {
   startTime: Date | string
   endTime: Date | string
   equipmentId: string
+  organizationId: string
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -644,6 +720,7 @@ export type MaintenanceTaskUpdateWithoutMaterialsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
   equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
   assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
 }
@@ -656,6 +733,7 @@ export type MaintenanceTaskUncheckedUpdateWithoutMaterialsInput = {
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -672,6 +750,7 @@ export type MaintenanceTaskCreateWithoutAssignmentsInput = {
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
   equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
   materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
 }
@@ -684,6 +763,7 @@ export type MaintenanceTaskUncheckedCreateWithoutAssignmentsInput = {
   startTime: Date | string
   endTime: Date | string
   equipmentId: string
+  organizationId: string
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -716,6 +796,7 @@ export type MaintenanceTaskUpdateWithoutAssignmentsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
   equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
   materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
 }
@@ -728,10 +809,67 @@ export type MaintenanceTaskUncheckedUpdateWithoutAssignmentsInput = {
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   materials?: Prisma.MaterialUncheckedUpdateManyWithoutTaskNestedInput
+}
+
+export type MaintenanceTaskCreateWithoutOrganizationInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime: Date | string
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
+  assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
+  materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
+}
+
+export type MaintenanceTaskUncheckedCreateWithoutOrganizationInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime: Date | string
+  equipmentId: string
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
+  materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutTaskInput
+}
+
+export type MaintenanceTaskCreateOrConnectWithoutOrganizationInput = {
+  where: Prisma.MaintenanceTaskWhereUniqueInput
+  create: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutOrganizationInput, Prisma.MaintenanceTaskUncheckedCreateWithoutOrganizationInput>
+}
+
+export type MaintenanceTaskCreateManyOrganizationInputEnvelope = {
+  data: Prisma.MaintenanceTaskCreateManyOrganizationInput | Prisma.MaintenanceTaskCreateManyOrganizationInput[]
+  skipDuplicates?: boolean
+}
+
+export type MaintenanceTaskUpsertWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.MaintenanceTaskWhereUniqueInput
+  update: Prisma.XOR<Prisma.MaintenanceTaskUpdateWithoutOrganizationInput, Prisma.MaintenanceTaskUncheckedUpdateWithoutOrganizationInput>
+  create: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutOrganizationInput, Prisma.MaintenanceTaskUncheckedCreateWithoutOrganizationInput>
+}
+
+export type MaintenanceTaskUpdateWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.MaintenanceTaskWhereUniqueInput
+  data: Prisma.XOR<Prisma.MaintenanceTaskUpdateWithoutOrganizationInput, Prisma.MaintenanceTaskUncheckedUpdateWithoutOrganizationInput>
+}
+
+export type MaintenanceTaskUpdateManyWithWhereWithoutOrganizationInput = {
+  where: Prisma.MaintenanceTaskScalarWhereInput
+  data: Prisma.XOR<Prisma.MaintenanceTaskUpdateManyMutationInput, Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationInput>
 }
 
 export type MaintenanceTaskCreateManyEquipmentInput = {
@@ -756,6 +894,7 @@ export type MaintenanceTaskUpdateWithoutEquipmentInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
   assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
   materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
 }
@@ -781,6 +920,62 @@ export type MaintenanceTaskUncheckedUpdateManyWithoutEquipmentInput = {
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type MaintenanceTaskCreateManyOrganizationInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime: Date | string
+  equipmentId: string
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type MaintenanceTaskUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
+  assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
+  materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
+}
+
+export type MaintenanceTaskUncheckedUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
+  materials?: Prisma.MaterialUncheckedUpdateManyWithoutTaskNestedInput
+}
+
+export type MaintenanceTaskUncheckedUpdateManyWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -834,9 +1029,11 @@ export type MaintenanceTaskSelect<ExtArgs extends runtime.Types.Extensions.Inter
   startTime?: boolean
   endTime?: boolean
   equipmentId?: boolean
+  organizationId?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
   assignments?: boolean | Prisma.MaintenanceTask$assignmentsArgs<ExtArgs>
   materials?: boolean | Prisma.MaintenanceTask$materialsArgs<ExtArgs>
@@ -851,9 +1048,11 @@ export type MaintenanceTaskSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   startTime?: boolean
   endTime?: boolean
   equipmentId?: boolean
+  organizationId?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["maintenanceTask"]>
 
@@ -865,9 +1064,11 @@ export type MaintenanceTaskSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   startTime?: boolean
   endTime?: boolean
   equipmentId?: boolean
+  organizationId?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["maintenanceTask"]>
 
@@ -879,28 +1080,33 @@ export type MaintenanceTaskSelectScalar = {
   startTime?: boolean
   endTime?: boolean
   equipmentId?: boolean
+  organizationId?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type MaintenanceTaskOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "type" | "startTime" | "endTime" | "equipmentId" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["maintenanceTask"]>
+export type MaintenanceTaskOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "type" | "startTime" | "endTime" | "equipmentId" | "organizationId" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["maintenanceTask"]>
 export type MaintenanceTaskInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
   assignments?: boolean | Prisma.MaintenanceTask$assignmentsArgs<ExtArgs>
   materials?: boolean | Prisma.MaintenanceTask$materialsArgs<ExtArgs>
   _count?: boolean | Prisma.MaintenanceTaskCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type MaintenanceTaskIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
 }
 export type MaintenanceTaskIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
 }
 
 export type $MaintenanceTaskPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "MaintenanceTask"
   objects: {
+    organization: Prisma.$OrganizationPayload<ExtArgs>
     equipment: Prisma.$EquipmentPayload<ExtArgs>
     assignments: Prisma.$MaintenanceTaskAssignmentPayload<ExtArgs>[]
     materials: Prisma.$MaterialPayload<ExtArgs>[]
@@ -913,6 +1119,7 @@ export type $MaintenanceTaskPayload<ExtArgs extends runtime.Types.Extensions.Int
     startTime: Date
     endTime: Date
     equipmentId: string
+    organizationId: string
     status: string
     createdAt: Date
     updatedAt: Date
@@ -1310,6 +1517,7 @@ readonly fields: MaintenanceTaskFieldRefs;
  */
 export interface Prisma__MaintenanceTaskClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   equipment<T extends Prisma.EquipmentDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EquipmentDefaultArgs<ExtArgs>>): Prisma.Prisma__EquipmentClient<runtime.Types.Result.GetResult<Prisma.$EquipmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   assignments<T extends Prisma.MaintenanceTask$assignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MaintenanceTask$assignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   materials<T extends Prisma.MaintenanceTask$materialsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MaintenanceTask$materialsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1349,6 +1557,7 @@ export interface MaintenanceTaskFieldRefs {
   readonly startTime: Prisma.FieldRef<"MaintenanceTask", 'DateTime'>
   readonly endTime: Prisma.FieldRef<"MaintenanceTask", 'DateTime'>
   readonly equipmentId: Prisma.FieldRef<"MaintenanceTask", 'String'>
+  readonly organizationId: Prisma.FieldRef<"MaintenanceTask", 'String'>
   readonly status: Prisma.FieldRef<"MaintenanceTask", 'String'>
   readonly createdAt: Prisma.FieldRef<"MaintenanceTask", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"MaintenanceTask", 'DateTime'>

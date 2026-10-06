@@ -2,6 +2,10 @@ import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
 import { validateE2EDatabaseUrl } from "./tests/e2e/test-database";
 
+process.env.BETTER_AUTH_SECRET ??=
+  "playwright-e2e-secret-that-is-at-least-thirty-two-chars";
+process.env.BETTER_AUTH_URL = "http://127.0.0.1:3000";
+
 const databaseUrl = process.env.E2E_DATABASE_URL;
 
 if (databaseUrl) {
@@ -29,6 +33,10 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       DATABASE_URL: databaseUrl ?? "",
+      BETTER_AUTH_SECRET:
+        process.env.BETTER_AUTH_SECRET ??
+        "playwright-e2e-secret-that-is-at-least-thirty-two-chars",
+      BETTER_AUTH_URL: "http://127.0.0.1:3000",
       NODE_ENV: "development",
     },
   },

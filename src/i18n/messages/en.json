@@ -225,5 +225,30 @@
       "page": "Page",
       "of": "of"
     }
+  },
+  "Auth": {
+    "signInTitle": "Sign in",
+    "signInDescription": "Sign in to manage your maintenance schedule.",
+    "signUpTitle": "Create your account",
+    "signUpDescription": "Create an account to start a maintenance workspace.",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "createAccountPrompt": "New to Maintenance Scheduler?",
+    "signInPrompt": "Already have an account?",
+    "createAccountLink": "Create an account",
+    "signInLink": "Sign in",
+    "error": "Authentication failed. Please check your details and try again.",
+    "signOut": "Sign out"
+  },
+  "OrganizationSetup": {
+    "title": "Set up your workspace",
+    "description": "Create an organization and its first site to get started.",
+    "organizationName": "Organization name",
+    "siteName": "First site name",
+    "submit": "Create workspace",
+    "error": "Could not set up the workspace. Please try again."
   }
 }
