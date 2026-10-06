@@ -42,6 +42,7 @@
   },
   "Form": {
     "schedule": "Agendar Manutenção",
+    "scheduleDescription": "Indique o equipamento, as datas, os trabalhadores e os materiais da tarefa de manutenção.",
     "edit": "Editar: {title}",
     "status": "Estado",
     "equipment": "Equipamento",

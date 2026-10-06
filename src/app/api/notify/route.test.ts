@@ -1,9 +1,8 @@
-import assert from "node:assert/strict";
-import test, { describe } from "node:test";
+import { describe, expect, it } from "vitest";
 import { POST } from "./route";
 
 describe("POST /api/notify", () => {
-  test("processes notification request and returns recipient", async () => {
+  it("processes notification request and returns recipient", async () => {
     const request = new Request("http://localhost:3000/api/notify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -14,25 +13,25 @@ describe("POST /api/notify", () => {
     });
 
     const response = await POST(request);
-    assert.strictEqual(response.status, 200);
+    expect(response.status).toBe(200);
 
     const data = await response.json();
-    assert.strictEqual(data.success, true);
-    assert.strictEqual(data.message, "Notification sent successfully");
-    assert.strictEqual(data.recipient, "tech@company.com");
+    expect(data.success).toBe(true);
+    expect(data.message).toBe("Notification sent successfully");
+    expect(data.recipient).toBe("tech@company.com");
   });
 
-  test("handles invalid request bodies gracefully with 500 status", async () => {
+  it("handles invalid request bodies gracefully with 500 status", async () => {
     const request = new Request("http://localhost:3000/api/notify", {
       method: "POST",
       body: "invalid-json-body",
     });
 
     const response = await POST(request);
-    assert.strictEqual(response.status, 500);
+    expect(response.status).toBe(500);
 
     const data = await response.json();
-    assert.strictEqual(data.success, false);
-    assert.strictEqual(data.message, "Failed to send notification");
+    expect(data.success).toBe(false);
+    expect(data.message).toBe("Failed to send notification");
   });
 });

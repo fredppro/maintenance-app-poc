@@ -1,88 +1,87 @@
-import assert from "node:assert/strict";
-import test, { describe } from "node:test";
+import { describe, expect, it } from "vitest";
 import { toClientSafe, toNumberOrNull } from "./serializer";
 
 describe("toNumberOrNull", () => {
-  test("returns null for null and undefined", () => {
-    assert.strictEqual(toNumberOrNull(null), null);
-    assert.strictEqual(toNumberOrNull(undefined), null);
+  it("returns null for null and undefined", () => {
+    expect(toNumberOrNull(null)).toBeNull();
+    expect(toNumberOrNull(undefined)).toBeNull();
   });
 
-  test("handles numbers properly", () => {
-    assert.strictEqual(toNumberOrNull(42), 42);
-    assert.strictEqual(toNumberOrNull(0), 0);
-    assert.strictEqual(toNumberOrNull(-15.75), -15.75);
-    assert.strictEqual(toNumberOrNull(NaN), null);
-    assert.strictEqual(toNumberOrNull(Infinity), null);
-    assert.strictEqual(toNumberOrNull(-Infinity), null);
+  it("handles numbers properly", () => {
+    expect(toNumberOrNull(42)).toBe(42);
+    expect(toNumberOrNull(0)).toBe(0);
+    expect(toNumberOrNull(-15.75)).toBe(-15.75);
+    expect(toNumberOrNull(NaN)).toBeNull();
+    expect(toNumberOrNull(Infinity)).toBeNull();
+    expect(toNumberOrNull(-Infinity)).toBeNull();
   });
 
-  test("parses numeric strings", () => {
-    assert.strictEqual(toNumberOrNull("123"), 123);
-    assert.strictEqual(toNumberOrNull("45.67"), 45.67);
-    assert.strictEqual(toNumberOrNull("0"), 0);
-    assert.strictEqual(toNumberOrNull("invalid"), null);
-    assert.strictEqual(toNumberOrNull(""), 0);
+  it("parses numeric strings", () => {
+    expect(toNumberOrNull("123")).toBe(123);
+    expect(toNumberOrNull("45.67")).toBe(45.67);
+    expect(toNumberOrNull("0")).toBe(0);
+    expect(toNumberOrNull("invalid")).toBeNull();
+    expect(toNumberOrNull("")).toBe(0);
   });
 
-  test("handles objects with toNumber method (Prisma Decimal)", () => {
+  it("handles objects with toNumber method (Prisma Decimal)", () => {
     const decimalLike = {
       toNumber: () => 99.99,
     };
-    assert.strictEqual(toNumberOrNull(decimalLike), 99.99);
+    expect(toNumberOrNull(decimalLike)).toBe(99.99);
 
     const invalidDecimalLike = {
       toNumber: () => NaN,
     };
-    assert.strictEqual(toNumberOrNull(invalidDecimalLike), null);
+    expect(toNumberOrNull(invalidDecimalLike)).toBeNull();
   });
 
-  test("returns null for other non-numeric types", () => {
-    assert.strictEqual(toNumberOrNull({}), null);
-    assert.strictEqual(toNumberOrNull([]), null);
-    assert.strictEqual(toNumberOrNull(true), null);
+  it("returns null for other non-numeric types", () => {
+    expect(toNumberOrNull({})).toBeNull();
+    expect(toNumberOrNull([])).toBeNull();
+    expect(toNumberOrNull(true)).toBeNull();
   });
 });
 
 describe("toClientSafe", () => {
-  test("passes through primitives unchanged", () => {
-    assert.strictEqual(toClientSafe(null), null);
-    assert.strictEqual(toClientSafe(undefined), undefined);
-    assert.strictEqual(toClientSafe("hello"), "hello");
-    assert.strictEqual(toClientSafe(123), 123);
-    assert.strictEqual(toClientSafe(true), true);
-    assert.strictEqual(toClientSafe(false), false);
+  it("passes through primitives unchanged", () => {
+    expect(toClientSafe(null)).toBeNull();
+    expect(toClientSafe(undefined)).toBeUndefined();
+    expect(toClientSafe("hello")).toBe("hello");
+    expect(toClientSafe(123)).toBe(123);
+    expect(toClientSafe(true)).toBe(true);
+    expect(toClientSafe(false)).toBe(false);
   });
 
-  test("converts BigInt to string", () => {
-    assert.strictEqual(toClientSafe(BigInt(9007199254740991)), "9007199254740991");
+  it("converts BigInt to string", () => {
+    expect(toClientSafe(BigInt(9007199254740991))).toBe("9007199254740991");
   });
 
-  test("preserves native Date instances", () => {
+  it("preserves native Date instances", () => {
     const date = new Date("2026-05-01T12:00:00.000Z");
     const result = toClientSafe(date);
-    assert.ok(result instanceof Date);
-    assert.strictEqual((result as Date).toISOString(), "2026-05-01T12:00:00.000Z");
+    expect(result).toBeInstanceOf(Date);
+    expect((result as Date).toISOString()).toBe("2026-05-01T12:00:00.000Z");
   });
 
-  test("converts Prisma Decimal-like objects via toNumber()", () => {
+  it("converts Prisma Decimal-like objects via toNumber()", () => {
     const decimalObj = { toNumber: () => 49.99 };
-    assert.strictEqual(toClientSafe(decimalObj), 49.99);
+    expect(toClientSafe(decimalObj)).toBe(49.99);
   });
 
-  test("converts objects with toJSON method", () => {
+  it("converts objects with toJSON method", () => {
     const jsonable = {
       toJSON: () => ({ converted: true, value: 10 }),
     };
-    assert.deepStrictEqual(toClientSafe(jsonable), { converted: true, value: 10 });
+    expect(toClientSafe(jsonable)).toEqual({ converted: true, value: 10 });
   });
 
-  test("recursively converts arrays", () => {
+  it("recursively converts arrays", () => {
     const input = [1, "two", BigInt(3), { toNumber: () => 4.5 }];
-    assert.deepStrictEqual(toClientSafe(input), [1, "two", "3", 4.5]);
+    expect(toClientSafe(input)).toEqual([1, "two", "3", 4.5]);
   });
 
-  test("recursively converts plain objects with nested data", () => {
+  it("recursively converts plain objects with nested data", () => {
     const date = new Date("2026-08-01T09:00:00.000Z");
     const input = {
       id: "task-1",
@@ -98,24 +97,24 @@ describe("toClientSafe", () => {
     };
 
     const output = toClientSafe(input) as Record<string, unknown>;
-    assert.strictEqual(output.id, "task-1");
-    assert.strictEqual(output.title, "Pump Repair");
-    assert.strictEqual(output.cost, 150.5);
-    assert.strictEqual(output.count, "10");
-    assert.strictEqual(output.scheduledAt, date);
-    assert.deepStrictEqual(output.tags, ["urgent", "mechanical"]);
-    assert.deepStrictEqual(output.metadata, {
+    expect(output.id).toBe("task-1");
+    expect(output.title).toBe("Pump Repair");
+    expect(output.cost).toBe(150.5);
+    expect(output.count).toBe("10");
+    expect(output.scheduledAt).toBe(date);
+    expect(output.tags).toEqual(["urgent", "mechanical"]);
+    expect(output.metadata).toEqual({
       vendor: "Acme Corp",
       rate: 75.0,
     });
   });
 
-  test("falls back to String conversion for other non-plain objects", () => {
+  it("falls back to String conversion for other non-plain objects", () => {
     class CustomClass {
       toString() {
         return "custom-instance";
       }
     }
-    assert.strictEqual(toClientSafe(new CustomClass()), "custom-instance");
+    expect(toClientSafe(new CustomClass())).toBe("custom-instance");
   });
 });

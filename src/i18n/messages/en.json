@@ -42,6 +42,7 @@
   },
   "Form": {
     "schedule": "Schedule Maintenance",
+    "scheduleDescription": "Enter the equipment, dates, workers, and materials for the maintenance task.",
     "edit": "Edit: {title}",
     "status": "Status",
     "equipment": "Equipment",

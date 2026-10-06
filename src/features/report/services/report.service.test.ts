@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import test, { describe, mock } from "node:test";
+import { describe, expect, it, vi } from "vitest";
 import * as getTaskModule from "../server/get-task";
 import { buildMaintenanceReportPDF, buildReportResponse } from "./report.service";
 
@@ -22,58 +21,52 @@ describe("report service", () => {
     materials: [],
   } as any;
 
-  test("buildMaintenanceReportPDF creates a stream and filename for an existing task", async () => {
-    const getTaskMock = mock.method(getTaskModule, "getMaintenanceTask", async () => mockTask);
+  it("buildMaintenanceReportPDF creates a stream and filename for an existing task", async () => {
+    const getTaskMock = vi.spyOn(getTaskModule, "getMaintenanceTask").mockResolvedValue(mockTask);
 
     try {
       const result = await buildMaintenanceReportPDF("task-abcdef123456", "en");
-      assert.strictEqual(result.filename, "report-task-abc.pdf");
-      assert.ok(result.stream);
-      assert.strictEqual(getTaskMock.mock.calls.length, 1);
+      expect(result.filename).toBe("report-task-abc.pdf");
+      expect(result.stream).toBeTruthy();
+      expect(getTaskMock.mock.calls.length).toBe(1);
     } finally {
-      getTaskMock.mock.restore();
+      getTaskMock.mockRestore();
     }
   });
 
-  test("buildMaintenanceReportPDF throws NOT_FOUND when task does not exist", async () => {
-    const getTaskMock = mock.method(getTaskModule, "getMaintenanceTask", async () => null);
+  it("buildMaintenanceReportPDF throws NOT_FOUND when task does not exist", async () => {
+    const getTaskMock = vi.spyOn(getTaskModule, "getMaintenanceTask").mockResolvedValue(null);
 
     try {
-      await assert.rejects(
-        () => buildMaintenanceReportPDF("nonexistent-task", "en"),
-        { message: "NOT_FOUND" }
-      );
+      await expect(buildMaintenanceReportPDF("nonexistent-task", "en")).rejects.toThrow("NOT_FOUND");
     } finally {
-      getTaskMock.mock.restore();
+      getTaskMock.mockRestore();
     }
   });
 
-  test("buildReportResponse sets preview headers with inline Content-Disposition", async () => {
-    const getTaskMock = mock.method(getTaskModule, "getMaintenanceTask", async () => mockTask);
+  it("buildReportResponse sets preview headers with inline Content-Disposition", async () => {
+    const getTaskMock = vi.spyOn(getTaskModule, "getMaintenanceTask").mockResolvedValue(mockTask);
 
     try {
       const response = await buildReportResponse("task-abcdef123456", "en", "preview");
-      assert.strictEqual(response.headers.get("Content-Type"), "application/pdf");
-      assert.strictEqual(response.headers.get("Content-Disposition"), "inline");
-      assert.strictEqual(response.headers.get("Cache-Control"), "no-store");
+      expect(response.headers.get("Content-Type")).toBe("application/pdf");
+      expect(response.headers.get("Content-Disposition")).toBe("inline");
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
     } finally {
-      getTaskMock.mock.restore();
+      getTaskMock.mockRestore();
     }
   });
 
-  test("buildReportResponse sets download headers with attachment filename", async () => {
-    const getTaskMock = mock.method(getTaskModule, "getMaintenanceTask", async () => mockTask);
+  it("buildReportResponse sets download headers with attachment filename", async () => {
+    const getTaskMock = vi.spyOn(getTaskModule, "getMaintenanceTask").mockResolvedValue(mockTask);
 
     try {
       const response = await buildReportResponse("task-abcdef123456", "pt-pt", "download");
-      assert.strictEqual(response.headers.get("Content-Type"), "application/pdf");
-      assert.strictEqual(
-        response.headers.get("Content-Disposition"),
-        'attachment; filename="report-task-abc.pdf"'
-      );
-      assert.strictEqual(response.headers.get("Cache-Control"), "no-store");
+      expect(response.headers.get("Content-Type")).toBe("application/pdf");
+      expect(response.headers.get("Content-Disposition")).toBe('attachment; filename="report-task-abc.pdf"');
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
     } finally {
-      getTaskMock.mock.restore();
+      getTaskMock.mockRestore();
     }
   });
 });

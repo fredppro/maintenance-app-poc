@@ -1,10 +1,9 @@
-import assert from "node:assert/strict";
-import test, { describe, mock } from "node:test";
+import { describe, expect, it, vi } from "vitest";
 import prisma from "@/lib/prisma";
 import { getMaintenanceTask } from "./get-task";
 
 describe("getMaintenanceTask", () => {
-  test("queries maintenance task with equipment, assignments (and workers), and materials included", async () => {
+  it("queries maintenance task with equipment, assignments (and workers), and materials included", async () => {
     const mockTask = {
       id: "task-123",
       title: "Test Task",
@@ -13,24 +12,20 @@ describe("getMaintenanceTask", () => {
       materials: [{ id: "mat-1", name: "Filter", quantity: 2 }],
     };
 
-    const findUniqueMock = mock.method(
-      prisma.maintenanceTask,
-      "findUnique",
-      async (args: any) => {
-        assert.strictEqual(args.where.id, "task-123");
-        assert.strictEqual(args.include.equipment, true);
-        assert.strictEqual(args.include.materials, true);
-        assert.strictEqual(args.include.assignments.include.worker, true);
-        return mockTask as any;
-      }
-    );
+    const findUniqueMock = vi.spyOn(prisma.maintenanceTask, "findUnique").mockImplementation(async (args: any) => {
+      expect(args.where.id).toBe("task-123");
+      expect(args.include.equipment).toBe(true);
+      expect(args.include.materials).toBe(true);
+      expect(args.include.assignments.include.worker).toBe(true);
+      return mockTask as any;
+    });
 
     try {
       const task = await getMaintenanceTask("task-123");
-      assert.deepStrictEqual(task, mockTask);
-      assert.strictEqual(findUniqueMock.mock.calls.length, 1);
+      expect(task).toEqual(mockTask);
+      expect(findUniqueMock.mock.calls.length).toBe(1);
     } finally {
-      findUniqueMock.mock.restore();
+      findUniqueMock.mockRestore();
     }
   });
 });

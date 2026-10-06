@@ -677,11 +677,17 @@ export function TimelineGrid() {
                             : isSameDay(dragOverCell.date, slot));
 
                         return (
-                          <div
+                          <button
+                            type="button"
+                            aria-label={`${equip.name}, ${format(
+                              slot,
+                              viewMode === "day" ? "PPpp" : "PP",
+                              { locale: dateFnsLocale },
+                            )}`}
                             key={slotIdx}
                             className={cn(
                               cellWidth,
-                              "flex-1 border-r border-border cursor-pointer transition-colors relative",
+                              "flex-1 border-0 rounded-none bg-transparent p-0 text-left border-r border-border cursor-pointer transition-colors relative",
                               "hover:bg-accent/50",
                               isDragOver && "bg-primary/20",
                               isToday(slot) && "bg-primary/5",

@@ -1,7 +1,6 @@
-import assert from "node:assert/strict";
-import test, { describe, mock, beforeEach, afterEach } from "node:test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import * as nextCache from "next/cache";
 import {
   getEquipment,
   addEquipment,
@@ -15,107 +14,109 @@ import {
 } from "./actions";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
 
-describe("scheduler server actions", () => {
-  let revalidateMock: any;
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
 
+describe("scheduler server actions", () => {
   beforeEach(() => {
-    revalidateMock = mock.method(nextCache, "revalidatePath", () => {});
+    vi.mocked(revalidatePath).mockClear();
   });
 
   afterEach(() => {
-    revalidateMock?.mock?.restore();
+    vi.mocked(revalidatePath).mockClear();
   });
 
   describe("equipment actions", () => {
-    test("getEquipment orders by name ascending", async () => {
+    it("getEquipment orders by name ascending", async () => {
       const mockEquipments = [{ id: "eq-1", name: "Conveyor" }];
-      const findManyMock = mock.method(prisma.equipment, "findMany", async (args: any) => {
-        assert.deepStrictEqual(args.orderBy, { name: "asc" });
+      const findManyMock = vi.spyOn(prisma.equipment, "findMany").mockImplementation(async (args: any) => {
+        expect(args.orderBy).toEqual({ name: "asc" });
         return mockEquipments as any;
       });
 
       try {
         const result = await getEquipment();
-        assert.deepStrictEqual(result, mockEquipments);
+        expect(result).toEqual(mockEquipments);
       } finally {
-        findManyMock.mock.restore();
+        findManyMock.mockRestore();
       }
     });
 
-    test("addEquipment creates record and revalidates path", async () => {
+    it("addEquipment creates record and revalidates path", async () => {
       const newEquip = { name: "Press B", category: "Heavy" };
       const created = { id: "eq-2", ...newEquip, createdAt: new Date() };
 
-      const createMock = mock.method(prisma.equipment, "create", async (args: any) => {
-        assert.deepStrictEqual(args.data, newEquip);
+      const createMock = vi.spyOn(prisma.equipment, "create").mockImplementation(async (args: any) => {
+        expect(args.data).toEqual(newEquip);
         return created as any;
       });
 
       try {
         const result = await addEquipment(newEquip);
-        assert.deepStrictEqual(result, created);
-        assert.strictEqual(revalidateMock.mock.calls.length, 1);
-        assert.strictEqual(revalidateMock.mock.calls[0].arguments[0], "/");
+        expect(result).toEqual(created);
+        expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
+        expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/");
       } finally {
-        createMock.mock.restore();
+        createMock.mockRestore();
       }
     });
 
-    test("updateEquipment updates record and revalidates path", async () => {
+    it("updateEquipment updates record and revalidates path", async () => {
       const updateData = { name: "Press B (Modified)" };
       const updated = { id: "eq-2", name: "Press B (Modified)", category: "Heavy", createdAt: new Date() };
 
-      const updateMock = mock.method(prisma.equipment, "update", async (args: any) => {
-        assert.strictEqual(args.where.id, "eq-2");
-        assert.deepStrictEqual(args.data, updateData);
+      const updateMock = vi.spyOn(prisma.equipment, "update").mockImplementation(async (args: any) => {
+        expect(args.where.id).toBe("eq-2");
+        expect(args.data).toEqual(updateData);
         return updated as any;
       });
 
       try {
         const result = await updateEquipment("eq-2", updateData);
-        assert.deepStrictEqual(result, updated);
-        assert.strictEqual(revalidateMock.mock.calls.length, 1);
+        expect(result).toEqual(updated);
+        expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
-        updateMock.mock.restore();
+        updateMock.mockRestore();
       }
     });
 
-    test("deleteEquipment deletes record and revalidates path", async () => {
-      const deleteMock = mock.method(prisma.equipment, "delete", async (args: any) => {
-        assert.strictEqual(args.where.id, "eq-2");
+    it("deleteEquipment deletes record and revalidates path", async () => {
+      const deleteMock = vi.spyOn(prisma.equipment, "delete").mockImplementation(async (args: any) => {
+        expect(args.where.id).toBe("eq-2");
         return { id: "eq-2" } as any;
       });
 
       try {
         await deleteEquipment("eq-2");
-        assert.strictEqual(deleteMock.mock.calls.length, 1);
-        assert.strictEqual(revalidateMock.mock.calls.length, 1);
+        expect(deleteMock.mock.calls.length).toBe(1);
+        expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
-        deleteMock.mock.restore();
+        deleteMock.mockRestore();
       }
     });
   });
 
   describe("task actions", () => {
-    test("getTasks queries tasks with equipment, worker assignments, and materials ordered by startTime", async () => {
+    it("getTasks queries tasks with equipment, worker assignments, and materials ordered by startTime", async () => {
       const mockTasks = [{ id: "task-1", title: "Maintenance 1" }];
-      const findManyMock = mock.method(prisma.maintenanceTask, "findMany", async (args: any) => {
-        assert.strictEqual(args.include.equipment, true);
-        assert.strictEqual(args.include.materials, true);
-        assert.strictEqual(args.include.assignments.include.worker, true);
-        assert.deepStrictEqual(args.orderBy, { startTime: "asc" });
+      const findManyMock = vi.spyOn(prisma.maintenanceTask, "findMany").mockImplementation(async (args: any) => {
+        expect(args.include.equipment).toBe(true);
+        expect(args.include.materials).toBe(true);
+        expect(args.include.assignments.include.worker).toBe(true);
+        expect(args.orderBy).toEqual({ startTime: "asc" });
         return mockTasks as any;
       });
 
       try {
         const result = await getTasks();
-        assert.deepStrictEqual(result, mockTasks);
+        expect(result).toEqual(mockTasks);
       } finally {
-        findManyMock.mock.restore();
+        findManyMock.mockRestore();
       }
     });
 
-    test("createTask creates assignments and materials relations with formatted prices", async () => {
+    it("createTask creates assignments and materials relations with formatted prices", async () => {
       const taskInput = {
         title: "Oil Change",
         description: "Replace engine oil",
@@ -135,14 +136,14 @@ describe("scheduler server actions", () => {
         ],
       };
 
-      const createMock = mock.method(prisma.maintenanceTask, "create", async (args: any) => {
-        assert.strictEqual(args.data.title, "Oil Change");
-        assert.strictEqual(args.data.equipmentId, "eq-1");
-        assert.deepStrictEqual(args.data.assignments.create, [
+      const createMock = vi.spyOn(prisma.maintenanceTask, "create").mockImplementation(async (args: any) => {
+        expect(args.data.title).toBe("Oil Change");
+        expect(args.data.equipmentId).toBe("eq-1");
+        expect(args.data.assignments.create).toEqual([
           { workerId: "worker-1" },
           { workerId: "worker-2" },
         ]);
-        assert.deepStrictEqual(args.data.materials.create, [
+        expect(args.data.materials.create).toEqual([
           {
             name: "Synthetic Oil 5W30",
             reference: "OIL-5W30",
@@ -156,14 +157,14 @@ describe("scheduler server actions", () => {
 
       try {
         const result = await createTask(taskInput);
-        assert.strictEqual(result.id, "task-new");
-        assert.strictEqual(revalidateMock.mock.calls.length, 1);
+        expect(result.id).toBe("task-new");
+        expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
-        createMock.mock.restore();
+        createMock.mockRestore();
       }
     });
 
-    test("updateTask updates assignments when workerLogs are provided in transaction", async () => {
+    it("updateTask updates assignments when workerLogs are provided in transaction", async () => {
       const logStart = new Date("2026-06-01T08:30:00.000Z");
       const logEnd = new Date("2026-06-01T09:30:00.000Z");
 
@@ -193,9 +194,7 @@ describe("scheduler server actions", () => {
         },
       };
 
-      const txMock = mock.method(prisma, "$transaction", async (cb: any) => {
-        return cb(fakeTx);
-      });
+      const txMock = vi.spyOn(prisma, "$transaction").mockImplementation(async (cb: any) => cb(fakeTx));
 
       try {
         const result = await updateTask("task-123", {
@@ -203,10 +202,10 @@ describe("scheduler server actions", () => {
           workerLogs: [{ workerId: "worker-1", startTime: logStart, endTime: logEnd }],
         });
 
-        assert.strictEqual(result.id, "task-123");
-        assert.strictEqual(result.status, "completed");
-        assert.deepStrictEqual(deletedAssignmentTasks, ["task-123"]);
-        assert.deepStrictEqual(createdAssignments, [
+        expect(result.id).toBe("task-123");
+        expect(result.status).toBe("completed");
+        expect(deletedAssignmentTasks).toEqual(["task-123"]);
+        expect(createdAssignments).toEqual([
           {
             taskId: "task-123",
             workerId: "worker-1",
@@ -214,13 +213,13 @@ describe("scheduler server actions", () => {
             endTime: logEnd,
           },
         ]);
-        assert.strictEqual(revalidateMock.mock.calls.length, 1);
+        expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
-        txMock.mock.restore();
+        txMock.mockRestore();
       }
     });
 
-    test("updateTask replaces materials when materials array is provided", async () => {
+    it("updateTask replaces materials when materials array is provided", async () => {
       const deletedMaterialsTasks: string[] = [];
       const createdMaterials: any[] = [];
 
@@ -247,9 +246,7 @@ describe("scheduler server actions", () => {
         },
       };
 
-      const txMock = mock.method(prisma, "$transaction", async (cb: any) => {
-        return cb(fakeTx);
-      });
+      const txMock = vi.spyOn(prisma, "$transaction").mockImplementation(async (cb: any) => cb(fakeTx));
 
       try {
         await updateTask("task-123", {
@@ -265,8 +262,8 @@ describe("scheduler server actions", () => {
           ],
         });
 
-        assert.deepStrictEqual(deletedMaterialsTasks, ["task-123"]);
-        assert.deepStrictEqual(createdMaterials, [
+        expect(deletedMaterialsTasks).toEqual(["task-123"]);
+        expect(createdMaterials).toEqual([
           {
             taskId: "task-123",
             name: "Bearing G4",
@@ -277,45 +274,45 @@ describe("scheduler server actions", () => {
           },
         ]);
       } finally {
-        txMock.mock.restore();
+        txMock.mockRestore();
       }
     });
 
-    test("deleteTask deletes task and revalidates path", async () => {
-      const deleteMock = mock.method(prisma.maintenanceTask, "delete", async (args: any) => {
-        assert.strictEqual(args.where.id, "task-123");
+    it("deleteTask deletes task and revalidates path", async () => {
+      const deleteMock = vi.spyOn(prisma.maintenanceTask, "delete").mockImplementation(async (args: any) => {
+        expect(args.where.id).toBe("task-123");
         return { id: "task-123" } as any;
       });
 
       try {
         await deleteTask("task-123");
-        assert.strictEqual(deleteMock.mock.calls.length, 1);
-        assert.strictEqual(revalidateMock.mock.calls.length, 1);
+        expect(deleteMock.mock.calls.length).toBe(1);
+        expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
-        deleteMock.mock.restore();
+        deleteMock.mockRestore();
       }
     });
 
-    test("moveTask updates start/end time and equipmentId", async () => {
+    it("moveTask updates start/end time and equipmentId", async () => {
       const newStart = new Date("2026-07-01T10:00:00.000Z");
       const newEnd = new Date("2026-07-01T12:00:00.000Z");
 
-      const updateMock = mock.method(prisma.maintenanceTask, "update", async (args: any) => {
-        assert.strictEqual(args.where.id, "task-123");
-        assert.strictEqual(args.data.startTime, newStart);
-        assert.strictEqual(args.data.endTime, newEnd);
-        assert.strictEqual(args.data.equipmentId, "eq-new");
-        assert.strictEqual(args.include.equipment, true);
-        assert.strictEqual(args.include.assignments.include.worker, true);
+      const updateMock = vi.spyOn(prisma.maintenanceTask, "update").mockImplementation(async (args: any) => {
+        expect(args.where.id).toBe("task-123");
+        expect(args.data.startTime).toBe(newStart);
+        expect(args.data.endTime).toBe(newEnd);
+        expect(args.data.equipmentId).toBe("eq-new");
+        expect(args.include.equipment).toBe(true);
+        expect(args.include.assignments.include.worker).toBe(true);
         return { id: "task-123", startTime: newStart, endTime: newEnd, equipmentId: "eq-new" } as any;
       });
 
       try {
         const result = await moveTask("task-123", newStart, newEnd, "eq-new");
-        assert.strictEqual(result.id, "task-123");
-        assert.strictEqual(revalidateMock.mock.calls.length, 1);
+        expect(result.id).toBe("task-123");
+        expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
-        updateMock.mock.restore();
+        updateMock.mockRestore();
       }
     });
   });

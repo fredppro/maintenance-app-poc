@@ -1,9 +1,7 @@
-import assert from "node:assert/strict";
-import test, { describe, beforeEach, afterEach } from "node:test";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   notifyReportPreviewRefresh,
   subscribeToReportPreviewRefresh,
-  REPORT_PREVIEW_EVENT,
 } from "./events";
 
 describe("report events", () => {
@@ -20,19 +18,18 @@ describe("report events", () => {
     (globalThis as any).BroadcastChannel = originalBroadcastChannel;
   });
 
-  test("handles SSR environment gracefully when window is undefined", () => {
+  it("handles SSR environment gracefully when window is undefined", () => {
     delete (globalThis as any).window;
     delete (globalThis as any).BroadcastChannel;
 
-    // Should not throw in SSR
-    assert.doesNotThrow(() => notifyReportPreviewRefresh("task-123"));
+    expect(() => notifyReportPreviewRefresh("task-123")).not.toThrow();
 
     const unsubscribe = subscribeToReportPreviewRefresh(() => {});
-    assert.strictEqual(typeof unsubscribe, "function");
-    assert.doesNotThrow(() => unsubscribe());
+    expect(typeof unsubscribe).toBe("function");
+    expect(() => unsubscribe()).not.toThrow();
   });
 
-  test("notifies and receives events in the same tab via CustomEvent", () => {
+  it("notifies and receives events in the same tab via CustomEvent", () => {
     const listeners: Record<string, ((event: any) => void)[]> = {};
 
     class MockCustomEvent {
@@ -69,15 +66,14 @@ describe("report events", () => {
     notifyReportPreviewRefresh("task-abc");
     notifyReportPreviewRefresh("task-def");
 
-    assert.deepStrictEqual(receivedTaskIds, ["task-abc", "task-def"]);
+    expect(receivedTaskIds).toEqual(["task-abc", "task-def"]);
 
-    // Unsubscribe and ensure no further notifications
     unsubscribe();
     notifyReportPreviewRefresh("task-ghi");
-    assert.deepStrictEqual(receivedTaskIds, ["task-abc", "task-def"]);
+    expect(receivedTaskIds).toEqual(["task-abc", "task-def"]);
   });
 
-  test("broadcasts to other tabs via BroadcastChannel when available", () => {
+  it("broadcasts to other tabs via BroadcastChannel when available", () => {
     const postedMessages: any[] = [];
     let channelClosed = false;
 
@@ -104,9 +100,9 @@ describe("report events", () => {
 
     notifyReportPreviewRefresh("task-999");
 
-    assert.strictEqual(postedMessages.length, 1);
-    assert.strictEqual(postedMessages[0].taskId, "task-999");
-    assert.ok(typeof postedMessages[0].timestamp === "number");
-    assert.strictEqual(channelClosed, true);
+    expect(postedMessages).toHaveLength(1);
+    expect(postedMessages[0].taskId).toBe("task-999");
+    expect(typeof postedMessages[0].timestamp).toBe("number");
+    expect(channelClosed).toBe(true);
   });
 });

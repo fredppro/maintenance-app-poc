@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import test, { describe } from "node:test";
+import { describe, expect, it } from "vitest";
 import { createMaintenanceReportPDFStream } from "./stream";
 import { routing } from "src/i18n/routing";
 
@@ -12,7 +11,7 @@ async function collectStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
 }
 
 describe("createMaintenanceReportPDFStream", () => {
-  test("creates a PDF stream for a maintenance task with default locale", async () => {
+  it("creates a PDF stream for a maintenance task with default locale", async () => {
     const entry = {
       id: "task-123",
       title: "Quarterly inspection",
@@ -34,11 +33,11 @@ describe("createMaintenanceReportPDFStream", () => {
     const stream = createMaintenanceReportPDFStream(entry, routing.defaultLocale);
     const pdf = await collectStream(stream);
 
-    assert.ok(pdf.length > 0);
-    assert.match(pdf.toString("latin1"), /^%PDF/);
+    expect(pdf.length).toBeGreaterThan(0);
+    expect(pdf.toString("latin1").startsWith("%PDF")).toBe(true);
   });
 
-  test("creates a PDF stream with pt-pt locale and comprehensive task data", async () => {
+  it("creates a PDF stream with pt-pt locale and comprehensive task data", async () => {
     const entry = {
       id: "task-456789abcdef",
       title: "Substituição de Rolamento e Lubrificação Geral",
@@ -90,11 +89,11 @@ describe("createMaintenanceReportPDFStream", () => {
     const stream = createMaintenanceReportPDFStream(entry, "pt-pt");
     const pdf = await collectStream(stream);
 
-    assert.ok(pdf.length > 0);
-    assert.match(pdf.toString("latin1"), /^%PDF/);
+    expect(pdf.length).toBeGreaterThan(0);
+    expect(pdf.toString("latin1").startsWith("%PDF")).toBe(true);
   });
 
-  test("handles overflow with multiple pages and long text without throwing", async () => {
+  it("handles overflow with multiple pages and long text without throwing", async () => {
     const longDescription = "Detailed inspection log entry. ".repeat(60);
 
     const entry = {
@@ -129,7 +128,10 @@ describe("createMaintenanceReportPDFStream", () => {
     const stream = createMaintenanceReportPDFStream(entry, "en");
     const pdf = await collectStream(stream);
 
-    assert.ok(pdf.length > 0);
-    assert.match(pdf.toString("latin1"), /^%PDF/);
+    expect(pdf.length).toBeGreaterThan(0);
+    expect(pdf.toString("latin1").startsWith("%PDF")).toBe(true);
+    const pageCount =
+      pdf.toString("latin1").match(/\/Type\s*\/Page\b/g)?.length ?? 0;
+    expect(pageCount).toBeGreaterThan(1);
   });
 });

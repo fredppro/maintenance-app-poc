@@ -29,6 +29,7 @@ interface MultiSelectProps {
   selected: string[]
   onChange: (value: string[]) => void
   placeholder?: string
+  id?: string
   className?: string
 }
 
@@ -37,6 +38,7 @@ export function MultiSelect({
   selected,
   onChange,
   placeholder = 'Select items...',
+  id,
   className,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false)
@@ -58,8 +60,10 @@ export function MultiSelect({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
+            id={id}
             variant="outline"
             role="combobox"
+            aria-label={placeholder}
             aria-expanded={open}
             className="w-full justify-between h-auto min-h-10 py-2"
           >

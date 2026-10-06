@@ -1,31 +1,30 @@
-import assert from "node:assert/strict";
-import test, { describe } from "node:test";
+import { describe, expect, it } from "vitest";
 import { getValidLocale, localeSchema } from "./locale";
 import { routing } from "./routing";
 
 describe("locale validation", () => {
-  test("accepts valid supported locales", () => {
-    assert.strictEqual(getValidLocale("en"), "en");
-    assert.strictEqual(getValidLocale("pt-pt"), "pt-pt");
+  it("accepts valid supported locales", () => {
+    expect(getValidLocale("en")).toBe("en");
+    expect(getValidLocale("pt-pt")).toBe("pt-pt");
   });
 
-  test("falls back to defaultLocale for unsupported or invalid strings", () => {
-    assert.strictEqual(getValidLocale("fr"), routing.defaultLocale);
-    assert.strictEqual(getValidLocale("de"), routing.defaultLocale);
-    assert.strictEqual(getValidLocale(""), routing.defaultLocale);
-    assert.strictEqual(getValidLocale("unknown"), routing.defaultLocale);
+  it("falls back to defaultLocale for unsupported or invalid strings", () => {
+    expect(getValidLocale("fr")).toBe(routing.defaultLocale);
+    expect(getValidLocale("de")).toBe(routing.defaultLocale);
+    expect(getValidLocale("")).toBe(routing.defaultLocale);
+    expect(getValidLocale("unknown")).toBe(routing.defaultLocale);
   });
 
-  test("falls back to defaultLocale for non-string inputs", () => {
-    assert.strictEqual(getValidLocale(null), routing.defaultLocale);
-    assert.strictEqual(getValidLocale(undefined), routing.defaultLocale);
-    assert.strictEqual(getValidLocale(123), routing.defaultLocale);
-    assert.strictEqual(getValidLocale({}), routing.defaultLocale);
+  it("falls back to defaultLocale for non-string inputs", () => {
+    expect(getValidLocale(null)).toBe(routing.defaultLocale);
+    expect(getValidLocale(undefined)).toBe(routing.defaultLocale);
+    expect(getValidLocale(123)).toBe(routing.defaultLocale);
+    expect(getValidLocale({})).toBe(routing.defaultLocale);
   });
 
-  test("localeSchema parses valid locales and rejects invalid ones", () => {
-    assert.strictEqual(localeSchema.safeParse("en").success, true);
-    assert.strictEqual(localeSchema.safeParse("pt-pt").success, true);
-    assert.strictEqual(localeSchema.safeParse("invalid").success, false);
+  it("localeSchema parses valid locales and rejects invalid ones", () => {
+    expect(localeSchema.safeParse("en").success).toBe(true);
+    expect(localeSchema.safeParse("pt-pt").success).toBe(true);
+    expect(localeSchema.safeParse("invalid").success).toBe(false);
   });
 });

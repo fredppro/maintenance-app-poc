@@ -1,6 +1,6 @@
 import { PrismaNeon } from '@prisma/adapter-neon'
 import { toClientSafe } from "./serializer";
-import { PrismaClient } from 'prisma/generated/prisma/client';
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export const prismaClientSingleton = () => {
   const connectionString = process.env.DATABASE_URL?.trim();

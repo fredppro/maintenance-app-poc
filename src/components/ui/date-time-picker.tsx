@@ -22,6 +22,7 @@ interface DateTimePickerProps {
   setDate: (date: Date) => void;
   locale: AppLocale;
   placeholder?: string;
+  id?: string;
   hasError?: boolean;
   defaultMonth?: Date;
   disabled?: React.ComponentProps<typeof Calendar>["disabled"];
@@ -34,6 +35,7 @@ export function DateTimePicker({
   setDate,
   locale,
   placeholder,
+  id,
   hasError,
   defaultMonth,
   disabled,
@@ -140,6 +142,7 @@ export function DateTimePicker({
     <Popover>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           variant="outline"
           className={cn(
             "w-full justify-start text-left font-normal h-9 px-3",
@@ -211,6 +214,7 @@ export function DateTimePicker({
                 {t("hours")}
               </span>
               <Input
+                aria-label={t("hours")}
                 value={hours}
                 onChange={(e) => handleTimeChange("hours", e.target.value)}
                 onBlur={() => handleBlur("hours")}
@@ -233,6 +237,7 @@ export function DateTimePicker({
                 {t("minutes")}
               </span>
               <Input
+                aria-label={t("minutes")}
                 value={minutes}
                 onChange={(e) => handleTimeChange("minutes", e.target.value)}
                 onBlur={() => handleBlur("minutes")}

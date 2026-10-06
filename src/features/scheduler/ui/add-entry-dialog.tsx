@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -193,6 +194,9 @@ export function AddEntryDialog({
       <DialogContent className="sm:max-w-xl lg:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t("schedule")}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {t("scheduleDescription")}
+          </DialogDescription>
         </DialogHeader>
 
         <form
@@ -202,12 +206,15 @@ export function AddEntryDialog({
           <FieldGroup>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field>
-                <FieldLabel>{t("equipment")}</FieldLabel>
+                <FieldLabel htmlFor="task-equipment">
+                  {t("equipment")}
+                </FieldLabel>
                 <Select
                   value={form.watch("equipmentId")}
                   onValueChange={(v) => form.setValue("equipmentId", v)}
                 >
                   <SelectTrigger
+                    id="task-equipment"
                     className={
                       hasConflict
                         ? "border-destructive text-destructive focus:ring-destructive"
@@ -240,12 +247,12 @@ export function AddEntryDialog({
               </Field>
 
               <Field>
-                <FieldLabel>{t("taskType")}</FieldLabel>
+                <FieldLabel htmlFor="task-type">{t("taskType")}</FieldLabel>
                 <Select
                   value={form.watch("type")}
                   onValueChange={(v) => form.setValue("type", v as TaskType)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="task-type">
                     <SelectValue placeholder={t("selectType")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -264,8 +271,9 @@ export function AddEntryDialog({
             </div>
 
             <Field>
-              <FieldLabel>{t("title")}</FieldLabel>
+              <FieldLabel htmlFor="task-title">{t("title")}</FieldLabel>
               <Input
+                id="task-title"
                 {...form.register("title")}
                 placeholder={t("titlePlaceholder")}
               />
@@ -278,7 +286,7 @@ export function AddEntryDialog({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-xs font-semibold">
+                <Label htmlFor="task-start-time" className="text-xs font-semibold">
                   {t("startDateTime")}
                 </Label>
                 <Controller
@@ -289,6 +297,7 @@ export function AddEntryDialog({
                       date={field.value}
                       setDate={field.onChange}
                       locale={locale}
+                      id="task-start-time"
                       placeholder={t("pickDate")}
                       hasError={hasConflict}
                     />
@@ -297,7 +306,7 @@ export function AddEntryDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-semibold">
+                <Label htmlFor="task-end-time" className="text-xs font-semibold">
                   {t("endDateTime")}
                 </Label>
                 <Controller
@@ -308,6 +317,7 @@ export function AddEntryDialog({
                       date={field.value}
                       setDate={field.onChange}
                       locale={locale}
+                      id="task-end-time"
                       placeholder={t("pickDate")}
                       hasError={hasConflict}
                     />
@@ -317,8 +327,11 @@ export function AddEntryDialog({
             </div>
 
             <Field>
-              <FieldLabel>{t("description")}</FieldLabel>
+              <FieldLabel htmlFor="task-description">
+                {t("description")}
+              </FieldLabel>
               <Textarea
+                id="task-description"
                 {...form.register("description")}
                 placeholder={t("descriptionPlaceholder")}
                 rows={2}
@@ -326,8 +339,11 @@ export function AddEntryDialog({
             </Field>
 
             <Field>
-              <FieldLabel>{t("assignedWorkers")}</FieldLabel>
+              <FieldLabel htmlFor="task-workers">
+                {t("assignedWorkers")}
+              </FieldLabel>
               <MultiSelect
+                id="task-workers"
                 options={workerOptions}
                 selected={form.watch("workerIds")}
                 onChange={(v) => form.setValue("workerIds", v)}
@@ -391,6 +407,7 @@ export function AddEntryDialog({
                         <TableRow key={field.id} className="group">
                           <TableCell className="p-2">
                             <Input
+                              aria-label={`${t("itemName")} ${index + 1}`}
                               {...form.register(
                                 `materials.${index}.name` as const,
                               )}
@@ -408,6 +425,7 @@ export function AddEntryDialog({
                           </TableCell>
                           <TableCell className="p-2">
                             <Input
+                              aria-label={`${t("reference")} ${index + 1}`}
                               {...form.register(
                                 `materials.${index}.reference` as const,
                               )}
@@ -417,6 +435,7 @@ export function AddEntryDialog({
                           </TableCell>
                           <TableCell className="p-2 text-right">
                             <Input
+                              aria-label={`${t("quantity")} ${index + 1}`}
                               type="number"
                               step="0.1"
                               {...form.register(
@@ -463,6 +482,7 @@ export function AddEntryDialog({
                           <TableCell className="p-2 text-right">
                             <InputGroup className="h-8">
                               <InputGroupInput
+                                aria-label={`${t("price")} ${index + 1}`}
                                 type="number"
                                 min="0"
                                 step="0.01"

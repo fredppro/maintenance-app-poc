@@ -1,7 +1,6 @@
-import assert from "node:assert/strict";
-import test, { describe, mock, beforeEach, afterEach } from "node:test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import * as nextCache from "next/cache";
 import {
   getWorkers,
   createWorker,
@@ -10,38 +9,40 @@ import {
 } from "./actions";
 import { WorkerType } from "../../../../prisma/generated/prisma/enums";
 
-describe("worker server actions", () => {
-  let revalidateMock: any;
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
 
+describe("worker server actions", () => {
   beforeEach(() => {
-    revalidateMock = mock.method(nextCache, "revalidatePath", () => {});
+    vi.mocked(revalidatePath).mockClear();
   });
 
   afterEach(() => {
-    revalidateMock?.mock?.restore();
+    vi.mocked(revalidatePath).mockClear();
   });
 
-  test("getWorkers queries workers ordered by name ascending", async () => {
+  it("getWorkers queries workers ordered by name ascending", async () => {
     const mockWorkers = [
       { id: "w-1", name: "Alice", email: "alice@example.com" },
       { id: "w-2", name: "Bob", email: "bob@example.com" },
     ];
 
-    const findManyMock = mock.method(prisma.worker, "findMany", async (args: any) => {
-      assert.deepStrictEqual(args.orderBy, { name: "asc" });
+    const findManyMock = vi.spyOn(prisma.worker, "findMany").mockImplementation(async (args: any) => {
+      expect(args.orderBy).toEqual({ name: "asc" });
       return mockWorkers as any;
     });
 
     try {
       const result = await getWorkers();
-      assert.deepStrictEqual(result, mockWorkers);
-      assert.strictEqual(findManyMock.mock.calls.length, 1);
+      expect(result).toEqual(mockWorkers);
+      expect(findManyMock.mock.calls.length).toBe(1);
     } finally {
-      findManyMock.mock.restore();
+      findManyMock.mockRestore();
     }
   });
 
-  test("createWorker creates internal worker by default and revalidates path", async () => {
+  it("createWorker creates internal worker by default and revalidates path", async () => {
     const workerInput = {
       name: "Carlos Silva",
       email: "carlos@example.com",
@@ -57,8 +58,8 @@ describe("worker server actions", () => {
       createdAt: new Date(),
     };
 
-    const createMock = mock.method(prisma.worker, "create", async (args: any) => {
-      assert.deepStrictEqual(args.data, {
+    const createMock = vi.spyOn(prisma.worker, "create").mockImplementation(async (args: any) => {
+      expect(args.data).toEqual({
         name: "Carlos Silva",
         email: "carlos@example.com",
         phone: null,
@@ -70,15 +71,15 @@ describe("worker server actions", () => {
 
     try {
       const result = await createWorker(workerInput);
-      assert.deepStrictEqual(result, created);
-      assert.strictEqual(revalidateMock.mock.calls.length, 1);
-      assert.strictEqual(revalidateMock.mock.calls[0].arguments[0], "/");
+      expect(result).toEqual(created);
+      expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/");
     } finally {
-      createMock.mock.restore();
+      createMock.mockRestore();
     }
   });
 
-  test("createWorker creates external worker with vendorId and phone", async () => {
+  it("createWorker creates external worker with vendorId and phone", async () => {
     const workerInput = {
       name: "Dave External",
       email: "dave@vendor.com",
@@ -93,21 +94,21 @@ describe("worker server actions", () => {
       createdAt: new Date(),
     };
 
-    const createMock = mock.method(prisma.worker, "create", async (args: any) => {
-      assert.deepStrictEqual(args.data, workerInput);
+    const createMock = vi.spyOn(prisma.worker, "create").mockImplementation(async (args: any) => {
+      expect(args.data).toEqual(workerInput);
       return created as any;
     });
 
     try {
       const result = await createWorker(workerInput);
-      assert.deepStrictEqual(result, created);
-      assert.strictEqual(revalidateMock.mock.calls.length, 1);
+      expect(result).toEqual(created);
+      expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
     } finally {
-      createMock.mock.restore();
+      createMock.mockRestore();
     }
   });
 
-  test("updateWorker updates worker fields and revalidates path", async () => {
+  it("updateWorker updates worker fields and revalidates path", async () => {
     const updateData = {
       name: "Carlos Silva Jr.",
       phone: "+351999999999",
@@ -123,33 +124,33 @@ describe("worker server actions", () => {
       createdAt: new Date(),
     };
 
-    const updateMock = mock.method(prisma.worker, "update", async (args: any) => {
-      assert.strictEqual(args.where.id, "w-3");
-      assert.deepStrictEqual(args.data, updateData);
+    const updateMock = vi.spyOn(prisma.worker, "update").mockImplementation(async (args: any) => {
+      expect(args.where.id).toBe("w-3");
+      expect(args.data).toEqual(updateData);
       return updated as any;
     });
 
     try {
       const result = await updateWorker("w-3", updateData);
-      assert.deepStrictEqual(result, updated);
-      assert.strictEqual(revalidateMock.mock.calls.length, 1);
+      expect(result).toEqual(updated);
+      expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
     } finally {
-      updateMock.mock.restore();
+      updateMock.mockRestore();
     }
   });
 
-  test("deleteWorker deletes worker by id and revalidates path", async () => {
-    const deleteMock = mock.method(prisma.worker, "delete", async (args: any) => {
-      assert.strictEqual(args.where.id, "w-3");
+  it("deleteWorker deletes worker by id and revalidates path", async () => {
+    const deleteMock = vi.spyOn(prisma.worker, "delete").mockImplementation(async (args: any) => {
+      expect(args.where.id).toBe("w-3");
       return { id: "w-3" } as any;
     });
 
     try {
       await deleteWorker("w-3");
-      assert.strictEqual(deleteMock.mock.calls.length, 1);
-      assert.strictEqual(revalidateMock.mock.calls.length, 1);
+      expect(deleteMock.mock.calls.length).toBe(1);
+      expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
     } finally {
-      deleteMock.mock.restore();
+      deleteMock.mockRestore();
     }
   });
 });
