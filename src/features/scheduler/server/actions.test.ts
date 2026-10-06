@@ -30,14 +30,12 @@ describe("scheduler server actions", () => {
   describe("equipment actions", () => {
     it("getEquipment orders by name ascending", async () => {
       const mockEquipments = [{ id: "eq-1", name: "Conveyor" }];
-      const findManyMock = vi.spyOn(prisma.equipment, "findMany").mockImplementation(async (args: any) => {
-        expect(args.orderBy).toEqual({ name: "asc" });
-        return mockEquipments as any;
-      });
+      const findManyMock = vi.spyOn(prisma.equipment, "findMany").mockResolvedValue(mockEquipments as any);
 
       try {
         const result = await getEquipment();
         expect(result).toEqual(mockEquipments);
+        expect(findManyMock).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { name: "asc" } }));
       } finally {
         findManyMock.mockRestore();
       }
@@ -47,14 +45,12 @@ describe("scheduler server actions", () => {
       const newEquip = { name: "Press B", category: "Heavy" };
       const created = { id: "eq-2", ...newEquip, createdAt: new Date() };
 
-      const createMock = vi.spyOn(prisma.equipment, "create").mockImplementation(async (args: any) => {
-        expect(args.data).toEqual(newEquip);
-        return created as any;
-      });
+      const createMock = vi.spyOn(prisma.equipment, "create").mockResolvedValue(created as any);
 
       try {
         const result = await addEquipment(newEquip);
         expect(result).toEqual(created);
+        expect(createMock).toHaveBeenCalledWith(expect.objectContaining({ data: newEquip }));
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/");
       } finally {
@@ -66,15 +62,14 @@ describe("scheduler server actions", () => {
       const updateData = { name: "Press B (Modified)" };
       const updated = { id: "eq-2", name: "Press B (Modified)", category: "Heavy", createdAt: new Date() };
 
-      const updateMock = vi.spyOn(prisma.equipment, "update").mockImplementation(async (args: any) => {
-        expect(args.where.id).toBe("eq-2");
-        expect(args.data).toEqual(updateData);
-        return updated as any;
-      });
+      const updateMock = vi.spyOn(prisma.equipment, "update").mockResolvedValue(updated as any);
 
       try {
         const result = await updateEquipment("eq-2", updateData);
         expect(result).toEqual(updated);
+        expect(updateMock).toHaveBeenCalledWith(
+          expect.objectContaining({ where: { id: "eq-2" }, data: updateData }),
+        );
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
         updateMock.mockRestore();
@@ -82,14 +77,12 @@ describe("scheduler server actions", () => {
     });
 
     it("deleteEquipment deletes record and revalidates path", async () => {
-      const deleteMock = vi.spyOn(prisma.equipment, "delete").mockImplementation(async (args: any) => {
-        expect(args.where.id).toBe("eq-2");
-        return { id: "eq-2" } as any;
-      });
+      const deleteMock = vi.spyOn(prisma.equipment, "delete").mockResolvedValue({ id: "eq-2" } as any);
 
       try {
         await deleteEquipment("eq-2");
         expect(deleteMock.mock.calls.length).toBe(1);
+        expect(deleteMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "eq-2" } }));
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
         deleteMock.mockRestore();
@@ -100,17 +93,21 @@ describe("scheduler server actions", () => {
   describe("task actions", () => {
     it("getTasks queries tasks with equipment, worker assignments, and materials ordered by startTime", async () => {
       const mockTasks = [{ id: "task-1", title: "Maintenance 1" }];
-      const findManyMock = vi.spyOn(prisma.maintenanceTask, "findMany").mockImplementation(async (args: any) => {
-        expect(args.include.equipment).toBe(true);
-        expect(args.include.materials).toBe(true);
-        expect(args.include.assignments.include.worker).toBe(true);
-        expect(args.orderBy).toEqual({ startTime: "asc" });
-        return mockTasks as any;
-      });
+      const findManyMock = vi.spyOn(prisma.maintenanceTask, "findMany").mockResolvedValue(mockTasks as any);
 
       try {
         const result = await getTasks();
         expect(result).toEqual(mockTasks);
+        expect(findManyMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            include: {
+              equipment: true,
+              materials: true,
+              assignments: { include: { worker: true } },
+            },
+            orderBy: { startTime: "asc" },
+          }),
+        );
       } finally {
         findManyMock.mockRestore();
       }
@@ -136,28 +133,33 @@ describe("scheduler server actions", () => {
         ],
       };
 
-      const createMock = vi.spyOn(prisma.maintenanceTask, "create").mockImplementation(async (args: any) => {
-        expect(args.data.title).toBe("Oil Change");
-        expect(args.data.equipmentId).toBe("eq-1");
-        expect(args.data.assignments.create).toEqual([
-          { workerId: "worker-1" },
-          { workerId: "worker-2" },
-        ]);
-        expect(args.data.materials.create).toEqual([
-          {
-            name: "Synthetic Oil 5W30",
-            reference: "OIL-5W30",
-            quantity: 5,
-            unit: MaterialUnit.L,
-            price: "12.50",
-          },
-        ]);
-        return { id: "task-new", ...taskInput } as any;
-      });
+      const createMock = vi
+        .spyOn(prisma.maintenanceTask, "create")
+        .mockResolvedValue({ id: "task-new", ...taskInput } as any);
 
       try {
         const result = await createTask(taskInput);
         expect(result.id).toBe("task-new");
+        expect(createMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              title: "Oil Change",
+              equipmentId: "eq-1",
+              assignments: { create: [{ workerId: "worker-1" }, { workerId: "worker-2" }] },
+              materials: {
+                create: [
+                  {
+                    name: "Synthetic Oil 5W30",
+                    reference: "OIL-5W30",
+                    quantity: 5,
+                    unit: MaterialUnit.L,
+                    price: "12.50",
+                  },
+                ],
+              },
+            }),
+          }),
+        );
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
         createMock.mockRestore();
@@ -279,14 +281,14 @@ describe("scheduler server actions", () => {
     });
 
     it("deleteTask deletes task and revalidates path", async () => {
-      const deleteMock = vi.spyOn(prisma.maintenanceTask, "delete").mockImplementation(async (args: any) => {
-        expect(args.where.id).toBe("task-123");
-        return { id: "task-123" } as any;
-      });
+      const deleteMock = vi
+        .spyOn(prisma.maintenanceTask, "delete")
+        .mockResolvedValue({ id: "task-123" } as any);
 
       try {
         await deleteTask("task-123");
         expect(deleteMock.mock.calls.length).toBe(1);
+        expect(deleteMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "task-123" } }));
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
         deleteMock.mockRestore();
@@ -297,19 +299,20 @@ describe("scheduler server actions", () => {
       const newStart = new Date("2026-07-01T10:00:00.000Z");
       const newEnd = new Date("2026-07-01T12:00:00.000Z");
 
-      const updateMock = vi.spyOn(prisma.maintenanceTask, "update").mockImplementation(async (args: any) => {
-        expect(args.where.id).toBe("task-123");
-        expect(args.data.startTime).toBe(newStart);
-        expect(args.data.endTime).toBe(newEnd);
-        expect(args.data.equipmentId).toBe("eq-new");
-        expect(args.include.equipment).toBe(true);
-        expect(args.include.assignments.include.worker).toBe(true);
-        return { id: "task-123", startTime: newStart, endTime: newEnd, equipmentId: "eq-new" } as any;
-      });
+      const updateMock = vi.spyOn(prisma.maintenanceTask, "update").mockResolvedValue(
+        { id: "task-123", startTime: newStart, endTime: newEnd, equipmentId: "eq-new" } as any,
+      );
 
       try {
         const result = await moveTask("task-123", newStart, newEnd, "eq-new");
         expect(result.id).toBe("task-123");
+        expect(updateMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { id: "task-123" },
+            data: { startTime: newStart, endTime: newEnd, equipmentId: "eq-new" },
+            include: { equipment: true, assignments: { include: { worker: true } } },
+          }),
+        );
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
         updateMock.mockRestore();

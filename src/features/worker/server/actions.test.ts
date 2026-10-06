@@ -28,15 +28,13 @@ describe("worker server actions", () => {
       { id: "w-2", name: "Bob", email: "bob@example.com" },
     ];
 
-    const findManyMock = vi.spyOn(prisma.worker, "findMany").mockImplementation(async (args: any) => {
-      expect(args.orderBy).toEqual({ name: "asc" });
-      return mockWorkers as any;
-    });
+    const findManyMock = vi.spyOn(prisma.worker, "findMany").mockResolvedValue(mockWorkers as any);
 
     try {
       const result = await getWorkers();
       expect(result).toEqual(mockWorkers);
       expect(findManyMock.mock.calls.length).toBe(1);
+      expect(findManyMock).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { name: "asc" } }));
     } finally {
       findManyMock.mockRestore();
     }
@@ -58,20 +56,22 @@ describe("worker server actions", () => {
       createdAt: new Date(),
     };
 
-    const createMock = vi.spyOn(prisma.worker, "create").mockImplementation(async (args: any) => {
-      expect(args.data).toEqual({
-        name: "Carlos Silva",
-        email: "carlos@example.com",
-        phone: null,
-        type: WorkerType.INTERNAL,
-        vendorId: null,
-      });
-      return created as any;
-    });
+    const createMock = vi.spyOn(prisma.worker, "create").mockResolvedValue(created as any);
 
     try {
       const result = await createWorker(workerInput);
       expect(result).toEqual(created);
+      expect(createMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: {
+            name: "Carlos Silva",
+            email: "carlos@example.com",
+            phone: null,
+            type: WorkerType.INTERNAL,
+            vendorId: null,
+          },
+        }),
+      );
       expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/");
     } finally {
@@ -94,14 +94,12 @@ describe("worker server actions", () => {
       createdAt: new Date(),
     };
 
-    const createMock = vi.spyOn(prisma.worker, "create").mockImplementation(async (args: any) => {
-      expect(args.data).toEqual(workerInput);
-      return created as any;
-    });
+    const createMock = vi.spyOn(prisma.worker, "create").mockResolvedValue(created as any);
 
     try {
       const result = await createWorker(workerInput);
       expect(result).toEqual(created);
+      expect(createMock).toHaveBeenCalledWith(expect.objectContaining({ data: workerInput }));
       expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
     } finally {
       createMock.mockRestore();
@@ -124,15 +122,12 @@ describe("worker server actions", () => {
       createdAt: new Date(),
     };
 
-    const updateMock = vi.spyOn(prisma.worker, "update").mockImplementation(async (args: any) => {
-      expect(args.where.id).toBe("w-3");
-      expect(args.data).toEqual(updateData);
-      return updated as any;
-    });
+    const updateMock = vi.spyOn(prisma.worker, "update").mockResolvedValue(updated as any);
 
     try {
       const result = await updateWorker("w-3", updateData);
       expect(result).toEqual(updated);
+      expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "w-3" }, data: updateData }));
       expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
     } finally {
       updateMock.mockRestore();
@@ -140,14 +135,12 @@ describe("worker server actions", () => {
   });
 
   it("deleteWorker deletes worker by id and revalidates path", async () => {
-    const deleteMock = vi.spyOn(prisma.worker, "delete").mockImplementation(async (args: any) => {
-      expect(args.where.id).toBe("w-3");
-      return { id: "w-3" } as any;
-    });
+    const deleteMock = vi.spyOn(prisma.worker, "delete").mockResolvedValue({ id: "w-3" } as any);
 
     try {
       await deleteWorker("w-3");
       expect(deleteMock.mock.calls.length).toBe(1);
+      expect(deleteMock).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "w-3" } }));
       expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
     } finally {
       deleteMock.mockRestore();

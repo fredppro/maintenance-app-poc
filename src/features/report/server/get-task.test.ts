@@ -12,18 +12,22 @@ describe("getMaintenanceTask", () => {
       materials: [{ id: "mat-1", name: "Filter", quantity: 2 }],
     };
 
-    const findUniqueMock = vi.spyOn(prisma.maintenanceTask, "findUnique").mockImplementation(async (args: any) => {
-      expect(args.where.id).toBe("task-123");
-      expect(args.include.equipment).toBe(true);
-      expect(args.include.materials).toBe(true);
-      expect(args.include.assignments.include.worker).toBe(true);
-      return mockTask as any;
-    });
+    const findUniqueMock = vi.spyOn(prisma.maintenanceTask, "findUnique").mockResolvedValue(mockTask as any);
 
     try {
       const task = await getMaintenanceTask("task-123");
       expect(task).toEqual(mockTask);
       expect(findUniqueMock.mock.calls.length).toBe(1);
+      expect(findUniqueMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "task-123" },
+          include: {
+            equipment: true,
+            materials: true,
+            assignments: { include: { worker: true } },
+          },
+        }),
+      );
     } finally {
       findUniqueMock.mockRestore();
     }
