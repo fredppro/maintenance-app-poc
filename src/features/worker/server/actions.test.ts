@@ -8,6 +8,7 @@ import {
   deleteWorker,
 } from "./actions";
 import { WorkerType } from "../../../../prisma/generated/prisma/enums";
+import { getTenantContext } from "@/lib/tenant-context";
 
 vi.mock("@/lib/tenant-context", () => ({
   getTenantContext: vi.fn().mockResolvedValue({
@@ -25,6 +26,7 @@ vi.mock("next/cache", () => ({
 describe("worker server actions", () => {
   beforeEach(() => {
     vi.mocked(revalidatePath).mockClear();
+    vi.mocked(getTenantContext).mockClear();
     vi.spyOn(prisma.vendor, "findFirst").mockResolvedValue({ id: "vendor-1" } as never);
   });
 
@@ -49,6 +51,21 @@ describe("worker server actions", () => {
     updateMock.mockRestore();
   });
 
+  it("requires worker-management permission before writes", async () => {
+    vi.mocked(getTenantContext).mockRejectedValueOnce(
+      new Error("Permission denied"),
+    );
+    const createMock = vi.spyOn(prisma.worker, "create");
+
+    await expect(
+      createWorker({ name: "Worker", email: "worker@example.com" }),
+    ).rejects.toThrow("Permission denied");
+
+    expect(getTenantContext).toHaveBeenCalledWith("manageWorkers");
+    expect(createMock).not.toHaveBeenCalled();
+    createMock.mockRestore();
+  });
+
   it("getWorkers queries workers ordered by name ascending", async () => {
     const mockWorkers = [
       { id: "w-1", name: "Alice", email: "alice@example.com" },
@@ -59,6 +76,7 @@ describe("worker server actions", () => {
 
     try {
       const result = await getWorkers();
+      expect(getTenantContext).toHaveBeenCalledWith("viewMaintenance");
       expect(result).toEqual(mockWorkers);
       expect(findManyMock.mock.calls.length).toBe(1);
       expect(findManyMock).toHaveBeenCalledWith(
@@ -93,6 +111,7 @@ describe("worker server actions", () => {
 
     try {
       const result = await createWorker(workerInput);
+      expect(getTenantContext).toHaveBeenCalledWith("manageWorkers");
       expect(result).toEqual(created);
       expect(createMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -178,6 +197,7 @@ describe("worker server actions", () => {
 
     try {
       await deleteWorker("w-3");
+      expect(getTenantContext).toHaveBeenCalledWith("manageWorkers");
       expect(deleteMock.mock.calls.length).toBe(1);
       expect(deleteMock).toHaveBeenCalledWith({
         where: { id: "w-3", organizationId: "org-1" },

@@ -6,6 +6,32 @@ The application is built with Next.js 16, React 19, TypeScript, and Prisma 7.
 Its PostgreSQL connection is configured through `DATABASE_URL`; the same app
 can use local PostgreSQL, Neon, or another PostgreSQL provider.
 
+## Quick start
+
+For a fresh clone on macOS, Linux, or Windows under WSL, install Node.js 24,
+Git, and Docker with Compose v2. Then run:
+
+```sh
+git clone <repository-url>
+cd maintenance-app-poc
+corepack enable
+cp .env.example .env
+pnpm install --frozen-lockfile
+pnpm db:up
+pnpm prisma:migrate:deploy
+pnpm dev
+```
+
+Open [http://localhost:3000/en](http://localhost:3000/en), sign up, and create
+an organization and its first site. The commands apply the checked-in
+migrations but do not add sample data. To seed development data, set
+`SEED_ADMIN_EMAIL` in `.env` to the email of that organization owner and run
+`pnpm prisma:seed`.
+
+Stop the local PostgreSQL service without deleting its data with
+`pnpm db:down`. The detailed setup and test instructions below cover other
+workflows and production configuration.
+
 ## Prerequisites
 
 - **Node.js 24**, pinned in `.node-version` and `package.json`.
@@ -46,8 +72,8 @@ pnpm install --frozen-lockfile
 ```
 
 The install runs the package `postinstall` script, which generates the Prisma
-client in `prisma/generated/prisma`. You can regenerate it explicitly after
-changing the Prisma schema:
+client in the checked-in `prisma/generated/prisma` directory. Regenerate it
+after changing the Prisma schema and include generated-client changes:
 
 ```sh
 pnpm prisma:generate
@@ -103,19 +129,24 @@ needs a reachable database.
 
 ### Account and workspace setup
 
-Open `/en/signup` to create an account. The first signed-in user can create an
-organization and its initial site during onboarding; subsequent visits use
-`/en/login`. The organization is the tenant boundary and each maintenance
-record is scoped to it (equipment is additionally scoped to the active site).
+In local development, open `/en/signup`; signup is unrestricted only outside
+production. The first account can create an organization and its initial site.
+In production, the initial owner must match `PILOT_BOOTSTRAP_EMAIL` until the
+first customer organization is created; an unclaimed migration-created legacy
+workspace does not count as a customer organization. Subsequent accounts
+require an unexpired organization invitation and verified email.
+Members accept invitations from the emailed link. Users with access to multiple
+organizations or sites select their active context during onboarding or from
+the dashboard.
 
-For local development, set `BETTER_AUTH_SECRET` to a random value of at least
-32 characters and `BETTER_AUTH_URL` to the app's origin in `.env`. Do not reuse
-the example secret in a deployed environment. Email/password authentication is
-currently enabled without email verification or delivery configuration.
-Organization invitations, organization/site switching, billing, and
-role-based restrictions for scheduler writes are not implemented yet; do not
-treat the current onboarding flow as a production-complete SaaS access-control
-system.
+Application roles are enforced on server-side actions and report access.
+Owners and admins manage members and pending invitations at `/en/members`.
+Admins cannot manage owners or other admins, invite admins, or revoke admin
+invitations; ownership transfer is not available in this interface.
+See [the pilot-readiness guide](./docs/pilot-readiness.md) for the permission
+matrix, account/bootstrap policy, legacy-data handling, and operational
+limitations. Production email verification, password recovery, and
+invitations require a verified Resend sender and credentials.
 
 ## Tests
 
@@ -165,11 +196,12 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
-The suite runs with one worker. Its setup creates named fixture equipment and a
-worker; teardown removes tasks with the `E2E - Playwright` title prefix and
-those specific fixtures. Stop the E2E service with `pnpm db:e2e:down`. It has
-no persistent volume; removing its container with
-`docker compose --profile e2e down` discards its data.
+The suite runs with one worker. Setup creates fixture organizations, sites,
+members, invitations, equipment, workers, and maintenance tasks. Tests cover
+both directions of tenant dashboard/report isolation, member administration,
+onboarding, and scheduling. Teardown removes test fixtures. Stop the E2E
+service with `pnpm db:e2e:down`. It has no persistent volume; removing its
+container with `docker compose --profile e2e down` discards its data.
 
 The configuration requires `E2E_DATABASE_URL`, rejects database names that do
 not end in `_test`, rejects the same host/port/database as `DATABASE_URL`, and
@@ -212,8 +244,8 @@ Next.js externalizes it for server use.
 
 - Prisma schema: `prisma/schema.prisma`.
 - Prisma CLI configuration and `DATABASE_URL`: `prisma.config.ts`.
-- Generated Prisma client: `prisma/generated/prisma/` (ignored by Git and
-  generated during install).
+- Generated Prisma client: `prisma/generated/prisma/` (tracked in Git and
+  regenerated during install or with `pnpm prisma:generate`).
 - Local PostgreSQL services: `docker-compose.yml` (`pnpm db:up` and
   `pnpm db:e2e:up`).
 - Apply committed migrations safely: `pnpm prisma:migrate:deploy`.
@@ -241,9 +273,16 @@ When upgrading a database that already has maintenance data, the tenant
 migration keeps those rows under an unclaimed `Legacy workspace` and creates a
 `Legacy site`. It deliberately does not grant membership to an arbitrary
 account. Existing installations therefore need a deliberate, verified process
-to assign an owner before that legacy data becomes accessible; that process is
-not automated yet. Never apply the migration to production without reviewing
-and planning this ownership transition.
+to assign an owner before that legacy data becomes accessible. After review and
+backup, create and verify the intended owner's account, then run the guarded,
+audited `pnpm legacy:assign-owner` operation with the required `LEGACY_*`
+variables and exact confirmation phrase. It records the approval ticket,
+operator, previous organization/site names, and assigned owner in
+`legacy_ownership_assignment`, and refuses to proceed if the account is
+unverified or ownership was already established. See the [pilot-readiness
+guide](./docs/pilot-readiness.md) for the required variables and review steps.
+Never apply the tenant migration to production without planning this ownership
+transition.
 
 ## Environment variables
 
@@ -253,11 +292,32 @@ and planning this ownership transition.
 | `E2E_DATABASE_URL` | Playwright browser tests and E2E migration command | Dedicated test database connection string. `.env.example` points to a separate local database on port 5433. The database name must end in `_test` and target a different host/port/database from `DATABASE_URL`. |
 | `BETTER_AUTH_SECRET` | App runtime and auth tests | Secret used to sign Better Auth sessions; use a random secret of at least 32 characters and keep it private. |
 | `BETTER_AUTH_URL` | App runtime and auth tests | Canonical application origin, for example `http://localhost:3000` locally or the deployed HTTPS origin. |
+| `RESEND_API_KEY` | Production verification, password recovery, and invitations | Resend API credential. Configure through a secret manager; no key is needed for local login/signup without email delivery. |
+| `AUTH_EMAIL_FROM` | Production verification, password recovery, and invitations | Verified sender in Resend, e.g. `Maintenance Scheduler <accounts@example.com>`. |
+| `PILOT_BOOTSTRAP_EMAIL` | Initial production owner setup | Email permitted to create the first production account while no customer organization exists. An unclaimed legacy workspace is ignored. Remove after initial setup. |
+| `LEGACY_OWNER_EMAIL` | Legacy data assignment only | Verified existing account selected to own migrated legacy data. |
+| `LEGACY_ORGANIZATION_NAME` | Legacy data assignment only | Approved customer organization name to replace the legacy workspace name. |
+| `LEGACY_ORGANIZATION_SLUG` | Legacy data assignment only | New, unused lowercase URL-safe customer slug. |
+| `LEGACY_SITE_NAME` | Legacy data assignment only | Approved site name to replace the legacy site name. |
+| `LEGACY_ASSIGNMENT_OPERATOR` | Legacy data assignment only | Accountable operator recorded in the ownership audit. |
+| `LEGACY_ASSIGNMENT_TICKET` | Legacy data assignment only | Approved change/ticket identifier recorded in the ownership audit. |
+| `CONFIRM_LEGACY_OWNERSHIP` | Legacy data assignment only | Exact confirmation: `ASSIGN LEGACY DATA TO <LEGACY_OWNER_EMAIL>`. |
 | `SEED_ADMIN_EMAIL` | Optional development seeding | Email of an existing organization owner. Seeding adds sample data to that owner's first organization/site and fails if the owner or site does not exist. |
 
 Playwright reads `E2E_DATABASE_URL` for its server and fixtures. The
 `pnpm prisma:migrate:e2e` command validates and uses that URL without changing
 the development database configuration.
+
+## Production and staging operations
+
+The repository does not provision production/staging resources or configure
+provider-managed database backups, secret storage, monitoring, or alerting.
+Before a pilot, deploy to an isolated staging environment first, use distinct
+database URLs and auth secrets per environment, set the production HTTPS origin,
+configure Resend, exercise the backup restore procedure, and run migrations
+only after a reviewed backup. Readiness is available at `/api/health`.
+See [docs/pilot-readiness.md](./docs/pilot-readiness.md) for the operational
+procedure and known limitations.
 
 ## Dependency management
 
@@ -381,6 +441,8 @@ src/
   app/                  Next.js routes, layouts, and API endpoints
   components/ui/        Shared UI primitives
   features/
+    auth/               Authentication flows and Better Auth configuration
+    organization/       Tenant context, sites, invitations, and membership
     report/             Report services, PDF rendering, and report UI
     scheduler/          Equipment/task scheduling, server actions, and state
     worker/             Worker management UI and server actions

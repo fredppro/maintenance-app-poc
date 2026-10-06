@@ -1,6 +1,55 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { auth } from "@/features/auth/server/auth";
 import prisma from "@/lib/prisma";
+
+export const ACTIVE_SITE_COOKIE = "maintenance_active_site";
+
+export type TenantPermission =
+  | "viewMaintenance"
+  | "viewReports"
+  | "manageMaintenance"
+  | "deleteMaintenance"
+  | "manageWorkers"
+  | "manageSites"
+  | "manageMembers"
+  | "manageOrganization";
+
+const rolePermissions: Record<string, ReadonlySet<TenantPermission>> = {
+  owner: new Set([
+    "viewMaintenance",
+    "viewReports",
+    "manageMaintenance",
+    "deleteMaintenance",
+    "manageWorkers",
+    "manageSites",
+    "manageMembers",
+    "manageOrganization",
+  ]),
+  admin: new Set([
+    "viewMaintenance",
+    "viewReports",
+    "manageMaintenance",
+    "deleteMaintenance",
+    "manageWorkers",
+    "manageSites",
+    "manageMembers",
+    "manageOrganization",
+  ]),
+  maintenance_manager: new Set([
+    "viewMaintenance",
+    "viewReports",
+    "manageMaintenance",
+    "deleteMaintenance",
+    "manageWorkers",
+  ]),
+  read_only: new Set(["viewMaintenance", "viewReports"]),
+  // Better Auth's default member role is deliberately least-privileged.
+  member: new Set(["viewMaintenance", "viewReports"]),
+};
+
+export function roleCan(role: string, permission: TenantPermission) {
+  return rolePermissions[role]?.has(permission) ?? false;
+}
 
 export class AuthenticationRequiredError extends Error {
   constructor() {
@@ -23,8 +72,59 @@ export class SiteSetupRequiredError extends Error {
   }
 }
 
-export async function getTenantContext() {
+export class SiteSelectionRequiredError extends Error {
+  constructor() {
+    super("Select an available site to continue");
+    this.name = "SiteSelectionRequiredError";
+  }
+}
+
+export class PermissionDeniedError extends Error {
+  constructor(permission: TenantPermission) {
+    super(`The active role does not allow ${permission}`);
+    this.name = "PermissionDeniedError";
+  }
+}
+
+export async function getAvailableTenantContexts() {
   const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) throw new AuthenticationRequiredError();
+
+  const memberships = await prisma.member.findMany({
+    where: { userId: session.user.id },
+    select: {
+      organizationId: true,
+      role: true,
+      organization: {
+        select: {
+          name: true,
+          sites: {
+            orderBy: { name: "asc" },
+            select: { id: true, name: true },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return memberships.flatMap((membership) =>
+    membership.organization.sites.map((site) => ({
+      organizationId: membership.organizationId,
+      organizationName: membership.organization.name,
+      siteId: site.id,
+      siteName: site.name,
+      role: membership.role,
+      active: membership.organizationId === session.session.activeOrganizationId,
+    })),
+  );
+}
+
+export async function getTenantContext(
+  permission: TenantPermission = "viewMaintenance",
+) {
+  const requestHeaders = await headers();
+  const session = await auth.api.getSession({ headers: requestHeaders });
 
   if (!session) {
     throw new AuthenticationRequiredError();
@@ -36,10 +136,7 @@ export async function getTenantContext() {
   }
 
   const membership = await prisma.member.findFirst({
-    where: {
-      organizationId,
-      userId: session.user.id,
-    },
+    where: { organizationId, userId: session.user.id },
     select: { role: true },
   });
 
@@ -47,20 +144,36 @@ export async function getTenantContext() {
     throw new OrganizationRequiredError();
   }
 
-  const site = await prisma.site.findFirst({
+  if (!roleCan(membership.role, permission)) {
+    throw new PermissionDeniedError(permission);
+  }
+
+  const sites = await prisma.site.findMany({
     where: { organizationId },
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
   });
 
-  if (!site) {
+  if (sites.length === 0) {
     throw new SiteSetupRequiredError();
+  }
+
+  const cookieStore = await cookies();
+  const requestedSiteId = cookieStore.get(ACTIVE_SITE_COOKIE)?.value;
+  const selectedSite =
+    sites.find((site) => site.id === requestedSiteId) ??
+    (sites.length === 1 ? sites[0] : undefined);
+
+  if (!selectedSite) {
+    throw new SiteSelectionRequiredError();
   }
 
   return {
     userId: session.user.id,
     organizationId,
-    siteId: site.id,
+    siteId: selectedSite.id,
+    siteName: selectedSite.name,
+    sites,
     role: membership.role,
   };
 }

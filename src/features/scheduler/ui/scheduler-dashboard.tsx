@@ -19,14 +19,18 @@ import { TimelineGrid } from "./timeline-grid";
 
 interface SchedulerDashboardProps {
   onOpenWorkers: () => void;
+  onOpenMembers?: () => void;
   onSignOut: () => void;
   workersContent?: ReactNode;
+  tenantContextControl?: ReactNode;
 }
 
 export function SchedulerDashboard({
   onOpenWorkers,
+  onOpenMembers,
   onSignOut,
   workersContent,
+  tenantContextControl,
 }: SchedulerDashboardProps) {
   const entries = useSchedulerStore((state) => state.entries);
   const equipment = useSchedulerStore((state) => state.equipment);
@@ -123,8 +127,13 @@ export function SchedulerDashboard({
             </div>
 
             <div className="flex items-center gap-4">
+              {tenantContextControl}
               <LanguageSwitcher />
-              <WorkerMenu onOpenWorkers={onOpenWorkers} onSignOut={onSignOut} />
+              <WorkerMenu
+                onOpenWorkers={onOpenWorkers}
+                onOpenMembers={onOpenMembers}
+                onSignOut={onSignOut}
+              />
             </div>
           </div>
         </div>
@@ -173,9 +182,11 @@ export function SchedulerDashboard({
 
 function WorkerMenu({
   onOpenWorkers,
+  onOpenMembers,
   onSignOut,
 }: {
   onOpenWorkers: () => void;
+  onOpenMembers?: () => void;
   onSignOut: () => void;
 }) {
   const t = useTranslations("Dashboard");
@@ -201,6 +212,11 @@ function WorkerMenu({
           <DropdownMenuItem onClick={onOpenWorkers}>
             {t("menu.workers")}
           </DropdownMenuItem>
+          {onOpenMembers && (
+            <DropdownMenuItem onClick={onOpenMembers}>
+              {t("menu.members")}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onSignOut} variant="destructive">
             {t("menu.logout")}

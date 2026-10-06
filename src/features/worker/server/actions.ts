@@ -29,7 +29,7 @@ async function ensureVendorBelongsToOrganization(
 }
 
 export async function getWorkers() {
-  const { organizationId } = await getTenantContext();
+  const { organizationId } = await getTenantContext("viewMaintenance");
   return await prisma.worker.findMany({
     where: { organizationId },
     orderBy: { name: "asc" },
@@ -43,7 +43,7 @@ export async function createWorker(data: {
   type?: WorkerType;
   vendorId?: string | null;
 }) {
-  const { organizationId } = await getTenantContext();
+  const { organizationId } = await getTenantContext("manageWorkers");
   const input = createWorkerSchema.parse(data);
   await ensureVendorBelongsToOrganization(input.vendorId, organizationId);
   const worker = await prisma.worker.create({
@@ -71,7 +71,7 @@ export async function updateWorker(
     vendorId?: string | null;
   }>,
 ) {
-  const { organizationId } = await getTenantContext();
+  const { organizationId } = await getTenantContext("manageWorkers");
   const workerId = workerIdSchema.parse(id);
   const input = updateWorkerSchema.parse(data);
   await ensureVendorBelongsToOrganization(input.vendorId, organizationId);
@@ -85,7 +85,7 @@ export async function updateWorker(
 }
 
 export async function deleteWorker(id: string) {
-  const { organizationId } = await getTenantContext();
+  const { organizationId } = await getTenantContext("manageWorkers");
   const workerId = workerIdSchema.parse(id);
   await prisma.worker.delete({
     where: { id: workerId, organizationId },

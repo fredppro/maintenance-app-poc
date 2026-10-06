@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
-import { Link, useRouter } from "@/i18n/routing";
+import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,14 +24,18 @@ import { authClient } from "@/features/auth/client";
 export function AuthForm({
   mode,
   locale,
+  invitationId,
+  emailVerificationEnabled = false,
 }: {
   mode: "sign-in" | "sign-up";
   locale: string;
+  invitationId?: string;
+  emailVerificationEnabled?: boolean;
 }) {
   const t = useTranslations("Auth");
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [verificationNotice, setVerificationNotice] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -41,7 +45,9 @@ export function AuthForm({
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email"));
     const password = String(formData.get("password"));
-    const callbackURL = `/${locale}/onboarding`;
+    const callbackURL = invitationId
+      ? `/${locale}/accept-invitation?id=${encodeURIComponent(invitationId)}`
+      : `/${locale}/onboarding`;
 
     try {
       const result =
@@ -63,8 +69,12 @@ export function AuthForm({
         return;
       }
 
-      router.replace("/onboarding");
-      router.refresh();
+      if (mode === "sign-up" && emailVerificationEnabled) {
+        setVerificationNotice(true);
+        return;
+      }
+
+      window.location.assign(callbackURL);
     } catch {
       setError(t("error"));
     } finally {
@@ -113,6 +123,11 @@ export function AuthForm({
               />
             </Field>
             {error && <FieldError>{error}</FieldError>}
+            {verificationNotice && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {t("verificationNotice")}
+              </p>
+            )}
             <Button type="submit" disabled={pending}>
               {pending && <Spinner data-icon="inline-start" />}
               {t(isSignUp ? "signUp" : "signIn")}
@@ -121,11 +136,29 @@ export function AuthForm({
               {t(isSignUp ? "signInPrompt" : "createAccountPrompt")}{" "}
               <Link
                 className="text-primary underline underline-offset-4"
-                href={isSignUp ? "/login" : "/signup"}
+                href={
+                  isSignUp
+                    ? invitationId
+                      ? `/login?invitationId=${encodeURIComponent(invitationId)}`
+                      : "/login"
+                    : invitationId
+                      ? `/signup?invitationId=${encodeURIComponent(invitationId)}`
+                      : "/signup"
+                }
               >
                 {t(isSignUp ? "signInLink" : "createAccountLink")}
               </Link>
             </p>
+            {!isSignUp && (
+              <p className="text-center text-sm">
+                <Link
+                  className="text-primary underline underline-offset-4"
+                  href="/reset-password"
+                >
+                  {t("forgotPassword")}
+                </Link>
+              </p>
+            )}
           </FieldGroup>
         </form>
       </CardContent>

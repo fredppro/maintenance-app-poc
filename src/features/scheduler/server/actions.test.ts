@@ -13,6 +13,7 @@ import {
   moveTask,
 } from "./actions";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
+import { getTenantContext } from "@/lib/tenant-context";
 
 vi.mock("@/lib/tenant-context", () => ({
   getTenantContext: vi.fn().mockResolvedValue({
@@ -30,6 +31,7 @@ vi.mock("next/cache", () => ({
 describe("scheduler server actions", () => {
   beforeEach(() => {
     vi.mocked(revalidatePath).mockClear();
+    vi.mocked(getTenantContext).mockClear();
     vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue({ id: "eq-1" } as never);
     vi.spyOn(prisma.worker, "count").mockResolvedValue(2);
     vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({ id: "task-123" } as never);
@@ -56,6 +58,7 @@ describe("scheduler server actions", () => {
 
       try {
         const result = await getEquipment();
+        expect(getTenantContext).toHaveBeenCalledWith("viewMaintenance");
         expect(result).toEqual(mockEquipments);
         expect(findManyMock).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -76,6 +79,7 @@ describe("scheduler server actions", () => {
 
       try {
         const result = await addEquipment(newEquip);
+        expect(getTenantContext).toHaveBeenCalledWith("manageMaintenance");
         expect(result).toEqual(created);
         expect(createMock).toHaveBeenCalledWith({
           data: { ...newEquip, organizationId: "org-1", siteId: "site-1" },
@@ -113,6 +117,7 @@ describe("scheduler server actions", () => {
 
       try {
         await deleteEquipment("eq-2");
+        expect(getTenantContext).toHaveBeenCalledWith("deleteMaintenance");
         expect(deleteMock.mock.calls.length).toBe(1);
         expect(deleteMock).toHaveBeenCalledWith({
           where: { id: "eq-2", organizationId: "org-1", siteId: "site-1" },
@@ -125,6 +130,27 @@ describe("scheduler server actions", () => {
   });
 
   describe("task actions", () => {
+    it("requires write permission before attempting a task mutation", async () => {
+      vi.mocked(getTenantContext).mockRejectedValueOnce(
+        new Error("Permission denied"),
+      );
+      const createMock = vi.spyOn(prisma.maintenanceTask, "create");
+
+      await expect(
+        createTask({
+          title: "Unauthorized task",
+          startTime: new Date("2026-06-01T08:00:00.000Z"),
+          endTime: new Date("2026-06-01T09:00:00.000Z"),
+          equipmentId: "eq-1",
+          workerIds: [],
+        }),
+      ).rejects.toThrow("Permission denied");
+
+      expect(getTenantContext).toHaveBeenCalledWith("manageMaintenance");
+      expect(createMock).not.toHaveBeenCalled();
+      createMock.mockRestore();
+    });
+
     it("rejects invalid task ranges and material values before writing", async () => {
       const createMock = vi.spyOn(prisma.maintenanceTask, "create");
       const startTime = new Date("2026-06-01T10:00:00.000Z");
@@ -211,6 +237,36 @@ describe("scheduler server actions", () => {
       } finally {
         workerLookup.mockRestore();
         createMock.mockRestore();
+      }
+    });
+
+    it("does not update a task outside the active organization and site", async () => {
+      const taskLookup = vi
+        .spyOn(prisma.maintenanceTask, "findFirst")
+        .mockResolvedValueOnce(null);
+      const updateMock = vi.spyOn(prisma.maintenanceTask, "update");
+      const transactionMock = vi.spyOn(prisma, "$transaction");
+
+      try {
+        await expect(
+          updateTask("foreign-task", { title: "Attempted cross-tenant update" }),
+        ).rejects.toThrow(
+          "Maintenance task not found in the active organization",
+        );
+        expect(taskLookup).toHaveBeenCalledWith({
+          where: {
+            id: "foreign-task",
+            organizationId: "org-1",
+            equipment: { is: { siteId: "site-1" } },
+          },
+          select: { id: true },
+        });
+        expect(updateMock).not.toHaveBeenCalled();
+        expect(transactionMock).not.toHaveBeenCalled();
+      } finally {
+        taskLookup.mockRestore();
+        updateMock.mockRestore();
+        transactionMock.mockRestore();
       }
     });
 

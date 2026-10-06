@@ -3,6 +3,7 @@ import {
   AuthenticationRequiredError,
   getTenantContext,
   OrganizationRequiredError,
+  SiteSelectionRequiredError,
   SiteSetupRequiredError,
 } from "@/lib/tenant-context";
 
@@ -23,6 +24,7 @@ export default async function DashboardLayout({
     }
     if (
       error instanceof OrganizationRequiredError ||
+      error instanceof SiteSelectionRequiredError ||
       error instanceof SiteSetupRequiredError
     ) {
       redirect(`/${locale}/onboarding`);

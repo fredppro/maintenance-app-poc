@@ -18,8 +18,20 @@
     "menu": {
       "account": "Conta",
       "workers": "Trabalhadores",
+      "members": "Membros da organização",
       "logout": "Sair"
     }
+  },
+  "Invitation": {
+    "title": "Aderir à organização",
+    "description": "Foi convidado para aderir a {organizationName}.",
+    "accept": "Aceitar convite",
+    "acceptError": "Não foi possível aceitar o convite. Confirme que ainda é válido e pertence à conta com sessão iniciada."
+  },
+  "OrganizationSelection": {
+    "label": "Escolher uma organização",
+    "placeholder": "Selecionar uma organização",
+    "error": "Não foi possível selecionar a organização. Atualize a página e tente novamente."
   },
   "Grid": {
     "equipment": "Equipamento",
@@ -240,8 +252,42 @@
     "signInPrompt": "Já tem uma conta?",
     "createAccountLink": "Criar conta",
     "signInLink": "Iniciar sessão",
+    "forgotPassword": "Esqueceu-se da palavra-passe?",
+    "resetPasswordTitle": "Redefinir palavra-passe",
+    "resetPasswordDescription": "Introduza o seu email para receber uma ligação de redefinição.",
+    "newPassword": "Nova palavra-passe",
+    "sendResetLink": "Enviar ligação",
+    "resetPasswordSubmit": "Atualizar palavra-passe",
+    "resetPasswordComplete": "Se a conta for elegível, foram enviadas instruções. Se redefiniu a palavra-passe, já pode iniciar sessão.",
+    "verificationNotice": "Verifique o seu email para encontrar a ligação de confirmação antes de iniciar sessão.",
     "error": "Não foi possível autenticar. Verifique os dados e tente novamente.",
     "signOut": "Terminar sessão"
+  },
+  "Members": {
+    "inviteTitle": "Convidar um colega",
+    "inviteDescription": "A ligação de convite será enviada para o endereço indicado.",
+    "email": "Email",
+    "role": "Função",
+    "readOnly": "Só de leitura",
+    "maintenanceManager": "Gestor de manutenção",
+    "admin": "Administrador",
+    "owner": "Proprietário",
+    "member": "Membro",
+    "maintenance_manager": "Gestor de manutenção",
+    "read_only": "Só de leitura",
+    "sendInvitation": "Enviar convite",
+    "inviteError": "Não foi possível enviar o convite. Confirme as permissões e a configuração de email.",
+    "membersTitle": "Membros da organização",
+    "invitationsTitle": "Convites pendentes",
+    "noInvitations": "Não existem convites pendentes.",
+    "managementError": "Não foi possível concluir a alteração do membro ou convite.",
+    "roleFor": "Função de {name}",
+    "confirmRoleChange": "Alterar a função de {name} nesta organização?",
+    "confirmRemove": "Remover {name} desta organização?",
+    "confirmRevoke": "Revogar o convite enviado a {email}?",
+    "remove": "Remover",
+    "revoke": "Revogar convite",
+    "expires": "Expira em {date}"
   },
   "OrganizationSetup": {
     "title": "Configure o seu espaço",

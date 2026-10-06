@@ -26,6 +26,8 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:migrate:e2e": "tsx scripts/migrate-e2e.ts",
+    "legacy:assign-owner": "tsx scripts/assign-legacy-ownership.ts",
+    "test:legacy-ownership": "tsx scripts/verify-legacy-ownership.ts",
     "prisma:seed": "prisma db seed",
     "postinstall": "prisma generate"
   },

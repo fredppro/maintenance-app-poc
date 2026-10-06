@@ -18,8 +18,20 @@
     "menu": {
       "account": "Account",
       "workers": "Workers",
+      "members": "Organization members",
       "logout": "Logout"
     }
+  },
+  "Invitation": {
+    "title": "Join organization",
+    "description": "You have been invited to join {organizationName}.",
+    "accept": "Accept invitation",
+    "acceptError": "The invitation could not be accepted. Check that it is still valid and belongs to your signed-in account."
+  },
+  "OrganizationSelection": {
+    "label": "Choose an organization",
+    "placeholder": "Select an organization",
+    "error": "The organization could not be selected. Refresh and try again."
   },
   "Grid": {
     "equipment": "Equipment",
@@ -240,8 +252,42 @@
     "signInPrompt": "Already have an account?",
     "createAccountLink": "Create an account",
     "signInLink": "Sign in",
+    "forgotPassword": "Forgot your password?",
+    "resetPasswordTitle": "Reset your password",
+    "resetPasswordDescription": "Enter your email to receive a password reset link.",
+    "newPassword": "New password",
+    "sendResetLink": "Send reset link",
+    "resetPasswordSubmit": "Update password",
+    "resetPasswordComplete": "If the account is eligible, instructions have been sent. If you reset your password, you can now sign in.",
+    "verificationNotice": "Check your email for a verification link before signing in.",
     "error": "Authentication failed. Please check your details and try again.",
     "signOut": "Sign out"
+  },
+  "Members": {
+    "inviteTitle": "Invite a colleague",
+    "inviteDescription": "The invitation link is sent to the supplied email address.",
+    "email": "Email",
+    "role": "Role",
+    "readOnly": "Read-only",
+    "maintenanceManager": "Maintenance manager",
+    "admin": "Admin",
+    "owner": "Owner",
+    "member": "Member",
+    "maintenance_manager": "Maintenance manager",
+    "read_only": "Read-only",
+    "sendInvitation": "Send invitation",
+    "inviteError": "The invitation could not be sent. Check your access and email configuration.",
+    "membersTitle": "Organization members",
+    "invitationsTitle": "Pending invitations",
+    "noInvitations": "There are no pending invitations.",
+    "managementError": "The requested member or invitation change could not be completed.",
+    "roleFor": "Role for {name}",
+    "confirmRoleChange": "Change {name}'s organization role?",
+    "confirmRemove": "Remove {name} from this organization?",
+    "confirmRevoke": "Revoke the invitation sent to {email}?",
+    "remove": "Remove",
+    "revoke": "Revoke invitation",
+    "expires": "Expires {date}"
   },
   "OrganizationSetup": {
     "title": "Set up your workspace",

@@ -7,8 +7,18 @@ import { useState } from "react";
 import { authClient } from "@/features/auth/client";
 import { useRouter } from "@/i18n/routing";
 import { toast } from "sonner";
+import type { TenantContextOption } from "@/features/organization/ui/tenant-context-selector";
+import { TenantContextSelector } from "@/features/organization/ui/tenant-context-selector";
 
-export function DashboardShell() {
+export function DashboardShell({
+  tenantContexts,
+  selectedSiteId,
+  canManageMembers,
+}: {
+  tenantContexts: TenantContextOption[];
+  selectedSiteId: string;
+  canManageMembers: boolean;
+}) {
   const [workersOpen, setWorkersOpen] = useState(false);
   const setWorkers = useSchedulerStore((state) => state.setWorkers);
   const router = useRouter();
@@ -26,7 +36,17 @@ export function DashboardShell() {
   return (
     <SchedulerDashboard
       onOpenWorkers={() => setWorkersOpen(true)}
+      onOpenMembers={canManageMembers ? () => router.push("/members") : undefined}
       onSignOut={signOut}
+      tenantContextControl={
+        tenantContexts.length > 1 ? (
+          <TenantContextSelector
+            options={tenantContexts}
+            selectedSiteId={selectedSiteId}
+            label="Organization and site"
+          />
+        ) : undefined
+      }
       workersContent={
         workersOpen ? (
           <WorkerManagementPage

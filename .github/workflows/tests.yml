@@ -65,5 +65,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma:migrate:e2e
+      - run: pnpm test:legacy-ownership
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e

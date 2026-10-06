@@ -24,11 +24,12 @@ test("a new user can create an account and set up an organization and site", asy
   await page.getByLabel("First site name").fill("Initial site");
   await page.getByRole("button", { name: "Create workspace" }).click();
 
-  const session = await page.request
-    .get("/api/auth/get-session")
-    .then((response) => response.json());
-  expect(session?.session?.activeOrganizationId).toBeTruthy();
   await expect(
     page.getByRole("heading", { name: "Maintenance Scheduler" }),
   ).toBeVisible();
+
+  const session = await page.evaluate(async () =>
+    (await fetch("/api/auth/get-session")).json(),
+  );
+  expect(session?.session?.activeOrganizationId).toBeTruthy();
 });

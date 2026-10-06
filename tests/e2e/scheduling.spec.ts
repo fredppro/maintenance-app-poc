@@ -16,7 +16,16 @@ test("schedule a task from the dashboard with accessible form controls", async (
   expect((await signInResponse).ok()).toBeTruthy();
   await expect(page).toHaveURL(/\/en(?:\/onboarding)?$/);
 
-  await page.goto("/en");
+  const organizationSelector = page.getByRole("combobox", {
+    name: "Choose an organization",
+  });
+  if (await organizationSelector.isVisible()) {
+    await organizationSelector.selectOption({
+      label: "E2E Playwright Organization",
+    });
+  }
+
+  await expect(page).toHaveURL(/\/en$/);
 
   await expect(
     page.getByRole("heading", { name: "Maintenance Scheduler" }),

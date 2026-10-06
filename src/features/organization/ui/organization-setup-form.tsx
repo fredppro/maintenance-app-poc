@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,6 +28,7 @@ export function OrganizationSetupForm({
   activeOrganizationId?: string;
 }) {
   const t = useTranslations("OrganizationSetup");
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -40,6 +42,7 @@ export function OrganizationSetupForm({
     const siteName = String(formData.get("siteName")).trim();
 
     try {
+      let organizationId = activeOrganizationId;
       if (activeOrganizationId) {
         const result = await authClient.organization.setActive({
           organizationId: activeOrganizationId,
@@ -59,10 +62,16 @@ export function OrganizationSetupForm({
           slug: `${slug}-${crypto.randomUUID().slice(0, 8)}`,
         });
         if (result.error) throw new Error(result.error.message);
+        organizationId = result.data.id;
+
+        const activeResult = await authClient.organization.setActive({
+          organizationId,
+        });
+        if (activeResult.error) throw new Error(activeResult.error.message);
       }
-      await createInitialSite({ siteName });
-      await createInitialSite({ siteName });
-      window.location.assign("/");
+      if (!organizationId) throw new Error("Organization setup did not complete");
+      await createInitialSite({ siteName, organizationId });
+      router.replace("/");
     } catch {
       setError(t("error"));
     } finally {

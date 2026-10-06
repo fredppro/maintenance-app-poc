@@ -61,10 +61,13 @@ export const ModelName = {
   Session: 'Session',
   Account: 'Account',
   Verification: 'Verification',
+  RateLimit: 'RateLimit',
   Organization: 'Organization',
   Site: 'Site',
   Member: 'Member',
-  Invitation: 'Invitation'
+  Invitation: 'Invitation',
+  LegacyOwnershipAssignment: 'LegacyOwnershipAssignment',
+  OrganizationAuditEvent: 'OrganizationAuditEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -223,6 +226,16 @@ export const VerificationScalarFieldEnum = {
 export type VerificationScalarFieldEnum = (typeof VerificationScalarFieldEnum)[keyof typeof VerificationScalarFieldEnum]
 
 
+export const RateLimitScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  count: 'count',
+  lastRequest: 'lastRequest'
+} as const
+
+export type RateLimitScalarFieldEnum = (typeof RateLimitScalarFieldEnum)[keyof typeof RateLimitScalarFieldEnum]
+
+
 export const OrganizationScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -270,12 +283,49 @@ export const InvitationScalarFieldEnum = {
 export type InvitationScalarFieldEnum = (typeof InvitationScalarFieldEnum)[keyof typeof InvitationScalarFieldEnum]
 
 
+export const LegacyOwnershipAssignmentScalarFieldEnum = {
+  id: 'id',
+  legacyOrganizationId: 'legacyOrganizationId',
+  siteId: 'siteId',
+  ownerUserId: 'ownerUserId',
+  operator: 'operator',
+  ticket: 'ticket',
+  organizationNameBefore: 'organizationNameBefore',
+  organizationSlugBefore: 'organizationSlugBefore',
+  siteNameBefore: 'siteNameBefore',
+  assignedAt: 'assignedAt'
+} as const
+
+export type LegacyOwnershipAssignmentScalarFieldEnum = (typeof LegacyOwnershipAssignmentScalarFieldEnum)[keyof typeof LegacyOwnershipAssignmentScalarFieldEnum]
+
+
+export const OrganizationAuditEventScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  actorUserId: 'actorUserId',
+  action: 'action',
+  subjectType: 'subjectType',
+  subjectId: 'subjectId',
+  details: 'details',
+  createdAt: 'createdAt'
+} as const
+
+export type OrganizationAuditEventScalarFieldEnum = (typeof OrganizationAuditEventScalarFieldEnum)[keyof typeof OrganizationAuditEventScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -292,4 +342,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

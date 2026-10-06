@@ -9,9 +9,15 @@ database and apply the committed migrations:
 ```sh
 pnpm db:e2e:up
 pnpm prisma:migrate:e2e
+pnpm test:legacy-ownership
 pnpm exec playwright install chromium
 pnpm test:e2e
 ```
+
+The legacy ownership integration check creates and removes isolated test
+fixtures, exercises the guarded assignment and audit transaction twice to
+verify idempotence, and refuses to run unless `E2E_DATABASE_URL` targets the
+dedicated `_test` database. CI runs this verification before the browser suite.
 
 `E2E_DATABASE_URL` must point at a PostgreSQL database whose name ends in
 `_test`; it is read from `.env` and must identify a different host/port/database

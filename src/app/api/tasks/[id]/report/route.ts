@@ -8,6 +8,8 @@ import {
   AuthenticationRequiredError,
   getTenantContext,
   OrganizationRequiredError,
+  PermissionDeniedError,
+  SiteSelectionRequiredError,
   SiteSetupRequiredError,
 } from "@/lib/tenant-context";
 
@@ -18,7 +20,6 @@ export async function GET(
   const { id } = await context.params;
 
   if (!id) {
-    console.error("Missing id");
     return NextResponse.json({ message: "Missing id" }, { status: 400 });
   }
 
@@ -30,7 +31,7 @@ export async function GET(
     url.searchParams.get("mode") === "download" ? "download" : "preview";
 
   try {
-    const tenant = await getTenantContext();
+    const tenant = await getTenantContext("viewReports");
     return await buildReportResponse(
       id,
       tenant.organizationId,
@@ -47,6 +48,15 @@ export async function GET(
       error instanceof SiteSetupRequiredError
     ) {
       return NextResponse.json({ message: "Organization setup required" }, { status: 403 });
+    }
+    if (error instanceof PermissionDeniedError) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+    if (error instanceof SiteSelectionRequiredError) {
+      return NextResponse.json(
+        { message: "Select an authorized site" },
+        { status: 409 },
+      );
     }
     if (error instanceof ReportTaskNotFoundError) {
       return NextResponse.json({ message: "Task not found" }, { status: 404 });

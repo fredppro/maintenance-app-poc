@@ -26,33 +26,33 @@ model Equipment {
 }
 
 model MaintenanceTask {
-  id          String                      @id @default(cuid())
-  title       String
-  description String?
-  type        TaskType                    @default(PREVENTIVE)
-  startTime   DateTime
-  endTime     DateTime
-  equipmentId String
+  id             String                      @id @default(cuid())
+  title          String
+  description    String?
+  type           TaskType                    @default(PREVENTIVE)
+  startTime      DateTime
+  endTime        DateTime
+  equipmentId    String
   organizationId String
-  organization Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  equipment   Equipment                   @relation(fields: [equipmentId, organizationId], references: [id, organizationId], onDelete: Cascade)
-  status      String                      @default("scheduled")
-  assignments MaintenanceTaskAssignment[]
-  materials   Material[]
-  createdAt   DateTime                    @default(now())
-  updatedAt   DateTime                    @updatedAt
+  organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  equipment      Equipment                   @relation(fields: [equipmentId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  status         String                      @default("scheduled")
+  assignments    MaintenanceTaskAssignment[]
+  materials      Material[]
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
 
   @@unique([id, organizationId])
   @@index([organizationId, startTime])
 }
 
 model Material {
-  id        String          @id @default(cuid())
-  name      String
-  reference String?
-  quantity  Float
-  unit      MaterialUnit    @default(PC)
-  price     Decimal?        @db.Decimal(10, 2)
+  id             String          @id @default(cuid())
+  name           String
+  reference      String?
+  quantity       Float
+  unit           MaterialUnit    @default(PC)
+  price          Decimal?        @db.Decimal(10, 2)
   taskId         String
   organizationId String
   task           MaintenanceTask @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
@@ -65,30 +65,30 @@ enum TaskType {
 }
 
 model MaintenanceTaskAssignment {
-  id        String          @id @default(cuid())
-  taskId    String
-  workerId  String
+  id             String          @id @default(cuid())
+  taskId         String
+  workerId       String
   organizationId String
-  startTime DateTime?
-  endTime   DateTime?
-  task      MaintenanceTask @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
-  worker    Worker          @relation(fields: [workerId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  startTime      DateTime?
+  endTime        DateTime?
+  task           MaintenanceTask @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  worker         Worker          @relation(fields: [workerId, organizationId], references: [id, organizationId], onDelete: Cascade)
 
   @@unique([taskId, workerId])
 }
 
 model Worker {
-  id             String      @id @default(cuid())
+  id             String                      @id @default(cuid())
   name           String
   email          String
   phone          String?
-  type           WorkerType  @default(INTERNAL)
+  type           WorkerType                  @default(INTERNAL)
   vendorId       String?
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  vendor         Vendor?     @relation(fields: [vendorId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vendor         Vendor?                     @relation(fields: [vendorId, organizationId], references: [id, organizationId], onDelete: Restrict)
   assignments    MaintenanceTaskAssignment[]
-  createdAt      DateTime @default(now())
+  createdAt      DateTime                    @default(now())
 
   @@unique([id, organizationId])
   @@unique([organizationId, email])
@@ -96,14 +96,14 @@ model Worker {
 }
 
 model Vendor {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   name           String
   contact        String?
   email          String?
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   workers        Worker[]
-  createdAt      DateTime @default(now())
+  createdAt      DateTime     @default(now())
 
   @@unique([id, organizationId])
   @@unique([organizationId, name])
@@ -210,8 +210,18 @@ model Verification {
   @@map("verification")
 }
 
+model RateLimit {
+  id          String @id @default(cuid())
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@index([lastRequest])
+  @@map("rateLimit")
+}
+
 model Organization {
-  id          String       @id
+  id          String                   @id
   name        String
   slug        String
   logo        String?
@@ -224,6 +234,7 @@ model Organization {
   tasks       MaintenanceTask[]
   workers     Worker[]
   vendors     Vendor[]
+  auditEvents OrganizationAuditEvent[]
 
   @@unique([slug])
   @@map("organization")
@@ -270,4 +281,36 @@ model Invitation {
   @@index([organizationId])
   @@index([email])
   @@map("invitation")
+}
+
+model LegacyOwnershipAssignment {
+  id                     String   @id
+  legacyOrganizationId   String   @unique
+  siteId                 String
+  ownerUserId            String
+  operator               String
+  ticket                 String
+  organizationNameBefore String
+  organizationSlugBefore String
+  siteNameBefore         String
+  assignedAt             DateTime @default(now())
+
+  @@index([ownerUserId])
+  @@map("legacy_ownership_assignment")
+}
+
+model OrganizationAuditEvent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actorUserId    String
+  action         String
+  subjectType    String
+  subjectId      String
+  details        Json         @default("{}")
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([subjectType, subjectId])
+  @@map("organization_audit_event")
 }

@@ -14,7 +14,7 @@ import {
 
 // Equipment Actions
 export async function getEquipment() {
-  const { organizationId, siteId } = await getTenantContext();
+  const { organizationId, siteId } = await getTenantContext("viewMaintenance");
   return await prisma.equipment.findMany({
     where: { organizationId, siteId },
     orderBy: { name: "asc" },
@@ -22,7 +22,7 @@ export async function getEquipment() {
 }
 
 export async function addEquipment(data: { name: string; category?: string }) {
-  const { organizationId, siteId } = await getTenantContext();
+  const { organizationId, siteId } = await getTenantContext("manageMaintenance");
   const input = equipmentSchema.parse(data);
   const equipment = await prisma.equipment.create({
     data: { ...input, organizationId, siteId },
@@ -35,7 +35,7 @@ export async function updateEquipment(
   id: string,
   data: { name: string; category?: string },
 ) {
-  const { organizationId, siteId } = await getTenantContext();
+  const { organizationId, siteId } = await getTenantContext("manageMaintenance");
   const equipmentId = equipmentIdSchema.parse(id);
   const input = equipmentUpdateSchema.parse(data);
   const equipment = await prisma.equipment.update({
@@ -47,7 +47,7 @@ export async function updateEquipment(
 }
 
 export async function deleteEquipment(id: string) {
-  const { organizationId, siteId } = await getTenantContext();
+  const { organizationId, siteId } = await getTenantContext("deleteMaintenance");
   const equipmentId = equipmentIdSchema.parse(id);
   await prisma.equipment.delete({
     where: { id: equipmentId, organizationId, siteId },
@@ -57,7 +57,7 @@ export async function deleteEquipment(id: string) {
 
 // Maintenance Task Actions
 export async function getTasks() {
-  const { organizationId, siteId } = await getTenantContext();
+  const { organizationId, siteId } = await getTenantContext("viewMaintenance");
   return await prisma.maintenanceTask.findMany({
     where: {
       organizationId,
@@ -93,7 +93,7 @@ export async function createTask(data: {
     price?: number;
   }[];
 }) {
-  const { organizationId, siteId } = await getTenantContext();
+  const { organizationId, siteId } = await getTenantContext("manageMaintenance");
   const input = createTaskSchema.parse(data);
   const { workerIds, materials, ...taskData } = input;
   const equipment = await prisma.equipment.findFirst({
@@ -165,7 +165,7 @@ export async function updateTask(
     }[];
   }>,
 ) {
-  const { organizationId, siteId } = await getTenantContext();
+  const { organizationId, siteId } = await getTenantContext("manageMaintenance");
   const taskId = equipmentIdSchema.parse(id);
   const input = updateTaskSchema.parse(data);
   const { workerIds, workerLogs, materials, ...taskData } = input;
@@ -274,7 +274,7 @@ export async function updateTask(
 }
 
 export async function deleteTask(id: string) {
-  const { organizationId, siteId } = await getTenantContext();
+  const { organizationId, siteId } = await getTenantContext("deleteMaintenance");
   const taskId = equipmentIdSchema.parse(id);
   await prisma.maintenanceTask.delete({
     where: {
@@ -292,7 +292,7 @@ export async function moveTask(
   newEndTime: Date,
   newEquipmentId?: string,
 ) {
-  const { organizationId, siteId } = await getTenantContext();
+  const { organizationId, siteId } = await getTenantContext("manageMaintenance");
   const validatedTaskId = equipmentIdSchema.parse(taskId);
   const startTime = new Date(newStartTime);
   const endTime = new Date(newEndTime);

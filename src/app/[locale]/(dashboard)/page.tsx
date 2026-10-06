@@ -5,6 +5,11 @@ import { getWorkers } from "@/features/worker/server/actions";
 import { SchedulerStoreProvider } from "@/features/scheduler/store/scheduler-provider";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import {
+  getAvailableTenantContexts,
+  getTenantContext,
+  roleCan,
+} from "@/lib/tenant-context";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +27,12 @@ export default async function Home({
 
   setRequestLocale(locale);
 
-  const [equipment, tasks, workers] = await Promise.all([
+  const [equipment, tasks, workers, tenant, tenantContexts] = await Promise.all([
     getEquipment(),
     getTasks(),
     getWorkers(),
+    getTenantContext(),
+    getAvailableTenantContexts(),
   ]);
 
   // Capture server-side "now" to sync with client hydration
@@ -40,7 +47,11 @@ export default async function Home({
         currentDate: serverNow,
       }}
     >
-      <DashboardShell />
+      <DashboardShell
+        tenantContexts={tenantContexts}
+        selectedSiteId={tenant.siteId}
+        canManageMembers={roleCan(tenant.role, "manageMembers")}
+      />
     </SchedulerStoreProvider>
   );
 }
