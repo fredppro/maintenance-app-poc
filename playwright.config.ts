@@ -1,11 +1,12 @@
+import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
 import { validateE2EDatabaseUrl } from "./tests/e2e/test-database";
 
 const databaseUrl = process.env.E2E_DATABASE_URL;
 
-if (databaseUrl) validateE2EDatabaseUrl(databaseUrl);
-
-if (databaseUrl) process.env.DATABASE_URL = databaseUrl;
+if (databaseUrl) {
+  validateE2EDatabaseUrl(databaseUrl);
+}
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -22,9 +23,9 @@ export default defineConfig({
     ...devices["Desktop Chrome"],
   },
   webServer: {
-    command: "pnpm dev -- --hostname 127.0.0.1",
+    command: `"${process.execPath}" ./node_modules/next/dist/bin/next dev --hostname 127.0.0.1`,
     url: "http://127.0.0.1:3000/en",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
     env: {
       DATABASE_URL: databaseUrl ?? "",

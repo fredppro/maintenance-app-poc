@@ -9,7 +9,7 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/maintenance_app_test
+      DATABASE_URL: postgresql://maintenance_app:maintenance_app@localhost:5432/maintenance_app_test?schema=public
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -17,7 +17,7 @@ jobs:
           version: 12.9.1
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
@@ -32,11 +32,24 @@ jobs:
           retention-days: 14
 
   browser:
-    if: ${{ vars.RUN_E2E_TESTS == 'true' }}
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_DB: maintenance_app_test
+          POSTGRES_USER: maintenance_app
+          POSTGRES_PASSWORD: maintenance_app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U maintenance_app -d maintenance_app_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
-      E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
-      DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+      E2E_DATABASE_URL: postgresql://maintenance_app:maintenance_app@localhost:5432/maintenance_app_test?schema=public
+      DATABASE_URL: postgresql://maintenance_app:maintenance_app@localhost:5432/maintenance_app_build?schema=public
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -44,8 +57,9 @@ jobs:
           version: 12.9.1
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:migrate:e2e
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e

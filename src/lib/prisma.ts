@@ -1,19 +1,19 @@
-import { PrismaNeon } from '@prisma/adapter-neon'
+import { PrismaPg } from "@prisma/adapter-pg";
 import { toClientSafe } from "./serializer";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export const prismaClientSingleton = () => {
   const connectionString = process.env.DATABASE_URL?.trim();
-  
+
   if (!connectionString) {
-    throw new Error('DATABASE_URL is missing');
+    throw new Error("DATABASE_URL is missing");
   }
 
-  const adapter = new PrismaNeon({ connectionString });
+  const adapter = new PrismaPg({ connectionString });
 
-  const client = new PrismaClient({ 
+  const client = new PrismaClient({
     adapter,
-    log: ['query', 'error', 'warn'],
+    log: ["query", "error", "warn"],
   });
 
   return client.$extends({
@@ -26,16 +26,16 @@ export const prismaClientSingleton = () => {
       },
     },
   });
-}
+};
 
 declare global {
   var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>;
 }
 
-const prisma = globalThis.prismaGlobal ?? prismaClientSingleton()
+const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
 
 export type DB = typeof prisma;
 
-if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma
+if (process.env.NODE_ENV !== "production") globalThis.prismaGlobal = prisma;
 
 export default prisma

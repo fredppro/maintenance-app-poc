@@ -2,7 +2,11 @@ import { validateE2EDatabaseUrl } from "./test-database";
 
 export default async function globalTeardown() {
   if (!process.env.E2E_DATABASE_URL) return;
-  const databaseUrl = validateE2EDatabaseUrl(process.env.E2E_DATABASE_URL);
+  const databaseUrl = validateE2EDatabaseUrl(
+    process.env.E2E_DATABASE_URL,
+    process.env.DATABASE_URL,
+  );
+  const originalDatabaseUrl = process.env.DATABASE_URL;
   process.env.DATABASE_URL = databaseUrl;
   const { default: prisma } = await import("../../src/lib/prisma");
 
@@ -18,5 +22,10 @@ export default async function globalTeardown() {
     });
   } finally {
     await prisma.$disconnect();
+    if (originalDatabaseUrl === undefined) {
+      delete process.env.DATABASE_URL;
+    } else {
+      process.env.DATABASE_URL = originalDatabaseUrl;
+    }
   }
 }

@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,8 +17,15 @@
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "db:up": "docker compose up -d --wait postgres",
+    "db:down": "docker compose stop postgres",
+    "db:e2e:up": "docker compose --profile e2e up -d --wait postgres-e2e",
+    "db:e2e:down": "docker compose --profile e2e stop postgres-e2e",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:e2e": "tsx scripts/migrate-e2e.ts",
     "prisma:seed": "prisma db seed",
     "postinstall": "prisma generate"
   },
@@ -29,8 +39,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^3.10.0",
-    "@neondatabase/serverless": "^1.1.0",
-    "@prisma/adapter-neon": "^7.9.1",
+    "@prisma/adapter-pg": "7.9.1",
     "@prisma/client": "^7.9.1",
     "@prisma/config": "^7.9.1",
     "@radix-ui/react-accordion": "1.2.12",

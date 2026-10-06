@@ -3,17 +3,24 @@
 The browser suite uses a real Next.js server and writes fixture records to a
 dedicated database. Do not point it at a development or production database.
 
-Set `E2E_DATABASE_URL` to a PostgreSQL/Neon database whose database name ends
-in `_test`, with the current Prisma schema already applied, then run:
+For local E2E, copy `.env.example` to `.env`, then start the isolated Compose
+database and apply the committed migrations:
 
 ```sh
+pnpm db:e2e:up
+pnpm prisma:migrate:e2e
 pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
+`E2E_DATABASE_URL` must point at a PostgreSQL database whose name ends in
+`_test`; it is read from `.env` and must identify a different host/port/database
+from `DATABASE_URL`. Playwright always starts its own server and does not reuse
+an existing development server.
+
 The global setup creates an equipment and worker fixture. Teardown removes tasks
 with the `E2E - Playwright` title prefix and removes those exact fixtures.
 
-GitHub Actions runs the browser job only when the repository variable
-`RUN_E2E_TESTS` is `true`; configure `E2E_DATABASE_URL` as a repository secret
-before enabling it. The standard unit-test job does not need a database server.
+GitHub Actions provisions an isolated PostgreSQL service, applies migrations,
+and runs the browser suite. The standard unit-test job does not need a database
+server.
