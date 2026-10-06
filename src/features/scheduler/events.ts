@@ -1,31 +1,31 @@
-export const REPORT_PREVIEW_EVENT = "maintenance-report-preview";
+export const TASK_UPDATED_EVENT = "maintenance-task-updated";
 
-const CHANNEL_NAME = REPORT_PREVIEW_EVENT;
+const CHANNEL_NAME = TASK_UPDATED_EVENT;
 
-export interface ReportPreviewEvent {
+export interface TaskUpdatedEvent {
   taskId: string;
   timestamp: number;
 }
 
 /**
- * Notify every preview that a task report should be refreshed.
+ * Notify listeners that a task was updated.
  *
  * - Current tab -> CustomEvent
  * - Other tabs/windows -> BroadcastChannel
  */
-export function notifyReportPreviewRefresh(taskId: string) {
+export function notifyTaskUpdated(taskId: string) {
   if (typeof window === "undefined") {
     return;
   }
 
-  const payload: ReportPreviewEvent = {
+  const payload: TaskUpdatedEvent = {
     taskId,
     timestamp: Date.now(),
   };
 
   // Same tab
   window.dispatchEvent(
-    new CustomEvent<ReportPreviewEvent>(REPORT_PREVIEW_EVENT, {
+    new CustomEvent<TaskUpdatedEvent>(TASK_UPDATED_EVENT, {
       detail: payload,
     }),
   );
@@ -39,11 +39,11 @@ export function notifyReportPreviewRefresh(taskId: string) {
 }
 
 /**
- * Subscribe to preview refresh events.
+ * Subscribe to task update events.
  *
  * Returns an unsubscribe function.
  */
-export function subscribeToReportPreviewRefresh(
+export function subscribeToTaskUpdates(
   listener: (taskId: string) => void,
 ) {
   if (typeof window === "undefined") {
@@ -51,24 +51,24 @@ export function subscribeToReportPreviewRefresh(
   }
 
   const handleCustomEvent = (event: Event) => {
-    const { taskId } = (event as CustomEvent<ReportPreviewEvent>).detail;
+    const { taskId } = (event as CustomEvent<TaskUpdatedEvent>).detail;
     listener(taskId);
   };
 
-  window.addEventListener(REPORT_PREVIEW_EVENT, handleCustomEvent);
+  window.addEventListener(TASK_UPDATED_EVENT, handleCustomEvent);
 
   let channel: BroadcastChannel | undefined;
 
   if (typeof BroadcastChannel !== "undefined") {
     channel = new BroadcastChannel(CHANNEL_NAME);
 
-    channel.onmessage = (event: MessageEvent<ReportPreviewEvent>) => {
+    channel.onmessage = (event: MessageEvent<TaskUpdatedEvent>) => {
       listener(event.data.taskId);
     };
   }
 
   return () => {
-    window.removeEventListener(REPORT_PREVIEW_EVENT, handleCustomEvent);
+    window.removeEventListener(TASK_UPDATED_EVENT, handleCustomEvent);
     channel?.close();
   };
 }

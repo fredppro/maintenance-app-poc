@@ -1,23 +1,23 @@
 import { 
   Equipment as PrismaEquipment, 
   MaintenanceTask as PrismaTask,
-  Worker as PrismaWorker,
   MaintenanceTaskAssignment as PrismaAssignment,
   Material as PrismaMaterial
 } from '../../../prisma/generated/prisma/client';
+import type { Worker } from "@/features/worker/types";
+
+export type { Worker } from "@/features/worker/types";
 
 export type ViewMode = 'day' | 'week' | 'month' | 'year';
 
 export type Equipment = PrismaEquipment;
-
-export type Worker = PrismaWorker;
 
 export type Material = PrismaMaterial;
 
 export type MaintenanceEntry = PrismaTask & {
   equipment?: Equipment;
   assignments?: (PrismaAssignment & {
-    worker: PrismaWorker;
+    worker: Worker;
   })[];
   materials?: Material[];
 };

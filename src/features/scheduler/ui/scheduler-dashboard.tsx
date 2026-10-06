@@ -9,16 +9,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import WorkerManagementPage from "@/features/worker/ui/WorkerManagementPage";
 import { useSchedulerStore } from "../store/scheduler-provider";
 import { Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TaskType } from "../../../../prisma/generated/prisma/enums";
-import { useState } from "react";
+import type { ReactNode } from "react";
 import { SchedulerToolbar } from "./scheduler-toolbar";
 import { TimelineGrid } from "./timeline-grid";
 
-export function SchedulerDashboard() {
+interface SchedulerDashboardProps {
+  onOpenWorkers: () => void;
+  workersContent?: ReactNode;
+}
+
+export function SchedulerDashboard({
+  onOpenWorkers,
+  workersContent,
+}: SchedulerDashboardProps) {
   const entries = useSchedulerStore((state) => state.entries);
   const equipment = useSchedulerStore((state) => state.equipment);
   const t = useTranslations("Dashboard");
@@ -32,8 +39,6 @@ export function SchedulerDashboard() {
     corrective: entries.filter((e) => e.type === TaskType.CORRECTIVE).length,
     inspection: entries.filter((e) => e.type === TaskType.INSPECTION).length,
   };
-
-  const [openWorkers, setOpenWorkers] = useState(false);
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -121,7 +126,7 @@ export function SchedulerDashboard() {
               <LanguageSwitcher />
 
               <div>
-                <WorkerMenu setOpenWorkers={setOpenWorkers} />
+                <WorkerMenu onOpenWorkers={onOpenWorkers} />
               </div>
             </div>
           </div>
@@ -131,15 +136,11 @@ export function SchedulerDashboard() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col p-6 gap-4 overflow-hidden">
         {/* Toolbar */}
-        {openWorkers ? null : <SchedulerToolbar />}
+        {workersContent ? null : <SchedulerToolbar />}
 
         {/* Content Area */}
         <div className="flex-1 flex gap-4 overflow-hidden">
-          {openWorkers ? (
-            <WorkerManagementPage onBack={() => setOpenWorkers(false)} />
-          ) : (
-            <TimelineGrid />
-          )}
+          {workersContent ?? <TimelineGrid />}
         </div>
       </main>
 
@@ -174,9 +175,9 @@ export function SchedulerDashboard() {
 }
 
 function WorkerMenu({
-  setOpenWorkers,
+  onOpenWorkers,
 }: {
-  setOpenWorkers: React.Dispatch<React.SetStateAction<boolean>>;
+  onOpenWorkers: () => void;
 }) {
   const t = useTranslations("Dashboard");
 
@@ -210,7 +211,7 @@ function WorkerMenu({
           >
             {t("menu.account")}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpenWorkers(true)}>
+          <DropdownMenuItem onClick={onOpenWorkers}>
             {t("menu.workers")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />

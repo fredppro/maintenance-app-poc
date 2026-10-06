@@ -1,10 +1,12 @@
-import { SchedulerDashboard } from "@/features/scheduler/ui/scheduler-dashboard";
+import { DashboardShell } from "./dashboard-shell";
 import { AppLocale, localeSchema } from "src/i18n/locale";
 import { getEquipment, getTasks } from "@/features/scheduler/server/actions";
 import { getWorkers } from "@/features/worker/server/actions";
 import { SchedulerStoreProvider } from "@/features/scheduler/store/scheduler-provider";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 export default async function Home({
   params,
@@ -38,8 +40,7 @@ export default async function Home({
         currentDate: serverNow,
       }}
     >
-      <SchedulerDashboard />
+      <DashboardShell />
     </SchedulerStoreProvider>
   );
 }
-

@@ -106,7 +106,9 @@ function ComboboxContent({
 
   React.useEffect(() => {
     // We target the dialog content so the combobox is inside the focus trap
-    setContainer(document.querySelector('[data-slot="dialog-content"]'));
+    setContainer(
+      document.querySelector<HTMLElement>('[data-slot="dialog-content"]'),
+    );
   }, []);
   return (
     <ComboboxPrimitive.Portal container={container || document.body}>

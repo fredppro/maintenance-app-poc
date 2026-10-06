@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { subscribeToReportPreviewRefresh } from "../events";
+import { subscribeToTaskUpdates } from "@/features/scheduler/events";
 
 export function useReportPreviewRefresh(
   taskId: string,
   onRefresh: () => void,
 ) {
   useEffect(() => {
-    return subscribeToReportPreviewRefresh((changedTaskId) => {
+    return subscribeToTaskUpdates((changedTaskId) => {
       if (changedTaskId === taskId) {
         onRefresh();
       }

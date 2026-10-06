@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getValidLocale } from "src/i18n/locale";
 import { createTask } from "../server/actions";
 import { useSchedulerStore } from "../store/scheduler-provider";
-import { getCurrencySymbol } from "@/lib/utils";
+import { getCurrencySymbol } from "@/features/scheduler/utils/currency";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addHours, areIntervalsOverlapping } from "date-fns";
 import { AlertCircle, Plus, Trash2 } from "lucide-react";

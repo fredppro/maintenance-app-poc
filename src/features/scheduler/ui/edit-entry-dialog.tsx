@@ -30,12 +30,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { notifyReportPreviewRefresh } from "@/features/report/events";
+import { notifyTaskUpdated } from "@/features/scheduler/events";
 import { getValidLocale } from "src/i18n/locale";
 import { deleteTask, updateTask } from "../server/actions";
 import { MaintenanceEntry, UpdateEntryPayload } from "../types";
 import { useSchedulerStore } from "../store/scheduler-provider";
-import { cn, getCurrencySymbol } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { getCurrencySymbol } from "@/features/scheduler/utils/currency";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { areIntervalsOverlapping } from "date-fns";
 import {
@@ -432,7 +433,7 @@ export function EditEntryDialog({
         }),
       });
       replaceEntry(entry.id, updatedTask);
-      notifyReportPreviewRefresh(entry.id);
+      notifyTaskUpdated(entry.id);
       toast.success(t("errors.updateSuccess"));
       onOpenChange(false);
     } catch (error) {

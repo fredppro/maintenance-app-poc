@@ -29,7 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { deleteWorker, getWorkers } from "../server/actions";
-import { useSchedulerStore } from "@/features/scheduler/store/scheduler-provider";
+import type { Worker as WorkerEntity } from "../types";
 import {
   DndContext,
   KeyboardSensor,
@@ -68,7 +68,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import CreateUpdateWorker from "./CreateUpdateUser";
 
-type Worker = {
+type WorkerRow = {
   id: string;
   name: string;
   email: string;
@@ -79,6 +79,7 @@ type Worker = {
 
 type WorkerManagementPageProps = {
   onBack: () => void;
+  onWorkersChange: (workers: WorkerEntity[]) => void;
 };
 
 function DragHandle({
@@ -106,8 +107,8 @@ function DraggableRow({
   row,
   onOpenDrawer,
 }: {
-  row: Row<Worker>;
-  onOpenDrawer: (worker: Worker) => void;
+  row: Row<WorkerRow>;
+  onOpenDrawer: (worker: WorkerRow) => void;
 }) {
   const {
     transform,
@@ -156,26 +157,25 @@ function DraggableRow({
 
 export default function WorkerManagementPage({
   onBack,
+  onWorkersChange,
 }: WorkerManagementPageProps) {
   const t = useTranslations("Workers");
   const tCommon = useTranslations("Common");
 
-  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [workers, setWorkers] = useState<WorkerRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedWorker, setSelectedWorker] = useState<Worker | undefined>(
+  const [selectedWorker, setSelectedWorker] = useState<WorkerRow | undefined>(
     undefined,
   );
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteWorker, setPendingDeleteWorker] = useState<
-    Worker | undefined
+    WorkerRow | undefined
   >(undefined);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
-  const setWorkersStore = useSchedulerStore((state) => state.setWorkers);
-
   const fetchWorkers = async () => {
     setLoading(true);
     try {
@@ -188,7 +188,7 @@ export default function WorkerManagementPage({
             : worker.createdAt,
       }));
       setWorkers(normalized);
-      setWorkersStore(data || []);
+      onWorkersChange(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -200,12 +200,12 @@ export default function WorkerManagementPage({
     fetchWorkers();
   }, []);
 
-  const handleOpenDrawer = (worker?: Worker) => {
+  const handleOpenDrawer = (worker?: WorkerRow) => {
     setSelectedWorker(worker);
     setDrawerOpen(true);
   };
 
-  const handleRequestDelete = (worker: Worker) => {
+  const handleRequestDelete = (worker: WorkerRow) => {
     setPendingDeleteWorker(worker);
     setConfirmOpen(true);
   };
@@ -229,7 +229,7 @@ export default function WorkerManagementPage({
     await fetchWorkers();
   };
 
-  const columns = useMemo<ColumnDef<Worker>[]>(
+  const columns = useMemo<ColumnDef<WorkerRow>[]>(
     () => [
       {
         id: "drag",

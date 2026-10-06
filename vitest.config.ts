@@ -26,6 +26,9 @@ export default defineConfig({
       "next/link.js": fileURLToPath(new URL("./vitest/next-stubs.ts", import.meta.url)),
       "next/headers": fileURLToPath(new URL("./vitest/next-stubs.ts", import.meta.url)),
       "next/headers.js": fileURLToPath(new URL("./vitest/next-stubs.ts", import.meta.url)),
+      "next-intl/navigation": fileURLToPath(
+        new URL("./vitest/next-intl-navigation.ts", import.meta.url),
+      ),
     },
   },
 });

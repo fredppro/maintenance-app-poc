@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  notifyReportPreviewRefresh,
-  subscribeToReportPreviewRefresh,
+  notifyTaskUpdated,
+  subscribeToTaskUpdates,
 } from "./events";
 
-describe("report events", () => {
+describe("scheduler events", () => {
   let originalWindow: typeof globalThis.window;
   let originalBroadcastChannel: typeof globalThis.BroadcastChannel;
 
@@ -22,9 +22,9 @@ describe("report events", () => {
     delete (globalThis as any).window;
     delete (globalThis as any).BroadcastChannel;
 
-    expect(() => notifyReportPreviewRefresh("task-123")).not.toThrow();
+    expect(() => notifyTaskUpdated("task-123")).not.toThrow();
 
-    const unsubscribe = subscribeToReportPreviewRefresh(() => {});
+    const unsubscribe = subscribeToTaskUpdates(() => {});
     expect(typeof unsubscribe).toBe("function");
     expect(() => unsubscribe()).not.toThrow();
   });
@@ -59,17 +59,17 @@ describe("report events", () => {
     delete (globalThis as any).BroadcastChannel;
 
     const receivedTaskIds: string[] = [];
-    const unsubscribe = subscribeToReportPreviewRefresh((taskId) => {
+    const unsubscribe = subscribeToTaskUpdates((taskId) => {
       receivedTaskIds.push(taskId);
     });
 
-    notifyReportPreviewRefresh("task-abc");
-    notifyReportPreviewRefresh("task-def");
+    notifyTaskUpdated("task-abc");
+    notifyTaskUpdated("task-def");
 
     expect(receivedTaskIds).toEqual(["task-abc", "task-def"]);
 
     unsubscribe();
-    notifyReportPreviewRefresh("task-ghi");
+    notifyTaskUpdated("task-ghi");
     expect(receivedTaskIds).toEqual(["task-abc", "task-def"]);
   });
 
@@ -98,7 +98,7 @@ describe("report events", () => {
     };
     (globalThis as any).BroadcastChannel = MockBroadcastChannel;
 
-    notifyReportPreviewRefresh("task-999");
+    notifyTaskUpdated("task-999");
 
     expect(postedMessages).toHaveLength(1);
     expect(postedMessages[0].taskId).toBe("task-999");

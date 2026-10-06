@@ -6,12 +6,11 @@
       "esnext"
     ],
     "allowJs": true,
-    "target": "ES6",
+    "target": "ESNext",
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "ignoreDeprecations": "6.0",
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
@@ -23,9 +22,11 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".",
     "paths": {
       "@/*": [
+        "./src/*"
+      ],
+      "src/*": [
         "./src/*"
       ]
     }
