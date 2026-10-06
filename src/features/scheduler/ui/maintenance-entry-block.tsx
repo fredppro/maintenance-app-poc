@@ -49,13 +49,13 @@ export function MaintenanceEntryBlock({
         );
       case "in-progress":
         return (
-          <Badge className="bg-chart-3/20 text-chart-3 border-chart-3/40 text-xs">
+          <Badge variant="warning" className="text-xs">
             In Progress
           </Badge>
         );
       case "completed":
         return (
-          <Badge className="bg-chart-1/20 text-chart-1 border-chart-1/40 text-xs">
+          <Badge variant="success" className="text-xs">
             Completed
           </Badge>
         );
@@ -71,11 +71,11 @@ export function MaintenanceEntryBlock({
   const getTypeStyles = () => {
     switch (entry.type) {
       case TaskType.PREVENTIVE:
-        return "bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400";
+        return "bg-info/10 border-info/20 text-info";
       case TaskType.INSPECTION:
-        return "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400";
+        return "bg-warning/10 border-warning/20 text-warning";
       case TaskType.CORRECTIVE:
-        return "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400";
+        return "bg-destructive/10 border-destructive/20 text-destructive";
       default:
         return "bg-primary/10 border-primary/20 text-primary";
     }

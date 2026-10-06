@@ -606,8 +606,8 @@ export function TimelineGrid() {
                             className={cn(
                               "absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-card",
                               pendingCount > 0
-                                ? "bg-amber-500"
-                                : "bg-emerald-500",
+                                ? "bg-warning"
+                                : "bg-success",
                             )}
                             title={
                               pendingCount > 0 ? "In Maintenance" : "Active"

@@ -10,10 +10,12 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { useSchedulerStore } from "../store/scheduler-provider";
-import { Wrench } from "lucide-react";
+import { Moon, Sun, Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
 import { TaskType } from "../../../../prisma/generated/prisma/enums";
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { SchedulerToolbar } from "./scheduler-toolbar";
 import { TimelineGrid } from "./timeline-grid";
 
@@ -69,7 +71,7 @@ export function SchedulerDashboard({
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500/20 border border-blue-500/40" />
+                <div className="size-3 rounded-full bg-info/20 border border-info/40" />
                 <span className="text-muted-foreground">
                   {t("stats.preventive")}
                 </span>
@@ -78,7 +80,7 @@ export function SchedulerDashboard({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40" />
+                <div className="size-3 rounded-full bg-destructive/20 border border-destructive/40" />
                 <span className="text-muted-foreground">
                   {t("stats.corrective")}
                 </span>
@@ -87,7 +89,7 @@ export function SchedulerDashboard({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500/40" />
+                <div className="size-3 rounded-full bg-warning/20 border border-warning/40" />
                 <span className="text-muted-foreground">
                   {t("stats.inspection")}
                 </span>
@@ -129,6 +131,7 @@ export function SchedulerDashboard({
             <div className="flex items-center gap-4">
               {tenantContextControl}
               <LanguageSwitcher />
+              <ThemeToggle />
               <WorkerMenu
                 onOpenWorkers={onOpenWorkers}
                 onOpenMembers={onOpenMembers}
@@ -162,21 +165,39 @@ export function SchedulerDashboard({
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <div className="size-2 rounded-full bg-info" />
               <span>{t("stats.preventive")}</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-red-500" />
+              <div className="size-2 rounded-full bg-destructive" />
               <span>{t("stats.corrective")}</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-amber-500" />
+              <div className="size-2 rounded-full bg-warning" />
               <span>{t("stats.inspection")}</span>
             </div>
           </div>
         </div>
       </footer>
     </div>
+  );
+}
+
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  const t = useTranslations("Dashboard");
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label={t("toggleTheme")}
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+    >
+      <Sun className="hidden dark:block" aria-hidden="true" />
+      <Moon className="block dark:hidden" aria-hidden="true" />
+    </Button>
   );
 }
 

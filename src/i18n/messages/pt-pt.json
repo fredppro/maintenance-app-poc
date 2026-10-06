@@ -20,7 +20,8 @@
       "workers": "Trabalhadores",
       "members": "Membros da organização",
       "logout": "Sair"
-    }
+    },
+    "toggleTheme": "Alternar tema de cores"
   },
   "Invitation": {
     "title": "Aderir à organização",

@@ -85,7 +85,7 @@ export function AuthForm({
   const isSignUp = mode === "sign-up";
 
   return (
-    <Card className="w-full max-w-md">
+    <Card variant="elevated" className="w-full max-w-md">
       <CardHeader>
         <CardTitle>{t(isSignUp ? "signUpTitle" : "signInTitle")}</CardTitle>
         <CardDescription>

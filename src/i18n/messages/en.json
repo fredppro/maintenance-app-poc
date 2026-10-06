@@ -20,7 +20,8 @@
       "workers": "Workers",
       "members": "Organization members",
       "logout": "Logout"
-    }
+    },
+    "toggleTheme": "Toggle color theme"
   },
   "Invitation": {
     "title": "Join organization",

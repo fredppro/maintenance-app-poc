@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
 import { localeSchema } from "@/i18n/locale";
 import "@/styles/globals.css";
 import { Analytics } from "@vercel/analytics/next";
@@ -55,13 +56,15 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className="bg-background">
+    <html lang={locale} className="bg-background" suppressHydrationWarning>
       <body className="font-sans antialiased bg-background">
-        <NextIntlClientProvider messages={messages}>
-          {children}
-        </NextIntlClientProvider>
-        <Toaster />
-        {process.env.NODE_ENV === "production" && <Analytics />}
+        <ThemeProvider>
+          <NextIntlClientProvider messages={messages}>
+            {children}
+          </NextIntlClientProvider>
+          <Toaster />
+          {process.env.NODE_ENV === "production" && <Analytics />}
+        </ThemeProvider>
       </body>
     </html>
   );

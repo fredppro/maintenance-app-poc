@@ -80,7 +80,7 @@ export function OrganizationSetupForm({
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card variant="elevated" className="w-full max-w-md">
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
         <CardDescription>{t("description")}</CardDescription>
