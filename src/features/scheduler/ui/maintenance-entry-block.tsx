@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { updateTask } from "../server/actions";
 import { MaintenanceEntry } from "../types";
 import { useSchedulerStore } from "../store/scheduler-provider";
@@ -38,35 +37,6 @@ export function MaintenanceEntryBlock({
   const [isResizing, setIsResizing] = useState<"start" | "end" | null>(null);
   const [resizeOffset, setResizeOffset] = useState(0);
   const entryRef = useRef<HTMLDivElement>(null);
-
-  const getStatusBadge = () => {
-    switch (entry.status) {
-      case "scheduled":
-        return (
-          <Badge variant="secondary" className="text-xs">
-            Scheduled
-          </Badge>
-        );
-      case "in-progress":
-        return (
-          <Badge variant="warning" className="text-xs">
-            In Progress
-          </Badge>
-        );
-      case "completed":
-        return (
-          <Badge variant="success" className="text-xs">
-            Completed
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="text-xs">
-            {entry.status}
-          </Badge>
-        );
-    }
-  };
 
   const getTypeStyles = () => {
     switch (entry.type) {

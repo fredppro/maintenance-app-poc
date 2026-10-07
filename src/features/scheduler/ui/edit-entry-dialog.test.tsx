@@ -8,7 +8,6 @@ import {
   SchedulerStoreProvider,
   useSchedulerStore,
 } from "../store/scheduler-provider";
-import { deleteTask, updateTask } from "../server/actions";
 import { EditEntryDialog } from "./edit-entry-dialog";
 import { toast } from "sonner";
 

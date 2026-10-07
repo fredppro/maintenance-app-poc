@@ -30,6 +30,7 @@ import {
 import { summarizeEquipmentMaintenance } from "@/features/scheduler/utils/insights";
 import { useSchedulerStore } from "@/features/scheduler/store/scheduler-provider";
 import type { Equipment } from "@/features/scheduler/types";
+import { EquipmentThumbnail } from "@/features/scheduler/ui/equipment-thumbnail";
 import { EquipmentDialog } from "@/features/scheduler/ui/equipment-dialog";
 import { Link } from "@/i18n/routing";
 
@@ -147,18 +148,7 @@ export function EquipmentPageClient() {
                   <TableRow key={row.equipment.id}>
                     <TableCell>
                       <div className="flex min-w-0 items-center gap-3">
-                        {row.equipment.imageFileId ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={`/api/files/${row.equipment.imageFileId}`}
-                            alt=""
-                            className="size-10 shrink-0 rounded-lg border object-cover"
-                          />
-                        ) : (
-                          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                            <Box className="size-5" />
-                          </div>
-                        )}
+                        <EquipmentThumbnail imageFileId={row.equipment.imageFileId} size="md" />
                         <span className="truncate font-medium">
                           {row.equipment.name}
                         </span>

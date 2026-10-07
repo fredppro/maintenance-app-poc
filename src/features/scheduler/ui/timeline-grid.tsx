@@ -1,7 +1,7 @@
 "use client";
 
+import { EquipmentThumbnail } from "./equipment-thumbnail";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Empty,
   EmptyContent,
@@ -11,29 +11,17 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { APPLICATION_LOCALES } from "src/i18n/config";
 import { getValidLocale, LOCALE_MAP } from "src/i18n/locale";
 import {
-  addEquipment as dbAddEquipment,
   deleteEquipment as dbDeleteEquipment,
   moveTask as dbMoveTask,
-  updateEquipment as dbUpdateEquipment,
 } from "../server/actions";
 import { Equipment, MaintenanceEntry } from "../types";
 import { useSchedulerStore } from "../store/scheduler-provider";
@@ -91,8 +79,6 @@ export function TimelineGrid() {
   const setEntries = useSchedulerStore((state) => state.setEntries);
   const setViewMode = useSchedulerStore((state) => state.setViewMode);
   const setCurrentDate = useSchedulerStore((state) => state.setCurrentDate);
-  const addEquipment = useSchedulerStore((state) => state.addEquipment);
-  const updateEquipment = useSchedulerStore((state) => state.updateEquipment);
   const removeEquipment = useSchedulerStore((state) => state.removeEquipment);
   const moveEntry = useSchedulerStore((state) => state.moveEntry);
   const replaceEntry = useSchedulerStore((state) => state.replaceEntry);
@@ -546,18 +532,7 @@ export function TimelineGrid() {
                     >
                       <div className="flex min-w-0 items-center gap-2">
                         <div className="relative">
-                          {equip.imageFileId ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={`/api/files/${equip.imageFileId}`}
-                              alt=""
-                              className="size-7 shrink-0 rounded-lg border border-border object-cover"
-                            />
-                          ) : (
-                            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                              <Box className="size-4 text-primary" />
-                            </div>
-                          )}
+                          <EquipmentThumbnail imageFileId={equip.imageFileId} size="sm" />
                           <div
                             className={cn(
                               "absolute -right-1 -top-1 size-2.5 rounded-full border-2 border-card",

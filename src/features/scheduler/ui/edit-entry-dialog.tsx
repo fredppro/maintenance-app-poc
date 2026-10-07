@@ -357,7 +357,7 @@ export function EditEntryDialog({
       setConfirmDeleteOpen(false);
       onOpenChange(false);
       toast.success(t("errors.deleteSuccess"));
-    } catch (error) {
+    } catch {
       setEntries(previousEntries);
       setSelectedEntry(previousSelectedEntry);
       toast.error(t("errors.deleteFailure"));
@@ -411,7 +411,7 @@ export function EditEntryDialog({
       notifyTaskUpdated(entry.id);
       toast.success(t("errors.updateSuccess"));
       onOpenChange(false);
-    } catch (error) {
+    } catch {
       setEntries(previousEntries);
       setSelectedEntry(previousSelectedEntry);
       toast.error(t("errors.updateFailure"));
