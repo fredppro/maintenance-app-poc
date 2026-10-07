@@ -33,4 +33,4 @@ jobs:
           fi
       - name: Dump and upload
         if: steps.config.outputs.run == 'true'
-        run: sh scripts/backup/backup-db.sh
+        run: sh scripts/db/backup/backup-db.sh

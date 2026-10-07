@@ -70,7 +70,7 @@ Before deploying a schema change:
 2. Test the migration against a staging database restored from a recent backup.
 3. Check status with `pnpm exec prisma migrate status` using the target
    environment's `DATABASE_URL`.
-4. Deploy committed migrations with `pnpm prisma:migrate:deploy`.
+4. Deploy committed migrations with `pnpm db:migrate:deploy`.
 5. Check `/api/health` and perform an application smoke test.
 
 Do not use `prisma db push` for production and do not point browser tests at a

@@ -1,12 +1,12 @@
 // Operator tool for cross-tenant lifecycle changes. Run with the owner connection:
-//   pnpm tenant:admin suspend <orgId> [reason]
-//   pnpm tenant:admin reactivate <orgId>
-//   pnpm tenant:admin purge-due          (permanently deletes organizations past their grace period)
-import "../prisma/seed-env";
+//   pnpm ops:tenant suspend <orgId> [reason]
+//   pnpm ops:tenant reactivate <orgId>
+//   pnpm ops:tenant purge-due          (permanently deletes organizations past their grace period)
+import "../../prisma/seed-env";
 import { pathToFileURL } from "node:url";
-import { recordAuditEvent } from "../src/lib/audit";
-import prisma from "../src/lib/prisma";
-import { getStorage } from "../src/lib/storage";
+import { recordAuditEvent } from "../../src/lib/audit";
+import prisma from "../../src/lib/prisma";
+import { getStorage } from "../../src/lib/storage";
 
 const OPERATOR = "operator";
 

@@ -3,6 +3,7 @@ import { APIError, createAuthMiddleware } from "better-auth/api";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { organization } from "better-auth/plugins";
 import prisma from "@/lib/prisma";
+import { recordAuditEvent } from "@/lib/audit";
 import { LEGACY_ORGANIZATION_SLUG } from "@/lib/tenant-constants";
 import { sendTransactionalEmail } from "./email";
 import { organizationAccess, organizationRoles } from "../shared/organization-access";
@@ -148,6 +149,28 @@ export const auth = betterAuth({
       }),
   },
   databaseHooks: {
+    session: {
+      create: {
+        // Sign-ins are recorded in every organization the user belongs to; no IP or user agent is copied.
+        after: async (session) => {
+          const memberships = await prisma.member.findMany({
+            where: { userId: session.userId },
+            select: { organizationId: true },
+          });
+          await Promise.all(
+            memberships.map(({ organizationId }) =>
+              recordAuditEvent({
+                organizationId,
+                actorUserId: session.userId,
+                action: "auth.sign_in",
+                subjectType: "user",
+                subjectId: session.userId,
+              }),
+            ),
+          );
+        },
+      },
+    },
     user: {
       create: {
         before: async (user) => {

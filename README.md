@@ -8,6 +8,23 @@ can use local PostgreSQL, Neon, or another PostgreSQL provider.
 
 ## Quick start
 
+### Docker only (no Node or pnpm on the host)
+
+Install Docker with Compose v2, clone, then:
+
+```sh
+pnpm up      # or: docker compose --profile app up --build
+```
+
+This builds a pinned Node 24 image, starts PostgreSQL, applies migrations and
+serves the app with hot reload at [http://localhost:3000/en](http://localhost:3000/en).
+Stop with `pnpm down` (or `docker compose --profile app down`). Without pnpm on
+the host, use the `docker compose` form. Run other commands inside the
+container, e.g. `docker compose exec app pnpm test:run`. Uses a development-only
+auth secret unless `BETTER_AUTH_SECRET` is exported.
+
+### Host toolchain
+
 For a fresh clone on macOS, Linux, or Windows under WSL, install Node.js 24,
 Git, and Docker with Compose v2. Then run:
 
@@ -15,10 +32,18 @@ Git, and Docker with Compose v2. Then run:
 git clone <repository-url>
 cd maintenance-app-poc
 corepack enable
-cp .env.example .env
+pnpm bootstrap   # creates .env, installs, starts Postgres, applies migrations
+pnpm dev
+```
+
+`pnpm bootstrap` (`scripts/dev/bootstrap.ts`) is idempotent and refuses to touch a
+non-local database. The manual equivalent is:
+
+```sh
+cp .env.example .env   # then set BETTER_AUTH_SECRET
 pnpm install --frozen-lockfile
 pnpm db:up
-pnpm prisma:migrate:deploy
+pnpm db:migrate:deploy
 pnpm dev
 ```
 
@@ -26,7 +51,7 @@ Open [http://localhost:3000/en](http://localhost:3000/en), sign up, and create
 an organization and its first site. The commands apply the checked-in
 migrations but do not add sample data. To seed development data, set
 `SEED_ADMIN_EMAIL` in `.env` to the email of that organization owner and run
-`pnpm prisma:seed`.
+`pnpm db:seed`.
 
 `pnpm dev` only boots with `DATABASE_URL`, `BETTER_AUTH_SECRET` (at least 32
 characters) and `BETTER_AUTH_URL` set; `.env.example` provides working
@@ -91,7 +116,7 @@ client in the checked-in `prisma/generated/prisma` directory. Regenerate it
 after changing the Prisma schema and include generated-client changes:
 
 ```sh
-pnpm prisma:generate
+pnpm db:generate
 ```
 
 Start the local development database:
@@ -103,7 +128,7 @@ pnpm db:up
 Apply the committed migration history to the local database:
 
 ```sh
-pnpm prisma:migrate:deploy
+pnpm db:migrate:deploy
 ```
 
 This command applies pending migrations and does not reset or drop existing
@@ -112,7 +137,7 @@ data. Stop (but retain) the local database with `pnpm db:down`.
 Optionally, add the sample equipment, vendors, workers, and maintenance tasks:
 
 ```sh
-pnpm prisma:seed
+pnpm db:seed
 ```
 
 The seed uses upserts for equipment, vendors, and workers, and skips tasks that
@@ -201,7 +226,7 @@ pnpm db:e2e:up
 the committed migrations with the E2E-specific command:
 
 ```sh
-pnpm prisma:migrate:e2e
+pnpm db:migrate:e2e
 ```
 
 Install Chromium and run the browser tests:
@@ -260,15 +285,16 @@ Next.js externalizes it for server use.
 - Prisma schema: `prisma/schema.prisma`.
 - Prisma CLI configuration and `DATABASE_URL`: `prisma.config.ts`.
 - Generated Prisma client: `prisma/generated/prisma/` (tracked in Git and
-  regenerated during install or with `pnpm prisma:generate`).
+  regenerated during install or with `pnpm db:generate`).
 - Local PostgreSQL services: `docker-compose.yml` (`pnpm db:up` and
   `pnpm db:e2e:up`).
-- Apply committed migrations safely: `pnpm prisma:migrate:deploy`.
-- Create a migration during development: `pnpm prisma:migrate:dev`. Use this
+- Script reference by environment: [scripts/README.md](scripts/README.md).
+- Apply committed migrations safely: `pnpm db:migrate:deploy`.
+- Create a migration during development: `pnpm db:migrate:dev`. Use this
   only with the local development database; review and commit the SQL.
-- `pnpm prisma:push` remains available for intentional prototyping, but it
-  bypasses migration history and is not the normal setup or deployment path.
-- Development data command: `pnpm prisma:seed`.
+- `prisma db push` is intentionally not exposed as a script: it bypasses
+  migration history and RLS policies.
+- Development data command: `pnpm db:seed`.
 
 `DATABASE_URL` is the application's runtime connection. For row-level security
 it must be a restricted role; `MIGRATION_DATABASE_URL` (the owner) is used by
@@ -283,7 +309,7 @@ The committed migration history initializes the schema, including the
 historical `MaterialConsumed` creation and rename migrations. A forward
 migration adds `Material.price` and worker assignment times with
 `ADD COLUMN IF NOT EXISTS`, accommodating databases where those fields already
-exist. Apply migrations in deployment with `pnpm prisma:migrate:deploy`; check
+exist. Apply migrations in deployment with `pnpm db:migrate:deploy`; check
 `pnpm exec prisma migrate status` against an existing database before rollout.
 
 When upgrading a database that already has maintenance data, the tenant
@@ -306,7 +332,7 @@ transition.
 | Variable | Required for | Description |
 | --- | --- | --- |
 | `DATABASE_URL` | Prisma client generation/configuration, database commands, and app runtime | PostgreSQL-compatible connection string. `.env.example` points to local development PostgreSQL. |
-| `MIGRATION_DATABASE_URL` | `prisma migrate`, `pnpm prisma:seed` | Optional owner connection string; falls back to `DATABASE_URL`. Required when `DATABASE_URL` is a restricted role (the local Docker default). |
+| `MIGRATION_DATABASE_URL` | `prisma migrate`, `pnpm db:seed` | Optional owner connection string; falls back to `DATABASE_URL`. Required when `DATABASE_URL` is a restricted role (the local Docker default). |
 | `E2E_DATABASE_URL` | Playwright browser tests and E2E migration command | Dedicated test database connection string. `.env.example` points to a separate local database on port 5433. The database name must end in `_test` and target a different host/port/database from `DATABASE_URL`. |
 | `BETTER_AUTH_SECRET` | App runtime and auth tests | Secret used to sign Better Auth sessions; use a random secret of at least 32 characters and keep it private. |
 | `BETTER_AUTH_URL` | App runtime and auth tests | Canonical application origin, for example `http://localhost:3000` locally or the deployed HTTPS origin. |
@@ -345,7 +371,7 @@ Resend account with a verified sender domain; `S3_*` come from your storage
 provider, or the fixed MinIO defaults above.
 
 Playwright reads `E2E_DATABASE_URL` for its server and fixtures. The
-`pnpm prisma:migrate:e2e` command validates and uses that URL without changing
+`pnpm db:migrate:e2e` command validates and uses that URL without changing
 the development database configuration.
 
 ## File storage
@@ -427,7 +453,7 @@ For core dependency upgrades:
 4. Regenerate Prisma client code after Prisma/schema changes:
 
    ```sh
-   pnpm prisma:generate
+   pnpm db:generate
    ```
 
 5. Verify the lockfile and run the quality checks:
@@ -465,7 +491,7 @@ database secret.
 ## Tenant lifecycle, export and recovery
 
 Suspension, deletion with a grace period, soft delete, customer data export,
-operator scripts (`pnpm tenant:admin`, `pnpm trash:purge`) and the backup/restore
+operator scripts (`pnpm ops:tenant`, `pnpm ops:purge-trash`) and the backup/restore
 procedure are documented in [docs/tenant-lifecycle-and-recovery.md](docs/tenant-lifecycle-and-recovery.md).
 
 ## Troubleshooting
@@ -475,7 +501,7 @@ procedure are documented in [docs/tenant-lifecycle-and-recovery.md](docs/tenant-
   configuration reads this variable, including during client generation.
 - **The app cannot load scheduler data:** check that the database connection
   string is valid, the database is reachable, and
-  `pnpm prisma:migrate:deploy` has been run against the intended database.
+  `pnpm db:migrate:deploy` has been run against the intended database.
 - **Playwright refuses the database URL:** its database name must end in
   `_test`. Use a dedicated database; do not bypass this guard or point tests
   at shared data.
@@ -490,7 +516,7 @@ procedure are documented in [docs/tenant-lifecycle-and-recovery.md](docs/tenant-
    `.env.example` to `.env`.
 2. Run `pnpm install --frozen-lockfile`.
 3. Start local PostgreSQL with `pnpm db:up`; apply migrations with
-   `pnpm prisma:migrate:deploy`; optionally run `pnpm prisma:seed`.
+   `pnpm db:migrate:deploy`; optionally run `pnpm db:seed`.
 4. Start `pnpm dev` and work at `http://localhost:3000/en`.
 5. Before opening a pull request, run `pnpm lint`, `pnpm typecheck`,
    `pnpm test:coverage`, and `pnpm build`.

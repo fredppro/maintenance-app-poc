@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { logEvent } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
 /**
@@ -23,7 +24,7 @@ export async function takeRateLimit(
       RETURNING count`;
     return { allowed: Number(rows[0]?.count ?? 1) <= limit };
   } catch (error) {
-    console.error("rate_limit.failed", { bucket, error });
+    logEvent("error", "rate_limit.failed", { bucket, error });
     return { allowed: true };
   }
 }

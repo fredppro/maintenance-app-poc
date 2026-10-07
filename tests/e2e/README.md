@@ -8,7 +8,7 @@ database and apply the committed migrations:
 
 ```sh
 pnpm db:e2e:up
-pnpm prisma:migrate:e2e
+pnpm db:migrate:e2e
 pnpm test:legacy-ownership
 pnpm exec playwright install chromium
 pnpm test:e2e

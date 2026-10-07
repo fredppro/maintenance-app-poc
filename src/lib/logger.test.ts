@@ -18,4 +18,10 @@ describe("logEvent", () => {
     expect(JSON.stringify(line)).not.toContain("hunter2");
     expect(JSON.stringify(line)).not.toContain("user:pw");
   });
+
+  it("redacts email addresses in messages and string fields", () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    logEvent("error", "mail", { error: new Error("rejected jane.doe@example.com"), to: "jane.doe@example.com" });
+    expect(spy.mock.calls[0][0]).not.toContain("jane.doe");
+  });
 });

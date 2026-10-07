@@ -2,8 +2,8 @@ import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import prisma from "../src/lib/prisma";
-import { LEGACY_ORGANIZATION_SLUG } from "../src/lib/tenant-constants";
+import prisma from "../../src/lib/prisma";
+import { LEGACY_ORGANIZATION_SLUG } from "../../src/lib/tenant-constants";
 import { readLegacyOwnershipConfig } from "./legacy-ownership";
 
 export async function assignLegacyOwnership() {

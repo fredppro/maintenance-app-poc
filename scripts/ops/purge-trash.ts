@@ -1,8 +1,8 @@
 // Permanently removes soft-deleted equipment, tasks and workers older than the retention window.
-// Run with the owner connection: pnpm trash:purge [days]   (default 30)
-import "../prisma/seed-env";
+// Run with the owner connection: pnpm ops:purge-trash [days]   (default 30)
+import "../../prisma/seed-env";
 import { pathToFileURL } from "node:url";
-import prisma from "../src/lib/prisma";
+import prisma from "../../src/lib/prisma";
 
 export const TRASH_RETENTION_DAYS = 30;
 

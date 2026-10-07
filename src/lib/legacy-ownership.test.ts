@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readLegacyOwnershipConfig } from "../../scripts/legacy-ownership";
+import { readLegacyOwnershipConfig } from "../../scripts/legacy/legacy-ownership";
 
 const validEnvironment: Partial<NodeJS.ProcessEnv> = {
   LEGACY_OWNER_EMAIL: "owner@example.com",

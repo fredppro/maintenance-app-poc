@@ -1,4 +1,5 @@
 import { saveImageFile, FileValidationError, MAX_FILE_BYTES } from "@/features/files/server/files";
+import { logEvent } from "@/lib/logger";
 import { takeRateLimit } from "@/lib/rate-limit";
 import { getTenantContext } from "@/lib/tenant-context";
 import { NextResponse } from "next/server";
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     if (error instanceof FileValidationError) {
       return NextResponse.json({ error: "invalid" }, { status: 400 });
     }
-    console.error("File upload failed", error);
+    logEvent("error", "file.upload_failed", { error });
     return NextResponse.json({ error: "storage" }, { status: 500 });
   }
 }

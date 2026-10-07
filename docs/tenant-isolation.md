@@ -46,3 +46,5 @@ start of the Docker databases (existing volumes: run the script once, or `docker
 
 Tenant status, soft delete, export and backups: [tenant-lifecycle-and-recovery.md](tenant-lifecycle-and-recovery.md).
 The RLS integration test runs in CI against the e2e database.
+
+See also [GDPR readiness](./gdpr-readiness.md) for the privacy view of this architecture.

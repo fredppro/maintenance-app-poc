@@ -8,6 +8,7 @@ import {
   updateWorkerSchema,
   workerIdSchema,
 } from "./schemas";
+import { anonymizeWorker } from "@/lib/privacy";
 import { recordAuditEvent } from "@/lib/audit";
 import { getTenantContext } from "@/lib/tenant-context";
 
@@ -121,5 +122,11 @@ export async function restoreWorker(id: string) {
     subjectType: "worker",
     subjectId: workerId,
   });
+  revalidatePath("/");
+}
+
+export async function eraseWorkerPersonalData(id: string) {
+  const { db, organizationId, userId } = await getTenantContext("manageWorkers");
+  await anonymizeWorker(db, organizationId, workerIdSchema.parse(id), userId);
   revalidatePath("/");
 }

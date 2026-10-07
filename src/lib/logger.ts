@@ -1,10 +1,13 @@
+const EMAIL = /[^\s@"']+@[^\s@"']+\.[^\s@"']+/g;
 const SENSITIVE = /(password|token|secret|cookie|authorization|database_url|connection)/i;
+
+const scrub = (text: string) => text.replace(/\w+:\/\/[^\s]+/g, "[redacted-url]").replace(EMAIL, "[redacted-email]");
 
 function redact(value: unknown, depth = 0): unknown {
   if (value instanceof Error) {
-    return { name: value.name, message: value.message.replace(/\w+:\/\/[^\s]+/g, "[redacted-url]") };
+    return { name: value.name, message: scrub(value.message) };
   }
-  if (depth > 3 || value === null || typeof value !== "object") return value;
+  if (depth > 3 || value === null || typeof value !== "object") return typeof value === "string" ? scrub(value) : value;
   return Object.fromEntries(
     Object.entries(value).map(([key, entry]) => [key, SENSITIVE.test(key) ? "[redacted]" : redact(entry, depth + 1)]),
   );

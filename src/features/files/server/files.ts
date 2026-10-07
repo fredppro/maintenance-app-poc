@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { logEvent } from "@/lib/logger";
 import type { TenantDb } from "@/lib/prisma";
 import { getStorage } from "@/lib/storage";
 
@@ -90,6 +91,6 @@ export async function deleteStoredFile(db: TenantDb, id: string, organizationId:
   try {
     await getStorage().delete(file.key);
   } catch (error) {
-    console.error("Failed to delete stored object", file.key, error);
+    logEvent("error", "file.object_delete_failed", { fileId: id, error });
   }
 }

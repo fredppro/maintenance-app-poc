@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
-import { validateE2EDatabaseUrl } from "../tests/e2e/test-database";
+import { validateE2EDatabaseUrl } from "../../tests/e2e/test-database";
 
 const databaseUrl = validateE2EDatabaseUrl(
   process.env.E2E_DATABASE_URL,
@@ -8,9 +8,9 @@ const databaseUrl = validateE2EDatabaseUrl(
 );
 process.env.DATABASE_URL = databaseUrl;
 
-const { default: prisma } = await import("../src/lib/prisma");
+const { default: prisma } = await import("../../src/lib/prisma");
 const { LEGACY_ORGANIZATION_SLUG } =
-  await import("../src/lib/tenant-constants");
+  await import("../../src/lib/tenant-constants");
 
 const suffix = randomUUID().replaceAll("-", "").slice(0, 12);
 const ownerEmail = `legacy-owner-${suffix}@example.test`;

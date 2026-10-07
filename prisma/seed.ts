@@ -7,7 +7,18 @@ import { seedMaintenanceTasks } from "./seeds/maintenance-task";
 import { seedWorkers } from "./seeds/worker";
 import { seedVendors } from "./seeds/vendor";
 
+function assertLocalDatabase() {
+  const host = new URL(process.env.DATABASE_URL ?? "postgresql://unset@unset/db").hostname;
+  if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(host) && process.env.ALLOW_REMOTE_SEED !== "true") {
+    throw new Error(
+      "Seed data is synthetic and must not be loaded into a shared or production database. " +
+        "Set ALLOW_REMOTE_SEED=true to override.",
+    );
+  }
+}
+
 async function main() {
+  assertLocalDatabase();
   console.log("🌱 Starting database seeding...");
   
   try {

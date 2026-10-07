@@ -13,6 +13,7 @@ import {
 import { FieldError } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/features/auth/client";
+import { useRouter } from "@/i18n/routing";
 
 export function AcceptInvitation({
   invitationId,
@@ -26,6 +27,7 @@ export function AcceptInvitation({
   locale: string;
 }) {
   const t = useTranslations("Invitation");
+  const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +46,8 @@ export function AcceptInvitation({
       });
       if (activeResult.error) throw new Error(activeResult.error.message);
 
-      window.location.assign(`/${locale}/onboarding`);
+      router.replace("/onboarding", { locale });
+      router.refresh();
     } catch {
       setError(t("acceptError"));
       setPending(false);

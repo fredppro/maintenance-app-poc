@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { logEvent } from "@/lib/logger";
 import { Prisma } from "../../prisma/generated/prisma/client";
 
 type AuditEvent = {
@@ -18,6 +19,6 @@ export async function recordAuditEvent(event: AuditEvent) {
   try {
     await prisma.organizationAuditEvent.create({ data: event });
   } catch (error) {
-    console.error("audit.write_failed", { action: event.action, error });
+    logEvent("error", "audit.write_failed", { action: event.action, error });
   }
 }

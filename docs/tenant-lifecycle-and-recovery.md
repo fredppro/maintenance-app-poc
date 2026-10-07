@@ -17,13 +17,13 @@ Each organization has a `tenant_settings` row (`status`, `isolationTier`). A mis
 Operator commands (owner database connection, `MIGRATION_DATABASE_URL`):
 
 ```sh
-pnpm tenant:admin suspend <orgId> "reason"
-pnpm tenant:admin reactivate <orgId>
-pnpm tenant:admin purge-due     # permanently deletes organizations past the grace period, with their stored files
-pnpm trash:purge [days]         # permanently deletes soft-deleted equipment/tasks/workers older than 30 days
+pnpm ops:tenant suspend <orgId> "reason"
+pnpm ops:tenant reactivate <orgId>
+pnpm ops:tenant purge-due     # permanently deletes organizations past the grace period, with their stored files
+pnpm ops:purge-trash [days]         # permanently deletes soft-deleted equipment/tasks/workers older than 30 days
 ```
 
-Schedule `purge-due` and `trash:purge` daily from your job runner. Owners can also transfer ownership (`transferOrganizationOwnership`).
+Schedule `purge-due` and `ops:purge-trash` daily from your job runner. Owners can also transfer ownership (`transferOrganizationOwnership`).
 
 ## Soft delete
 
@@ -52,20 +52,20 @@ Targets to adopt (adjust to contract): **RPO 24 h** with logical backups alone, 
 Layers — replication is not a backup:
 
 1. **Provider PITR** (Neon history retention / managed Postgres PITR). Enable it and set retention to your RPO; this is not configurable from this repository.
-2. **Independent logical backup.** `.github/workflows/backup.yml` runs `scripts/backup/backup-db.sh` daily and copies the dump to `BACKUP_S3_URI`. Use a bucket in a different account/provider whose write-only credentials the application and database cannot delete (enable object lock/versioning). The workflow skips itself until the `BACKUP_*` secrets exist.
+2. **Independent logical backup.** `.github/workflows/backup.yml` runs `scripts/db/backup/backup-db.sh` daily and copies the dump to `BACKUP_S3_URI`. Use a bucket in a different account/provider whose write-only credentials the application and database cannot delete (enable object lock/versioning). The workflow skips itself until the `BACKUP_*` secrets exist.
 3. **Object storage.** Uploaded files and exports live in the S3 bucket. Enable bucket versioning and cross-region replication or a scheduled copy; the database dump alone does not contain files.
 
 Restore test (do this before go-live and on a schedule):
 
 ```sh
-BACKUP_DATABASE_URL=<unpooled owner url> sh scripts/backup/backup-db.sh
-sh scripts/backup/restore-test.sh backups/<file>.dump   # restores into a scratch DB, verifies, drops it
+BACKUP_DATABASE_URL=<unpooled owner url> sh scripts/db/backup/backup-db.sh
+sh scripts/db/backup/restore-test.sh backups/<file>.dump   # restores into a scratch DB, verifies, drops it
 ```
 
 Recovery procedure:
 
 1. Provision a new database; restore the latest dump (`pg_restore --no-owner`) or use PITR to the instant before the incident.
-2. Run `pnpm prisma:migrate:deploy` with the owner URL, and create the restricted runtime role (`docker/db-init/01-app-role.sh` shows the grants).
+2. Run `pnpm db:migrate:deploy` with the owner URL, and create the restricted runtime role (`docker/db-init/01-app-role.sh` shows the grants).
 3. Point `DATABASE_URL` / `MIGRATION_DATABASE_URL` at it, check `/api/health`, then smoke test.
 4. Restore the file bucket if lost.
 

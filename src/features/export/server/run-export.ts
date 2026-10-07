@@ -1,4 +1,5 @@
 import type { TenantDb } from "@/lib/prisma";
+import { logEvent } from "@/lib/logger";
 import { getStorage } from "@/lib/storage";
 import { buildTenantExport } from "./build-export";
 
@@ -30,7 +31,7 @@ export async function runTenantExport(db: TenantDb, organizationId: string, expo
       },
     });
   } catch (error) {
-    console.error("export.failed", { organizationId, exportId, error });
+    logEvent("error", "export.failed", { organizationId, exportId, error });
     await db.tenantExport.updateMany({
       where: { id: exportId, organizationId },
       data: { status: "FAILED", error: "Export failed", completedAt: new Date() },

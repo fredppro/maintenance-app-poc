@@ -1,4 +1,4 @@
-import { LEGACY_ORGANIZATION_SLUG } from "../src/lib/tenant-constants";
+import { LEGACY_ORGANIZATION_SLUG } from "../../src/lib/tenant-constants";
 
 export type LegacyOwnershipConfig = {
   ownerEmail: string;

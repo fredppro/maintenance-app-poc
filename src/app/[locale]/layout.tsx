@@ -59,7 +59,8 @@ export default async function RootLayout({
             {children}
           </NextIntlClientProvider>
           <Toaster />
-          {process.env.NODE_ENV === "production" && <Analytics />}
+          {process.env.NODE_ENV === "production" &&
+            process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "true" && <Analytics />}
         </ThemeProvider>
       </body>
     </html>
