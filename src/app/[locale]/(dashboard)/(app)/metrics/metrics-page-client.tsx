@@ -19,6 +19,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Progress } from "@/components/ui/progress";
+import { summarizeMetrics } from "@/features/scheduler/utils/insights";
 import { useSchedulerStore } from "@/features/scheduler/store/scheduler-provider";
 
 function Bars({ items }: { items: { label: string; value: number }[] }) {
@@ -43,47 +44,24 @@ export function MetricsPageClient() {
   const entries = useSchedulerStore((s) => s.entries);
   const equipment = useSchedulerStore((s) => s.equipment);
 
-  const m = useMemo(() => {
-    const now = Date.now();
-    const completed = entries.filter((e) => e.status === "completed").length;
-    const open = entries.filter((e) => e.status !== "completed");
-    const count = (f: (e: (typeof entries)[number]) => boolean) =>
-      entries.filter(f).length;
-    const perEquipment = equipment
-      .map((eq) => ({
-        label: eq.name,
-        value: entries.filter((e) => e.equipmentId === eq.id).length,
-      }))
-      .filter((i) => i.value > 0)
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 5);
-    return {
-      total: entries.length,
-      completion: entries.length
-        ? Math.round((completed / entries.length) * 100)
-        : 0,
-      overdue: open.filter((e) => +new Date(e.endTime) < now).length,
-      upcoming: open.filter((e) => +new Date(e.endTime) >= now).length,
-      types: [
-        { label: t("preventive"), value: count((e) => e.type === "PREVENTIVE") },
-        { label: t("corrective"), value: count((e) => e.type === "CORRECTIVE") },
-        { label: t("inspection"), value: count((e) => e.type === "INSPECTION") },
-      ],
-      statuses: [
-        { label: t("scheduled"), value: count((e) => e.status === "scheduled") },
-        {
-          label: t("inProgress"),
-          value: count((e) => e.status === "in-progress"),
-        },
-        { label: t("completed"), value: completed },
-      ],
-      perEquipment,
-    };
-  }, [entries, equipment, t]);
+  const m = useMemo(
+    () => summarizeMetrics(entries, equipment, Date.now()),
+    [entries, equipment],
+  );
+  const types = [
+    { label: t("preventive"), value: m.byType.preventive },
+    { label: t("corrective"), value: m.byType.corrective },
+    { label: t("inspection"), value: m.byType.inspection },
+  ];
+  const statuses = [
+    { label: t("scheduled"), value: m.byStatus.scheduled },
+    { label: t("inProgress"), value: m.byStatus.inProgress },
+    { label: t("completed"), value: m.byStatus.completed },
+  ];
 
   const kpis = [
     { label: t("total"), value: m.total },
-    { label: t("completion"), value: `${m.completion}%` },
+    { label: t("completion"), value: `${m.completionRate}%` },
     { label: t("upcoming"), value: m.upcoming },
     { label: t("overdue"), value: m.overdue },
   ];
@@ -121,7 +99,7 @@ export function MetricsPageClient() {
                 <CardTitle>{t("byType")}</CardTitle>
               </CardHeader>
               <CardContent>
-                <Bars items={m.types} />
+                <Bars items={types} />
               </CardContent>
             </Card>
             <Card>
@@ -129,16 +107,16 @@ export function MetricsPageClient() {
                 <CardTitle>{t("byStatus")}</CardTitle>
               </CardHeader>
               <CardContent>
-                <Bars items={m.statuses} />
+                <Bars items={statuses} />
               </CardContent>
             </Card>
-            {m.perEquipment.length > 0 && (
+            {m.topEquipment.length > 0 && (
               <Card className="md:col-span-2">
                 <CardHeader>
                   <CardTitle>{t("topEquipment")}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Bars items={m.perEquipment} />
+                  <Bars items={m.topEquipment} />
                 </CardContent>
               </Card>
             )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import LanguageSwitcher from "@/components/language-switcher";
@@ -24,7 +24,6 @@ import {
   type TenantContextOption,
 } from "@/features/organization/ui/tenant-context-selector";
 import { usePathname, useRouter } from "@/i18n/routing";
-import { useSchedulerStore } from "@/features/scheduler/store/scheduler-provider";
 import { AppSidebar, type AppUser } from "./app-sidebar";
 import { findNavItem } from "./nav";
 
@@ -48,12 +47,6 @@ export function AppShell({
   const pathname = usePathname();
   const current = findNavItem(pathname);
   const selected = tenantContexts.find((c) => c.siteId === selectedSiteId);
-
-  // Entry forms ask for the workers page when no workers exist yet.
-  const workersViewRequest = useSchedulerStore((s) => s.workersViewRequest);
-  useEffect(() => {
-    if (workersViewRequest > 0) router.push("/workers");
-  }, [workersViewRequest, router]);
 
   async function signOut() {
     const { error } = await authClient.signOut();

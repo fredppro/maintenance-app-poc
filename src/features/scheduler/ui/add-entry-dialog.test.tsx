@@ -11,8 +11,13 @@ import { toast } from "sonner";
 import type { Equipment, MaintenanceEntry, Worker } from "../types";
 import { AddEntryDialog } from "./add-entry-dialog";
 
-const { createTaskMock } = vi.hoisted(() => ({
+const { createTaskMock, pushMock } = vi.hoisted(() => ({
   createTaskMock: vi.fn(),
+  pushMock: vi.fn(),
+}));
+
+vi.mock("@/i18n/routing", () => ({
+  useRouter: () => ({ push: pushMock }),
 }));
 
 vi.mock("../server/actions", () => ({
@@ -82,6 +87,17 @@ describe("AddEntryDialog", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it("offers an Add worker action that closes the dialog and opens the workers page", async () => {
+    const user = userEvent.setup();
+    const { onOpenChange } = renderDialog();
+
+    await user.click(screen.getByRole("combobox", { name: /worker/i }));
+    await user.click(await screen.findByRole("button", { name: /add worker/i }));
+
+    expect(pushMock).toHaveBeenCalledWith("/workers");
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it("shows required-field errors and does not create an incomplete task", async () => {

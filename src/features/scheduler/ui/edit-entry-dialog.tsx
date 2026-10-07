@@ -38,6 +38,7 @@ import { getValidLocale } from "src/i18n/locale";
 import { deleteTask, updateTask } from "../server/actions";
 import { MaintenanceEntry, UpdateEntryPayload } from "../types";
 import { useSchedulerStore } from "../store/scheduler-provider";
+import { useRouter } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { areIntervalsOverlapping } from "date-fns";
@@ -129,9 +130,7 @@ export function EditEntryDialog({
 }: EditEntryDialogProps) {
   const equipment = useSchedulerStore((state) => state.equipment);
   const workers = useSchedulerStore((state) => state.workers);
-  const requestWorkersView = useSchedulerStore(
-    (state) => state.requestWorkersView,
-  );
+  const router = useRouter();
   const entries = useSchedulerStore((state) => state.entries);
   const selectedEntry = useSchedulerStore((state) => state.selectedEntry);
   const setEntries = useSchedulerStore((state) => state.setEntries);
@@ -616,7 +615,7 @@ export function EditEntryDialog({
                 label: t("addWorker"),
                 onClick: () => {
                   onOpenChange(false);
-                  requestWorkersView();
+                  router.push("/workers");
                 },
               }}
               />

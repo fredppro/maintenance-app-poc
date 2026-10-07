@@ -302,4 +302,23 @@ describe("scheduler store", () => {
       expect(store.getState().isLoading).toBe(false);
     });
   });
+
+  describe("sections", () => {
+    const section = (id: string, name: string) => ({ id, name, siteId: "site-1" }) as never;
+
+    it("adds sections alphabetically and ignores duplicates", () => {
+      const store = createSchedulerStore();
+      store.getState().addSection(section("b", "Warehouse"));
+      store.getState().addSection(section("a", "Dock"));
+      store.getState().addSection(section("a", "Dock"));
+      expect(store.getState().sections.map((s) => s.name)).toEqual(["Dock", "Warehouse"]);
+    });
+
+    it("replaces all sections with setSections", () => {
+      const store = createSchedulerStore();
+      store.getState().addSection(section("a", "Dock"));
+      store.getState().setSections([section("c", "Yard")]);
+      expect(store.getState().sections.map((s) => s.id)).toEqual(["c"]);
+    });
+  });
 });

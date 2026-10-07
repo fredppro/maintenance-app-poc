@@ -27,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { summarizeEquipmentMaintenance } from "@/features/scheduler/utils/insights";
 import { useSchedulerStore } from "@/features/scheduler/store/scheduler-provider";
 import type { Equipment } from "@/features/scheduler/types";
 import { EquipmentDialog } from "@/features/scheduler/ui/equipment-dialog";
@@ -59,22 +60,11 @@ export function EquipmentPageClient() {
           e.name.toLowerCase().includes(q) ||
           e.category?.toLowerCase().includes(q),
       )
-      .map((e) => {
-        const own = entries.filter((en) => en.equipmentId === e.id);
-        const upcoming = own
-          .filter((en) => en.status !== "completed" && +new Date(en.endTime) >= now)
-          .sort((a, b) => +new Date(a.startTime) - +new Date(b.startTime));
-        const last = own
-          .filter((en) => en.status === "completed")
-          .sort((a, b) => +new Date(b.endTime) - +new Date(a.endTime))[0];
-        return {
-          equipment: e,
-          section: sections.find((s) => s.id === e.sectionId)?.name,
-          upcomingCount: upcoming.length,
-          next: upcoming[0]?.startTime,
-          last: last?.endTime,
-        };
-      });
+      .map((e) => ({
+        equipment: e,
+        section: sections.find((s) => s.id === e.sectionId)?.name,
+        ...summarizeEquipmentMaintenance(e.id, entries, now),
+      }));
   }, [equipment, entries, sections, query]);
 
   const fmt = (d?: Date | string) =>

@@ -17,6 +17,12 @@ const { deleteTaskMock, updateTaskMock } = vi.hoisted(() => ({
   updateTaskMock: vi.fn(),
 }));
 
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
+
+vi.mock("@/i18n/routing", () => ({
+  useRouter: () => ({ push: pushMock }),
+}));
+
 vi.mock("../server/actions", () => ({
   deleteTask: deleteTaskMock,
   updateTask: updateTaskMock,

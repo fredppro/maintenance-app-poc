@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getValidLocale } from "src/i18n/locale";
 import { createTask } from "../server/actions";
 import { useSchedulerStore } from "../store/scheduler-provider";
+import { useRouter } from "@/i18n/routing";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addHours, areIntervalsOverlapping } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
@@ -60,9 +61,7 @@ export function AddEntryDialog({
   const addEntry = useSchedulerStore((state) => state.addEntry);
   const equipment = useSchedulerStore((state) => state.equipment);
   const workers = useSchedulerStore((state) => state.workers);
-  const requestWorkersView = useSchedulerStore(
-    (state) => state.requestWorkersView,
-  );
+  const router = useRouter();
   const entries = useSchedulerStore((state) => state.entries);
 
   const locale = getValidLocale(useLocale());
@@ -270,7 +269,7 @@ export function AddEntryDialog({
                 label: t("addWorker"),
                 onClick: () => {
                   onOpenChange(false);
-                  requestWorkersView();
+                  router.push("/workers");
                 },
               }}
             />

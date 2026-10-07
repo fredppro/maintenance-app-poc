@@ -6,6 +6,11 @@ import {
   addEquipment,
   updateEquipment,
   relocateEquipment,
+  getEquipmentRelocations,
+  getSections,
+  createSection,
+  renameSection,
+  deleteSection,
   deleteEquipment,
   getTasks,
   createTask,
@@ -15,6 +20,7 @@ import {
 } from "./actions";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
 import { getTenantContext } from "@/lib/tenant-context";
+import { deleteStoredFile } from "@/features/files/server/files";
 
 vi.mock("@/lib/tenant-context", () => ({
   getTenantContext: vi.fn().mockResolvedValue({
@@ -24,6 +30,10 @@ vi.mock("@/lib/tenant-context", () => ({
     siteName: "Plant",
     role: "owner",
   }),
+}));
+
+vi.mock("@/features/files/server/files", () => ({
+  deleteStoredFile: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -204,6 +214,115 @@ describe("scheduler server actions", () => {
       } finally {
         deleteMock.mockRestore();
       }
+    });
+  });
+
+  describe("equipment files and sections", () => {
+    beforeEach(() => vi.mocked(deleteStoredFile).mockClear());
+
+    it("rejects an image that belongs to another organization", async () => {
+      vi.spyOn(prisma.storedFile, "findFirst").mockResolvedValue(null);
+      const create = vi.spyOn(prisma.equipment, "create");
+      await expect(addEquipment({ name: "Press", imageFileId: "foreign" })).rejects.toThrow("File not found");
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it("rejects a section from another site when adding equipment", async () => {
+      vi.spyOn(prisma.section, "findFirst").mockResolvedValue(null);
+      const create = vi.spyOn(prisma.equipment, "create");
+      await expect(addEquipment({ name: "Press", sectionId: "elsewhere" })).rejects.toThrow("Section not found");
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it("records the initial placement in the location history", async () => {
+      vi.spyOn(prisma.section, "findFirst").mockResolvedValue({ id: "sec-1", name: "Dock" } as never);
+      const create = vi.spyOn(prisma.equipment, "create").mockResolvedValue({ id: "eq-9" } as never);
+      await addEquipment({ name: "Press", sectionId: "sec-1" });
+      expect(create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          sectionId: "sec-1",
+          siteId: "site-1",
+          relocations: {
+            create: expect.objectContaining({ toSiteName: "Plant", toSectionName: "Dock", movedById: "user-1" }),
+          },
+        }),
+      });
+    });
+
+    it("deletes the previous image when it is replaced", async () => {
+      vi.spyOn(prisma.storedFile, "findFirst").mockResolvedValue({ id: "new" } as never);
+      vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue({ imageFileId: "old" } as never);
+      vi.spyOn(prisma.equipment, "update").mockResolvedValue({ id: "eq-1" } as never);
+      await updateEquipment("eq-1", { imageFileId: "new" });
+      expect(deleteStoredFile).toHaveBeenCalledWith("old", "org-1");
+    });
+
+    it("keeps the image when other fields change or the same image is resubmitted", async () => {
+      vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue({ imageFileId: "old" } as never);
+      vi.spyOn(prisma.equipment, "update").mockResolvedValue({ id: "eq-1" } as never);
+      await updateEquipment("eq-1", { name: "Renamed" });
+      vi.spyOn(prisma.storedFile, "findFirst").mockResolvedValue({ id: "old" } as never);
+      await updateEquipment("eq-1", { imageFileId: "old" });
+      expect(deleteStoredFile).not.toHaveBeenCalled();
+    });
+
+    it("refuses to update equipment outside the active site", async () => {
+      vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue(null);
+      const update = vi.spyOn(prisma.equipment, "update");
+      await expect(updateEquipment("eq-x", { name: "Hi" })).rejects.toThrow("Equipment not found");
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    it("deletes the image file together with the equipment", async () => {
+      vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue({ imageFileId: "img" } as never);
+      vi.spyOn(prisma.equipment, "delete").mockResolvedValue({} as never);
+      await deleteEquipment("eq-1");
+      expect(deleteStoredFile).toHaveBeenCalledWith("img", "org-1");
+    });
+
+    it("scopes relocation history to the active site and organization", async () => {
+      const find = vi.spyOn(prisma.equipmentRelocation, "findMany").mockResolvedValue([]);
+      await getEquipmentRelocations("eq-1");
+      expect(find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { equipmentId: "eq-1", organizationId: "org-1", equipment: { siteId: "site-1" } },
+          orderBy: { movedAt: "desc" },
+        }),
+      );
+    });
+
+    it("lists sections across the organization alphabetically", async () => {
+      const find = vi.spyOn(prisma.section, "findMany").mockResolvedValue([]);
+      await getSections();
+      expect(find).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { organizationId: "org-1" }, orderBy: { name: "asc" } }),
+      );
+    });
+
+    it("creates a section only in a site of the active organization", async () => {
+      vi.spyOn(prisma.site, "findFirst").mockResolvedValue(null);
+      const upsert = vi.spyOn(prisma.section, "upsert");
+      await expect(createSection("foreign-site", "Dock")).rejects.toThrow("Site not found");
+      expect(upsert).not.toHaveBeenCalled();
+    });
+
+    it("creates sections idempotently by trimmed name", async () => {
+      vi.spyOn(prisma.site, "findFirst").mockResolvedValue({ id: "site-1" } as never);
+      const upsert = vi.spyOn(prisma.section, "upsert").mockResolvedValue({ id: "s", name: "Dock", siteId: "site-1" } as never);
+      await createSection("site-1", "  Dock ");
+      expect(upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { siteId_name: { siteId: "site-1", name: "Dock" } }, update: {} }),
+      );
+    });
+
+    it("rejects blank section names and requires site management to rename or delete", async () => {
+      await expect(createSection("site-1", "   ")).rejects.toThrow();
+      vi.spyOn(prisma.section, "update").mockResolvedValue({ id: "s" } as never);
+      vi.spyOn(prisma.section, "delete").mockResolvedValue({} as never);
+      await renameSection("s", "New");
+      await deleteSection("s");
+      expect(getTenantContext).toHaveBeenCalledWith("manageSites");
+      expect(prisma.section.delete).toHaveBeenCalledWith({ where: { id: "s", organizationId: "org-1" } });
     });
   });
 

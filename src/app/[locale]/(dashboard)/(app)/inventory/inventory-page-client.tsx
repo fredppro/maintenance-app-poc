@@ -25,17 +25,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useSchedulerStore } from "@/features/scheduler/store/scheduler-provider";
+import { summarizeMaterials } from "@/features/scheduler/utils/insights";
 import { getCurrencyCode } from "@/features/scheduler/utils/currency";
-
-interface Row {
-  key: string;
-  name: string;
-  reference?: string;
-  unit: string;
-  quantity: number;
-  cost: number;
-  taskIds: Set<string>;
-}
 
 export function InventoryPageClient() {
   const t = useTranslations("InventoryPage");
@@ -44,28 +35,7 @@ export function InventoryPageClient() {
   const entries = useSchedulerStore((s) => s.entries);
   const [query, setQuery] = useState("");
 
-  const rows = useMemo(() => {
-    const map = new Map<string, Row>();
-    for (const entry of entries) {
-      for (const m of entry.materials ?? []) {
-        const key = `${m.name.toLowerCase()}|${m.reference ?? ""}|${m.unit}`;
-        const row = map.get(key) ?? {
-          key,
-          name: m.name,
-          reference: m.reference ?? undefined,
-          unit: m.unit,
-          quantity: 0,
-          cost: 0,
-          taskIds: new Set<string>(),
-        };
-        row.quantity += Number(m.quantity);
-        row.cost += Number(m.quantity) * Number(m.price ?? 0);
-        row.taskIds.add(entry.id);
-        map.set(key, row);
-      }
-    }
-    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [entries]);
+  const rows = useMemo(() => summarizeMaterials(entries), [entries]);
 
   const q = query.trim().toLowerCase();
   const visible = rows.filter(
@@ -148,7 +118,7 @@ export function InventoryPageClient() {
                       </span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {r.taskIds.size}
+                      {r.taskCount}
                     </TableCell>
                     <TableCell className="hidden text-right tabular-nums sm:table-cell">
                       {r.cost > 0 ? money.format(r.cost) : t("none")}
