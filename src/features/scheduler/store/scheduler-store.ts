@@ -8,10 +8,17 @@ import {
   Worker,
 } from "@/features/scheduler/types";
 
+export interface SiteOption {
+  id: string;
+  name: string;
+  current: boolean;
+}
+
 export interface SchedulerState {
   equipment: Equipment[];
   entries: MaintenanceEntry[];
   workers: Worker[];
+  sites: SiteOption[];
   viewMode: ViewMode;
   currentDate: Date;
   selectedEntry: MaintenanceEntry | null;
@@ -50,6 +57,7 @@ export type SchedulerInitialState = Partial<
     | "equipment"
     | "entries"
     | "workers"
+    | "sites"
     | "viewMode"
     | "currentDate"
     | "selectedEntry"
@@ -63,6 +71,7 @@ const defaultSchedulerState = (): Pick<
   | "equipment"
   | "entries"
   | "workers"
+  | "sites"
   | "viewMode"
   | "currentDate"
   | "selectedEntry"
@@ -72,6 +81,7 @@ const defaultSchedulerState = (): Pick<
   equipment: [],
   entries: [],
   workers: [],
+  sites: [],
   viewMode: "week",
   currentDate: new Date(),
   selectedEntry: null,

@@ -10,6 +10,15 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { MailPlus, UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -260,7 +269,26 @@ export function MemberAdministration({
         </CardHeader>
         <CardContent>
           {invitations.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("noInvitations")}</p>
+            <Empty className="border-0 p-4">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <MailPlus />
+                </EmptyMedia>
+                <EmptyTitle>{t("noInvitations")}</EmptyTitle>
+                <EmptyDescription>{t("noInvitationsHint")}</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById("member-email")?.focus()}
+                >
+                  <UserPlus data-icon="inline-start" />
+                  {t("inviteAction")}
+                </Button>
+              </EmptyContent>
+            </Empty>
           ) : (
             <ul className="flex flex-col divide-y">
               {invitations.map((invitation) => (

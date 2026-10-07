@@ -63,7 +63,20 @@
     "failedRemoveEquipment": "Não foi possível remover o equipamento",
     "failedMoveTask": "Não foi possível mover a tarefa",
     "task": "tarefa",
-    "tasks": "tarefas"
+    "tasks": "tarefas",
+    "equipmentImage": "Foto",
+    "uploadImage": "Carregar foto",
+    "replaceImage": "Substituir",
+    "removeImage": "Remover foto",
+    "noImageTitle": "Sem foto",
+    "imageHint": "Largue uma imagem aqui ou procure. PNG, JPEG ou WebP.",
+    "imageInvalid": "Escolha uma imagem PNG, JPEG ou WebP com menos de 10 MB.",
+    "site": "Local",
+    "keepSite": "Manter no local atual",
+    "moveSiteHint": "Mover este equipamento e as suas tarefas para outro local.",
+    "saveAndMove": "Guardar e mover",
+    "equipmentMoved": "Equipamento movido para {site}",
+    "equipmentDialogDescription": "Detalhes do equipamento"
   },
   "Toolbar": {
     "previous": "Período anterior",
@@ -365,7 +378,9 @@
     "confirmRevoke": "Revogar o convite enviado a {email}?",
     "remove": "Remover",
     "revoke": "Revogar convite",
-    "expires": "Expira em {date}"
+    "expires": "Expira em {date}",
+    "noInvitationsHint": "Convide um colega para colaborar nesta organização.",
+    "inviteAction": "Convidar alguém"
   },
   "OrganizationSetup": {
     "title": "Configure o seu espaço",
@@ -374,5 +389,13 @@
     "siteName": "Nome do primeiro local",
     "submit": "Criar espaço",
     "error": "Não foi possível configurar o espaço. Tente novamente."
+  },
+  "Errors": {
+    "notFoundTitle": "Página não encontrada",
+    "notFoundDescription": "A página que procura não existe ou foi movida.",
+    "backToDashboard": "Voltar ao painel",
+    "errorTitle": "Algo correu mal",
+    "errorDescription": "Ocorreu um erro inesperado. Tente novamente ou volte ao painel.",
+    "retry": "Tentar novamente"
   }
 }

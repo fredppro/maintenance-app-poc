@@ -13,6 +13,7 @@ model Equipment {
   id             String            @id @default(cuid())
   name           String
   category       String?
+  image          String?
   organizationId String
   siteId         String
   organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)

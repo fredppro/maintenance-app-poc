@@ -21,7 +21,7 @@ export async function getEquipment() {
   });
 }
 
-export async function addEquipment(data: { name: string; category?: string }) {
+export async function addEquipment(data: { name: string; category?: string; image?: string | null }) {
   const { organizationId, siteId } = await getTenantContext("manageMaintenance");
   const input = equipmentSchema.parse(data);
   const equipment = await prisma.equipment.create({
@@ -33,7 +33,7 @@ export async function addEquipment(data: { name: string; category?: string }) {
 
 export async function updateEquipment(
   id: string,
-  data: { name: string; category?: string },
+  data: { name: string; category?: string; image?: string | null },
 ) {
   const { organizationId, siteId } = await getTenantContext("manageMaintenance");
   const equipmentId = equipmentIdSchema.parse(id);
@@ -41,6 +41,28 @@ export async function updateEquipment(
   const equipment = await prisma.equipment.update({
     where: { id: equipmentId, organizationId, siteId },
     data: input,
+  });
+  revalidatePath("/");
+  return equipment;
+}
+
+export async function moveEquipment(id: string, targetSiteId: string) {
+  const { organizationId, siteId } = await getTenantContext("manageMaintenance");
+  const equipmentId = equipmentIdSchema.parse(id);
+  const targetId = equipmentIdSchema.parse(targetSiteId);
+
+  const targetSite = await prisma.site.findFirst({
+    where: { id: targetId, organizationId },
+    select: { id: true },
+  });
+  if (!targetSite) {
+    throw new Error("Target site not found in the active organization");
+  }
+
+  // Tasks follow the equipment because they are scoped through it.
+  const equipment = await prisma.equipment.update({
+    where: { id: equipmentId, organizationId, siteId },
+    data: { siteId: targetSite.id },
   });
   revalidatePath("/");
   return equipment;

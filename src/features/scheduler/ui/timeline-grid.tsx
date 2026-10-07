@@ -72,6 +72,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AddEntryDialog } from "./add-entry-dialog";
+import { EquipmentDialog } from "./equipment-dialog";
 import { MaintenanceEntryBlock } from "./maintenance-entry-block";
 
 export function TimelineGrid() {
@@ -110,14 +111,9 @@ export function TimelineGrid() {
   } | null>(null);
 
   const [addEquipDialogOpen, setAddEquipDialogOpen] = useState(false);
-  const [editingEquipment, setEditingEquipment] = useState<{
-    id: string;
-    name: string;
-    category: string | null;
-  } | null>(null);
-  const [newEquipName, setNewEquipName] = useState("");
-  const [newEquipCategory, setNewEquipCategory] = useState("");
-  const [isSavingEquipment, setIsSavingEquipment] = useState(false);
+  const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(
+    null,
+  );
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -333,49 +329,8 @@ export function TimelineGrid() {
     }
   };
 
-  const handleAddEquipSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newEquipName.trim() || isSavingEquipment) return;
-
-    setIsSavingEquipment(true);
-    try {
-      if (editingEquipment) {
-        const updatedEquipment = await dbUpdateEquipment(
-          editingEquipment.id,
-          {
-            name: newEquipName.trim(),
-            category: newEquipCategory.trim() || undefined,
-          },
-        );
-        updateEquipment(updatedEquipment);
-        toast.success(t("equipmentUpdated"));
-      } else {
-        const newEquipment = await dbAddEquipment({
-          name: newEquipName.trim(),
-          category: newEquipCategory.trim() || undefined,
-        });
-        addEquipment(newEquipment);
-        toast.success(t("equipmentAdded"));
-      }
-      setNewEquipName("");
-      setNewEquipCategory("");
-      setEditingEquipment(null);
-      setAddEquipDialogOpen(false);
-    } catch {
-      toast.error(
-        editingEquipment
-          ? t("failedUpdateEquipment")
-          : t("failedAddEquipment"),
-      );
-    } finally {
-      setIsSavingEquipment(false);
-    }
-  };
-
   const handleEditEquip = (equip: Equipment) => {
     setEditingEquipment(equip);
-    setNewEquipName(equip.name);
-    setNewEquipCategory(equip.category || "");
     setAddEquipDialogOpen(true);
   };
 
@@ -460,92 +415,24 @@ export function TimelineGrid() {
                 {t("equipment")}
               </span>
 
-              <Dialog
-                open={addEquipDialogOpen}
-                onOpenChange={(open) => {
-                  setAddEquipDialogOpen(open);
-                  if (!open) {
-                    setEditingEquipment(null);
-                    setNewEquipName("");
-                    setNewEquipCategory("");
-                  }
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8"
+                aria-label={t("addEquipment")}
+                onClick={() => {
+                  setEditingEquipment(null);
+                  setAddEquipDialogOpen(true);
                 }}
               >
-                <DialogTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="size-8"
-                    aria-label={t("addEquipment")}
-                    onClick={() => {
-                      setEditingEquipment(null);
-                      setNewEquipName("");
-                      setNewEquipCategory("");
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>
-                      {editingEquipment
-                        ? t("editEquipment")
-                        : t("addEquipment")}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleAddEquipSubmit} className="space-y-4">
-                    <FieldGroup>
-                      <Field>
-                        <FieldLabel>{t("equipmentName")}</FieldLabel>
-                        <Input
-                          value={newEquipName}
-                          onChange={(e) => setNewEquipName(e.target.value)}
-                          placeholder={t("equipmentNamePlaceholder")}
-                          required
-                        />
-                      </Field>
-                      <Field>
-                        <FieldLabel>{t("category")}</FieldLabel>
-                        <Input
-                          value={newEquipCategory}
-                          onChange={(e) => setNewEquipCategory(e.target.value)}
-                          placeholder={t("categoryPlaceholder")}
-                          list="timeline-categories"
-                        />
-                        <datalist id="timeline-categories">
-                          {equipCategories.map((cat) => (
-                            <option key={cat} value={cat} />
-                          ))}
-                        </datalist>
-                      </Field>
-                    </FieldGroup>
-                    <DialogFooter>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={isSavingEquipment}
-                        onClick={() => setAddEquipDialogOpen(false)}
-                      >
-                        {tCommon("cancel")}
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={!newEquipName.trim() || isSavingEquipment}
-                        aria-busy={isSavingEquipment}
-                      >
-                        {isSavingEquipment && (
-                          <Spinner
-                            data-icon="inline-start"
-                            aria-label={t("saving")}
-                          />
-                        )}
-                        {editingEquipment ? tCommon("save") : t("addEquipment")}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
+                <Plus className="h-4 w-4" />
+              </Button>
+              <EquipmentDialog
+                open={addEquipDialogOpen}
+                onOpenChange={setAddEquipDialogOpen}
+                equipment={editingEquipment}
+                categories={equipCategories}
+              />
             </div>
             <div className="flex flex-1">
               {timeSlots.map((slot, idx) => (
@@ -650,9 +537,18 @@ export function TimelineGrid() {
                     >
                       <div className="flex min-w-0 items-center gap-2">
                         <div className="relative">
-                          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                            <Box className="size-4 text-primary" />
-                          </div>
+                          {equip.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={equip.image}
+                              alt=""
+                              className="size-7 shrink-0 rounded-lg border border-border object-cover"
+                            />
+                          ) : (
+                            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                              <Box className="size-4 text-primary" />
+                            </div>
+                          )}
                           <div
                             className={cn(
                               "absolute -right-1 -top-1 size-2.5 rounded-full border-2 border-card",

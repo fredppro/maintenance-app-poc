@@ -44,6 +44,13 @@ export default async function Home({
         equipment,
         entries: tasks,
         workers,
+        sites: tenantContexts
+          .filter((c) => c.organizationId === tenant.organizationId)
+          .map((c) => ({
+            id: c.siteId,
+            name: c.siteName,
+            current: c.siteId === tenant.siteId,
+          })),
         currentDate: serverNow,
       }}
     >

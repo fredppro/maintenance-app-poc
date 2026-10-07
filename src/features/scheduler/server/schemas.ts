@@ -89,15 +89,26 @@ export const updateTaskSchema = z
 export const equipmentIdSchema = idSchema;
 export const workerIdsSchema = z.array(idSchema);
 
+// Client downsizes to a small JPEG/WebP; the cap keeps rows light without object storage.
+export const EQUIPMENT_IMAGE_MAX_LENGTH = 150_000;
+const equipmentImageSchema = z
+  .string()
+  .max(EQUIPMENT_IMAGE_MAX_LENGTH)
+  .regex(/^data:image\/(jpeg|webp|png);base64,[A-Za-z0-9+/=]+$/)
+  .nullable()
+  .optional();
+
 export const equipmentSchema = z.object({
   name: z.string().trim().min(1),
   category: z.string().trim().nullable().optional(),
+  image: equipmentImageSchema,
 });
 
 export const equipmentUpdateSchema = z
   .object({
     name: z.string().trim().min(1).optional(),
     category: z.string().trim().nullable().optional(),
+    image: equipmentImageSchema,
   })
   .refine((equipment) => Object.keys(equipment).length > 0, {
     message: "At least one equipment field must be provided",

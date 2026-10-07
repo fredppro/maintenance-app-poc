@@ -63,7 +63,20 @@
     "failedRemoveEquipment": "Failed to remove equipment",
     "failedMoveTask": "Failed to move task",
     "task": "task",
-    "tasks": "tasks"
+    "tasks": "tasks",
+    "equipmentImage": "Photo",
+    "uploadImage": "Upload photo",
+    "replaceImage": "Replace",
+    "removeImage": "Remove photo",
+    "noImageTitle": "No photo yet",
+    "imageHint": "Drop an image here or browse. PNG, JPEG or WebP.",
+    "imageInvalid": "Choose a PNG, JPEG or WebP image under 10 MB.",
+    "site": "Site",
+    "keepSite": "Keep in current site",
+    "moveSiteHint": "Move this equipment and its tasks to another site.",
+    "saveAndMove": "Save and move",
+    "equipmentMoved": "Equipment moved to {site}",
+    "equipmentDialogDescription": "Equipment details"
   },
   "Toolbar": {
     "previous": "Previous period",
@@ -365,7 +378,9 @@
     "confirmRevoke": "Revoke the invitation sent to {email}?",
     "remove": "Remove",
     "revoke": "Revoke invitation",
-    "expires": "Expires {date}"
+    "expires": "Expires {date}",
+    "noInvitationsHint": "Invite a colleague to collaborate on this organization.",
+    "inviteAction": "Invite someone"
   },
   "OrganizationSetup": {
     "title": "Set up your workspace",
@@ -374,5 +389,13 @@
     "siteName": "First site name",
     "submit": "Create workspace",
     "error": "Could not set up the workspace. Please try again."
+  },
+  "Errors": {
+    "notFoundTitle": "Page not found",
+    "notFoundDescription": "The page you are looking for doesn't exist or has moved.",
+    "backToDashboard": "Back to dashboard",
+    "errorTitle": "Something went wrong",
+    "errorDescription": "An unexpected error occurred. Try again, or return to the dashboard.",
+    "retry": "Try again"
   }
 }
