@@ -305,6 +305,15 @@ and any provider-required TLS or pooler options. For Neon production, prefer
 its pooled endpoint when the deployment creates many short-lived connections.
 Connection limits, TLS, and pooler behavior remain provider-specific settings.
 
+**Vercel / Neon.** Vercel runs `pnpm vercel-build` automatically. It applies migrations
+(`prisma migrate deploy`, using `MIGRATION_DATABASE_URL`), then creates or updates the
+restricted runtime role named in `DATABASE_URL` (`pnpm db:provision-role`, idempotent), then
+builds. Set these Vercel variables for the build: `MIGRATION_DATABASE_URL` (Neon owner),
+`DATABASE_URL` (the runtime role and the password you choose; it is created for you),
+`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`. Run `pnpm db:verify-role` against `DATABASE_URL` to
+confirm RLS cannot be bypassed. Use a Production-only `MIGRATION_DATABASE_URL` if previews
+should not migrate your database.
+
 The committed migration history initializes the schema, including the
 historical `MaterialConsumed` creation and rename migrations. A forward
 migration adds `Material.price` and worker assignment times with

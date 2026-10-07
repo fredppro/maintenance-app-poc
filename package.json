@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "vercel-build": "prisma migrate deploy && tsx scripts/db/provision-runtime-role.ts && next build",
     "start": "next start",
     "up": "docker compose --profile app up --build",
     "down": "docker compose --profile app down",
@@ -30,6 +31,7 @@
     "db:generate": "prisma generate",
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
+    "db:provision-role": "tsx scripts/db/provision-runtime-role.ts",
     "db:migrate:status": "prisma migrate status",
     "db:migrate:e2e": "tsx scripts/db/migrate-e2e.ts",
     "db:seed": "prisma db seed",
