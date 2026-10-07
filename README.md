@@ -309,7 +309,8 @@ Connection limits, TLS, and pooler behavior remain provider-specific settings.
 (`prisma migrate deploy`, using `MIGRATION_DATABASE_URL`), then creates or updates the
 restricted runtime role named in `DATABASE_URL` (`pnpm db:provision-role`, idempotent), then
 builds. Set these Vercel variables for the build: `MIGRATION_DATABASE_URL` (Neon owner),
-`DATABASE_URL` (the runtime role and the password you choose; it is created for you),
+`DATABASE_URL` (the runtime role and the password you choose; it is created for you; if a
+provider integration owns `DATABASE_URL`, set `APP_DATABASE_URL` instead, which takes priority),
 `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`. Run `pnpm db:verify-role` against `DATABASE_URL` to
 confirm RLS cannot be bypassed. Use a Production-only `MIGRATION_DATABASE_URL` if previews
 should not migrate your database.

@@ -3,7 +3,7 @@ import { toClientSafe } from "./serializer";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export const prismaClientSingleton = () => {
-  const connectionString = process.env.DATABASE_URL?.trim();
+  const connectionString = (process.env.APP_DATABASE_URL ?? process.env.DATABASE_URL)?.trim();
 
   if (!connectionString) {
     throw new Error("DATABASE_URL is missing");
