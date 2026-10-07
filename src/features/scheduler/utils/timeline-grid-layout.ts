@@ -18,7 +18,7 @@ import {
 import type { MaintenanceEntry, ViewMode } from "../types";
 
 const cellWidths: Record<ViewMode, string> = {
-  day: "min-w-[5.5rem]",
+  day: "min-w-16",
   week: "min-w-[4.75rem]",
   month: "min-w-10",
   year: "min-w-16",

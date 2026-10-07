@@ -218,8 +218,11 @@ export function TimelineGrid() {
   );
 
   const cellWidth = getTimelineCellMinWidth(viewMode);
-  const yAxisWidth =
-    "w-44 min-w-44 md:w-48 md:min-w-48 xl:w-52 xl:min-w-52";
+  // With no equipment the column only needs to fit the title and add button.
+  const hasEquipment = equipment.length > 0;
+  const yAxisWidth = hasEquipment
+    ? "w-44 min-w-44 md:w-48 md:min-w-48 xl:w-52 xl:min-w-52"
+    : "w-40 min-w-40";
 
   const totalTasksInView = useMemo(() => {
     return equipment.reduce(
@@ -265,7 +268,7 @@ export function TimelineGrid() {
                 "sticky left-0 z-30 flex items-center justify-between border-r border-border bg-card px-2 py-2",
               )}
             >
-              <span className="font-semibold text-sm text-foreground">
+              <span className="truncate font-semibold text-sm text-foreground">
                 {t("equipment")}
               </span>
 
@@ -305,7 +308,8 @@ export function TimelineGrid() {
                   }
                   className={cn(
                     cellWidth,
-                    "relative flex-1 whitespace-nowrap border-b-0 border-r px-1 py-2 text-center tabular-nums text-xs font-medium text-muted-foreground transition-colors focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-default sm:text-sm",
+                    "relative flex-1 whitespace-nowrap border-b-0 border-r px-1 py-2 text-center tabular-nums text-xs font-medium text-muted-foreground transition-colors focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-default",
+                    viewMode === "day" ? "px-0.5 leading-none tracking-tight" : "sm:text-sm",
                     getTimelineBoundaryClass(timeSlots, viewMode, idx),
                     (viewMode === "week" || viewMode === "month") &&
                       "cursor-pointer hover:bg-accent hover:text-foreground active:bg-accent/80",
@@ -476,15 +480,37 @@ export function TimelineGrid() {
                 <div
                   className={cn(
                     yAxisWidth,
-                    "sticky left-0 z-10 border-r border-border bg-card",
+                    "sticky left-0 z-10 flex overflow-hidden border-r border-border bg-card",
                   )}
-                  aria-hidden="true"
-                />
-                <div className="relative flex min-h-64 flex-1">
+                >
+                  <Empty className="min-h-0 min-w-0 flex-1 gap-3 rounded-none border-0 p-3 md:p-3">
+                    <EmptyHeader className="gap-1">
+                      <EmptyMedia variant="icon">
+                        <Box aria-hidden="true" />
+                      </EmptyMedia>
+                      <EmptyTitle className="text-xs">
+                        {t("noEquipment")}
+                      </EmptyTitle>
+                    </EmptyHeader>
+                    <EmptyContent>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-auto w-full whitespace-normal px-2 py-1.5 text-center text-xs leading-tight"
+                        onClick={() => {
+                          setEditingEquipment(null);
+                          setAddEquipDialogOpen(true);
+                        }}
+                      >
+                        {t("addEquipment")}
+                      </Button>
+                    </EmptyContent>
+                  </Empty>
+                </div>
+                <div className="flex min-h-64 flex-1" aria-hidden="true">
                   {timeSlots.map((slot, index) => (
                     <div
                       key={index}
-                      aria-hidden="true"
                       className={cn(
                         cellWidth,
                         "flex-1 border-r",
@@ -492,25 +518,6 @@ export function TimelineGrid() {
                       )}
                     />
                   ))}
-                  <Empty className="absolute inset-0 min-h-0 flex-none gap-3 rounded-none border-0 bg-background/85 p-4">
-                    <EmptyHeader>
-                      <EmptyMedia variant="icon">
-                        <Box aria-hidden="true" />
-                      </EmptyMedia>
-                      <EmptyTitle className="text-sm">
-                        {t("noEquipment")}
-                      </EmptyTitle>
-                    </EmptyHeader>
-                    <EmptyContent>
-                      <Button
-                        variant="outline"
-                        onClick={() => setAddEquipDialogOpen(true)}
-                      >
-                        <Plus data-icon="inline-start" />
-                        {t("addEquipment")}
-                      </Button>
-                    </EmptyContent>
-                  </Empty>
                 </div>
               </div>
             )}

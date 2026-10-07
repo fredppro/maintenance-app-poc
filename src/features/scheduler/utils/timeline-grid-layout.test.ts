@@ -15,7 +15,7 @@ const entry = (id: string, start: Date, end: Date) =>
 
 describe("timeline grid layout", () => {
   it("keeps slot widths compact but readable by view mode", () => {
-    expect(getTimelineCellMinWidth("day")).toBe("min-w-[5.5rem]");
+    expect(getTimelineCellMinWidth("day")).toBe("min-w-16");
     expect(getTimelineCellMinWidth("week")).toBe("min-w-[4.75rem]");
     expect(getTimelineCellMinWidth("month")).toBe("min-w-10");
     expect(getTimelineCellMinWidth("year")).toBe("min-w-16");
