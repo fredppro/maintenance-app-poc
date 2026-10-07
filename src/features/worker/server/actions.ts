@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import prisma from "@/lib/prisma";
+import type { TenantDb } from "@/lib/prisma";
 import { WorkerType } from "../../../../prisma/generated/prisma/enums";
 import {
   createWorkerSchema,
@@ -11,6 +11,7 @@ import {
 import { getTenantContext } from "@/lib/tenant-context";
 
 async function ensureVendorBelongsToOrganization(
+  db: TenantDb,
   vendorId: string | null | undefined,
   organizationId: string,
 ) {
@@ -18,7 +19,7 @@ async function ensureVendorBelongsToOrganization(
     return;
   }
 
-  const vendor = await prisma.vendor.findFirst({
+  const vendor = await db.vendor.findFirst({
     where: { id: vendorId, organizationId },
     select: { id: true },
   });
@@ -29,8 +30,8 @@ async function ensureVendorBelongsToOrganization(
 }
 
 export async function getWorkers() {
-  const { organizationId } = await getTenantContext("viewMaintenance");
-  return await prisma.worker.findMany({
+  const { db, organizationId } = await getTenantContext("viewMaintenance");
+  return await db.worker.findMany({
     where: { organizationId },
     orderBy: { name: "asc" },
   });
@@ -43,10 +44,10 @@ export async function createWorker(data: {
   type?: WorkerType;
   vendorId?: string | null;
 }) {
-  const { organizationId } = await getTenantContext("manageWorkers");
+  const { db, organizationId } = await getTenantContext("manageWorkers");
   const input = createWorkerSchema.parse(data);
-  await ensureVendorBelongsToOrganization(input.vendorId, organizationId);
-  const worker = await prisma.worker.create({
+  await ensureVendorBelongsToOrganization(db, input.vendorId, organizationId);
+  const worker = await db.worker.create({
     data: {
       name: input.name,
       email: input.email,
@@ -71,11 +72,11 @@ export async function updateWorker(
     vendorId?: string | null;
   }>,
 ) {
-  const { organizationId } = await getTenantContext("manageWorkers");
+  const { db, organizationId } = await getTenantContext("manageWorkers");
   const workerId = workerIdSchema.parse(id);
   const input = updateWorkerSchema.parse(data);
-  await ensureVendorBelongsToOrganization(input.vendorId, organizationId);
-  const worker = await prisma.worker.update({
+  await ensureVendorBelongsToOrganization(db, input.vendorId, organizationId);
+  const worker = await db.worker.update({
     where: { id: workerId, organizationId },
     data: input,
   });
@@ -85,9 +86,9 @@ export async function updateWorker(
 }
 
 export async function deleteWorker(id: string) {
-  const { organizationId } = await getTenantContext("manageWorkers");
+  const { db, organizationId } = await getTenantContext("manageWorkers");
   const workerId = workerIdSchema.parse(id);
-  await prisma.worker.delete({
+  await db.worker.delete({
     where: { id: workerId, organizationId },
   });
 

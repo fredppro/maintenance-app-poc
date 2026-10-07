@@ -3,7 +3,7 @@
 import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/features/auth/server/auth";
-import prisma from "@/lib/prisma";
+import prisma, { forTenant } from "@/lib/prisma";
 import { ACTIVE_SITE_COOKIE } from "@/lib/tenant-context";
 
 export async function createInitialSite(input: {
@@ -51,13 +51,13 @@ export async function createInitialSite(input: {
     }
   }
 
-  const existingSite = await prisma.site.findFirst({
+  const existingSite = await forTenant(organizationId).site.findFirst({
     where: { organizationId },
     select: { id: true },
   });
 
   if (!existingSite) {
-    await prisma.site.create({
+    await forTenant(organizationId).site.create({
       data: { name: siteName, organizationId },
     });
   }
@@ -82,7 +82,7 @@ export async function switchTenantContext(input: {
       where: { organizationId, userId: session.user.id },
       select: { id: true },
     }),
-    prisma.site.findFirst({
+    forTenant(organizationId).site.findFirst({
       where: { id: siteId, organizationId },
       select: { id: true },
     }),

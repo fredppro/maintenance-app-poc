@@ -22,15 +22,23 @@ import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enum
 import { getTenantContext } from "@/lib/tenant-context";
 import { deleteStoredFile } from "@/features/files/server/files";
 
-vi.mock("@/lib/tenant-context", () => ({
+// The tenant client is the shared prisma object, so spies on `prisma` observe the actions' queries.
+vi.mock("@/lib/tenant-context", async () => {
+  const { default: prisma } = await import("@/lib/prisma");
+  const db = Object.create(prisma, {
+    transaction: { value: (fn: never) => prisma.$transaction(fn) },
+  });
+  return {
   getTenantContext: vi.fn().mockResolvedValue({
+    db,
     userId: "user-1",
     organizationId: "org-1",
     siteId: "site-1",
     siteName: "Plant",
     role: "owner",
   }),
-}));
+};
+});
 
 vi.mock("@/features/files/server/files", () => ({
   deleteStoredFile: vi.fn(),
@@ -101,7 +109,6 @@ describe("scheduler server actions", () => {
             siteId: "site-1",
             relocations: {
               create: {
-                organizationId: "org-1",
                 toSiteName: "Plant",
                 toSectionName: null,
                 movedById: "user-1",
@@ -166,7 +173,6 @@ describe("scheduler server actions", () => {
             sectionId: "sec-1",
             relocations: {
               create: {
-                organizationId: "org-1",
                 fromSiteName: "Plant",
                 fromSectionName: null,
                 toSiteName: "Depot",
@@ -254,7 +260,7 @@ describe("scheduler server actions", () => {
       vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue({ imageFileId: "old" } as never);
       vi.spyOn(prisma.equipment, "update").mockResolvedValue({ id: "eq-1" } as never);
       await updateEquipment("eq-1", { imageFileId: "new" });
-      expect(deleteStoredFile).toHaveBeenCalledWith("old", "org-1");
+      expect(deleteStoredFile).toHaveBeenCalledWith(expect.anything(), "old", "org-1");
     });
 
     it("keeps the image when other fields change or the same image is resubmitted", async () => {
@@ -277,7 +283,7 @@ describe("scheduler server actions", () => {
       vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue({ imageFileId: "img" } as never);
       vi.spyOn(prisma.equipment, "delete").mockResolvedValue({} as never);
       await deleteEquipment("eq-1");
-      expect(deleteStoredFile).toHaveBeenCalledWith("img", "org-1");
+      expect(deleteStoredFile).toHaveBeenCalledWith(expect.anything(), "img", "org-1");
     });
 
     it("scopes relocation history to the active site and organization", async () => {

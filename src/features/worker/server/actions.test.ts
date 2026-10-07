@@ -10,14 +10,22 @@ import {
 import { WorkerType } from "../../../../prisma/generated/prisma/enums";
 import { getTenantContext } from "@/lib/tenant-context";
 
-vi.mock("@/lib/tenant-context", () => ({
+// The tenant client is the shared prisma object, so spies on `prisma` observe the actions' queries.
+vi.mock("@/lib/tenant-context", async () => {
+  const { default: prisma } = await import("@/lib/prisma");
+  const db = Object.create(prisma, {
+    transaction: { value: (fn: never) => prisma.$transaction(fn) },
+  });
+  return {
   getTenantContext: vi.fn().mockResolvedValue({
+    db,
     userId: "user-1",
     organizationId: "org-1",
     siteId: "site-1",
     role: "owner",
   }),
-}));
+};
+});
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),

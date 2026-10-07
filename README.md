@@ -369,7 +369,7 @@ database URLs and auth secrets per environment, set the production HTTPS origin,
 configure Resend, exercise the backup restore procedure, and run migrations
 only after a reviewed backup. Readiness is available at `/api/health`.
 See [docs/pilot-readiness.md](./docs/pilot-readiness.md) for the operational
-procedure and known limitations.
+procedure and known limitations. Row-level security and tenant isolation are described in [docs/tenant-isolation.md](./docs/tenant-isolation.md).
 
 ## Dependency management
 

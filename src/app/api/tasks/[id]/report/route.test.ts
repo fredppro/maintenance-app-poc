@@ -68,7 +68,7 @@ describe("GET /api/tasks/[id]/report", () => {
       headers: { "Content-Type": "application/pdf" },
     });
 
-    const buildReportMock = vi.spyOn(reportService, "buildReportResponse").mockImplementation(async (id, organizationId, siteId, locale, mode) => {
+    const buildReportMock = vi.spyOn(reportService, "buildReportResponse").mockImplementation(async (_db, id, organizationId, siteId, locale, mode) => {
       expect(id).toBe("task-999");
       expect(organizationId).toBe("org-1");
       expect(siteId).toBe("site-1");
@@ -98,7 +98,7 @@ describe("GET /api/tasks/[id]/report", () => {
       headers: { "Content-Type": "application/pdf" },
     });
 
-    const buildReportMock = vi.spyOn(reportService, "buildReportResponse").mockImplementation(async (id, organizationId, siteId, locale, mode) => {
+    const buildReportMock = vi.spyOn(reportService, "buildReportResponse").mockImplementation(async (_db, id, organizationId, siteId, locale, mode) => {
       expect(id).toBe("task-999");
       expect(organizationId).toBe("org-1");
       expect(siteId).toBe("site-1");

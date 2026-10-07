@@ -5,7 +5,7 @@ import { OrganizationSetupForm } from "@/features/organization/ui/organization-s
 import { TenantContextSelector } from "@/features/organization/ui/tenant-context-selector";
 import { getAvailableTenantContexts } from "@/lib/tenant-context";
 import { ACTIVE_SITE_COOKIE } from "@/lib/tenant-context";
-import prisma from "@/lib/prisma";
+import prisma, { forTenant } from "@/lib/prisma";
 import { OrganizationSelector } from "@/features/organization/ui/organization-selector";
 
 export default async function OrganizationOnboardingPage({
@@ -26,7 +26,7 @@ export default async function OrganizationOnboardingPage({
       where: { organizationId: activeOrganizationId, userId: session.user.id },
       select: { role: true },
     });
-    const sites = await prisma.site.findMany({
+    const sites = await forTenant(activeOrganizationId).site.findMany({
       where: { organizationId: activeOrganizationId },
       orderBy: { name: "asc" },
       select: { id: true },

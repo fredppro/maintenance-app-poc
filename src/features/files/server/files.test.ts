@@ -16,7 +16,7 @@ const storage = vi.hoisted(() => ({
 vi.mock("@/lib/storage", () => ({ getStorage: () => storage }));
 
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-const input = { organizationId: "org-1", userId: "u-1", filename: "pump.png", bytes: PNG };
+const input = { db: prisma as never, organizationId: "org-1", userId: "u-1", filename: "pump.png", bytes: PNG };
 
 describe("file storage service", () => {
   beforeEach(() => {
@@ -65,7 +65,7 @@ describe("file storage service", () => {
 
   it("only reads files that belong to the organization", async () => {
     const find = vi.spyOn(prisma.storedFile, "findFirst").mockResolvedValue(null);
-    expect(await readStoredFile("f-1", "org-2")).toBeNull();
+    expect(await readStoredFile(prisma as never, "f-1", "org-2")).toBeNull();
     expect(find).toHaveBeenCalledWith({ where: { id: "f-1", organizationId: "org-2" } });
     expect(storage.get).not.toHaveBeenCalled();
   });
@@ -73,7 +73,7 @@ describe("file storage service", () => {
   it("returns null when the object is missing from storage", async () => {
     vi.spyOn(prisma.storedFile, "findFirst").mockResolvedValue({ id: "f-1", key: "k" } as never);
     storage.get.mockResolvedValue(null);
-    expect(await readStoredFile("f-1", "org-1")).toBeNull();
+    expect(await readStoredFile(prisma as never, "f-1", "org-1")).toBeNull();
   });
 
   it("deletes metadata and object, and tolerates storage failures", async () => {
@@ -82,7 +82,7 @@ describe("file storage service", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     storage.delete.mockRejectedValue(new Error("s3 down"));
 
-    await expect(deleteStoredFile("f-1", "org-1")).resolves.toBeUndefined();
+    await expect(deleteStoredFile(prisma as never, "f-1", "org-1")).resolves.toBeUndefined();
     expect(del).toHaveBeenCalledWith({ where: { id: "f-1" } });
     expect(storage.delete).toHaveBeenCalledWith("k");
   });
@@ -90,7 +90,7 @@ describe("file storage service", () => {
   it("does nothing when deleting an unknown file", async () => {
     vi.spyOn(prisma.storedFile, "findFirst").mockResolvedValue(null);
     const del = vi.spyOn(prisma.storedFile, "delete");
-    await deleteStoredFile("nope", "org-1");
+    await deleteStoredFile(prisma as never, "nope", "org-1");
     expect(del).not.toHaveBeenCalled();
   });
 });

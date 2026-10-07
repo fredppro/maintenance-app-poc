@@ -6,6 +6,8 @@ import {
   ReportTaskNotFoundError,
 } from "./report.service";
 
+const db = {} as never;
+
 describe("report service", () => {
   const mockTask = {
     id: "task-abcdef123456",
@@ -30,6 +32,7 @@ describe("report service", () => {
 
     try {
       const result = await buildMaintenanceReportPDF(
+        db,
         "task-abcdef123456",
         "org-1",
         "site-1",
@@ -48,7 +51,7 @@ describe("report service", () => {
 
     try {
       await expect(
-        buildMaintenanceReportPDF("nonexistent-task", "org-1", "site-1", "en"),
+        buildMaintenanceReportPDF(db, "nonexistent-task", "org-1", "site-1", "en"),
       ).rejects.toBeInstanceOf(ReportTaskNotFoundError);
     } finally {
       getTaskMock.mockRestore();
@@ -60,6 +63,7 @@ describe("report service", () => {
 
     try {
       const response = await buildReportResponse(
+        db,
         "task-abcdef123456",
         "org-1",
         "site-1",
@@ -79,6 +83,7 @@ describe("report service", () => {
 
     try {
       const response = await buildReportResponse(
+        db,
         "task-abcdef123456",
         "org-1",
         "site-1",

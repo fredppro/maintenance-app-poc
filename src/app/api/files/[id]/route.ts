@@ -1,4 +1,5 @@
 import { readStoredFile } from "@/features/files/server/files";
+import type { TenantDb } from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenant-context";
 import { NextResponse } from "next/server";
 
@@ -9,14 +10,15 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   let organizationId: string;
+  let db: TenantDb;
   try {
-    ({ organizationId } = await getTenantContext("viewMaintenance"));
+    ({ organizationId, db } = await getTenantContext("viewMaintenance"));
   } catch {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
   const { id } = await params;
-  const result = await readStoredFile(id, organizationId);
+  const result = await readStoredFile(db, id, organizationId);
   if (!result) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }

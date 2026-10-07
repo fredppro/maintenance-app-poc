@@ -278,7 +278,6 @@ export type EquipmentRelocationScalarWhereWithAggregatesInput = {
 
 export type EquipmentRelocationCreateInput = {
   id?: string
-  organizationId: string
   fromSiteName?: string | null
   fromSectionName?: string | null
   toSiteName: string
@@ -302,7 +301,6 @@ export type EquipmentRelocationUncheckedCreateInput = {
 
 export type EquipmentRelocationUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   fromSiteName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fromSectionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toSiteName?: Prisma.StringFieldUpdateOperationsInput | string
@@ -338,7 +336,6 @@ export type EquipmentRelocationCreateManyInput = {
 
 export type EquipmentRelocationUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   fromSiteName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fromSectionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toSiteName?: Prisma.StringFieldUpdateOperationsInput | string
@@ -449,7 +446,6 @@ export type EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput = 
 
 export type EquipmentRelocationCreateWithoutEquipmentInput = {
   id?: string
-  organizationId: string
   fromSiteName?: string | null
   fromSectionName?: string | null
   toSiteName: string
@@ -460,7 +456,6 @@ export type EquipmentRelocationCreateWithoutEquipmentInput = {
 
 export type EquipmentRelocationUncheckedCreateWithoutEquipmentInput = {
   id?: string
-  organizationId: string
   fromSiteName?: string | null
   fromSectionName?: string | null
   toSiteName: string
@@ -512,7 +507,6 @@ export type EquipmentRelocationScalarWhereInput = {
 
 export type EquipmentRelocationCreateManyEquipmentInput = {
   id?: string
-  organizationId: string
   fromSiteName?: string | null
   fromSectionName?: string | null
   toSiteName: string
@@ -523,7 +517,6 @@ export type EquipmentRelocationCreateManyEquipmentInput = {
 
 export type EquipmentRelocationUpdateWithoutEquipmentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   fromSiteName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fromSectionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toSiteName?: Prisma.StringFieldUpdateOperationsInput | string
@@ -534,7 +527,6 @@ export type EquipmentRelocationUpdateWithoutEquipmentInput = {
 
 export type EquipmentRelocationUncheckedUpdateWithoutEquipmentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   fromSiteName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fromSectionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toSiteName?: Prisma.StringFieldUpdateOperationsInput | string
@@ -545,7 +537,6 @@ export type EquipmentRelocationUncheckedUpdateWithoutEquipmentInput = {
 
 export type EquipmentRelocationUncheckedUpdateManyWithoutEquipmentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   fromSiteName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fromSectionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toSiteName?: Prisma.StringFieldUpdateOperationsInput | string

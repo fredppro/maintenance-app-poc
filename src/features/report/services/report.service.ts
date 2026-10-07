@@ -1,3 +1,4 @@
+import type { TenantDb } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { Readable } from "node:stream";
 import { getMaintenanceTask } from "../server/get-task";
@@ -12,12 +13,13 @@ export class ReportTaskNotFoundError extends Error {
 }
 
 export async function buildMaintenanceReportPDF(
+  db: TenantDb,
   taskId: string,
   organizationId: string,
   siteId: string,
   locale: AppLocale,
 ) {
-  const task = await getMaintenanceTask(taskId, organizationId, siteId);
+  const task = await getMaintenanceTask(db, taskId, organizationId, siteId);
 
   if (!task) {
     throw new ReportTaskNotFoundError(taskId);
@@ -32,6 +34,7 @@ export async function buildMaintenanceReportPDF(
 }
 
 export async function buildReportResponse(
+  db: TenantDb,
   taskId: string,
   organizationId: string,
   siteId: string,
@@ -39,6 +42,7 @@ export async function buildReportResponse(
   mode: "preview" | "download"
 ) {
   const { stream, filename } = await buildMaintenanceReportPDF(
+    db,
     taskId,
     organizationId,
     siteId,

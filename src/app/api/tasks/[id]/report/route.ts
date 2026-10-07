@@ -33,6 +33,7 @@ export async function GET(
   try {
     const tenant = await getTenantContext("viewReports");
     return await buildReportResponse(
+      tenant.db,
       id,
       tenant.organizationId,
       tenant.siteId,

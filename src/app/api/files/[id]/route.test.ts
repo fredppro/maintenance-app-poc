@@ -12,7 +12,7 @@ const call = () => GET(new Request("http://x"), { params: Promise.resolve({ id: 
 
 describe("GET /api/files/[id]", () => {
   beforeEach(() => {
-    getTenantContext.mockReset().mockResolvedValue({ organizationId: "org-1" });
+    getTenantContext.mockReset().mockResolvedValue({ organizationId: "org-1", db: "tenant-db" });
     readStoredFile.mockReset();
   });
 
@@ -24,7 +24,7 @@ describe("GET /api/files/[id]", () => {
   it("returns 404 for files outside the caller's organization", async () => {
     readStoredFile.mockResolvedValue(null);
     expect((await call()).status).toBe(404);
-    expect(readStoredFile).toHaveBeenCalledWith("f-1", "org-1");
+    expect(readStoredFile).toHaveBeenCalledWith("tenant-db", "f-1", "org-1");
   });
 
   it("serves the bytes with safe, private headers", async () => {

@@ -1,6 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { auth } from "@/features/auth/server/auth";
-import prisma from "@/lib/prisma";
+import prisma, { forTenant } from "@/lib/prisma";
 
 export const ACTIVE_SITE_COOKIE = "maintenance_active_site";
 
@@ -148,7 +148,8 @@ export async function getTenantContext(
     throw new PermissionDeniedError(permission);
   }
 
-  const sites = await prisma.site.findMany({
+  const db = forTenant(organizationId);
+  const sites = await db.site.findMany({
     where: { organizationId },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
@@ -171,6 +172,7 @@ export async function getTenantContext(
   return {
     userId: session.user.id,
     organizationId,
+    db,
     siteId: selectedSite.id,
     siteName: selectedSite.name,
     sites,

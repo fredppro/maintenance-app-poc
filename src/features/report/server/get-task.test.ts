@@ -15,7 +15,7 @@ describe("getMaintenanceTask", () => {
     const findUniqueMock = vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue(mockTask as any);
 
     try {
-      const task = await getMaintenanceTask("task-123", "org-1", "site-1");
+      const task = await getMaintenanceTask(prisma as never, "task-123", "org-1", "site-1");
       expect(task).toEqual(mockTask);
       expect(findUniqueMock.mock.calls.length).toBe(1);
       expect(findUniqueMock).toHaveBeenCalledWith(

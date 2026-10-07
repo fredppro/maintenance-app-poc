@@ -20,7 +20,9 @@ model Equipment {
   organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   site           Site                  @relation(fields: [siteId, organizationId], references: [id, organizationId], onDelete: Restrict)
   imageFile      StoredFile?           @relation(fields: [imageFileId], references: [id], onDelete: SetNull)
-  // Optional area within `site`; the application keeps section.siteId === siteId.
+  // Optional area within `site`. `imageFileId` and `sectionId` are single-column FKs because
+  // SET NULL can't null just one column of a composite FK; the equipment_same_tenant trigger
+  // enforces that both belong to the same organization.
   section        Section?              @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   tasks          MaintenanceTask[]
   relocations    EquipmentRelocation[]
@@ -46,6 +48,7 @@ model StoredFile {
   equipment      Equipment[]
   createdAt      DateTime     @default(now())
 
+  @@unique([id, organizationId])
   @@index([organizationId])
 }
 
@@ -69,7 +72,7 @@ model EquipmentRelocation {
   id              String    @id @default(cuid())
   equipmentId     String
   organizationId  String
-  equipment       Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  equipment       Equipment @relation(fields: [equipmentId, organizationId], references: [id, organizationId], onDelete: Cascade)
   fromSiteName    String?
   fromSectionName String?
   toSiteName      String

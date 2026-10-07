@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { prismaClientSingleton } from "./prisma";
+import prisma, { createTenantClient, prismaClientSingleton } from "./prisma";
 
 describe("prisma client singleton", () => {
   const originalDatabaseUrl = process.env.DATABASE_URL;
@@ -16,5 +16,11 @@ describe("prisma client singleton", () => {
     delete process.env.DATABASE_URL;
 
     expect(() => prismaClientSingleton()).toThrow(/DATABASE_URL is missing/);
+  });
+});
+
+describe("tenant client", () => {
+  it("refuses an empty organization id", () => {
+    expect(() => createTenantClient(prisma, "")).toThrow(/organizationId/);
   });
 });

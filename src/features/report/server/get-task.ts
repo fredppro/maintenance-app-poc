@@ -1,11 +1,12 @@
-import prisma from "@/lib/prisma";
+import type { TenantDb } from "@/lib/prisma";
 
 export async function getMaintenanceTask(
+  db: TenantDb,
   id: string,
   organizationId: string,
   siteId: string,
 ) {
-  return prisma.maintenanceTask.findFirst({
+  return db.maintenanceTask.findFirst({
     where: {
       id,
       organizationId,

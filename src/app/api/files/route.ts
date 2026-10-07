@@ -25,6 +25,7 @@ export async function POST(request: Request) {
 
   try {
     const stored = await saveImageFile({
+      db: tenant.db,
       organizationId: tenant.organizationId,
       userId: tenant.userId,
       filename: file.name,

@@ -260,6 +260,7 @@ export type StoredFileOrderByWithRelationInput = {
 export type StoredFileWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   key?: string
+  id_organizationId?: Prisma.StoredFileIdOrganizationIdCompoundUniqueInput
   AND?: Prisma.StoredFileWhereInput | Prisma.StoredFileWhereInput[]
   OR?: Prisma.StoredFileWhereInput[]
   NOT?: Prisma.StoredFileWhereInput | Prisma.StoredFileWhereInput[]
@@ -271,7 +272,7 @@ export type StoredFileWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"StoredFile"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   equipment?: Prisma.EquipmentListRelationFilter
-}, "id" | "key">
+}, "id" | "key" | "id_organizationId">
 
 export type StoredFileOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -386,6 +387,11 @@ export type StoredFileUncheckedUpdateManyInput = {
 export type StoredFileNullableScalarRelationFilter = {
   is?: Prisma.StoredFileWhereInput | null
   isNot?: Prisma.StoredFileWhereInput | null
+}
+
+export type StoredFileIdOrganizationIdCompoundUniqueInput = {
+  id: string
+  organizationId: string
 }
 
 export type StoredFileCountOrderByAggregateInput = {

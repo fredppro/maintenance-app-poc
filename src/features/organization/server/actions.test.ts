@@ -29,6 +29,11 @@ vi.mock("@/features/auth/server/auth", () => ({
   },
 }));
 
+vi.mock("@/lib/prisma", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/prisma")>();
+  return { ...actual, forTenant: () => actual.default };
+});
+
 describe("organization context actions", () => {
   beforeEach(() => {
     mocks.headers.mockResolvedValue(new Headers());

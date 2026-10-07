@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import prisma from "@/lib/prisma";
+import type { TenantDb } from "@/lib/prisma";
 import { getStorage } from "@/lib/storage";
 
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -37,6 +37,7 @@ function safeFilename(name: string) {
 }
 
 export async function saveImageFile(input: {
+  db: TenantDb;
   organizationId: string;
   userId: string;
   filename: string;
@@ -51,11 +52,12 @@ export async function saveImageFile(input: {
   }
 
   const key = `${input.organizationId}/${randomUUID()}.${IMAGE_TYPES[contentType].ext}`;
+  const { db } = input;
   const storage = getStorage();
   await storage.put(key, input.bytes, contentType);
 
   try {
-    return await prisma.storedFile.create({
+    return await db.storedFile.create({
       data: {
         organizationId: input.organizationId,
         uploadedById: input.userId,
@@ -71,8 +73,8 @@ export async function saveImageFile(input: {
   }
 }
 
-export async function readStoredFile(id: string, organizationId: string) {
-  const file = await prisma.storedFile.findFirst({
+export async function readStoredFile(db: TenantDb, id: string, organizationId: string) {
+  const file = await db.storedFile.findFirst({
     where: { id, organizationId },
   });
   if (!file) return null;
@@ -81,10 +83,10 @@ export async function readStoredFile(id: string, organizationId: string) {
 }
 
 /** Removes the object and its metadata; storage failures are logged, never thrown. */
-export async function deleteStoredFile(id: string, organizationId: string) {
-  const file = await prisma.storedFile.findFirst({ where: { id, organizationId } });
+export async function deleteStoredFile(db: TenantDb, id: string, organizationId: string) {
+  const file = await db.storedFile.findFirst({ where: { id, organizationId } });
   if (!file) return;
-  await prisma.storedFile.delete({ where: { id } });
+  await db.storedFile.delete({ where: { id } });
   try {
     await getStorage().delete(file.key);
   } catch (error) {
