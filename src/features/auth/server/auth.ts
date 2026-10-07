@@ -16,6 +16,8 @@ import {
 const secret = process.env.BETTER_AUTH_SECRET;
 const baseURL = process.env.BETTER_AUTH_URL;
 const isProduction = process.env.NODE_ENV === "production";
+// Explicit opt-in that opens self-service sign-up and organisation creation in production (e.g. previews).
+const allowPublicSignup = process.env.ALLOW_PUBLIC_SIGNUP === "true";
 const bootstrapEmail = process.env.PILOT_BOOTSTRAP_EMAIL?.trim().toLowerCase();
 
 async function hasNoCustomerOrganizations() {
@@ -174,7 +176,7 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user) => {
-          if (!isProduction) return { data: user };
+          if (!isProduction || allowPublicSignup) return { data: user };
 
           const email = user.email.trim().toLowerCase();
           if (
@@ -265,7 +267,7 @@ export const auth = betterAuth({
         },
       },
       allowUserToCreateOrganization: async (user) => {
-        if (!isProduction) return true;
+        if (!isProduction || allowPublicSignup) return true;
         return Boolean(
           bootstrapEmail &&
             user.email.trim().toLowerCase() === bootstrapEmail &&
