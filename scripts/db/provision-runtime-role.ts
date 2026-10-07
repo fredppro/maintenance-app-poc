@@ -9,10 +9,10 @@ const ident = (value: string) => `"${value.replaceAll('"', '""')}"`;
 const literal = (value: string) => `'${value.replaceAll("'", "''")}'`;
 
 async function main() {
-  const ownerUrl = process.env.MIGRATION_DATABASE_URL;
+  const ownerUrl = process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_URL_UNPOOLED;
   const runtimeUrl = process.env.DATABASE_URL;
   if (!ownerUrl || !runtimeUrl) {
-    throw new Error("MIGRATION_DATABASE_URL and DATABASE_URL must both be set");
+    throw new Error("MIGRATION_DATABASE_URL (or DATABASE_URL_UNPOOLED) and DATABASE_URL must both be set");
   }
 
   const runtime = new URL(runtimeUrl);
