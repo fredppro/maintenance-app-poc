@@ -47,6 +47,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AddEntryDialog } from "./add-entry-dialog";
+import { EquipmentRowLabel } from "./equipment-row-label";
 import { EquipmentDialog } from "./equipment-dialog";
 import { MaintenanceEntryBlock } from "./maintenance-entry-block";
 
@@ -349,87 +350,14 @@ export function TimelineGrid() {
                     key={equip.id}
                     className="flex min-w-full w-fit border-b border-border"
                   >
-                    {/* Equipment name cell */}
-                    <div
-                      className={cn(
-                        yAxisWidth,
-                        "group/equipment-label sticky left-0 z-10 flex items-center justify-between border-r border-border bg-card px-2 py-1.5",
-                      )}
-                    >
-                      <div className="flex min-w-0 items-center gap-2">
-                        <div className="relative">
-                          <EquipmentThumbnail imageFileId={equip.imageFileId} size="sm" />
-                          <div
-                            className={cn(
-                              "absolute -right-1 -top-1 size-2.5 rounded-full border-2 border-card",
-                              pendingCount > 0
-                                ? "bg-warning"
-                                : "bg-success",
-                            )}
-                            title={
-                              pendingCount > 0
-                                ? t("equipmentInMaintenance")
-                                : t("equipmentActive")
-                            }
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="max-w-[9rem] truncate text-sm font-medium text-foreground">
-                            {equip.name}
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                            {locationLabel(equip) && (
-                              <span
-                                className="max-w-[7rem] truncate"
-                                title={locationLabel(equip)}
-                              >
-                                {locationLabel(equip)}
-                              </span>
-                            )}
-                            {locationLabel(equip) && pendingCount > 0 && (
-                              <span>•</span>
-                            )}
-                            {pendingCount > 0 && (
-                              <span className="text-primary font-medium">
-                                {pendingCount}{" "}
-                                {pendingCount !== 1 ? t("tasks") : t("task")}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7 opacity-0 transition-opacity group-hover/equipment-label:opacity-100 group-focus-within/equipment-label:opacity-100"
-                            aria-label={t("equipmentActions", {
-                              equipment: equip.name,
-                            })}
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="gap-2"
-                            onClick={() => handleEditEquip(equip)}
-                          >
-                            <Pencil />
-                            {tCommon("edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="gap-2 text-destructive focus:text-destructive"
-                            onClick={() => handleRemoveEquipment(equip.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            {tCommon("remove")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <EquipmentRowLabel
+                      equipment={equip}
+                      className={yAxisWidth}
+                      locationLabel={locationLabel(equip)}
+                      pendingCount={pendingCount}
+                      onEdit={() => handleEditEquip(equip)}
+                      onRemove={() => handleRemoveEquipment(equip.id)}
+                    />
 
                     {/* Timeline cells */}
                     <div className="relative isolate flex flex-1 overflow-hidden">
