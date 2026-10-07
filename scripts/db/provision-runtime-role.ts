@@ -9,6 +9,8 @@ import { PrismaClient } from "../../prisma/generated/prisma/client";
 const ident = (value: string) => `"${value.replaceAll('"', '""')}"`;
 const literal = (value: string) => `'${value.replaceAll("'", "''")}'`;
 
+// Attribute flags are deliberately not set: non-superusers cannot name BYPASSRLS, and new roles default
+// to no superuser/bypassrls/createdb/createrole. `pnpm db:verify-role` asserts that afterwards.
 async function main() {
   const ownerUrl = process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
   const runtimeUrl = resolveRuntimeDatabaseUrl();
@@ -32,9 +34,9 @@ async function main() {
     const statements = [
       `DO $$ BEGIN
          IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = ${literal(role)}) THEN
-           ALTER ROLE ${r} WITH LOGIN PASSWORD ${literal(password)} NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+           ALTER ROLE ${r} WITH LOGIN PASSWORD ${literal(password)};
          ELSE
-           CREATE ROLE ${r} LOGIN PASSWORD ${literal(password)} NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+           CREATE ROLE ${r} LOGIN PASSWORD ${literal(password)};
          END IF;
        END $$`,
       `GRANT CONNECT ON DATABASE ${ident(db)} TO ${r}`,
