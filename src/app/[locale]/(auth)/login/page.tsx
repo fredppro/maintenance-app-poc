@@ -1,5 +1,6 @@
 import { AuthForm } from "@/features/auth/ui/auth-form";
 import type { AppLocale } from "@/i18n/locale";
+import { isEmailVerificationRequired } from "@/features/auth/server/email-verification";
 
 export default async function LoginPage({
   params,
@@ -16,7 +17,7 @@ export default async function LoginPage({
         mode="sign-in"
         locale={locale}
         invitationId={invitationId}
-        emailVerificationEnabled={process.env.NODE_ENV === "production"}
+        emailVerificationEnabled={isEmailVerificationRequired()}
       />
     </main>
   );

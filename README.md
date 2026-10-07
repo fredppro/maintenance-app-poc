@@ -354,6 +354,7 @@ transition.
 | `STORAGE_LOCAL_DIR` | Optional | Local-disk directory used when `S3_BUCKET` is unset. Defaults to `.storage` (git-ignored). |
 | `RESEND_API_KEY` | Production verification, password recovery, and invitations | Resend API credential. Configure through a secret manager; no key is needed for local login/signup without email delivery. |
 | `AUTH_EMAIL_FROM` | Production verification, password recovery, and invitations | Verified sender in Resend, e.g. `Maintenance Scheduler <accounts@example.com>`. |
+| `REQUIRE_EMAIL_VERIFICATION` | Optional (previews) | Set to `false` to skip email verification in production when no email provider is configured. Leave unset in real production. |
 | `ALLOW_PUBLIC_SIGNUP` | Optional (previews) | Set to `true` to allow anyone to sign up and create an organisation in production. Leave unset for the invite-only pilot. |
 | `PILOT_BOOTSTRAP_EMAIL` | Initial production owner setup | Email permitted to create the first production account while no customer organization exists. An unclaimed legacy workspace is ignored. Remove after initial setup. |
 | `LEGACY_OWNER_EMAIL` | Legacy data assignment only | Verified existing account selected to own migrated legacy data. |

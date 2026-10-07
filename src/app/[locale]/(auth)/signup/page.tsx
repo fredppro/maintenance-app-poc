@@ -3,6 +3,7 @@ import type { AppLocale } from "@/i18n/locale";
 import prisma from "@/lib/prisma";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { isEmailVerificationRequired } from "@/features/auth/server/email-verification";
 
 export async function generateMetadata({
   params,
@@ -49,7 +50,7 @@ export default async function SignupPage({
           mode="sign-up"
           locale={locale}
           invitationId={validInvitationId}
-          emailVerificationEnabled={process.env.NODE_ENV === "production"}
+          emailVerificationEnabled={isEmailVerificationRequired()}
         />
       </div>
     </main>

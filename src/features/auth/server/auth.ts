@@ -12,6 +12,7 @@ import {
   canManageOrganizationMember,
   isOrganizationManager,
 } from "@/features/organization/shared/member-policy";
+import { isEmailVerificationRequired } from "./email-verification";
 
 const secret = process.env.BETTER_AUTH_SECRET;
 const baseURL = process.env.BETTER_AUTH_URL;
@@ -130,7 +131,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: isProduction,
+    requireEmailVerification: isEmailVerificationRequired(),
     sendResetPassword: async ({ user, url }) =>
       sendTransactionalEmail({
         to: user.email,
@@ -140,7 +141,7 @@ export const auth = betterAuth({
       }),
   },
   emailVerification: {
-    sendOnSignUp: isProduction,
+    sendOnSignUp: isEmailVerificationRequired(),
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url }) =>
       sendTransactionalEmail({
@@ -274,7 +275,7 @@ export const auth = betterAuth({
           (await hasNoCustomerOrganizations()),
         );
       },
-      requireEmailVerificationOnInvitation: isProduction,
+      requireEmailVerificationOnInvitation: isEmailVerificationRequired(),
       sendInvitationEmail: async ({ id, email, organization: invitedOrg }) => {
         const invitationUrl = new URL("/en/accept-invitation", authOrigin);
         invitationUrl.searchParams.set("id", id);
