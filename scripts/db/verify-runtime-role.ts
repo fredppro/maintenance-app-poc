@@ -1,6 +1,7 @@
 // Fails when DATABASE_URL's role could bypass row-level security. Run it against every environment:
 //   pnpm db:verify-role
 import "dotenv/config";
+import { resolveRuntimeDatabaseUrl } from "../../src/lib/database-url";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
@@ -9,7 +10,7 @@ import { PrismaClient } from "../../prisma/generated/prisma/client";
 const APP_LEVEL_ONLY = new Set(["member", "invitation", "organization_audit_event", "tenant_settings"]);
 
 async function main() {
-  const url = process.env.APP_DATABASE_URL ?? process.env.DATABASE_URL;
+  const url = resolveRuntimeDatabaseUrl();
   if (!url) throw new Error("DATABASE_URL is not set");
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
   try {
