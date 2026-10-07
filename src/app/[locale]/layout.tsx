@@ -6,7 +6,12 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
+import { Geist, Geist_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
+
+// Registers the "Geist" and "Geist Mono" @font-face rules that --font-sans/--font-mono in globals.css name.
+export const geist = Geist({ subsets: ["latin"] });
+export const geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Maintenance Scheduler - Equipment Service Planning",

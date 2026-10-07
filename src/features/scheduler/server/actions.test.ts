@@ -9,6 +9,7 @@ import {
   getEquipmentRelocations,
   getSections,
   createSection,
+  createSite,
   renameSection,
   deleteSection,
   deleteEquipment,
@@ -20,7 +21,12 @@ import {
   moveTask,
 } from "./actions";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
-import { getTenantContext } from "@/lib/tenant-context";
+import { cookies } from "next/headers";
+import {
+  getOrganizationContext,
+  getTenantContext,
+  setActiveSiteCookie,
+} from "@/lib/tenant-context";
 import { recordAuditEvent } from "@/lib/audit";
 import { deleteStoredFile } from "@/features/files/server/files";
 
@@ -30,22 +36,30 @@ vi.mock("@/lib/tenant-context", async () => {
   const db = Object.create(prisma, {
     transaction: { value: (fn: never) => prisma.$transaction(fn) },
   });
-  return {
-  getTenantContext: vi.fn().mockResolvedValue({
+  const context = {
     db,
     userId: "user-1",
     organizationId: "org-1",
     siteId: "site-1",
     siteName: "Plant",
     role: "owner",
-  }),
-};
+  };
+  return {
+    getTenantContext: vi.fn().mockResolvedValue(context),
+    getOrganizationContext: vi.fn().mockResolvedValue(context),
+    ACTIVE_SITE_COOKIE: "maintenance_active_site",
+    setActiveSiteCookie: vi.fn(),
+  };
 });
 
 vi.mock("@/lib/audit", () => ({ recordAuditEvent: vi.fn() }));
 
 vi.mock("@/features/files/server/files", () => ({
   deleteStoredFile: vi.fn(),
+}));
+
+vi.mock("next/headers", () => ({
+  cookies: vi.fn().mockResolvedValue({ get: vi.fn() }),
 }));
 
 vi.mock("next/cache", () => ({
@@ -351,6 +365,98 @@ describe("scheduler server actions", () => {
       await deleteSection("s");
       expect(getTenantContext).toHaveBeenCalledWith("manageSites");
       expect(prisma.section.delete).toHaveBeenCalledWith({ where: { id: "s", organizationId: "org-1" } });
+    });
+  });
+
+  describe("createSite", () => {
+    beforeEach(() => {
+      vi.spyOn(prisma.site, "findMany").mockResolvedValue([{ id: "site-1" }, { id: "site-2" }] as never);
+    });
+
+    it("creates a trimmed site in the caller's organization and audits it", async () => {
+      const create = vi
+        .spyOn(prisma.site, "create")
+        .mockResolvedValue({ id: "site-9", name: "Warehouse" } as never);
+      await expect(createSite("  Warehouse  ")).resolves.toEqual({
+        id: "site-9",
+        name: "Warehouse",
+      });
+      expect(getOrganizationContext).toHaveBeenCalledWith("manageSites");
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: "Warehouse", organizationId: "org-1" },
+        }),
+      );
+      expect(recordAuditEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: "org-1",
+          action: "site.created",
+          subjectId: "site-9",
+        }),
+      );
+      expect(revalidatePath).toHaveBeenCalledWith("/");
+    });
+
+    it("pins the only existing site so adding a second does not force re-selection", async () => {
+      vi.mocked(setActiveSiteCookie).mockClear();
+      vi.spyOn(prisma.site, "findMany").mockResolvedValue([{ id: "site-1" }] as never);
+      vi.spyOn(prisma.site, "create").mockResolvedValue({ id: "site-2", name: "B" } as never);
+      await createSite("B");
+      expect(setActiveSiteCookie).toHaveBeenCalledWith("site-1");
+    });
+
+    it("selects the first site of an empty organization", async () => {
+      vi.mocked(setActiveSiteCookie).mockClear();
+      vi.spyOn(prisma.site, "findMany").mockResolvedValue([]);
+      vi.spyOn(prisma.site, "create").mockResolvedValue({ id: "site-1", name: "A" } as never);
+      await createSite("A");
+      expect(setActiveSiteCookie).toHaveBeenCalledWith("site-1");
+    });
+
+    it("keeps an existing selection and never pins when several sites exist", async () => {
+      vi.mocked(setActiveSiteCookie).mockClear();
+      vi.spyOn(prisma.site, "create").mockResolvedValue({ id: "site-3", name: "C" } as never);
+      vi.spyOn(prisma.site, "findMany").mockResolvedValue([{ id: "a" }, { id: "b" }] as never);
+      await createSite("C");
+      vi.mocked(cookies).mockResolvedValueOnce({ get: () => ({ value: "a" }) } as never);
+      vi.spyOn(prisma.site, "findMany").mockResolvedValue([{ id: "a" }] as never);
+      await createSite("D");
+      expect(setActiveSiteCookie).not.toHaveBeenCalled();
+    });
+
+    it.each(["", "   ", "x".repeat(81)])("rejects invalid name %j", async (name) => {
+      const create = vi.spyOn(prisma.site, "create");
+      create.mockClear();
+      await expect(createSite(name)).rejects.toThrow();
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it("rejects non-string input", async () => {
+      await expect(createSite(undefined as never)).rejects.toThrow();
+    });
+
+    it("turns a unique-name violation (including races) into a clear error", async () => {
+      vi.mocked(recordAuditEvent).mockClear();
+      vi.spyOn(prisma.site, "create").mockRejectedValue({ code: "P2002" });
+      await expect(createSite("Plant")).rejects.toThrow("already exists");
+      expect(recordAuditEvent).not.toHaveBeenCalled();
+    });
+
+    it("rethrows unexpected database errors without auditing", async () => {
+      vi.mocked(recordAuditEvent).mockClear();
+      vi.spyOn(prisma.site, "create").mockRejectedValue(new Error("db down"));
+      await expect(createSite("Plant")).rejects.toThrow("db down");
+      expect(recordAuditEvent).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when the caller lacks permission or the tenant is inactive", async () => {
+      const create = vi.spyOn(prisma.site, "create");
+      create.mockClear();
+      vi.mocked(getOrganizationContext).mockRejectedValueOnce(
+        new Error("Permission denied"),
+      );
+      await expect(createSite("Plant")).rejects.toThrow("Permission denied");
+      expect(create).not.toHaveBeenCalled();
     });
   });
 

@@ -1,17 +1,24 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import type { TenantDb } from "@/lib/prisma";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
 import { deleteStoredFile } from "@/features/files/server/files";
 import { recordAuditEvent } from "@/lib/audit";
-import { getTenantContext } from "@/lib/tenant-context";
+import {
+  ACTIVE_SITE_COOKIE,
+  getOrganizationContext,
+  getTenantContext,
+  setActiveSiteCookie,
+} from "@/lib/tenant-context";
 import {
   equipmentIdSchema,
   equipmentSchema,
   equipmentUpdateSchema,
   relocationSchema,
   sectionNameSchema,
+  siteNameSchema,
   createTaskSchema,
   updateTaskSchema,
 } from "./schemas";
@@ -242,6 +249,44 @@ export async function getSections() {
     select: { id: true, name: true, siteId: true },
     orderBy: { name: "asc" },
   });
+}
+
+export async function createSite(name: string) {
+  const { db, organizationId, userId } =
+    await getOrganizationContext("manageSites");
+  const siteName = siteNameSchema.parse(name);
+
+  const existingSites = await db.site.findMany({
+    where: { organizationId },
+    select: { id: true },
+    take: 2,
+  });
+
+  let site: { id: string; name: string };
+  try {
+    site = await db.site.create({
+      data: { name: siteName, organizationId },
+      select: { id: true, name: true },
+    });
+  } catch (error) {
+    if ((error as { code?: string }).code === "P2002") {
+      throw new Error("A site with this name already exists");
+    }
+    throw error;
+  }
+  // A single site is implicitly active; pin it so adding another does not force a re-selection.
+  if (existingSites.length <= 1 && !(await cookies()).get(ACTIVE_SITE_COOKIE)) {
+    await setActiveSiteCookie(existingSites[0]?.id ?? site.id);
+  }
+  await recordAuditEvent({
+    organizationId,
+    actorUserId: userId,
+    action: "site.created",
+    subjectType: "site",
+    subjectId: site.id,
+  });
+  revalidatePath("/");
+  return site;
 }
 
 export async function createSection(siteId: string, name: string) {

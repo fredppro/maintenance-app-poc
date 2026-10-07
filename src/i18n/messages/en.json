@@ -465,7 +465,11 @@
     "deleteDescription": "Equipment in this section stays at the site and becomes unassigned.",
     "unassigned": "Unassigned equipment",
     "emptyTitle": "No sites",
-    "emptyDescription": "Sites are created when you set up your organization."
+    "emptyDescription": "Add your first site above.",
+    "newSite": "New site name",
+    "addSite": "Add site",
+    "siteAdded": "Site added.",
+    "siteFailed": "Could not add the site. Check that the name is not already used."
   },
   "InventoryPage": {
     "title": "Inventory",

@@ -108,6 +108,8 @@ export const equipmentUpdateSchema = z
     message: "At least one equipment field must be provided",
   });
 
+export const siteNameSchema = z.string().trim().min(1).max(80);
+
 export const sectionNameSchema = z.string().trim().min(1).max(80);
 
 export const relocationSchema = z.object({

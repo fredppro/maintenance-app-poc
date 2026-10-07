@@ -37,6 +37,7 @@ export interface SchedulerState {
   addEquipment: (equipment: Equipment) => void;
   updateEquipment: (equipment: Equipment) => void;
   removeEquipment: (id: string) => void;
+  addSite: (site: SiteOption) => void;
   addSection: (section: SectionOption) => void;
   setSections: (sections: SectionOption[]) => void;
   addEntry: (entry: MaintenanceEntry) => void;
@@ -121,6 +122,13 @@ export function createSchedulerStore(initialState: SchedulerInitialState = {}) {
       })),
 
     setSections: (sections) => set({ sections }),
+
+    addSite: (site) =>
+      set((state) => ({
+        sites: state.sites.some((s) => s.id === site.id)
+          ? state.sites
+          : [...state.sites, site].sort((a, b) => a.name.localeCompare(b.name)),
+      })),
 
     addSection: (section) =>
       set((state) => ({

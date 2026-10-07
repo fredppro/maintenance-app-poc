@@ -34,6 +34,7 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   createSection,
+  createSite,
   deleteSection,
   renameSection,
 } from "@/features/scheduler/server/actions";
@@ -143,6 +144,43 @@ function SectionRow({
   );
 }
 
+function AddSite() {
+  const t = useTranslations("SitesPage");
+  const addSite = useSchedulerStore((s) => s.addSite);
+  const [name, setName] = useState("");
+  const [pending, start] = useTransition();
+  return (
+    <form
+      className="flex max-w-md gap-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!name.trim()) return;
+        start(async () => {
+          try {
+            const site = await createSite(name);
+            addSite({ ...site, current: false });
+            setName("");
+            toast.success(t("siteAdded"));
+          } catch {
+            toast.error(t("siteFailed"));
+          }
+        });
+      }}
+    >
+      <Input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={t("newSite")}
+        aria-label={t("newSite")}
+      />
+      <Button type="submit" disabled={pending || !name.trim()}>
+        <Plus data-icon="inline-start" />
+        {t("addSite")}
+      </Button>
+    </form>
+  );
+}
+
 function AddSection({ siteId }: { siteId: string }) {
   const t = useTranslations("SitesPage");
   const addSection = useSchedulerStore((s) => s.addSection);
@@ -187,6 +225,7 @@ export function SitesPageClient() {
   return (
     <PageBody>
       <PageHeader title={t("title")} description={t("description")} />
+      <AddSite />
       {sites.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>

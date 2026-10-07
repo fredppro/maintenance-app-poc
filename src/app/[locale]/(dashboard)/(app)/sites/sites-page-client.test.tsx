@@ -8,6 +8,7 @@ import type { Equipment } from "@/features/scheduler/types";
 import { SitesPageClient } from "./sites-page-client";
 
 const actions = vi.hoisted(() => ({
+  createSite: vi.fn(),
   createSection: vi.fn(),
   renameSection: vi.fn(),
   deleteSection: vi.fn(),
@@ -38,6 +39,15 @@ function renderPage(state: object = { sites, sections, equipment }) {
 
 describe("SitesPageClient", () => {
   beforeEach(() => Object.values(actions).forEach((fn) => fn.mockReset()));
+
+  it("adds a site at any time, including when none exist", async () => {
+    actions.createSite.mockResolvedValue({ id: "site-3", name: "Warehouse" });
+    renderPage({ sites: [] });
+    await userEvent.type(screen.getByLabelText("New site name"), "Warehouse");
+    await userEvent.click(screen.getByRole("button", { name: "Add site" }));
+    expect(actions.createSite).toHaveBeenCalledWith("Warehouse");
+    expect(await screen.findByText("Warehouse")).toBeInTheDocument();
+  });
 
   it("shows an empty state when there are no sites", () => {
     renderPage({ sites: [] });

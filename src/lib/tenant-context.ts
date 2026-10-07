@@ -102,32 +102,45 @@ export async function getAvailableTenantContexts() {
     select: {
       organizationId: true,
       role: true,
-      organization: {
-        select: {
-          name: true,
-          sites: {
-            orderBy: { name: "asc" },
-            select: { id: true, name: true },
-          },
-        },
-      },
+      organization: { select: { name: true } },
     },
     orderBy: { createdAt: "asc" },
   });
 
-  return memberships.flatMap((membership) =>
-    membership.organization.sites.map((site) => ({
-      organizationId: membership.organizationId,
-      organizationName: membership.organization.name,
-      siteId: site.id,
-      siteName: site.name,
-      role: membership.role,
-      active: membership.organizationId === session.session.activeOrganizationId,
-    })),
+  // Sites are row-level secured, so each organization is read in its own tenant scope.
+  const perOrganization = await Promise.all(
+    memberships.map(async (membership) => {
+      const sites = await forTenant(membership.organizationId).site.findMany({
+        where: { organizationId: membership.organizationId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      });
+      return sites.map((site) => ({
+        organizationId: membership.organizationId,
+        organizationName: membership.organization.name,
+        siteId: site.id,
+        siteName: site.name,
+        role: membership.role,
+        active:
+          membership.organizationId === session.session.activeOrganizationId,
+      }));
+    }),
   );
+  return perOrganization.flat();
 }
 
-export async function getTenantContext(
+/** Authenticated, active, authorized org context that does not require a selected site. */
+export async function setActiveSiteCookie(siteId: string) {
+  (await cookies()).set(ACTIVE_SITE_COOKIE, siteId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+}
+
+export async function getOrganizationContext(
   permission: TenantPermission = "viewMaintenance",
 ) {
   const requestHeaders = await headers();
@@ -163,7 +176,19 @@ export async function getTenantContext(
     throw new PermissionDeniedError(permission);
   }
 
-  const db = forTenant(organizationId);
+  return {
+    userId: session.user.id,
+    organizationId,
+    db: forTenant(organizationId),
+    role: membership.role,
+  };
+}
+
+export async function getTenantContext(
+  permission: TenantPermission = "viewMaintenance",
+) {
+  const { userId, organizationId, db, role } =
+    await getOrganizationContext(permission);
   const sites = await db.site.findMany({
     where: { organizationId },
     orderBy: { name: "asc" },
@@ -185,12 +210,12 @@ export async function getTenantContext(
   }
 
   return {
-    userId: session.user.id,
+    userId,
     organizationId,
     db,
     siteId: selectedSite.id,
     siteName: selectedSite.name,
     sites,
-    role: membership.role,
+    role,
   };
 }

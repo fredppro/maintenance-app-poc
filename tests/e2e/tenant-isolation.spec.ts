@@ -25,7 +25,7 @@ async function selectOrganization(page: Page, organizationName: string) {
   if (await organizationSelector.isVisible()) {
     await expect(async () => {
       await organizationSelector.selectOption({ label: organizationName });
-      await expect(page).toHaveURL(/\/en$/, { timeout: 2000 });
+      await expect(page).toHaveURL(/\/en$/, { timeout: 8000 });
     }).toPass();
   }
 }

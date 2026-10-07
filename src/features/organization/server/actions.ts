@@ -4,7 +4,7 @@ import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/features/auth/server/auth";
 import prisma, { forTenant } from "@/lib/prisma";
-import { ACTIVE_SITE_COOKIE } from "@/lib/tenant-context";
+import { ACTIVE_SITE_COOKIE, setActiveSiteCookie } from "@/lib/tenant-context";
 
 export async function createInitialSite(input: {
   siteName: string;
@@ -98,13 +98,7 @@ export async function switchTenantContext(input: {
     });
   }
 
-  (await cookies()).set(ACTIVE_SITE_COOKIE, siteId, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30,
-  });
+  await setActiveSiteCookie(siteId);
 }
 
 export async function switchActiveOrganization(input: {

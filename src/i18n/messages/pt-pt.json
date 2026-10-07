@@ -465,7 +465,11 @@
     "deleteDescription": "Os equipamentos desta secção permanecem no local e ficam sem secção.",
     "unassigned": "Equipamentos sem secção",
     "emptyTitle": "Sem locais",
-    "emptyDescription": "Os locais são criados quando configura a organização."
+    "emptyDescription": "Adicione o seu primeiro local acima.",
+    "newSite": "Nome do novo local",
+    "addSite": "Adicionar local",
+    "siteAdded": "Local adicionado.",
+    "siteFailed": "Não foi possível adicionar o local. Verifique se o nome já não está em uso."
   },
   "InventoryPage": {
     "title": "Inventário",
