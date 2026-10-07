@@ -270,7 +270,9 @@ Next.js externalizes it for server use.
   bypasses migration history and is not the normal setup or deployment path.
 - Development data command: `pnpm prisma:seed`.
 
-`DATABASE_URL` is the application's only connection setting. The Prisma schema
+`DATABASE_URL` is the application's runtime connection. For row-level security
+it must be a restricted role; `MIGRATION_DATABASE_URL` (the owner) is used by
+`prisma migrate` and seeding. See [docs/tenant-isolation.md](./docs/tenant-isolation.md). The Prisma schema
 and client use PostgreSQL; switching between compatible PostgreSQL providers
 does not require application-code changes. Supply the provider's connection URL
 and any provider-required TLS or pooler options. For Neon production, prefer
@@ -304,6 +306,7 @@ transition.
 | Variable | Required for | Description |
 | --- | --- | --- |
 | `DATABASE_URL` | Prisma client generation/configuration, database commands, and app runtime | PostgreSQL-compatible connection string. `.env.example` points to local development PostgreSQL. |
+| `MIGRATION_DATABASE_URL` | `prisma migrate`, `pnpm prisma:seed` | Optional owner connection string; falls back to `DATABASE_URL`. Required when `DATABASE_URL` is a restricted role (the local Docker default). |
 | `E2E_DATABASE_URL` | Playwright browser tests and E2E migration command | Dedicated test database connection string. `.env.example` points to a separate local database on port 5433. The database name must end in `_test` and target a different host/port/database from `DATABASE_URL`. |
 | `BETTER_AUTH_SECRET` | App runtime and auth tests | Secret used to sign Better Auth sessions; use a random secret of at least 32 characters and keep it private. |
 | `BETTER_AUTH_URL` | App runtime and auth tests | Canonical application origin, for example `http://localhost:3000` locally or the deployed HTTPS origin. |

@@ -12,6 +12,17 @@ if (databaseUrl) {
   validateE2EDatabaseUrl(databaseUrl);
 }
 
+// Global setup/teardown seed with the owner URL; the app under test runs as the restricted role so
+// row-level security is enforced.
+const appDatabaseUrl = databaseUrl
+  ? (() => {
+      const url = new URL(databaseUrl);
+      url.username = "maintenance_app_runtime";
+      url.password = "maintenance_app_runtime";
+      return url.toString();
+    })()
+  : "";
+
 export default defineConfig({
   testDir: "./tests/e2e",
   globalSetup: "./tests/e2e/global-setup.ts",
@@ -32,7 +43,7 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 120_000,
     env: {
-      DATABASE_URL: databaseUrl ?? "",
+      DATABASE_URL: appDatabaseUrl,
       BETTER_AUTH_SECRET:
         process.env.BETTER_AUTH_SECRET ??
         "playwright-e2e-secret-that-is-at-least-thirty-two-chars",

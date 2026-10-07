@@ -23,7 +23,9 @@ All customers share one PostgreSQL schema. Isolation has two independent layers:
 ## Enforcement requires a restricted role
 
 PostgreSQL superusers and `BYPASSRLS` roles skip RLS, and so do the table owners' default roles on many
-providers. The local Docker databases use a superuser, so RLS is **not** enforced there. To enforce it:
+providers. Locally, `docker/db-init/01-app-role.sh` creates the restricted `maintenance_app_runtime` role on first
+start of the Docker databases (existing volumes: run the script once, or `docker compose down -v`), and
+`.env.example` points `DATABASE_URL` at it. In production:
 
 1. Create a login role with `NOBYPASSRLS` and `SELECT/INSERT/UPDATE/DELETE` on all tables in `public`
    (plus sequence usage and matching `ALTER DEFAULT PRIVILEGES` for the owner so new tables are covered).

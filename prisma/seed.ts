@@ -1,5 +1,6 @@
 // prisma/seed.ts
-import "dotenv/config";
+import "./seed-env";
+
 import prisma from "../src/lib/prisma";
 import { seedEquipments } from "./seeds/equipment";
 import { seedMaintenanceTasks } from "./seeds/maintenance-task";

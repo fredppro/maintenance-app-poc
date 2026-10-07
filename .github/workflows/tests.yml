@@ -64,6 +64,13 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Create restricted app role
+        run: sh docker/db-init/01-app-role.sh
+        env:
+          PGHOST: localhost
+          PGPASSWORD: maintenance_app
+          POSTGRES_USER: maintenance_app
+          POSTGRES_DB: maintenance_app_test
       - run: pnpm prisma:migrate:e2e
       - run: pnpm test:legacy-ownership
       - run: pnpm exec playwright install --with-deps chromium
