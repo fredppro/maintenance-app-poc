@@ -32,7 +32,9 @@ test("schedule a task from the dashboard with accessible form controls", async (
   ).toBeVisible();
 
   await page
-    .getByRole("button", { name: /^E2E - Playwright Equipment,/ })
+    .getByRole("button", {
+      name: /^Add a maintenance task for E2E - Playwright Equipment on/,
+    })
     .first()
     .click();
 
@@ -52,7 +54,9 @@ test("schedule a task from the dashboard with accessible form controls", async (
     .getByRole("combobox", { name: "Select workers..." })
     .click();
   await page.getByRole("option", { name: /E2E Playwright Worker/ }).click();
-  await page.getByRole("button", { name: "Schedule" }).click();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeVisible();
+  await page.getByRole("button", { name: "Schedule", exact: true }).click();
 
   await expect(
     page.getByText("E2E - Playwright scheduled task"),

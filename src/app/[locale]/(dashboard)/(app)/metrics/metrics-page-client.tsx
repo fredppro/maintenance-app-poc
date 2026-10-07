@@ -32,7 +32,7 @@ function Bars({ items }: { items: { label: string; value: number }[] }) {
             <span className="truncate">{i.label}</span>
             <span className="tabular-nums text-muted-foreground">{i.value}</span>
           </div>
-          <Progress value={(i.value / max) * 100} />
+          <Progress aria-label={i.label} value={(i.value / max) * 100} />
         </li>
       ))}
     </ul>

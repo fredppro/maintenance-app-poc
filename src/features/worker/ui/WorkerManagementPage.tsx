@@ -180,9 +180,6 @@ export default function WorkerManagementPage({
     WorkerRow | undefined
   >(undefined);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
-  const [columnVisibility, setColumnVisibility] = useState<
-    Record<string, boolean>
-  >({});
   const fetchWorkers = useCallback(async () => {
     setLoading(true);
     setFetchFailed(false);
@@ -375,7 +372,6 @@ export default function WorkerManagementPage({
     columns,
     state: {
       rowSelection,
-      columnVisibility,
     },
     getRowId: (row) => row.id,
     enableRowSelection: true,
@@ -538,7 +534,6 @@ export default function WorkerManagementPage({
           <div className="h-full overflow-y-auto px-4 pb-4">
             <CreateUpdateWorker
               initialData={selectedWorker}
-              onCancel={() => setDrawerOpen(false)}
               onSaved={handleSaved}
             />
           </div>

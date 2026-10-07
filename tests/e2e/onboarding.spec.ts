@@ -9,7 +9,7 @@ test("a new user can create an account and set up an organization and site", asy
   await page
     .getByLabel("Email")
     .fill(`playwright-onboarding-${runId}@example.test`);
-  await page.getByLabel("Password").fill("playwright-onboarding-password");
+  await page.getByLabel("Password", { exact: true }).fill("playwright-onboarding-password");
 
   const signUpResponse = page.waitForResponse(
     (response) =>

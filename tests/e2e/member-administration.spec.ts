@@ -68,9 +68,10 @@ test("organization owners can manage members and revoke pending invitations", as
   const memberRole = page.getByRole("combobox", {
     name: "Role for E2E Organization Member",
   });
-  await expect(memberRole).toHaveValue("read_only");
-  await memberRole.selectOption("maintenance_manager");
-  await expect(memberRole).toHaveValue("maintenance_manager");
+  await expect(memberRole).toContainText("Read-only");
+  await memberRole.click();
+  await page.getByRole("option", { name: "Maintenance manager" }).click();
+  await expect(memberRole).toContainText("Maintenance manager");
 
   const pendingInvitation = page
     .locator("li")

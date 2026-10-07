@@ -20,7 +20,6 @@ export default function LanguageSwitcher() {
   const pathname = usePathname();
 
   function onSelectChange(nextLocale: string) {
-    // @ts-ignore
     router.replace(pathname, { locale: nextLocale });
   }
 

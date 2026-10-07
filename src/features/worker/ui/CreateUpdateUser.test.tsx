@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import messages from "@/i18n/messages/en.json";
-import { createWorker, updateWorker } from "../server/actions";
 import CreateUpdateWorker from "./CreateUpdateUser";
 
 const { createWorkerMock, updateWorkerMock } = vi.hoisted(() => ({
@@ -23,14 +22,12 @@ function renderWorkerForm(initialData?: {
   phone?: string | null;
   type?: string;
 }) {
-  const onCancel = vi.fn();
   const onSaved = vi.fn();
 
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <CreateUpdateWorker
         initialData={initialData}
-        onCancel={onCancel}
         onSaved={onSaved}
       />
       <button type="submit" form="worker-form">
@@ -39,7 +36,7 @@ function renderWorkerForm(initialData?: {
     </NextIntlClientProvider>,
   );
 
-  return { onCancel, onSaved };
+  return { onSaved };
 }
 
 describe("CreateUpdateWorker", () => {

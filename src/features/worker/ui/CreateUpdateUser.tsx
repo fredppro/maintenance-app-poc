@@ -37,17 +37,14 @@ type Props = {
     phone?: string | null;
     type?: string;
   };
-  onCancel: () => void;
   onSaved: () => void;
 };
 
 export default function CreateUpdateWorker({
   initialData,
-  onCancel,
   onSaved,
 }: Props) {
   const t = useTranslations("Workers");
-  const tCommon = useTranslations("Common");
   const isEdit = Boolean(initialData?.id);
 
   const workerSchema = z.object({
@@ -63,11 +60,11 @@ export default function CreateUpdateWorker({
       name: initialData?.name ?? "",
       email: initialData?.email ?? "",
       phone: initialData?.phone ?? "",
-      type: (initialData?.type as any) ?? "INTERNAL",
+      type: (initialData?.type as FormValues["type"] | undefined) ?? "INTERNAL",
     },
   });
 
-  const { control, register, handleSubmit, formState } = form;
+  const { control, register, handleSubmit } = form;
 
   const onSubmit = async (data: FormValues) => {
     try {
