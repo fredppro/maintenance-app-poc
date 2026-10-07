@@ -1,6 +1,7 @@
 import { createHmac } from "node:crypto";
 
-export const RUNTIME_ROLE = "maintenance_app_runtime";
+// Created by the build as the DB owner (not via the Neon console, whose roles can bypass RLS and cannot be altered by the owner).
+export const RUNTIME_ROLE = "maintenance_runtime";
 
 // Connection string the app (and role provisioning) should use at runtime.
 // 1. APP_DATABASE_URL wins when set.
