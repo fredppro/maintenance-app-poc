@@ -17,6 +17,8 @@ model Equipment {
   sectionId      String?
   organizationId String
   siteId         String
+  deletedAt      DateTime?
+  deletedById    String?
   organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   site           Site                  @relation(fields: [siteId, organizationId], references: [id, organizationId], onDelete: Restrict)
   imageFile      StoredFile?           @relation(fields: [imageFileId], references: [id], onDelete: SetNull)
@@ -33,6 +35,7 @@ model Equipment {
   @@index([siteId, organizationId])
   @@index([sectionId])
   @@index([imageFileId])
+  @@index([organizationId, deletedAt])
 }
 
 // Metadata for an object kept in S3-compatible storage; the bytes never live in Postgres.
@@ -98,11 +101,14 @@ model MaintenanceTask {
   status         String                      @default("scheduled")
   assignments    MaintenanceTaskAssignment[]
   materials      Material[]
+  deletedAt      DateTime?
+  deletedById    String?
   createdAt      DateTime                    @default(now())
   updatedAt      DateTime                    @updatedAt
 
   @@unique([id, organizationId])
   @@index([organizationId, startTime])
+  @@index([organizationId, deletedAt])
 }
 
 model Material {
@@ -147,11 +153,14 @@ model Worker {
   organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   vendor         Vendor?                     @relation(fields: [vendorId, organizationId], references: [id, organizationId], onDelete: Restrict)
   assignments    MaintenanceTaskAssignment[]
+  deletedAt      DateTime?
+  deletedById    String?
   createdAt      DateTime                    @default(now())
 
   @@unique([id, organizationId])
   @@unique([organizationId, email])
   @@index([vendorId, organizationId])
+  @@index([organizationId, deletedAt])
 }
 
 model Vendor {
@@ -296,6 +305,8 @@ model Organization {
   workers     Worker[]
   vendors     Vendor[]
   auditEvents OrganizationAuditEvent[]
+  settings    TenantSettings?
+  exports     TenantExport[]
 
   @@unique([slug])
   @@map("organization")
@@ -375,4 +386,54 @@ model OrganizationAuditEvent {
   @@index([organizationId, createdAt])
   @@index([subjectType, subjectId])
   @@map("organization_audit_event")
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_DELETION
+}
+
+// `pooled` tenants share the database; `dedicated` is reserved for tenants moved to their own database.
+enum IsolationTier {
+  POOLED
+  DEDICATED
+}
+
+// One row per organization once its lifecycle is changed; a missing row means ACTIVE and POOLED.
+model TenantSettings {
+  organizationId       String        @id
+  organization         Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  status               TenantStatus  @default(ACTIVE)
+  isolationTier        IsolationTier @default(POOLED)
+  statusReason         String?
+  deletionRequestedAt  DateTime?
+  deletionScheduledFor DateTime?
+  updatedAt            DateTime      @updatedAt
+
+  @@map("tenant_settings")
+}
+
+enum ExportStatus {
+  PENDING
+  RUNNING
+  READY
+  FAILED
+}
+
+model TenantExport {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestedById  String
+  status         ExportStatus @default(PENDING)
+  fileKey        String?
+  size           Int?
+  error          String?
+  createdAt      DateTime     @default(now())
+  completedAt    DateTime?
+  expiresAt      DateTime?
+
+  @@index([organizationId, createdAt])
+  @@map("tenant_export")
 }

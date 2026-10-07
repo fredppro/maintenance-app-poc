@@ -107,11 +107,11 @@ tamper-proof against a database administrator.
 
 ## Backup and restore
 
-The repository does not configure a PostgreSQL provider, retention policy, or
-automated backup job. Enable and monitor provider-managed backups/PITR for the
-production database, set retention to the customer's recovery objectives, and
-perform a restore exercise before the pilot. Keep backup credentials separate
-from application credentials.
+See [tenant-lifecycle-and-recovery.md](tenant-lifecycle-and-recovery.md) for the
+recovery targets, the scheduled backup workflow, the restore test and the
+recovery procedure. Provider-managed PITR and an off-account backup bucket
+still have to be enabled by the deployment owner. Keep backup credentials
+separate from application credentials.
 
 For a portable logical backup where PostgreSQL client tools are available:
 
@@ -137,15 +137,17 @@ history, CI logs, source control, or this documentation.
   email/bootstrap configuration. It returns only `ok` or `unavailable`; it
   does not disclose provider details.
 - Production Prisma query logging is disabled. Readiness failures emit a
-  small structured event without database exception text. There is no
-  configured external error-reporting or alerting provider.
+  small structured event without database exception text. Unhandled
+  server errors are logged as structured, redacted JSON
+  (`src/instrumentation.ts`); there is no external error-reporting or
+  alerting provider.
 - Responses include frame/content-type protections, a restrictive referrer
   policy, and disabled camera/microphone/geolocation access. Production
   responses additionally enable HSTS; TLS termination must be configured at
   the deployment ingress before enabling production traffic.
 - The repository contains no production deployment manifest, staging
-  environment, secret store, backup schedule, or database restore automation.
-  These must be supplied and exercised by the deployment owner.
+  environment or secret store. A backup workflow and restore-test script
+  exist, but need the deployment owner's bucket and secrets.
 - Real email delivery, verification, password reset, and invitations require
   valid Resend credentials and a verified sender. The repository cannot
   validate deliverability without those credentials.

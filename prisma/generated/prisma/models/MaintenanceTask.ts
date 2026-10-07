@@ -34,6 +34,8 @@ export type MaintenanceTaskMinAggregateOutputType = {
   equipmentId: string | null
   organizationId: string | null
   status: string | null
+  deletedAt: Date | null
+  deletedById: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -48,6 +50,8 @@ export type MaintenanceTaskMaxAggregateOutputType = {
   equipmentId: string | null
   organizationId: string | null
   status: string | null
+  deletedAt: Date | null
+  deletedById: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,6 +66,8 @@ export type MaintenanceTaskCountAggregateOutputType = {
   equipmentId: number
   organizationId: number
   status: number
+  deletedAt: number
+  deletedById: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -78,6 +84,8 @@ export type MaintenanceTaskMinAggregateInputType = {
   equipmentId?: true
   organizationId?: true
   status?: true
+  deletedAt?: true
+  deletedById?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -92,6 +100,8 @@ export type MaintenanceTaskMaxAggregateInputType = {
   equipmentId?: true
   organizationId?: true
   status?: true
+  deletedAt?: true
+  deletedById?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -106,6 +116,8 @@ export type MaintenanceTaskCountAggregateInputType = {
   equipmentId?: true
   organizationId?: true
   status?: true
+  deletedAt?: true
+  deletedById?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -193,6 +205,8 @@ export type MaintenanceTaskGroupByOutputType = {
   equipmentId: string
   organizationId: string
   status: string
+  deletedAt: Date | null
+  deletedById: string | null
   createdAt: Date
   updatedAt: Date
   _count: MaintenanceTaskCountAggregateOutputType | null
@@ -228,6 +242,8 @@ export type MaintenanceTaskWhereInput = {
   equipmentId?: Prisma.StringFilter<"MaintenanceTask"> | string
   organizationId?: Prisma.StringFilter<"MaintenanceTask"> | string
   status?: Prisma.StringFilter<"MaintenanceTask"> | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"MaintenanceTask"> | Date | string | null
+  deletedById?: Prisma.StringNullableFilter<"MaintenanceTask"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
@@ -246,6 +262,8 @@ export type MaintenanceTaskOrderByWithRelationInput = {
   equipmentId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  deletedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   organization?: Prisma.OrganizationOrderByWithRelationInput
@@ -268,6 +286,8 @@ export type MaintenanceTaskWhereUniqueInput = Prisma.AtLeast<{
   equipmentId?: Prisma.StringFilter<"MaintenanceTask"> | string
   organizationId?: Prisma.StringFilter<"MaintenanceTask"> | string
   status?: Prisma.StringFilter<"MaintenanceTask"> | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"MaintenanceTask"> | Date | string | null
+  deletedById?: Prisma.StringNullableFilter<"MaintenanceTask"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
@@ -286,6 +306,8 @@ export type MaintenanceTaskOrderByWithAggregationInput = {
   equipmentId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  deletedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.MaintenanceTaskCountOrderByAggregateInput
@@ -306,6 +328,8 @@ export type MaintenanceTaskScalarWhereWithAggregatesInput = {
   equipmentId?: Prisma.StringWithAggregatesFilter<"MaintenanceTask"> | string
   organizationId?: Prisma.StringWithAggregatesFilter<"MaintenanceTask"> | string
   status?: Prisma.StringWithAggregatesFilter<"MaintenanceTask"> | string
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"MaintenanceTask"> | Date | string | null
+  deletedById?: Prisma.StringNullableWithAggregatesFilter<"MaintenanceTask"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTask"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTask"> | Date | string
 }
@@ -318,6 +342,8 @@ export type MaintenanceTaskCreateInput = {
   startTime: Date | string
   endTime: Date | string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
@@ -336,6 +362,8 @@ export type MaintenanceTaskUncheckedCreateInput = {
   equipmentId: string
   organizationId: string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
@@ -350,6 +378,8 @@ export type MaintenanceTaskUpdateInput = {
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
@@ -368,6 +398,8 @@ export type MaintenanceTaskUncheckedUpdateInput = {
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
@@ -384,6 +416,8 @@ export type MaintenanceTaskCreateManyInput = {
   equipmentId: string
   organizationId: string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -396,6 +430,8 @@ export type MaintenanceTaskUpdateManyMutationInput = {
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -410,6 +446,8 @@ export type MaintenanceTaskUncheckedUpdateManyInput = {
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -439,6 +477,8 @@ export type MaintenanceTaskCountOrderByAggregateInput = {
   equipmentId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  deletedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -453,6 +493,8 @@ export type MaintenanceTaskMaxOrderByAggregateInput = {
   equipmentId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  deletedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -467,6 +509,8 @@ export type MaintenanceTaskMinOrderByAggregateInput = {
   equipmentId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  deletedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -600,6 +644,8 @@ export type MaintenanceTaskCreateWithoutEquipmentInput = {
   startTime: Date | string
   endTime: Date | string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
@@ -615,6 +661,8 @@ export type MaintenanceTaskUncheckedCreateWithoutEquipmentInput = {
   startTime: Date | string
   endTime: Date | string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
@@ -660,6 +708,8 @@ export type MaintenanceTaskScalarWhereInput = {
   equipmentId?: Prisma.StringFilter<"MaintenanceTask"> | string
   organizationId?: Prisma.StringFilter<"MaintenanceTask"> | string
   status?: Prisma.StringFilter<"MaintenanceTask"> | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"MaintenanceTask"> | Date | string | null
+  deletedById?: Prisma.StringNullableFilter<"MaintenanceTask"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
 }
@@ -672,6 +722,8 @@ export type MaintenanceTaskCreateWithoutMaterialsInput = {
   startTime: Date | string
   endTime: Date | string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
@@ -689,6 +741,8 @@ export type MaintenanceTaskUncheckedCreateWithoutMaterialsInput = {
   equipmentId: string
   organizationId: string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
@@ -718,6 +772,8 @@ export type MaintenanceTaskUpdateWithoutMaterialsInput = {
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
@@ -735,6 +791,8 @@ export type MaintenanceTaskUncheckedUpdateWithoutMaterialsInput = {
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
@@ -748,6 +806,8 @@ export type MaintenanceTaskCreateWithoutAssignmentsInput = {
   startTime: Date | string
   endTime: Date | string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
@@ -765,6 +825,8 @@ export type MaintenanceTaskUncheckedCreateWithoutAssignmentsInput = {
   equipmentId: string
   organizationId: string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutTaskInput
@@ -794,6 +856,8 @@ export type MaintenanceTaskUpdateWithoutAssignmentsInput = {
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
@@ -811,6 +875,8 @@ export type MaintenanceTaskUncheckedUpdateWithoutAssignmentsInput = {
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   materials?: Prisma.MaterialUncheckedUpdateManyWithoutTaskNestedInput
@@ -824,6 +890,8 @@ export type MaintenanceTaskCreateWithoutOrganizationInput = {
   startTime: Date | string
   endTime: Date | string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
@@ -840,6 +908,8 @@ export type MaintenanceTaskUncheckedCreateWithoutOrganizationInput = {
   endTime: Date | string
   equipmentId: string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
@@ -880,6 +950,8 @@ export type MaintenanceTaskCreateManyEquipmentInput = {
   startTime: Date | string
   endTime: Date | string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -892,6 +964,8 @@ export type MaintenanceTaskUpdateWithoutEquipmentInput = {
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
@@ -907,6 +981,8 @@ export type MaintenanceTaskUncheckedUpdateWithoutEquipmentInput = {
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
@@ -921,6 +997,8 @@ export type MaintenanceTaskUncheckedUpdateManyWithoutEquipmentInput = {
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -934,6 +1012,8 @@ export type MaintenanceTaskCreateManyOrganizationInput = {
   endTime: Date | string
   equipmentId: string
   status?: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -946,6 +1026,8 @@ export type MaintenanceTaskUpdateWithoutOrganizationInput = {
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
@@ -962,6 +1044,8 @@ export type MaintenanceTaskUncheckedUpdateWithoutOrganizationInput = {
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
@@ -977,6 +1061,8 @@ export type MaintenanceTaskUncheckedUpdateManyWithoutOrganizationInput = {
   endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1031,6 +1117,8 @@ export type MaintenanceTaskSelect<ExtArgs extends runtime.Types.Extensions.Inter
   equipmentId?: boolean
   organizationId?: boolean
   status?: boolean
+  deletedAt?: boolean
+  deletedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
@@ -1050,6 +1138,8 @@ export type MaintenanceTaskSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   equipmentId?: boolean
   organizationId?: boolean
   status?: boolean
+  deletedAt?: boolean
+  deletedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
@@ -1066,6 +1156,8 @@ export type MaintenanceTaskSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   equipmentId?: boolean
   organizationId?: boolean
   status?: boolean
+  deletedAt?: boolean
+  deletedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
@@ -1082,11 +1174,13 @@ export type MaintenanceTaskSelectScalar = {
   equipmentId?: boolean
   organizationId?: boolean
   status?: boolean
+  deletedAt?: boolean
+  deletedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type MaintenanceTaskOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "type" | "startTime" | "endTime" | "equipmentId" | "organizationId" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["maintenanceTask"]>
+export type MaintenanceTaskOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "type" | "startTime" | "endTime" | "equipmentId" | "organizationId" | "status" | "deletedAt" | "deletedById" | "createdAt" | "updatedAt", ExtArgs["result"]["maintenanceTask"]>
 export type MaintenanceTaskInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
@@ -1121,6 +1215,8 @@ export type $MaintenanceTaskPayload<ExtArgs extends runtime.Types.Extensions.Int
     equipmentId: string
     organizationId: string
     status: string
+    deletedAt: Date | null
+    deletedById: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["maintenanceTask"]>
@@ -1559,6 +1655,8 @@ export interface MaintenanceTaskFieldRefs {
   readonly equipmentId: Prisma.FieldRef<"MaintenanceTask", 'String'>
   readonly organizationId: Prisma.FieldRef<"MaintenanceTask", 'String'>
   readonly status: Prisma.FieldRef<"MaintenanceTask", 'String'>
+  readonly deletedAt: Prisma.FieldRef<"MaintenanceTask", 'DateTime'>
+  readonly deletedById: Prisma.FieldRef<"MaintenanceTask", 'String'>
   readonly createdAt: Prisma.FieldRef<"MaintenanceTask", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"MaintenanceTask", 'DateTime'>
 }

@@ -12,6 +12,7 @@ import {
   renameSection,
   deleteSection,
   deleteEquipment,
+  restoreEquipment,
   getTasks,
   createTask,
   updateTask,
@@ -20,6 +21,7 @@ import {
 } from "./actions";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
 import { getTenantContext } from "@/lib/tenant-context";
+import { recordAuditEvent } from "@/lib/audit";
 import { deleteStoredFile } from "@/features/files/server/files";
 
 // The tenant client is the shared prisma object, so spies on `prisma` observe the actions' queries.
@@ -39,6 +41,8 @@ vi.mock("@/lib/tenant-context", async () => {
   }),
 };
 });
+
+vi.mock("@/lib/audit", () => ({ recordAuditEvent: vi.fn() }));
 
 vi.mock("@/features/files/server/files", () => ({
   deleteStoredFile: vi.fn(),
@@ -206,20 +210,45 @@ describe("scheduler server actions", () => {
       });
     });
 
-    it("deleteEquipment deletes record and revalidates path", async () => {
-      const deleteMock = vi.spyOn(prisma.equipment, "delete").mockResolvedValue({ id: "eq-2" } as any);
+    it("deleteEquipment moves the equipment and its tasks to the trash", async () => {
+      vi.spyOn(prisma, "$transaction").mockImplementation(((fn: (tx: unknown) => unknown) => fn(prisma)) as never);
+      const equipmentUpdate = vi.spyOn(prisma.equipment, "updateMany").mockResolvedValue({ count: 1 });
+      const taskUpdate = vi.spyOn(prisma.maintenanceTask, "updateMany").mockResolvedValue({ count: 2 });
 
-      try {
-        await deleteEquipment("eq-2");
-        expect(getTenantContext).toHaveBeenCalledWith("deleteMaintenance");
-        expect(deleteMock.mock.calls.length).toBe(1);
-        expect(deleteMock).toHaveBeenCalledWith({
-          where: { id: "eq-2", organizationId: "org-1", siteId: "site-1" },
-        });
-        expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
-      } finally {
-        deleteMock.mockRestore();
-      }
+      await deleteEquipment("eq-2");
+
+      expect(getTenantContext).toHaveBeenCalledWith("deleteMaintenance");
+      expect(equipmentUpdate).toHaveBeenCalledWith({
+        where: { id: "eq-2", organizationId: "org-1", siteId: "site-1", deletedAt: null },
+        data: { deletedAt: expect.any(Date), deletedById: "user-1" },
+      });
+      expect(taskUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { equipmentId: "eq-2", organizationId: "org-1", deletedAt: null },
+        }),
+      );
+      expect(recordAuditEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "equipment.deleted", subjectId: "eq-2" }),
+      );
+      expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
+    });
+
+    it("restoreEquipment restores the tasks trashed with it", async () => {
+      const deletedAt = new Date("2026-01-01T00:00:00Z");
+      vi.spyOn(prisma, "$transaction").mockImplementation(((fn: (tx: unknown) => unknown) => fn(prisma)) as never);
+      vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue({ deletedAt } as never);
+      vi.spyOn(prisma.equipment, "updateMany").mockResolvedValue({ count: 1 });
+      const taskUpdate = vi.spyOn(prisma.maintenanceTask, "updateMany").mockResolvedValue({ count: 1 });
+
+      await restoreEquipment("eq-2");
+
+      expect(taskUpdate).toHaveBeenCalledWith({
+        where: { equipmentId: "eq-2", organizationId: "org-1", deletedAt },
+        data: { deletedAt: null, deletedById: null },
+      });
+      expect(recordAuditEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "equipment.restored" }),
+      );
     });
   });
 
@@ -277,13 +306,6 @@ describe("scheduler server actions", () => {
       const update = vi.spyOn(prisma.equipment, "update");
       await expect(updateEquipment("eq-x", { name: "Hi" })).rejects.toThrow("Equipment not found");
       expect(update).not.toHaveBeenCalled();
-    });
-
-    it("deletes the image file together with the equipment", async () => {
-      vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue({ imageFileId: "img" } as never);
-      vi.spyOn(prisma.equipment, "delete").mockResolvedValue({} as never);
-      await deleteEquipment("eq-1");
-      expect(deleteStoredFile).toHaveBeenCalledWith(expect.anything(), "img", "org-1");
     });
 
     it("scopes relocation history to the active site and organization", async () => {
@@ -714,25 +736,21 @@ describe("scheduler server actions", () => {
       }
     });
 
-    it("deleteTask deletes task and revalidates path", async () => {
-      const deleteMock = vi
-        .spyOn(prisma.maintenanceTask, "delete")
-        .mockResolvedValue({ id: "task-123" } as any);
+    it("deleteTask moves the task to the trash and revalidates path", async () => {
+      const update = vi.spyOn(prisma.maintenanceTask, "updateMany").mockResolvedValue({ count: 1 });
 
-      try {
-        await deleteTask("task-123");
-        expect(deleteMock.mock.calls.length).toBe(1);
-        expect(deleteMock).toHaveBeenCalledWith(expect.objectContaining({
-          where: {
-            id: "task-123",
-            organizationId: "org-1",
-            equipment: { is: { siteId: "site-1" } },
-          },
-        }));
-        expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
-      } finally {
-        deleteMock.mockRestore();
-      }
+      await deleteTask("task-123");
+
+      expect(update).toHaveBeenCalledWith({
+        where: {
+          id: "task-123",
+          organizationId: "org-1",
+          deletedAt: null,
+          equipment: { is: { siteId: "site-1" } },
+        },
+        data: { deletedAt: expect.any(Date), deletedById: "user-1" },
+      });
+      expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
     });
 
     it("moveTask updates start/end time and equipmentId", async () => {

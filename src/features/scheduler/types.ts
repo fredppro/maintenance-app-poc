@@ -10,11 +10,11 @@ export type { Worker } from "@/features/worker/types";
 
 export type ViewMode = 'day' | 'week' | 'month' | 'year';
 
-export type Equipment = Omit<PrismaEquipment, "organizationId" | "siteId">;
+export type Equipment = Omit<PrismaEquipment, "organizationId" | "siteId" | "deletedAt" | "deletedById">;
 
 export type Material = Omit<PrismaMaterial, "organizationId">;
 
-export type MaintenanceEntry = Omit<PrismaTask, "organizationId"> & {
+export type MaintenanceEntry = Omit<PrismaTask, "organizationId" | "deletedAt" | "deletedById"> & {
   equipment?: Equipment;
   assignments?: (Omit<PrismaAssignment, "organizationId"> & {
     worker: Worker;

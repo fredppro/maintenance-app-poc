@@ -6,6 +6,7 @@ import {
   createWorker,
   updateWorker,
   deleteWorker,
+  restoreWorker,
 } from "./actions";
 import { WorkerType } from "../../../../prisma/generated/prisma/enums";
 import { getTenantContext } from "@/lib/tenant-context";
@@ -26,6 +27,8 @@ vi.mock("@/lib/tenant-context", async () => {
   }),
 };
 });
+
+vi.mock("@/lib/audit", () => ({ recordAuditEvent: vi.fn() }));
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
@@ -200,19 +203,28 @@ describe("worker server actions", () => {
     }
   });
 
-  it("deleteWorker deletes worker by id and revalidates path", async () => {
-    const deleteMock = vi.spyOn(prisma.worker, "delete").mockResolvedValue({ id: "w-3" } as any);
+  it("deleteWorker moves the worker to the trash and revalidates path", async () => {
+    const update = vi.spyOn(prisma.worker, "updateMany").mockResolvedValue({ count: 1 });
 
-    try {
-      await deleteWorker("w-3");
-      expect(getTenantContext).toHaveBeenCalledWith("manageWorkers");
-      expect(deleteMock.mock.calls.length).toBe(1);
-      expect(deleteMock).toHaveBeenCalledWith({
-        where: { id: "w-3", organizationId: "org-1" },
-      });
-      expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
-    } finally {
-      deleteMock.mockRestore();
-    }
+    await deleteWorker("w-3");
+
+    expect(getTenantContext).toHaveBeenCalledWith("manageWorkers");
+    expect(update).toHaveBeenCalledWith({
+      where: { id: "w-3", organizationId: "org-1", deletedAt: null },
+      data: { deletedAt: expect.any(Date), deletedById: "user-1" },
+    });
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
+  });
+
+  it("restoreWorker clears the deletion marker and fails for unknown workers", async () => {
+    const update = vi.spyOn(prisma.worker, "updateMany").mockResolvedValue({ count: 1 });
+    await restoreWorker("w-3");
+    expect(update).toHaveBeenCalledWith({
+      where: { id: "w-3", organizationId: "org-1", deletedAt: { not: null } },
+      data: { deletedAt: null, deletedById: null },
+    });
+
+    update.mockResolvedValue({ count: 0 });
+    await expect(restoreWorker("w-9")).rejects.toThrow("Deleted worker not found");
   });
 });

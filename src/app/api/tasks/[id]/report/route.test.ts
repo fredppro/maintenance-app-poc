@@ -2,13 +2,20 @@ import { describe, expect, it, vi } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
 import { GET } from "./route";
 import * as reportService from "@/features/report/services/report.service";
+import { takeRateLimit } from "@/lib/rate-limit";
 import {
   getTenantContext,
   PermissionDeniedError,
+  TenantInactiveError,
   SiteSelectionRequiredError,
 } from "@/lib/tenant-context";
 
+vi.mock("@/lib/rate-limit", () => ({
+  takeRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+}));
+
 vi.mock("@/lib/tenant-context", () => ({
+  TenantInactiveError: class TenantInactiveError extends Error {},
   AuthenticationRequiredError: class AuthenticationRequiredError extends Error {},
   OrganizationRequiredError: class OrganizationRequiredError extends Error {},
   PermissionDeniedError: class PermissionDeniedError extends Error {},
@@ -34,6 +41,24 @@ describe("GET /api/tasks/[id]/report", () => {
 
     expect(response.status).toBe(403);
     expect(await response.json()).toEqual({ message: "Forbidden" });
+  });
+
+  it("blocks reports for an inactive organization", async () => {
+    vi.mocked(getTenantContext).mockRejectedValueOnce(new TenantInactiveError("SUSPENDED"));
+    const response = await GET(
+      new NextRequest("http://localhost:3000/api/tasks/task-1/report"),
+      { params: Promise.resolve({ id: "task-1" }) },
+    );
+    expect(response.status).toBe(403);
+  });
+
+  it("rate limits report generation", async () => {
+    vi.mocked(takeRateLimit).mockResolvedValueOnce({ allowed: false });
+    const response = await GET(
+      new NextRequest("http://localhost:3000/api/tasks/task-1/report"),
+      { params: Promise.resolve({ id: "task-1" }) },
+    );
+    expect(response.status).toBe(429);
   });
 
   it("requires an explicit site when the user has multiple sites", async () => {

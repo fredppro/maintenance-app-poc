@@ -1,4 +1,5 @@
 import { saveImageFile, FileValidationError, MAX_FILE_BYTES } from "@/features/files/server/files";
+import { takeRateLimit } from "@/lib/rate-limit";
 import { getTenantContext } from "@/lib/tenant-context";
 import { NextResponse } from "next/server";
 
@@ -10,6 +11,10 @@ export async function POST(request: Request) {
     tenant = await getTenantContext("manageMaintenance");
   } catch {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
+  if (!(await takeRateLimit("upload", tenant.userId, { limit: 30, windowSeconds: 60 })).allowed) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
   const declared = Number(request.headers.get("content-length") ?? 0);

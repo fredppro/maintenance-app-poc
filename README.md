@@ -462,6 +462,12 @@ separate browser job provisions its own PostgreSQL 17 service, applies
 migrations, installs Chromium, and runs the Playwright suite without a hosted
 database secret.
 
+## Tenant lifecycle, export and recovery
+
+Suspension, deletion with a grace period, soft delete, customer data export,
+operator scripts (`pnpm tenant:admin`, `pnpm trash:purge`) and the backup/restore
+procedure are documented in [docs/tenant-lifecycle-and-recovery.md](docs/tenant-lifecycle-and-recovery.md).
+
 ## Troubleshooting
 
 - **Prisma reports that `DATABASE_URL` is missing:** copy `.env.example` to

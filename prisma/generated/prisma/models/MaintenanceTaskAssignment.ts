@@ -386,10 +386,6 @@ export type MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput =
   deleteMany?: Prisma.MaintenanceTaskAssignmentScalarWhereInput | Prisma.MaintenanceTaskAssignmentScalarWhereInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type MaintenanceTaskAssignmentCreateNestedManyWithoutWorkerInput = {
   create?: Prisma.XOR<Prisma.MaintenanceTaskAssignmentCreateWithoutWorkerInput, Prisma.MaintenanceTaskAssignmentUncheckedCreateWithoutWorkerInput> | Prisma.MaintenanceTaskAssignmentCreateWithoutWorkerInput[] | Prisma.MaintenanceTaskAssignmentUncheckedCreateWithoutWorkerInput[]
   connectOrCreate?: Prisma.MaintenanceTaskAssignmentCreateOrConnectWithoutWorkerInput | Prisma.MaintenanceTaskAssignmentCreateOrConnectWithoutWorkerInput[]

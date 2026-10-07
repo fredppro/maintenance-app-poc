@@ -73,5 +73,9 @@ jobs:
           POSTGRES_DB: maintenance_app_test
       - run: pnpm prisma:migrate:e2e
       - run: pnpm test:legacy-ownership
+      - name: Tenant isolation (RLS) integration tests
+        run: pnpm exec vitest run src/lib/rls.integration.test.ts
+        env:
+          RLS_TEST_DATABASE_URL: ${{ env.E2E_DATABASE_URL }}
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e

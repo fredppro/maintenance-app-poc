@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Building2,
   CalendarDays,
   MapPin,
   Package,
@@ -47,6 +48,12 @@ export const NAV_GROUPS: NavGroup[] = [
         id: "members",
         href: "/members",
         icon: UserCog,
+        requiresMemberAdmin: true,
+      },
+      {
+        id: "organization",
+        href: "/organization",
+        icon: Building2,
         requiresMemberAdmin: true,
       },
     ],

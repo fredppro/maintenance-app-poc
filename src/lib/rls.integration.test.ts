@@ -90,4 +90,13 @@ describe.skipIf(!url)("tenant isolation in PostgreSQL", () => {
     );
     await expect(make({ id: "e3", org: ids.a, site: `${ids.a}-site`, file: `${ids.a}-file` })).resolves.toBe(1);
   });
+
+  it("isolates tenant exports", async () => {
+    await db.tenantExport.create({ data: { id: `${ids.b}-export`, organizationId: ids.b, requestedById: "u" } });
+    const visible = await asTenant(ids.a, (tx) => tx.tenantExport.findMany());
+    expect(visible).toEqual([]);
+    await expect(
+      asTenant(ids.a, (tx) => tx.tenantExport.create({ data: { organizationId: ids.b, requestedById: "u" } })),
+    ).rejects.toThrow();
+  });
 });

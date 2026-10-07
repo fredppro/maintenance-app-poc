@@ -420,7 +420,8 @@
       "sites": "Locais",
       "inventory": "Inventário",
       "workers": "Técnicos",
-      "members": "Colaboradores"
+      "members": "Colaboradores",
+      "organization": "Organização"
     },
     "noContext": "Sem local",
     "switchContext": "Mudar de local",
@@ -501,5 +502,36 @@
     "completed": "Concluída",
     "emptyTitle": "Ainda sem dados",
     "emptyDescription": "As métricas surgem quando existirem tarefas de manutenção agendadas."
+  },
+  "OrganizationStatus": {
+    "title": "Organização indisponível",
+    "suspended": "Esta organização foi suspensa. Contacte o suporte para restaurar o acesso.",
+    "pendingDeletion": "Esta organização está agendada para eliminação permanente em {date}."
+  },
+  "OrganizationData": {
+    "title": "Dados da organização",
+    "exportTitle": "Exportar os seus dados",
+    "exportDescription": "Transfira um ZIP com todos os registos e ficheiros carregados em CSV e JSON. As transferências ficam disponíveis durante 7 dias.",
+    "exportEmpty": "Ainda sem exportações.",
+    "requestExport": "Pedir exportação",
+    "download": "Transferir",
+    "failed": "Algo correu mal. Tente novamente.",
+    "status": {
+      "PENDING": "Em fila",
+      "RUNNING": "A preparar",
+      "READY": "Pronta",
+      "FAILED": "Falhou"
+    },
+    "deleteTitle": "Eliminar organização",
+    "deleteDescription": "Agenda a eliminação permanente da organização e de todos os dados após 30 dias de carência. O acesso fica bloqueado entretanto.",
+    "pendingTitle": "Eliminação agendada",
+    "pendingDescription": "Todos os dados serão eliminados permanentemente em {date}. Pode cancelar até lá.",
+    "ownerOnly": "Só o proprietário da organização a pode eliminar.",
+    "cancelDeletion": "Cancelar eliminação",
+    "requestDeletion": "Eliminar organização",
+    "confirmTitle": "Eliminar esta organização?",
+    "confirmDescription": "Todos perdem o acesso de imediato. Exporte primeiro os dados; são eliminados permanentemente após 30 dias.",
+    "keep": "Manter organização",
+    "confirmDeletion": "Agendar eliminação"
   }
 }

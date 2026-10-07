@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 
-const { getTenantContext, saveImageFile } = vi.hoisted(() => ({
+const { getTenantContext, saveImageFile, takeRateLimit } = vi.hoisted(() => ({
   getTenantContext: vi.fn(),
+  takeRateLimit: vi.fn(),
   saveImageFile: vi.fn(),
 }));
 vi.mock("@/lib/tenant-context", () => ({ getTenantContext }));
+vi.mock("@/lib/rate-limit", () => ({ takeRateLimit }));
 vi.mock("@/features/files/server/files", async () => {
   class FileValidationError extends Error {}
   return { saveImageFile, FileValidationError, MAX_FILE_BYTES: 5 * 1024 * 1024 };
@@ -31,6 +33,14 @@ describe("POST /api/files", () => {
   beforeEach(() => {
     getTenantContext.mockReset().mockResolvedValue({ organizationId: "org-1", userId: "u-1" });
     saveImageFile.mockReset();
+    takeRateLimit.mockReset().mockResolvedValue({ allowed: true });
+  });
+
+  it("rejects uploads over the rate limit", async () => {
+    takeRateLimit.mockResolvedValue({ allowed: false });
+    const response = await upload(formWith(new File(["x"], "a.png")));
+    expect(response.status).toBe(429);
+    expect(saveImageFile).not.toHaveBeenCalled();
   });
 
   it("requires maintenance write permission", async () => {

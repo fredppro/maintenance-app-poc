@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { TenantDb } from "@/lib/prisma";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
 import { deleteStoredFile } from "@/features/files/server/files";
+import { recordAuditEvent } from "@/lib/audit";
 import { getTenantContext } from "@/lib/tenant-context";
 import {
   equipmentIdSchema,
@@ -173,19 +174,63 @@ export async function getEquipmentRelocations(id: string) {
   });
 }
 
+/** Moves equipment and its tasks to the trash; admins can restore them. */
 export async function deleteEquipment(id: string) {
-  const { db, organizationId, siteId } = await getTenantContext("deleteMaintenance");
+  const { db, organizationId, siteId, userId } = await getTenantContext("deleteMaintenance");
   const equipmentId = equipmentIdSchema.parse(id);
-  const equipment = await db.equipment.findFirst({
-    where: { id: equipmentId, organizationId, siteId },
-    select: { imageFileId: true },
+  const deletedAt = new Date();
+  const removed = await db.transaction(async (tx) => {
+    const { count } = await tx.equipment.updateMany({
+      where: { id: equipmentId, organizationId, siteId, deletedAt: null },
+      data: { deletedAt, deletedById: userId },
+    });
+    if (count === 0) return false;
+    await tx.maintenanceTask.updateMany({
+      where: { equipmentId, organizationId, deletedAt: null },
+      data: { deletedAt, deletedById: userId },
+    });
+    return true;
   });
-  await db.equipment.delete({
-    where: { id: equipmentId, organizationId, siteId },
-  });
-  if (equipment?.imageFileId) {
-    await deleteStoredFile(db, equipment.imageFileId, organizationId);
+  if (removed) {
+    await recordAuditEvent({
+      organizationId,
+      actorUserId: userId,
+      action: "equipment.deleted",
+      subjectType: "equipment",
+      subjectId: equipmentId,
+    });
   }
+  revalidatePath("/");
+}
+
+/** Restores trashed equipment together with the tasks trashed alongside it. */
+export async function restoreEquipment(id: string) {
+  const { db, organizationId, siteId, userId } = await getTenantContext("deleteMaintenance");
+  const equipmentId = equipmentIdSchema.parse(id);
+  const restored = await db.transaction(async (tx) => {
+    const trashed = await tx.equipment.findFirst({
+      where: { id: equipmentId, organizationId, siteId, deletedAt: { not: null } },
+      select: { deletedAt: true },
+    });
+    if (!trashed?.deletedAt) return false;
+    await tx.equipment.updateMany({
+      where: { id: equipmentId, organizationId },
+      data: { deletedAt: null, deletedById: null },
+    });
+    await tx.maintenanceTask.updateMany({
+      where: { equipmentId, organizationId, deletedAt: trashed.deletedAt },
+      data: { deletedAt: null, deletedById: null },
+    });
+    return true;
+  });
+  if (!restored) throw new Error("Deleted equipment not found");
+  await recordAuditEvent({
+    organizationId,
+    actorUserId: userId,
+    action: "equipment.restored",
+    subjectType: "equipment",
+    subjectId: equipmentId,
+  });
   revalidatePath("/");
 }
 
@@ -458,14 +503,48 @@ export async function updateTask(
 }
 
 export async function deleteTask(id: string) {
-  const { db, organizationId, siteId } = await getTenantContext("deleteMaintenance");
+  const { db, organizationId, siteId, userId } = await getTenantContext("deleteMaintenance");
   const taskId = equipmentIdSchema.parse(id);
-  await db.maintenanceTask.delete({
+  const { count } = await db.maintenanceTask.updateMany({
     where: {
       id: taskId,
       organizationId,
+      deletedAt: null,
       equipment: { is: { siteId } },
     },
+    data: { deletedAt: new Date(), deletedById: userId },
+  });
+  if (count > 0) {
+    await recordAuditEvent({
+      organizationId,
+      actorUserId: userId,
+      action: "task.deleted",
+      subjectType: "task",
+      subjectId: taskId,
+    });
+  }
+  revalidatePath("/");
+}
+
+export async function restoreTask(id: string) {
+  const { db, organizationId, siteId, userId } = await getTenantContext("deleteMaintenance");
+  const taskId = equipmentIdSchema.parse(id);
+  const { count } = await db.maintenanceTask.updateMany({
+    where: {
+      id: taskId,
+      organizationId,
+      deletedAt: { not: null },
+      equipment: { is: { siteId, deletedAt: null } },
+    },
+    data: { deletedAt: null, deletedById: null },
+  });
+  if (count === 0) throw new Error("Deleted task not found");
+  await recordAuditEvent({
+    organizationId,
+    actorUserId: userId,
+    action: "task.restored",
+    subjectType: "task",
+    subjectId: taskId,
   });
   revalidatePath("/");
 }

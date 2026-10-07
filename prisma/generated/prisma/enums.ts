@@ -50,3 +50,30 @@ export const MaterialUnit = {
 } as const
 
 export type MaterialUnit = (typeof MaterialUnit)[keyof typeof MaterialUnit]
+
+
+export const TenantStatus = {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  PENDING_DELETION: 'PENDING_DELETION'
+} as const
+
+export type TenantStatus = (typeof TenantStatus)[keyof typeof TenantStatus]
+
+
+export const IsolationTier = {
+  POOLED: 'POOLED',
+  DEDICATED: 'DEDICATED'
+} as const
+
+export type IsolationTier = (typeof IsolationTier)[keyof typeof IsolationTier]
+
+
+export const ExportStatus = {
+  PENDING: 'PENDING',
+  RUNNING: 'RUNNING',
+  READY: 'READY',
+  FAILED: 'FAILED'
+} as const
+
+export type ExportStatus = (typeof ExportStatus)[keyof typeof ExportStatus]

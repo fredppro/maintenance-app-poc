@@ -32,6 +32,8 @@ export type EquipmentMinAggregateOutputType = {
   sectionId: string | null
   organizationId: string | null
   siteId: string | null
+  deletedAt: Date | null
+  deletedById: string | null
   createdAt: Date | null
 }
 
@@ -43,6 +45,8 @@ export type EquipmentMaxAggregateOutputType = {
   sectionId: string | null
   organizationId: string | null
   siteId: string | null
+  deletedAt: Date | null
+  deletedById: string | null
   createdAt: Date | null
 }
 
@@ -54,6 +58,8 @@ export type EquipmentCountAggregateOutputType = {
   sectionId: number
   organizationId: number
   siteId: number
+  deletedAt: number
+  deletedById: number
   createdAt: number
   _all: number
 }
@@ -67,6 +73,8 @@ export type EquipmentMinAggregateInputType = {
   sectionId?: true
   organizationId?: true
   siteId?: true
+  deletedAt?: true
+  deletedById?: true
   createdAt?: true
 }
 
@@ -78,6 +86,8 @@ export type EquipmentMaxAggregateInputType = {
   sectionId?: true
   organizationId?: true
   siteId?: true
+  deletedAt?: true
+  deletedById?: true
   createdAt?: true
 }
 
@@ -89,6 +99,8 @@ export type EquipmentCountAggregateInputType = {
   sectionId?: true
   organizationId?: true
   siteId?: true
+  deletedAt?: true
+  deletedById?: true
   createdAt?: true
   _all?: true
 }
@@ -173,6 +185,8 @@ export type EquipmentGroupByOutputType = {
   sectionId: string | null
   organizationId: string
   siteId: string
+  deletedAt: Date | null
+  deletedById: string | null
   createdAt: Date
   _count: EquipmentCountAggregateOutputType | null
   _min: EquipmentMinAggregateOutputType | null
@@ -205,6 +219,8 @@ export type EquipmentWhereInput = {
   sectionId?: Prisma.StringNullableFilter<"Equipment"> | string | null
   organizationId?: Prisma.StringFilter<"Equipment"> | string
   siteId?: Prisma.StringFilter<"Equipment"> | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Equipment"> | Date | string | null
+  deletedById?: Prisma.StringNullableFilter<"Equipment"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Equipment"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   site?: Prisma.XOR<Prisma.SiteScalarRelationFilter, Prisma.SiteWhereInput>
@@ -222,6 +238,8 @@ export type EquipmentOrderByWithRelationInput = {
   sectionId?: Prisma.SortOrderInput | Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  deletedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   organization?: Prisma.OrganizationOrderByWithRelationInput
   site?: Prisma.SiteOrderByWithRelationInput
@@ -244,6 +262,8 @@ export type EquipmentWhereUniqueInput = Prisma.AtLeast<{
   sectionId?: Prisma.StringNullableFilter<"Equipment"> | string | null
   organizationId?: Prisma.StringFilter<"Equipment"> | string
   siteId?: Prisma.StringFilter<"Equipment"> | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Equipment"> | Date | string | null
+  deletedById?: Prisma.StringNullableFilter<"Equipment"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Equipment"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   site?: Prisma.XOR<Prisma.SiteScalarRelationFilter, Prisma.SiteWhereInput>
@@ -261,6 +281,8 @@ export type EquipmentOrderByWithAggregationInput = {
   sectionId?: Prisma.SortOrderInput | Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  deletedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.EquipmentCountOrderByAggregateInput
   _max?: Prisma.EquipmentMaxOrderByAggregateInput
@@ -278,6 +300,8 @@ export type EquipmentScalarWhereWithAggregatesInput = {
   sectionId?: Prisma.StringNullableWithAggregatesFilter<"Equipment"> | string | null
   organizationId?: Prisma.StringWithAggregatesFilter<"Equipment"> | string
   siteId?: Prisma.StringWithAggregatesFilter<"Equipment"> | string
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Equipment"> | Date | string | null
+  deletedById?: Prisma.StringNullableWithAggregatesFilter<"Equipment"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Equipment"> | Date | string
 }
 
@@ -285,6 +309,8 @@ export type EquipmentCreateInput = {
   id?: string
   name: string
   category?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
   site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
@@ -302,6 +328,8 @@ export type EquipmentUncheckedCreateInput = {
   sectionId?: string | null
   organizationId: string
   siteId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
@@ -311,6 +339,8 @@ export type EquipmentUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
   site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
@@ -328,6 +358,8 @@ export type EquipmentUncheckedUpdateInput = {
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
@@ -341,6 +373,8 @@ export type EquipmentCreateManyInput = {
   sectionId?: string | null
   organizationId: string
   siteId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
 }
 
@@ -348,6 +382,8 @@ export type EquipmentUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -359,6 +395,8 @@ export type EquipmentUncheckedUpdateManyInput = {
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -380,6 +418,8 @@ export type EquipmentCountOrderByAggregateInput = {
   sectionId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  deletedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -391,6 +431,8 @@ export type EquipmentMaxOrderByAggregateInput = {
   sectionId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  deletedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -402,6 +444,8 @@ export type EquipmentMinOrderByAggregateInput = {
   sectionId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  deletedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -426,6 +470,10 @@ export type StringFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -632,6 +680,8 @@ export type EquipmentCreateWithoutImageFileInput = {
   id?: string
   name: string
   category?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
   site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
@@ -647,6 +697,8 @@ export type EquipmentUncheckedCreateWithoutImageFileInput = {
   sectionId?: string | null
   organizationId: string
   siteId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
@@ -689,6 +741,8 @@ export type EquipmentScalarWhereInput = {
   sectionId?: Prisma.StringNullableFilter<"Equipment"> | string | null
   organizationId?: Prisma.StringFilter<"Equipment"> | string
   siteId?: Prisma.StringFilter<"Equipment"> | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Equipment"> | Date | string | null
+  deletedById?: Prisma.StringNullableFilter<"Equipment"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Equipment"> | Date | string
 }
 
@@ -696,6 +750,8 @@ export type EquipmentCreateWithoutSectionInput = {
   id?: string
   name: string
   category?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
   site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
@@ -711,6 +767,8 @@ export type EquipmentUncheckedCreateWithoutSectionInput = {
   imageFileId?: string | null
   organizationId: string
   siteId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
@@ -746,6 +804,8 @@ export type EquipmentCreateWithoutRelocationsInput = {
   id?: string
   name: string
   category?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
   site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
@@ -762,6 +822,8 @@ export type EquipmentUncheckedCreateWithoutRelocationsInput = {
   sectionId?: string | null
   organizationId: string
   siteId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
 }
@@ -786,6 +848,8 @@ export type EquipmentUpdateWithoutRelocationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
   site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
@@ -802,6 +866,8 @@ export type EquipmentUncheckedUpdateWithoutRelocationsInput = {
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
 }
@@ -810,6 +876,8 @@ export type EquipmentCreateWithoutTasksInput = {
   id?: string
   name: string
   category?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
   site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
@@ -826,6 +894,8 @@ export type EquipmentUncheckedCreateWithoutTasksInput = {
   sectionId?: string | null
   organizationId: string
   siteId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
 }
@@ -850,6 +920,8 @@ export type EquipmentUpdateWithoutTasksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
   site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
@@ -866,6 +938,8 @@ export type EquipmentUncheckedUpdateWithoutTasksInput = {
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
 }
@@ -874,6 +948,8 @@ export type EquipmentCreateWithoutOrganizationInput = {
   id?: string
   name: string
   category?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
   imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
@@ -889,6 +965,8 @@ export type EquipmentUncheckedCreateWithoutOrganizationInput = {
   imageFileId?: string | null
   sectionId?: string | null
   siteId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
@@ -924,6 +1002,8 @@ export type EquipmentCreateWithoutSiteInput = {
   id?: string
   name: string
   category?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
   imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
@@ -938,6 +1018,8 @@ export type EquipmentUncheckedCreateWithoutSiteInput = {
   category?: string | null
   imageFileId?: string | null
   sectionId?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
@@ -976,6 +1058,8 @@ export type EquipmentCreateManyImageFileInput = {
   sectionId?: string | null
   organizationId: string
   siteId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
 }
 
@@ -983,6 +1067,8 @@ export type EquipmentUpdateWithoutImageFileInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
   site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
@@ -998,6 +1084,8 @@ export type EquipmentUncheckedUpdateWithoutImageFileInput = {
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
@@ -1010,6 +1098,8 @@ export type EquipmentUncheckedUpdateManyWithoutImageFileInput = {
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1020,6 +1110,8 @@ export type EquipmentCreateManySectionInput = {
   imageFileId?: string | null
   organizationId: string
   siteId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
 }
 
@@ -1027,6 +1119,8 @@ export type EquipmentUpdateWithoutSectionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
   site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
@@ -1042,6 +1136,8 @@ export type EquipmentUncheckedUpdateWithoutSectionInput = {
   imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
@@ -1054,6 +1150,8 @@ export type EquipmentUncheckedUpdateManyWithoutSectionInput = {
   imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1064,6 +1162,8 @@ export type EquipmentCreateManyOrganizationInput = {
   imageFileId?: string | null
   sectionId?: string | null
   siteId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
 }
 
@@ -1071,6 +1171,8 @@ export type EquipmentUpdateWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
   imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
@@ -1086,6 +1188,8 @@ export type EquipmentUncheckedUpdateWithoutOrganizationInput = {
   imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
@@ -1098,6 +1202,8 @@ export type EquipmentUncheckedUpdateManyWithoutOrganizationInput = {
   imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1107,6 +1213,8 @@ export type EquipmentCreateManySiteInput = {
   category?: string | null
   imageFileId?: string | null
   sectionId?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
   createdAt?: Date | string
 }
 
@@ -1114,6 +1222,8 @@ export type EquipmentUpdateWithoutSiteInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
   imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
@@ -1128,6 +1238,8 @@ export type EquipmentUncheckedUpdateWithoutSiteInput = {
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
@@ -1139,6 +1251,8 @@ export type EquipmentUncheckedUpdateManyWithoutSiteInput = {
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1190,6 +1304,8 @@ export type EquipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   sectionId?: boolean
   organizationId?: boolean
   siteId?: boolean
+  deletedAt?: boolean
+  deletedById?: boolean
   createdAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
@@ -1208,6 +1324,8 @@ export type EquipmentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   sectionId?: boolean
   organizationId?: boolean
   siteId?: boolean
+  deletedAt?: boolean
+  deletedById?: boolean
   createdAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
@@ -1223,6 +1341,8 @@ export type EquipmentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   sectionId?: boolean
   organizationId?: boolean
   siteId?: boolean
+  deletedAt?: boolean
+  deletedById?: boolean
   createdAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
@@ -1238,10 +1358,12 @@ export type EquipmentSelectScalar = {
   sectionId?: boolean
   organizationId?: boolean
   siteId?: boolean
+  deletedAt?: boolean
+  deletedById?: boolean
   createdAt?: boolean
 }
 
-export type EquipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "category" | "imageFileId" | "sectionId" | "organizationId" | "siteId" | "createdAt", ExtArgs["result"]["equipment"]>
+export type EquipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "category" | "imageFileId" | "sectionId" | "organizationId" | "siteId" | "deletedAt" | "deletedById" | "createdAt", ExtArgs["result"]["equipment"]>
 export type EquipmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
@@ -1282,6 +1404,8 @@ export type $EquipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     sectionId: string | null
     organizationId: string
     siteId: string
+    deletedAt: Date | null
+    deletedById: string | null
     createdAt: Date
   }, ExtArgs["result"]["equipment"]>
   composites: {}
@@ -1719,6 +1843,8 @@ export interface EquipmentFieldRefs {
   readonly sectionId: Prisma.FieldRef<"Equipment", 'String'>
   readonly organizationId: Prisma.FieldRef<"Equipment", 'String'>
   readonly siteId: Prisma.FieldRef<"Equipment", 'String'>
+  readonly deletedAt: Prisma.FieldRef<"Equipment", 'DateTime'>
+  readonly deletedById: Prisma.FieldRef<"Equipment", 'String'>
   readonly createdAt: Prisma.FieldRef<"Equipment", 'DateTime'>
 }
     

@@ -1,0 +1,36 @@
+name: Database backup
+
+# Daily logical backup copied to a bucket the application credentials cannot touch.
+# Requires repository secrets: BACKUP_DATABASE_URL, BACKUP_S3_URI, BACKUP_AWS_ACCESS_KEY_ID,
+# BACKUP_AWS_SECRET_ACCESS_KEY (and optionally BACKUP_AWS_REGION). Skips itself until configured.
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+      BACKUP_S3_URI: ${{ secrets.BACKUP_S3_URI }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.BACKUP_AWS_REGION || 'eu-west-1' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check configuration
+        id: config
+        run: |
+          if [ -z "$BACKUP_DATABASE_URL" ] || [ -z "$BACKUP_S3_URI" ]; then
+            echo "::warning::Backup secrets are not configured; skipping."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Dump and upload
+        if: steps.config.outputs.run == 'true'
+        run: sh scripts/backup/backup-db.sh

@@ -141,3 +141,13 @@ export type LegacyOwnershipAssignment = Prisma.LegacyOwnershipAssignmentModel
  * 
  */
 export type OrganizationAuditEvent = Prisma.OrganizationAuditEventModel
+/**
+ * Model TenantSettings
+ * 
+ */
+export type TenantSettings = Prisma.TenantSettingsModel
+/**
+ * Model TenantExport
+ * 
+ */
+export type TenantExport = Prisma.TenantExportModel

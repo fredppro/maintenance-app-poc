@@ -5,6 +5,7 @@ import {
   OrganizationRequiredError,
   SiteSelectionRequiredError,
   SiteSetupRequiredError,
+  TenantInactiveError,
 } from "@/lib/tenant-context";
 
 export default async function DashboardLayout({
@@ -28,6 +29,9 @@ export default async function DashboardLayout({
       error instanceof SiteSetupRequiredError
     ) {
       redirect(`/${locale}/onboarding`);
+    }
+    if (error instanceof TenantInactiveError) {
+      redirect(`/${locale}/organization-status`);
     }
     throw error;
   }

@@ -41,3 +41,8 @@ start of the Docker databases (existing volumes: run the script once, or `docker
 - `RLS_TEST_DATABASE_URL=<superuser url of a disposable migrated DB> pnpm vitest run src/lib/rls.integration.test.ts`
   drops to a restricted role per transaction and checks isolation, write rejection and FK/trigger guards.
 - `tests/e2e/tenant-isolation.spec.ts` covers cross-tenant access through the UI/API.
+
+## Related
+
+Tenant status, soft delete, export and backups: [tenant-lifecycle-and-recovery.md](tenant-lifecycle-and-recovery.md).
+The RLS integration test runs in CI against the e2e database.

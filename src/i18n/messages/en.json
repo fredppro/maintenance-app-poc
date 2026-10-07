@@ -420,7 +420,8 @@
       "sites": "Sites",
       "inventory": "Inventory",
       "workers": "Workers",
-      "members": "Collaborators"
+      "members": "Collaborators",
+      "organization": "Organization"
     },
     "noContext": "No site",
     "switchContext": "Switch site",
@@ -501,5 +502,36 @@
     "completed": "Completed",
     "emptyTitle": "No data yet",
     "emptyDescription": "Metrics appear once maintenance tasks are scheduled."
+  },
+  "OrganizationStatus": {
+    "title": "Organization unavailable",
+    "suspended": "This organization has been suspended. Contact support to restore access.",
+    "pendingDeletion": "This organization is scheduled for permanent deletion on {date}."
+  },
+  "OrganizationData": {
+    "title": "Organization data",
+    "exportTitle": "Export your data",
+    "exportDescription": "Download a ZIP with every record and uploaded file as CSV and JSON. Downloads stay available for 7 days.",
+    "exportEmpty": "No exports yet.",
+    "requestExport": "Request export",
+    "download": "Download",
+    "failed": "Something went wrong. Please try again.",
+    "status": {
+      "PENDING": "Queued",
+      "RUNNING": "Preparing",
+      "READY": "Ready",
+      "FAILED": "Failed"
+    },
+    "deleteTitle": "Delete organization",
+    "deleteDescription": "Schedules the organization and all its data for permanent deletion after a 30-day grace period. Access is blocked meanwhile.",
+    "pendingTitle": "Deletion scheduled",
+    "pendingDescription": "All data will be permanently deleted on {date}. You can cancel until then.",
+    "ownerOnly": "Only an organization owner can delete the organization.",
+    "cancelDeletion": "Cancel deletion",
+    "requestDeletion": "Delete organization",
+    "confirmTitle": "Delete this organization?",
+    "confirmDescription": "Everyone loses access immediately. Export your data first; it is permanently deleted after 30 days.",
+    "keep": "Keep organization",
+    "confirmDeletion": "Schedule deletion"
   }
 }

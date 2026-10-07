@@ -3,6 +3,7 @@ import {
   ReportTaskNotFoundError,
 } from "@/features/report/services/report.service";
 import { getValidLocale } from "src/i18n/locale";
+import { takeRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 import {
   AuthenticationRequiredError,
@@ -11,6 +12,7 @@ import {
   PermissionDeniedError,
   SiteSelectionRequiredError,
   SiteSetupRequiredError,
+  TenantInactiveError,
 } from "@/lib/tenant-context";
 
 export async function GET(
@@ -32,6 +34,10 @@ export async function GET(
 
   try {
     const tenant = await getTenantContext("viewReports");
+    const limit = await takeRateLimit("report", tenant.userId, { limit: 20, windowSeconds: 60 });
+    if (!limit.allowed) {
+      return NextResponse.json({ message: "Too many requests" }, { status: 429 });
+    }
     return await buildReportResponse(
       tenant.db,
       id,
@@ -49,6 +55,9 @@ export async function GET(
       error instanceof SiteSetupRequiredError
     ) {
       return NextResponse.json({ message: "Organization setup required" }, { status: 403 });
+    }
+    if (error instanceof TenantInactiveError) {
+      return NextResponse.json({ message: "Organization unavailable" }, { status: 403 });
     }
     if (error instanceof PermissionDeniedError) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });

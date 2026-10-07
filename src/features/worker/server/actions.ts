@@ -8,6 +8,7 @@ import {
   updateWorkerSchema,
   workerIdSchema,
 } from "./schemas";
+import { recordAuditEvent } from "@/lib/audit";
 import { getTenantContext } from "@/lib/tenant-context";
 
 async function ensureVendorBelongsToOrganization(
@@ -86,11 +87,39 @@ export async function updateWorker(
 }
 
 export async function deleteWorker(id: string) {
-  const { db, organizationId } = await getTenantContext("manageWorkers");
+  const { db, organizationId, userId } = await getTenantContext("manageWorkers");
   const workerId = workerIdSchema.parse(id);
-  await db.worker.delete({
-    where: { id: workerId, organizationId },
+  const { count } = await db.worker.updateMany({
+    where: { id: workerId, organizationId, deletedAt: null },
+    data: { deletedAt: new Date(), deletedById: userId },
   });
+  if (count > 0) {
+    await recordAuditEvent({
+      organizationId,
+      actorUserId: userId,
+      action: "worker.deleted",
+      subjectType: "worker",
+      subjectId: workerId,
+    });
+  }
 
+  revalidatePath("/");
+}
+
+export async function restoreWorker(id: string) {
+  const { db, organizationId, userId } = await getTenantContext("manageWorkers");
+  const workerId = workerIdSchema.parse(id);
+  const { count } = await db.worker.updateMany({
+    where: { id: workerId, organizationId, deletedAt: { not: null } },
+    data: { deletedAt: null, deletedById: null },
+  });
+  if (count === 0) throw new Error("Deleted worker not found");
+  await recordAuditEvent({
+    organizationId,
+    actorUserId: userId,
+    action: "worker.restored",
+    subjectType: "worker",
+    subjectId: workerId,
+  });
   revalidatePath("/");
 }

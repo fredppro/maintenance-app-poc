@@ -79,6 +79,13 @@ export class SiteSelectionRequiredError extends Error {
   }
 }
 
+export class TenantInactiveError extends Error {
+  constructor(readonly status: "SUSPENDED" | "PENDING_DELETION") {
+    super(`The organization is ${status.toLowerCase().replace("_", " ")}`);
+    this.name = "TenantInactiveError";
+  }
+}
+
 export class PermissionDeniedError extends Error {
   constructor(permission: TenantPermission) {
     super(`The active role does not allow ${permission}`);
@@ -142,6 +149,14 @@ export async function getTenantContext(
 
   if (!membership) {
     throw new OrganizationRequiredError();
+  }
+
+  const settings = await prisma.tenantSettings.findUnique({
+    where: { organizationId },
+    select: { status: true },
+  });
+  if (settings && settings.status !== "ACTIVE") {
+    throw new TenantInactiveError(settings.status);
   }
 
   if (!roleCan(membership.role, permission)) {

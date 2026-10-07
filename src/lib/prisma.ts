@@ -32,10 +32,36 @@ type BaseClient = ReturnType<typeof prismaClientSingleton>;
 
 const TENANT_SETTING = "app.org_id";
 
+const SOFT_DELETE_MODELS = new Set(["Equipment", "MaintenanceTask", "Worker"]);
+const FILTERED_OPERATIONS = new Set([
+  "findMany",
+  "findFirst",
+  "findFirstOrThrow",
+  "findUnique",
+  "findUniqueOrThrow",
+  "count",
+  "aggregate",
+  "groupBy",
+  "update",
+  "updateMany",
+]);
+
+/**
+ * Soft-deletable models hide trashed rows unless the query asks about
+ * `deletedAt` explicitly (trash listings, restore, purge).
+ */
+export const hideTrashed = <A>(model: string, operation: string, args: A): A => {
+  if (!SOFT_DELETE_MODELS.has(model) || !FILTERED_OPERATIONS.has(operation)) return args;
+  const input = (args ?? {}) as { where?: Record<string, unknown> };
+  if (input.where && "deletedAt" in input.where) return args;
+  return { ...input, where: { ...input.where, deletedAt: null } } as A;
+};
+
 /**
  * Returns a client whose every query runs in a transaction that first sets
  * `app.org_id`, the value the row-level-security policies compare against.
- * `transaction` is the interactive form, for multi-statement work.
+ * `transaction` is the interactive form, for multi-statement work; it does not
+ * hide soft-deleted rows, so queries inside it must filter `deletedAt` themselves.
  */
 export const createTenantClient = (base: BaseClient, organizationId: string) => {
   if (!organizationId) {
@@ -55,8 +81,11 @@ export const createTenantClient = (base: BaseClient, organizationId: string) => 
     },
     query: {
       $allModels: {
-        async $allOperations({ args, query }) {
-          const [, result] = await base.$transaction([setTenant(), query(args)]);
+        async $allOperations({ model, operation, args, query }) {
+          const [, result] = await base.$transaction([
+            setTenant(),
+            query(hideTrashed(model, operation, args)),
+          ]);
           return result;
         },
       },

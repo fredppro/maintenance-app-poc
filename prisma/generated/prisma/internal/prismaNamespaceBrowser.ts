@@ -70,7 +70,9 @@ export const ModelName = {
   Member: 'Member',
   Invitation: 'Invitation',
   LegacyOwnershipAssignment: 'LegacyOwnershipAssignment',
-  OrganizationAuditEvent: 'OrganizationAuditEvent'
+  OrganizationAuditEvent: 'OrganizationAuditEvent',
+  TenantSettings: 'TenantSettings',
+  TenantExport: 'TenantExport'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -97,6 +99,8 @@ export const EquipmentScalarFieldEnum = {
   sectionId: 'sectionId',
   organizationId: 'organizationId',
   siteId: 'siteId',
+  deletedAt: 'deletedAt',
+  deletedById: 'deletedById',
   createdAt: 'createdAt'
 } as const
 
@@ -153,6 +157,8 @@ export const MaintenanceTaskScalarFieldEnum = {
   equipmentId: 'equipmentId',
   organizationId: 'organizationId',
   status: 'status',
+  deletedAt: 'deletedAt',
+  deletedById: 'deletedById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -194,6 +200,8 @@ export const WorkerScalarFieldEnum = {
   type: 'type',
   vendorId: 'vendorId',
   organizationId: 'organizationId',
+  deletedAt: 'deletedAt',
+  deletedById: 'deletedById',
   createdAt: 'createdAt'
 } as const
 
@@ -356,6 +364,35 @@ export const OrganizationAuditEventScalarFieldEnum = {
 } as const
 
 export type OrganizationAuditEventScalarFieldEnum = (typeof OrganizationAuditEventScalarFieldEnum)[keyof typeof OrganizationAuditEventScalarFieldEnum]
+
+
+export const TenantSettingsScalarFieldEnum = {
+  organizationId: 'organizationId',
+  status: 'status',
+  isolationTier: 'isolationTier',
+  statusReason: 'statusReason',
+  deletionRequestedAt: 'deletionRequestedAt',
+  deletionScheduledFor: 'deletionScheduledFor',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TenantSettingsScalarFieldEnum = (typeof TenantSettingsScalarFieldEnum)[keyof typeof TenantSettingsScalarFieldEnum]
+
+
+export const TenantExportScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  requestedById: 'requestedById',
+  status: 'status',
+  fileKey: 'fileKey',
+  size: 'size',
+  error: 'error',
+  createdAt: 'createdAt',
+  completedAt: 'completedAt',
+  expiresAt: 'expiresAt'
+} as const
+
+export type TenantExportScalarFieldEnum = (typeof TenantExportScalarFieldEnum)[keyof typeof TenantExportScalarFieldEnum]
 
 
 export const SortOrder = {
