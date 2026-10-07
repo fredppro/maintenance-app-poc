@@ -154,6 +154,7 @@ describe("AddEntryDialog", () => {
       screen.getByRole("combobox", { name: "Select workers..." }),
     );
     await user.click(screen.getByText("Taylor Worker (taylor@example.test)"));
+    await user.keyboard("{Escape}");
     await user.click(screen.getByRole("button", { name: "Schedule" }));
 
     await waitFor(() => {
@@ -183,6 +184,7 @@ describe("AddEntryDialog", () => {
       screen.getByRole("combobox", { name: "Select workers..." }),
     );
     await user.click(screen.getByText("Taylor Worker (taylor@example.test)"));
+    await user.keyboard("{Escape}");
     await user.click(screen.getByRole("button", { name: "Schedule" }));
 
     await waitFor(() => {
