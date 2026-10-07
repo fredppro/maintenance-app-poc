@@ -25,5 +25,6 @@ export function resolveRuntimeDatabaseUrl(env: NodeJS.ProcessEnv = process.env):
   url.username = RUNTIME_ROLE;
   url.password = createHmac("sha256", secret).update(`runtime-db-role:${RUNTIME_ROLE}`).digest("hex").slice(0, 48);
   url.searchParams.delete("channel_binding");
+  if (url.searchParams.get("sslmode") === "require") url.searchParams.set("sslmode", "verify-full");
   return url.toString();
 }
