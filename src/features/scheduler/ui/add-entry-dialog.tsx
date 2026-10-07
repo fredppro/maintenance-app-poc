@@ -1,17 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Select,
@@ -20,58 +11,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { getValidLocale } from "src/i18n/locale";
 import { createTask } from "../server/actions";
 import { useSchedulerStore } from "../store/scheduler-provider";
-import { getCurrencySymbol } from "@/features/scheduler/utils/currency";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addHours, areIntervalsOverlapping } from "date-fns";
-import { AlertCircle, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-
-const materialSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  reference: z.string().optional(),
-  quantity: z
-    .number()
-    .min(0.1, "Quantity must be > 0")
-    .multipleOf(0.1, "Only one decimal place allowed"),
-  unit: z.nativeEnum(MaterialUnit).optional().default(MaterialUnit.PC),
-  price: z.preprocess(
-    (value) =>
-      value === "" ||
-      value === null ||
-      value === undefined ||
-      Number.isNaN(Number(value))
-        ? undefined
-        : Number(value),
-    z
-      .number()
-      .min(0, "Price must be ≥ 0")
-      .refine(
-        (value) => Math.round(value * 100) === value * 100,
-        "Only two decimal places allowed",
-      )
-      .optional(),
-  ),
-});
+import { TaskType } from "../../../../prisma/generated/prisma/enums";
+import {
+  EntrySheet,
+  FieldError,
+  FormSection,
+  MaterialsEditor,
+  materialSchema,
+  ScheduleFields,
+} from "./entry-form-parts";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -100,6 +60,9 @@ export function AddEntryDialog({
   const addEntry = useSchedulerStore((state) => state.addEntry);
   const equipment = useSchedulerStore((state) => state.equipment);
   const workers = useSchedulerStore((state) => state.workers);
+  const requestWorkersView = useSchedulerStore(
+    (state) => state.requestWorkersView,
+  );
   const entries = useSchedulerStore((state) => state.entries);
 
   const locale = getValidLocale(useLocale());
@@ -118,11 +81,6 @@ export function AddEntryDialog({
       workerIds: [],
       materials: [],
     },
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "materials",
   });
 
   const watchEquipmentId = form.watch("equipmentId");
@@ -190,369 +148,147 @@ export function AddEntryDialog({
   }));
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl lg:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{t("schedule")}</DialogTitle>
-          <DialogDescription className="sr-only">
-            {t("scheduleDescription")}
-          </DialogDescription>
-        </DialogHeader>
+    <EntrySheet
+      open={open}
+      onOpenChange={onOpenChange}
+      formId="add-entry-form"
+      onSubmit={form.handleSubmit(onSubmit)}
+      title={t("schedule")}
+      description={t("scheduleDescription")}
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+          >
+            {tCommon("cancel")}
+          </Button>
+          <Button
+            type="submit"
+            form="add-entry-form"
+            disabled={form.formState.isSubmitting || hasConflict}
+            aria-busy={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting && <Spinner data-icon="inline-start" />}
+            {form.formState.isSubmitting ? t("submitting") : t("submit")}
+          </Button>
+        </>
+      }
+    >
+      <FieldGroup>
+        <FormSection title={t("sectionDetails")}>
+          <Field>
+            <FieldLabel htmlFor="task-title">{t("title")}</FieldLabel>
+            <Input
+              id="task-title"
+              autoFocus
+              {...form.register("title")}
+              placeholder={t("titlePlaceholder")}
+            />
+            <FieldError message={form.formState.errors.title?.message} />
+          </Field>
 
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-6 -mx-4 max-h-[75vh] overflow-y-auto px-4"
-        >
-          <FieldGroup>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field>
-                <FieldLabel htmlFor="task-equipment">
-                  {t("equipment")}
-                </FieldLabel>
-                <Select
-                  value={form.watch("equipmentId")}
-                  onValueChange={(v) => form.setValue("equipmentId", v)}
-                >
-                  <SelectTrigger
-                    id="task-equipment"
-                    className={
-                      hasConflict
-                        ? "border-destructive text-destructive focus:ring-destructive"
-                        : ""
-                    }
-                  >
-                    <SelectValue placeholder={t("selectEquipment")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {equipment.map((equip) => (
-                      <SelectItem key={equip.id} value={equip.id}>
-                        {equip.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.equipmentId && (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.equipmentId.message}
-                  </p>
-                )}
-                {hasConflict && (
-                  <div className="flex items-center gap-1.5 mt-1.5 text-destructive animate-in fade-in slide-in-from-top-1 duration-200">
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    <p className="text-xs font-medium">
-                      {t("errors.conflict")}
-                    </p>
-                  </div>
-                )}
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="task-type">{t("taskType")}</FieldLabel>
-                <Select
-                  value={form.watch("type")}
-                  onValueChange={(v) => form.setValue("type", v as TaskType)}
-                >
-                  <SelectTrigger id="task-type">
-                    <SelectValue placeholder={t("selectType")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={TaskType.PREVENTIVE}>
-                      {t("preventive")}
-                    </SelectItem>
-                    <SelectItem value={TaskType.INSPECTION}>
-                      {t("inspection")}
-                    </SelectItem>
-                    <SelectItem value={TaskType.CORRECTIVE}>
-                      {t("corrective")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-            </div>
-
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field>
-              <FieldLabel htmlFor="task-title">{t("title")}</FieldLabel>
-              <Input
-                id="task-title"
-                {...form.register("title")}
-                placeholder={t("titlePlaceholder")}
-              />
-              {form.formState.errors.title && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.title.message}
-                </p>
-              )}
-            </Field>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="task-start-time" className="text-xs font-semibold">
-                  {t("startDateTime")}
-                </Label>
-                <Controller
-                  control={form.control}
-                  name="startTime"
-                  render={({ field }) => (
-                    <DateTimePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      locale={locale}
-                      id="task-start-time"
-                      placeholder={t("pickDate")}
-                      hasError={hasConflict}
-                    />
-                  )}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="task-end-time" className="text-xs font-semibold">
-                  {t("endDateTime")}
-                </Label>
-                <Controller
-                  control={form.control}
-                  name="endTime"
-                  render={({ field }) => (
-                    <DateTimePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      locale={locale}
-                      id="task-end-time"
-                      placeholder={t("pickDate")}
-                      hasError={hasConflict}
-                    />
-                  )}
-                />
-              </div>
-            </div>
-
-            <Field>
-              <FieldLabel htmlFor="task-description">
-                {t("description")}
-              </FieldLabel>
-              <Textarea
-                id="task-description"
-                {...form.register("description")}
-                placeholder={t("descriptionPlaceholder")}
-                rows={2}
-              />
+              <FieldLabel htmlFor="task-equipment">{t("equipment")}</FieldLabel>
+              <Select
+                value={form.watch("equipmentId")}
+                onValueChange={(v) =>
+                  form.setValue("equipmentId", v, { shouldValidate: true })
+                }
+              >
+                <SelectTrigger
+                  id="task-equipment"
+                  className="w-full"
+                  aria-invalid={hasConflict || undefined}
+                >
+                  <SelectValue placeholder={t("selectEquipment")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {equipment.map((equip) => (
+                    <SelectItem key={equip.id} value={equip.id}>
+                      {equip.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldError message={form.formState.errors.equipmentId?.message} />
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="task-workers">
-                {t("assignedWorkers")}
-              </FieldLabel>
-              <MultiSelect
-                id="task-workers"
-                options={workerOptions}
-                selected={form.watch("workerIds")}
-                onChange={(v) => form.setValue("workerIds", v)}
-                placeholder={t("selectWorkers")}
-              />
-              {form.formState.errors.workerIds && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.workerIds.message}
-                </p>
-              )}
+              <FieldLabel htmlFor="task-type">{t("taskType")}</FieldLabel>
+              <Select
+                value={form.watch("type")}
+                onValueChange={(v) => form.setValue("type", v as TaskType)}
+              >
+                <SelectTrigger id="task-type" className="w-full">
+                  <SelectValue placeholder={t("selectType")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TaskType.PREVENTIVE}>
+                    {t("preventive")}
+                  </SelectItem>
+                  <SelectItem value={TaskType.INSPECTION}>
+                    {t("inspection")}
+                  </SelectItem>
+                  <SelectItem value={TaskType.CORRECTIVE}>
+                    {t("corrective")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
+          </div>
+        </FormSection>
 
-            <div className="pt-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-bold">{t("materials")}</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1"
-                  onClick={() =>
-                    append({
-                      name: "",
-                      reference: "",
-                      quantity: 1,
-                      unit: MaterialUnit.PC,
-                      price: undefined,
-                    })
-                  }
-                >
-                  <Plus className="h-4 w-4" />
-                  {t("addMaterial")}
-                </Button>
-              </div>
+        <FormSection title={t("sectionSchedule")}>
+          <ScheduleFields
+            form={form}
+            locale={locale}
+            hasConflict={hasConflict}
+          />
+        </FormSection>
 
-              {fields.length > 0 ? (
-                <div className="border rounded-md overflow-hidden">
-                  <Table>
-                    <TableHeader className="bg-muted/50">
-                      <TableRow>
-                        <TableHead className="w-[24%]">
-                          {t("itemName")}
-                        </TableHead>
-                        <TableHead className="w-[16%]">
-                          {t("reference")}
-                        </TableHead>
-                        <TableHead className="w-[12%] text-right">
-                          {t("quantity")}
-                        </TableHead>
-                        <TableHead className="w-[18%] min-w-[120px]">
-                          {t("unit")}
-                        </TableHead>
-                        <TableHead className="w-[22%] text-right">
-                          {t("price")}
-                        </TableHead>
-                        <TableHead className="w-[10%]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {fields.map((field, index) => (
-                        <TableRow key={field.id} className="group">
-                          <TableCell className="p-2">
-                            <Input
-                              aria-label={`${t("itemName")} ${index + 1}`}
-                              {...form.register(
-                                `materials.${index}.name` as const,
-                              )}
-                              placeholder={t("itemName")}
-                              className="h-8 text-xs"
-                            />
-                            {form.formState.errors.materials?.[index]?.name && (
-                              <p className="text-[10px] text-destructive mt-1">
-                                {
-                                  form.formState.errors.materials[index]?.name
-                                    ?.message
-                                }
-                              </p>
-                            )}
-                          </TableCell>
-                          <TableCell className="p-2">
-                            <Input
-                              aria-label={`${t("reference")} ${index + 1}`}
-                              {...form.register(
-                                `materials.${index}.reference` as const,
-                              )}
-                              placeholder={t("reference")}
-                              className="h-8 text-xs"
-                            />
-                          </TableCell>
-                          <TableCell className="p-2 text-right">
-                            <Input
-                              aria-label={`${t("quantity")} ${index + 1}`}
-                              type="number"
-                              step="0.1"
-                              {...form.register(
-                                `materials.${index}.quantity` as const,
-                                { valueAsNumber: true },
-                              )}
-                              className="h-8 text-xs text-right"
-                            />
-                            {form.formState.errors.materials?.[index]
-                              ?.quantity && (
-                              <p className="text-[10px] text-destructive mt-1">
-                                {
-                                  form.formState.errors.materials[index]
-                                    ?.quantity?.message
-                                }
-                              </p>
-                            )}
-                          </TableCell>
-                          <TableCell className="p-2">
-                            <Controller
-                              control={form.control}
-                              name={`materials.${index}.unit` as const}
-                              render={({ field }) => (
-                                <Select
-                                  value={field.value ?? MaterialUnit.PC}
-                                  onValueChange={field.onChange}
-                                >
-                                  <SelectTrigger className="h-8 text-xs min-w-[110px]">
-                                    <SelectValue
-                                      placeholder={t("selectUnit")}
-                                    />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {Object.values(MaterialUnit).map((unit) => (
-                                      <SelectItem key={unit} value={unit}>
-                                        {t(`materialUnits.${unit}`)}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
-                          </TableCell>
-                          <TableCell className="p-2 text-right">
-                            <InputGroup className="h-8">
-                              <InputGroupInput
-                                aria-label={`${t("price")} ${index + 1}`}
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                placeholder="0.00"
-                                {...form.register(
-                                  `materials.${index}.price` as const,
-                                  {
-                                    valueAsNumber: true,
-                                  },
-                                )}
-                                className="h-8 text-xs text-right"
-                              />
-                              <InputGroupAddon className="px-2 text-xs text-muted-foreground border-l-0">
-                                {getCurrencySymbol(locale)}
-                              </InputGroupAddon>
-                            </InputGroup>
+        <FormSection title={t("sectionTeam")}>
+          <Field>
+            <FieldLabel htmlFor="task-workers">{t("assignedWorkers")}</FieldLabel>
+            <MultiSelect
+              id="task-workers"
+              options={workerOptions}
+              selected={form.watch("workerIds")}
+              onChange={(v) =>
+                form.setValue("workerIds", v, { shouldValidate: true })
+              }
+              placeholder={t("selectWorkers")}
+              searchPlaceholder={t("searchWorkers")}
+              emptyText={
+                workerOptions.length === 0
+                  ? t("noWorkersAvailable")
+                  : t("noWorkerFound")
+              }
+              action={{
+                label: t("addWorker"),
+                onClick: () => {
+                  onOpenChange(false);
+                  requestWorkersView();
+                },
+              }}
+            />
+            <FieldError message={form.formState.errors.workerIds?.message} />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="task-description">{t("description")}</FieldLabel>
+            <Textarea
+              id="task-description"
+              {...form.register("description")}
+              placeholder={t("descriptionPlaceholder")}
+              rows={3}
+            />
+          </Field>
+        </FormSection>
 
-                            {form.formState.errors.materials?.[index]
-                              ?.price && (
-                              <p className="text-[10px] text-destructive mt-1">
-                                {
-                                  form.formState.errors.materials[index]?.price
-                                    ?.message
-                                }
-                              </p>
-                            )}
-                          </TableCell>
-                          <TableCell className="p-2 text-center">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                              onClick={() => remove(index)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center p-6 border border-dashed rounded-md bg-muted/20">
-                  <p className="text-xs text-muted-foreground">
-                    {t("noMaterials")}
-                  </p>
-                </div>
-              )}
-            </div>
-          </FieldGroup>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              {tCommon("cancel")}
-            </Button>
-            <Button
-              type="submit"
-              disabled={form.formState.isSubmitting || hasConflict}
-            >
-              {form.formState.isSubmitting ? t("submitting") : t("submit")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <MaterialsEditor form={form} locale={locale} />
+      </FieldGroup>
+    </EntrySheet>
   );
 }

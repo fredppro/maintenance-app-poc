@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Check, ChevronsUpDown, X } from 'lucide-react'
+import { Check, ChevronsUpDown, Plus, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -31,6 +31,10 @@ interface MultiSelectProps {
   placeholder?: string
   id?: string
   className?: string
+  searchPlaceholder?: string
+  emptyText?: string
+  /** Shown centered when there are no options, and as a footer row otherwise. */
+  action?: { label: string; onClick: () => void }
 }
 
 export function MultiSelect({
@@ -40,6 +44,9 @@ export function MultiSelect({
   placeholder = 'Select items...',
   id,
   className,
+  searchPlaceholder,
+  emptyText = 'No item found.',
+  action,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -57,7 +64,7 @@ export function MultiSelect({
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover modal open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             id={id}
@@ -94,9 +101,11 @@ export function MultiSelect({
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
           <Command>
-            <CommandInput placeholder={placeholder} />
+            {options.length > 0 && (
+              <CommandInput placeholder={searchPlaceholder ?? placeholder} />
+            )}
             <CommandList>
-              <CommandEmpty>No item found.</CommandEmpty>
+              {options.length > 0 && <CommandEmpty>{emptyText}</CommandEmpty>}
               <CommandGroup>
                 {options.map((option) => (
                   <CommandItem
@@ -116,6 +125,30 @@ export function MultiSelect({
                 ))}
               </CommandGroup>
             </CommandList>
+            {action && (
+              <div
+                className={cn(
+                  'border-t p-1',
+                  options.length === 0 &&
+                    'flex flex-col items-center gap-2 border-t-0 p-4 text-center text-sm text-muted-foreground',
+                )}
+              >
+                {options.length === 0 && <span>{emptyText}</span>}
+                <Button
+                  type="button"
+                  variant={options.length === 0 ? 'outline' : 'ghost'}
+                  size="sm"
+                  className={options.length === 0 ? '' : 'w-full justify-start'}
+                  onClick={() => {
+                    setOpen(false)
+                    action.onClick()
+                  }}
+                >
+                  <Plus data-icon="inline-start" />
+                  {action.label}
+                </Button>
+              </div>
+            )}
           </Command>
         </PopoverContent>
       </Popover>

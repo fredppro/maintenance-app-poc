@@ -1,6 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import {
   Dialog,
   DialogContent,
@@ -17,11 +26,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { APPLICATION_LOCALES } from "src/i18n/config";
-import {
-  getValidLocale,
-  LOCALE_MAP
-} from "src/i18n/locale";
+import { getValidLocale, LOCALE_MAP } from "src/i18n/locale";
 import {
   addEquipment as dbAddEquipment,
   deleteEquipment as dbDeleteEquipment,
@@ -31,6 +38,10 @@ import {
 import { Equipment, MaintenanceEntry } from "../types";
 import { useSchedulerStore } from "../store/scheduler-provider";
 import { cn } from "@/lib/utils";
+import {
+  getTimelineBoundaryClass,
+  getTimelineCellMinWidth,
+} from "../utils/timeline-grid-layout";
 import {
   addHours,
   differenceInDays,
@@ -51,7 +62,7 @@ import {
 } from "date-fns";
 import {
   Box,
-  Loader2,
+  CalendarDays,
   MoreVertical,
   Plus,
   Settings,
@@ -106,6 +117,7 @@ export function TimelineGrid() {
   } | null>(null);
   const [newEquipName, setNewEquipName] = useState("");
   const [newEquipCategory, setNewEquipCategory] = useState("");
+  const [isSavingEquipment, setIsSavingEquipment] = useState(false);
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -299,7 +311,7 @@ export function TimelineGrid() {
       } catch (error) {
         setEntries(previousEntries);
         console.error("Failed to move task:", error);
-        toast.error("Failed to move task");
+        toast.error(t("failedMoveTask"));
       }
     }
     setDraggedEntry(null);
@@ -323,8 +335,9 @@ export function TimelineGrid() {
 
   const handleAddEquipSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEquipName.trim()) return;
+    if (!newEquipName.trim() || isSavingEquipment) return;
 
+    setIsSavingEquipment(true);
     try {
       if (editingEquipment) {
         const updatedEquipment = await dbUpdateEquipment(
@@ -335,25 +348,27 @@ export function TimelineGrid() {
           },
         );
         updateEquipment(updatedEquipment);
-        toast.success("Equipment updated");
+        toast.success(t("equipmentUpdated"));
       } else {
         const newEquipment = await dbAddEquipment({
           name: newEquipName.trim(),
           category: newEquipCategory.trim() || undefined,
         });
         addEquipment(newEquipment);
-        toast.success("Equipment added");
+        toast.success(t("equipmentAdded"));
       }
       setNewEquipName("");
       setNewEquipCategory("");
       setEditingEquipment(null);
       setAddEquipDialogOpen(false);
-    } catch (error) {
+    } catch {
       toast.error(
         editingEquipment
-          ? "Failed to update equipment"
-          : "Failed to add equipment",
+          ? t("failedUpdateEquipment")
+          : t("failedAddEquipment"),
       );
+    } finally {
+      setIsSavingEquipment(false);
     }
   };
 
@@ -376,7 +391,7 @@ export function TimelineGrid() {
       setEquipment(previousEquipment);
       setEntries(previousEntries);
       console.error("Failed to delete equipment:", error);
-      toast.error("Failed to remove equipment");
+      toast.error(t("failedRemoveEquipment"));
     }
   };
 
@@ -393,13 +408,9 @@ export function TimelineGrid() {
     [equipment],
   );
 
-  const cellWidth =
-    viewMode === "month"
-      ? "min-w-[100px]"
-      : viewMode === "year"
-        ? "min-w-[80px]"
-        : "min-w-[100px]";
-  const yAxisWidth = "w-72 min-w-[18rem]";
+  const cellWidth = getTimelineCellMinWidth(viewMode);
+  const yAxisWidth =
+    "w-44 min-w-44 md:w-48 md:min-w-48 xl:w-52 xl:min-w-52";
 
   const totalTasksInView = useMemo(() => {
     return equipment.reduce(
@@ -407,26 +418,42 @@ export function TimelineGrid() {
       0,
     );
   }, [equipment, getEntriesForEquipment]);
+  const periodLabel = {
+    day: t("periodDay"),
+    week: t("periodWeek"),
+    month: t("periodMonth"),
+    year: t("periodYear"),
+  }[viewMode];
+  const now = new Date();
+  const currentTimePosition =
+    ((now.getHours() * 60 + now.getMinutes()) / 1440) * 100;
 
   return (
     <>
       <div
         ref={gridRef}
-        className="flex-1 overflow-auto border border-border rounded-lg bg-card relative"
+        aria-busy={isLoading}
+        className="relative flex-1 overflow-auto rounded-lg border border-border bg-card"
       >
         {isLoading && (
-          <div className="absolute inset-0 z-50 bg-background/50 flex items-center justify-center backdrop-blur-[1px]">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          </div>
+          <TimelineGridSkeleton
+            boundaryClasses={timeSlots.map((_, index) =>
+              getTimelineBoundaryClass(timeSlots, viewMode, index),
+            )}
+            rowCount={Math.min(Math.max(equipment.length, 3), 6)}
+            yAxisWidth={yAxisWidth}
+            cellWidth={cellWidth}
+            label={t("loading")}
+          />
         )}
 
-        <div className="min-w-full w-fit h-full flex flex-col">
+        <div className="flex h-full min-w-full w-fit flex-col">
           {/* Header row */}
-          <div className="flex sticky top-0 z-20 bg-card border-b border-border flex-shrink-0 min-w-full w-fit">
+          <div className="sticky top-0 z-20 flex min-w-full w-fit shrink-0 border-b border-border bg-card">
             <div
               className={cn(
                 yAxisWidth,
-                "sticky left-0 z-30 bg-card border-r border-border p-3 flex items-center justify-between",
+                "sticky left-0 z-30 flex items-center justify-between border-r border-border bg-card px-2 py-2",
               )}
             >
               <span className="font-semibold text-sm text-foreground">
@@ -448,7 +475,8 @@ export function TimelineGrid() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7"
+                    className="size-8"
+                    aria-label={t("addEquipment")}
                     onClick={() => {
                       setEditingEquipment(null);
                       setNewEquipName("");
@@ -473,7 +501,7 @@ export function TimelineGrid() {
                         <Input
                           value={newEquipName}
                           onChange={(e) => setNewEquipName(e.target.value)}
-                          placeholder="e.g., CNC Machine G7"
+                          placeholder={t("equipmentNamePlaceholder")}
                           required
                         />
                       </Field>
@@ -482,7 +510,7 @@ export function TimelineGrid() {
                         <Input
                           value={newEquipCategory}
                           onChange={(e) => setNewEquipCategory(e.target.value)}
-                          placeholder="e.g., Manufacturing"
+                          placeholder={t("categoryPlaceholder")}
                           list="timeline-categories"
                         />
                         <datalist id="timeline-categories">
@@ -496,11 +524,22 @@ export function TimelineGrid() {
                       <Button
                         type="button"
                         variant="outline"
+                        disabled={isSavingEquipment}
                         onClick={() => setAddEquipDialogOpen(false)}
                       >
                         {tCommon("cancel")}
                       </Button>
-                      <Button type="submit" disabled={!newEquipName.trim()}>
+                      <Button
+                        type="submit"
+                        disabled={!newEquipName.trim() || isSavingEquipment}
+                        aria-busy={isSavingEquipment}
+                      >
+                        {isSavingEquipment && (
+                          <Spinner
+                            data-icon="inline-start"
+                            aria-label={t("saving")}
+                          />
+                        )}
                         {editingEquipment ? tCommon("save") : t("addEquipment")}
                       </Button>
                     </DialogFooter>
@@ -510,25 +549,37 @@ export function TimelineGrid() {
             </div>
             <div className="flex flex-1">
               {timeSlots.map((slot, idx) => (
-                <div
+                <button
+                  type="button"
                   key={idx}
                   onClick={() => handleHeaderClick(slot)}
+                  disabled={viewMode !== "week" && viewMode !== "month"}
+                  aria-label={format(
+                    slot,
+                    viewMode === "day" ? "PPpp" : "PP",
+                    { locale: dateFnsLocale },
+                  )}
+                  aria-current={
+                    isToday(slot) && viewMode !== "day" ? "date" : undefined
+                  }
                   className={cn(
                     cellWidth,
-                    "flex-1 p-2 text-center text-sm font-medium border-r border-border text-muted-foreground transition-colors",
+                    "relative flex-1 whitespace-nowrap border-b-0 border-r px-1 py-2 text-center tabular-nums text-xs font-medium text-muted-foreground transition-colors focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-default sm:text-sm",
+                    getTimelineBoundaryClass(timeSlots, viewMode, idx),
                     (viewMode === "week" || viewMode === "month") &&
-                      "cursor-pointer hover:bg-accent hover:text-foreground",
-                    isToday(slot) && "bg-primary/10 text-primary",
+                      "cursor-pointer hover:bg-accent hover:text-foreground active:bg-accent/80",
+                    isToday(slot) &&
+                      "bg-primary-muted/50 text-primary after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary",
                   )}
                 >
                   {formatHeader(slot)}
-                </div>
+                </button>
               ))}
             </div>
           </div>
 
           {/* Equipment rows */}
-          <div className="flex-1 min-w-full w-fit">
+          <div className="flex min-w-full w-fit flex-1 flex-col">
             {equipment.length > 0 ? (
               equipment.map((equip) => {
                 const equipEntries = getEntriesForEquipment(equip.id);
@@ -583,44 +634,46 @@ export function TimelineGrid() {
 
                 const numTracks = Math.max(1, trackEndSlots.length);
                 const rowHeight =
-                  numTracks > 1 ? Math.max(64, numTracks * 40) : 64;
+                  numTracks > 1 ? Math.max(56, numTracks * 36) : 56;
 
                 return (
                   <div
                     key={equip.id}
-                    className="flex border-b border-border last:border-b-0 group min-w-full w-fit"
+                    className="flex min-w-full w-fit border-b border-border"
                   >
                     {/* Equipment name cell */}
                     <div
                       className={cn(
                         yAxisWidth,
-                        "sticky left-0 z-10 bg-card border-r border-border p-3 flex items-center justify-between",
+                        "group/equipment-label sticky left-0 z-10 flex items-center justify-between border-r border-border bg-card px-2 py-1.5",
                       )}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex min-w-0 items-center gap-2">
                         <div className="relative">
-                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <Box className="w-4 h-4 text-primary" />
+                          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                            <Box className="size-4 text-primary" />
                           </div>
                           <div
                             className={cn(
-                              "absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-card",
+                              "absolute -right-1 -top-1 size-2.5 rounded-full border-2 border-card",
                               pendingCount > 0
                                 ? "bg-warning"
                                 : "bg-success",
                             )}
                             title={
-                              pendingCount > 0 ? "In Maintenance" : "Active"
+                              pendingCount > 0
+                                ? t("equipmentInMaintenance")
+                                : t("equipmentActive")
                             }
                           />
                         </div>
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-foreground truncate max-w-[10rem]">
+                          <div className="max-w-[9rem] truncate text-sm font-medium text-foreground">
                             {equip.name}
                           </div>
-                          <div className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                             {equip.category && (
-                              <span className="truncate max-w-[6rem]">
+                              <span className="max-w-[6rem] truncate">
                                 {equip.category}
                               </span>
                             )}
@@ -642,7 +695,10 @@ export function TimelineGrid() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                            className="size-7 opacity-0 transition-opacity group-hover/equipment-label:opacity-100 group-focus-within/equipment-label:opacity-100"
+                            aria-label={t("equipmentActions", {
+                              equipment: equip.name,
+                            })}
                           >
                             <MoreVertical className="w-4 h-4" />
                           </Button>
@@ -667,7 +723,7 @@ export function TimelineGrid() {
                     </div>
 
                     {/* Timeline cells */}
-                    <div className="flex relative flex-1">
+                    <div className="relative isolate flex flex-1 overflow-hidden">
                       {timeSlots.map((slot, slotIdx) => {
                         const isDragOver =
                           dragOverCell &&
@@ -679,18 +735,34 @@ export function TimelineGrid() {
                         return (
                           <button
                             type="button"
-                            aria-label={`${equip.name}, ${format(
-                              slot,
-                              viewMode === "day" ? "PPpp" : "PP",
-                              { locale: dateFnsLocale },
-                            )}`}
+                            aria-label={t("addEntryAt", {
+                              equipment: equip.name,
+                              date: format(
+                                slot,
+                                viewMode === "day" ? "PPpp" : "PP",
+                                { locale: dateFnsLocale },
+                              ),
+                            })}
+                            title={t("addEntryAt", {
+                              equipment: equip.name,
+                              date: format(
+                                slot,
+                                viewMode === "day" ? "PPpp" : "PP",
+                                { locale: dateFnsLocale },
+                              ),
+                            })}
                             key={slotIdx}
                             className={cn(
                               cellWidth,
-                              "flex-1 border-0 rounded-none bg-transparent p-0 text-left border-r border-border cursor-pointer transition-colors relative",
-                              "hover:bg-accent/50",
-                              isDragOver && "bg-primary/20",
-                              isToday(slot) && "bg-primary/5",
+                              "group/cell relative flex-1 cursor-pointer rounded-none border-0 border-r bg-transparent p-0 text-left transition-colors focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                              getTimelineBoundaryClass(
+                                timeSlots,
+                                viewMode,
+                                slotIdx,
+                              ),
+                              "hover:bg-accent/50 active:bg-accent/80",
+                              isDragOver && "bg-primary-muted",
+                              isToday(slot) && "bg-primary-muted/30",
                             )}
                             style={{ height: `${rowHeight}px` }}
                             onClick={() => handleCellClick(slot, equip.id)}
@@ -699,9 +771,29 @@ export function TimelineGrid() {
                             }
                             onDragLeave={handleDragLeave}
                             onDrop={() => handleDrop(slot, equip.id)}
-                          />
+                          >
+                            <span
+                              aria-hidden="true"
+                              className="pointer-events-none absolute left-1/2 top-1/2 flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md bg-background text-primary opacity-0 shadow-sm ring-1 ring-border transition-opacity group-hover/cell:opacity-100 group-focus-visible/cell:opacity-100"
+                            >
+                              <Plus className="size-4" />
+                            </span>
+                          </button>
                         );
                       })}
+
+                      {viewMode === "day" &&
+                        isSameDay(currentDate, now) && (
+                          <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-y-0 z-10 border-l border-primary"
+                            style={{
+                              left: `${currentTimePosition}%`,
+                            }}
+                          >
+                            <span className="absolute -left-1 -top-1 size-2 rounded-full bg-primary ring-2 ring-card" />
+                          </div>
+                        )}
 
                       {/* Render entries as overlay */}
                       {!isLoading &&
@@ -756,14 +848,67 @@ export function TimelineGrid() {
                 );
               })
             ) : (
-              <div className="p-8 text-center text-muted-foreground italic">
-                {t("noEquipment")}
+              <div className="flex min-h-64 min-w-full w-fit border-b border-border">
+                <div
+                  className={cn(
+                    yAxisWidth,
+                    "sticky left-0 z-10 border-r border-border bg-card",
+                  )}
+                  aria-hidden="true"
+                />
+                <div className="relative flex min-h-64 flex-1">
+                  {timeSlots.map((slot, index) => (
+                    <div
+                      key={index}
+                      aria-hidden="true"
+                      className={cn(
+                        cellWidth,
+                        "flex-1 border-r",
+                        getTimelineBoundaryClass(timeSlots, viewMode, index),
+                      )}
+                    />
+                  ))}
+                  <Empty className="absolute inset-0 min-h-0 flex-none gap-3 rounded-none border-0 bg-background/85 p-4">
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <Box aria-hidden="true" />
+                      </EmptyMedia>
+                      <EmptyTitle className="text-sm">
+                        {t("noEquipment")}
+                      </EmptyTitle>
+                    </EmptyHeader>
+                    <EmptyContent>
+                      <Button
+                        variant="outline"
+                        onClick={() => setAddEquipDialogOpen(true)}
+                      >
+                        <Plus data-icon="inline-start" />
+                        {t("addEquipment")}
+                      </Button>
+                    </EmptyContent>
+                  </Empty>
+                </div>
               </div>
             )}
-
-            {viewMode === "day" && !isLoading && totalTasksInView === 0 && (
-              <div className="sticky left-0 right-0 p-4 text-center text-sm text-muted-foreground bg-muted/20 border-b border-border">
-                {t("noTasks")}
+            {equipment.length > 0 && !isLoading && totalTasksInView === 0 && (
+              <div className="flex flex-1 justify-center py-10 pl-44 md:pl-48 xl:pl-52">
+                <Empty
+                  role="status"
+                  aria-live="polite"
+                  className="min-h-0 flex-none gap-2 border-0 p-4"
+                >
+                  <EmptyHeader className="gap-1">
+                    <EmptyMedia variant="icon" className="mb-0 size-8">
+                      <CalendarDays aria-hidden="true" />
+                    </EmptyMedia>
+                    <EmptyTitle className="text-sm">
+                      {t("noTasksInPeriod", { period: periodLabel })}
+                    </EmptyTitle>
+                    <EmptyDescription className="text-xs">
+                      {t("emptyPeriodHint")}
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               </div>
             )}
           </div>
@@ -776,5 +921,93 @@ export function TimelineGrid() {
         selectedCell={selectedCell}
       />
     </>
+  );
+}
+
+function TimelineGridSkeleton({
+  boundaryClasses,
+  rowCount,
+  yAxisWidth,
+  cellWidth,
+  label,
+}: {
+  boundaryClasses: string[];
+  rowCount: number;
+  yAxisWidth: string;
+  cellWidth: string;
+  label: string;
+}) {
+  return (
+    <div
+      role="status"
+      aria-label={label}
+      className="pointer-events-auto absolute inset-0 z-30 overflow-hidden bg-background/80"
+    >
+      <div
+        aria-hidden="true"
+        className="flex h-full min-w-full w-fit flex-col"
+      >
+        <div className="flex min-w-full flex-none border-b border-border">
+          <div
+            className={cn(
+              yAxisWidth,
+              "sticky left-0 z-10 flex h-10 items-center border-r border-border bg-card px-2",
+            )}
+          >
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="flex flex-1">
+            {boundaryClasses.map((boundaryClass, index) => (
+              <div
+                key={index}
+                className={cn(
+                  cellWidth,
+                  "flex flex-1 items-center justify-center border-r p-1",
+                  boundaryClass,
+                )}
+              >
+                <Skeleton className="h-4 w-12" />
+              </div>
+            ))}
+          </div>
+        </div>
+        {Array.from({ length: rowCount }, (_, rowIndex) => (
+          <div
+            key={rowIndex}
+            className="flex h-14 min-w-full flex-none border-b border-border"
+          >
+            <div
+              className={cn(
+                yAxisWidth,
+                "sticky left-0 z-10 flex items-center gap-2 border-r border-border bg-card px-2",
+              )}
+            >
+              <Skeleton className="size-8 shrink-0 rounded-lg" />
+              <Skeleton className="h-4 w-28" />
+            </div>
+            <div className="relative flex flex-1">
+              {boundaryClasses.map((boundaryClass, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    cellWidth,
+                    "flex-1 border-r",
+                    boundaryClass,
+                  )}
+                />
+              ))}
+              <Skeleton
+                className={cn(
+                  "absolute top-3 h-8",
+                  rowIndex % 2 === 0
+                    ? "left-[12%] w-[28%]"
+                    : "left-[38%] w-[34%]",
+                )}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

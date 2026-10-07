@@ -16,10 +16,12 @@ export interface SchedulerState {
   currentDate: Date;
   selectedEntry: MaintenanceEntry | null;
   isLoading: boolean;
+  workersViewRequest: number;
 
   setEquipment: (equipment: Equipment[]) => void;
   setEntries: (entries: MaintenanceEntry[]) => void;
   setWorkers: (workers: Worker[]) => void;
+  requestWorkersView: () => void;
   addEquipment: (equipment: Equipment) => void;
   updateEquipment: (equipment: Equipment) => void;
   removeEquipment: (id: string) => void;
@@ -52,6 +54,7 @@ export type SchedulerInitialState = Partial<
     | "currentDate"
     | "selectedEntry"
     | "isLoading"
+    | "workersViewRequest"
   >
 >;
 
@@ -64,6 +67,7 @@ const defaultSchedulerState = (): Pick<
   | "currentDate"
   | "selectedEntry"
   | "isLoading"
+  | "workersViewRequest"
 > => ({
   equipment: [],
   entries: [],
@@ -72,6 +76,7 @@ const defaultSchedulerState = (): Pick<
   currentDate: new Date(),
   selectedEntry: null,
   isLoading: false,
+  workersViewRequest: 0,
 });
 
 export function createSchedulerStore(initialState: SchedulerInitialState = {}) {
@@ -84,6 +89,8 @@ export function createSchedulerStore(initialState: SchedulerInitialState = {}) {
     setEquipment: (equipment) => set({ equipment }),
     setEntries: (entries) => set({ entries }),
     setWorkers: (workers) => set({ workers }),
+    requestWorkersView: () =>
+      set((state) => ({ workersViewRequest: state.workersViewRequest + 1 })),
     setLoading: (isLoading) => set({ isLoading }),
 
     addEquipment: (equipment) =>

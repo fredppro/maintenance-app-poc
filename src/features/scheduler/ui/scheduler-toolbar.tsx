@@ -78,26 +78,32 @@ export function SchedulerToolbar() {
 
   return (
     <TooltipProvider>
-      <div className="flex items-center justify-between gap-4 p-4 bg-card border border-border rounded-lg">
+      <div className="grid grid-cols-1 items-center gap-2 rounded-lg border border-border bg-card p-2 sm:gap-3 sm:p-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
         {/* Left side: Navigation */}
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <ButtonGroup>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
-                  size="icon"
+                  size="icon-sm"
+                  aria-label={t("previous")}
                   onClick={navigateBackward}
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Previous</TooltipContent>
+              <TooltipContent>{t("previous")}</TooltipContent>
             </Tooltip>
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" onClick={handleToday}>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={t("today")}
+                  onClick={handleToday}
+                >
                   <RotateCcw className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
@@ -106,30 +112,36 @@ export function SchedulerToolbar() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" onClick={navigateForward}>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={t("next")}
+                  onClick={navigateForward}
+                >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Next</TooltipContent>
+              <TooltipContent>{t("next")}</TooltipContent>
             </Tooltip>
           </ButtonGroup>
 
-          <div className="flex items-center gap-2 px-3">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
-            <span className="font-medium text-foreground min-w-48">
+          <div className="flex min-w-0 items-center gap-2 px-1">
+            <Calendar className="size-4 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 truncate font-medium text-foreground">
               {formatDateRange()}
             </span>
           </div>
         </div>
 
         {/* Center: View Mode Buttons */}
-        <ButtonGroup>
+        <ButtonGroup className="lg:justify-self-center" aria-label={t("viewSelector")}>
           {viewModeOrder.map((mode) => (
             <Button
               key={mode}
               variant={viewMode === mode ? "default" : "outline"}
+              aria-pressed={viewMode === mode}
               onClick={() => setViewMode(mode)}
-              className="capitalize"
+              className="h-8 px-2 text-xs capitalize sm:h-9 sm:px-3 sm:text-sm"
             >
               {t(mode)}
             </Button>
@@ -137,34 +149,36 @@ export function SchedulerToolbar() {
         </ButtonGroup>
 
         {/* Right side: Zoom Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 lg:justify-self-end">
           <ButtonGroup>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
-                  size="icon"
+                  size="icon-sm"
+                  aria-label={t("zoomIn")}
                   onClick={handleZoomIn}
                   disabled={!canZoomIn}
                 >
                   <ZoomIn className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Zoom In</TooltipContent>
+              <TooltipContent>{t("zoomIn")}</TooltipContent>
             </Tooltip>
 
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
-                  size="icon"
+                  size="icon-sm"
+                  aria-label={t("zoomOut")}
                   onClick={handleZoomOut}
                   disabled={!canZoomOut}
                 >
                   <ZoomOut className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Zoom Out</TooltipContent>
+              <TooltipContent>{t("zoomOut")}</TooltipContent>
             </Tooltip>
           </ButtonGroup>
         </div>

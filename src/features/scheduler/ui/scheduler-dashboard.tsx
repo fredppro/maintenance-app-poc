@@ -51,8 +51,8 @@ export function SchedulerDashboard({
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card px-6 py-4">
-        <div className="flex items-center justify-between">
+      <header className="shrink-0 border-b border-border bg-card px-3 py-3 sm:px-6 sm:py-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
               <Wrench className="w-5 h-5 text-primary" />
@@ -68,8 +68,8 @@ export function SchedulerDashboard({
           </div>
 
           {/* Quick Stats */}
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 lg:flex-nowrap lg:gap-6">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <div className="size-3 rounded-full bg-info/20 border border-info/40" />
                 <span className="text-muted-foreground">
@@ -128,7 +128,7 @@ export function SchedulerDashboard({
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {tenantContextControl}
               <LanguageSwitcher />
               <ThemeToggle />
@@ -143,7 +143,7 @@ export function SchedulerDashboard({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col p-6 gap-4 overflow-hidden">
+      <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 sm:p-4">
         {/* Toolbar */}
         {workersContent ? null : <SchedulerToolbar />}
 
@@ -154,16 +154,16 @@ export function SchedulerDashboard({
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card px-6 py-3">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-4">
+      <footer className="shrink-0 border-t border-border bg-card px-3 py-3 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span>{t("footer.clickHint")}</span>
             <span>•</span>
             <span>{t("footer.dragHint")}</span>
             <span>•</span>
             <span>{t("footer.zoomHint")}</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <div className="flex items-center gap-1">
               <div className="size-2 rounded-full bg-info" />
               <span>{t("stats.preventive")}</span>

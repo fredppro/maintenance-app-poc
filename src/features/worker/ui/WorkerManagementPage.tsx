@@ -72,6 +72,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import CreateUpdateWorker from "./CreateUpdateUser";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type WorkerRow = {
   id: string;
@@ -427,7 +428,25 @@ export default function WorkerManagementPage({
 
       <div className="flex-1 overflow-hidden rounded-md border border-border bg-background">
         {loading ? (
-          <div className="p-4">{t("loading")}</div>
+          <div
+            role="status"
+            aria-label={t("loading")}
+            className="flex flex-col gap-4 p-4"
+          >
+            <Skeleton className="h-5 w-36" />
+            {Array.from({ length: 5 }, (_, row) => (
+              <div
+                key={row}
+                className="grid grid-cols-2 items-center gap-4 border-b border-border-subtle py-3 sm:grid-cols-4"
+              >
+                <Skeleton className="h-4 w-32 max-w-full" />
+                <Skeleton className="h-4 w-40 max-w-full" />
+                <Skeleton className="hidden h-4 w-24 sm:block" />
+                <Skeleton className="hidden h-4 w-20 sm:block" />
+              </div>
+            ))}
+            <span className="sr-only">{t("loading")}</span>
+          </div>
         ) : fetchFailed ? (
           <Alert className="m-4" variant="destructive" role="alert">
             <AlertDescription className="flex items-center justify-between gap-4">
@@ -438,7 +457,15 @@ export default function WorkerManagementPage({
             </AlertDescription>
           </Alert>
         ) : workers.length === 0 ? (
-          <div className="p-4 text-muted-foreground">{t("noWorkers")}</div>
+          <div className="flex min-h-64 flex-col items-center justify-center gap-3 p-8 text-center">
+            <h3 className="font-medium">{t("noWorkers")}</h3>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              {t("noWorkersDescription")}
+            </p>
+            <Button onClick={() => handleOpenDrawer(undefined)}>
+              {t("createWorker")}
+            </Button>
+          </div>
         ) : (
           <div className="h-full min-w-full overflow-auto">
             <div className="w-full overflow-x-auto">

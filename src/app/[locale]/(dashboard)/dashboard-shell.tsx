@@ -3,7 +3,7 @@
 import WorkerManagementPage from "@/features/worker/ui/WorkerManagementPage";
 import { SchedulerDashboard } from "@/features/scheduler/ui/scheduler-dashboard";
 import { useSchedulerStore } from "@/features/scheduler/store/scheduler-provider";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { authClient } from "@/features/auth/client";
 import { useRouter } from "@/i18n/routing";
 import { toast } from "sonner";
@@ -21,7 +21,14 @@ export function DashboardShell({
 }) {
   const [workersOpen, setWorkersOpen] = useState(false);
   const setWorkers = useSchedulerStore((state) => state.setWorkers);
+  const workersViewRequest = useSchedulerStore(
+    (state) => state.workersViewRequest,
+  );
   const router = useRouter();
+
+  useEffect(() => {
+    if (workersViewRequest > 0) setWorkersOpen(true);
+  }, [workersViewRequest]);
 
   async function signOut() {
     const { error } = await authClient.signOut();

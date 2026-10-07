@@ -1,6 +1,22 @@
 import { AuthForm } from "@/features/auth/ui/auth-form";
 import type { AppLocale } from "@/i18n/locale";
 import prisma from "@/lib/prisma";
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: AppLocale }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Auth" });
+
+  return {
+    title: t("signUpPageTitle"),
+    description: t("signUpPageDescription"),
+  };
+}
 
 export default async function SignupPage({
   params,
@@ -9,7 +25,10 @@ export default async function SignupPage({
   params: Promise<{ locale: AppLocale }>;
   searchParams: Promise<{ invitationId?: string }>;
 }) {
-  const [{ locale }, { invitationId }] = await Promise.all([params, searchParams]);
+  const [{ locale }, { invitationId }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const validInvitationId =
     invitationId &&
     (await prisma.invitation.findFirst({
@@ -24,13 +43,15 @@ export default async function SignupPage({
       : undefined;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 p-6">
-      <AuthForm
-        mode="sign-up"
-        locale={locale}
-        invitationId={validInvitationId}
-        emailVerificationEnabled={process.env.NODE_ENV === "production"}
-      />
+    <main className="flex min-h-svh items-center bg-background px-4 py-8 sm:px-6">
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-12">
+        <AuthForm
+          mode="sign-up"
+          locale={locale}
+          invitationId={validInvitationId}
+          emailVerificationEnabled={process.env.NODE_ENV === "production"}
+        />
+      </div>
     </main>
   );
 }
