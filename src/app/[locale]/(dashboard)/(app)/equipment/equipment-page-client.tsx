@@ -51,8 +51,8 @@ export function EquipmentPageClient() {
     [equipment],
   );
 
+  const [now] = useState(() => Date.now());
   const rows = useMemo(() => {
-    const now = Date.now();
     const q = query.trim().toLowerCase();
     return equipment
       .filter(
@@ -66,7 +66,7 @@ export function EquipmentPageClient() {
         section: sections.find((s) => s.id === e.sectionId)?.name,
         ...summarizeEquipmentMaintenance(e.id, entries, now),
       }));
-  }, [equipment, entries, sections, query]);
+  }, [equipment, entries, sections, query, now]);
 
   const fmt = (d?: Date | string) =>
     d ? format(new Date(d), "dd/MM/yyyy") : t("none");

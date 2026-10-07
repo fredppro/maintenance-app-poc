@@ -27,27 +27,14 @@ import { Equipment, MaintenanceEntry } from "../types";
 import { useSchedulerStore } from "../store/scheduler-provider";
 import { cn } from "@/lib/utils";
 import {
+  getTimeSlots,
   getTimelineBoundaryClass,
   getTimelineCellMinWidth,
+  getViewRange,
+  isSameSlot,
+  layoutEquipmentRow,
 } from "../utils/timeline-grid-layout";
-import {
-  addHours,
-  differenceInDays,
-  eachDayOfInterval,
-  eachHourOfInterval,
-  eachMonthOfInterval,
-  endOfDay,
-  endOfMonth,
-  endOfWeek,
-  format,
-  isSameDay,
-  isSameHour,
-  isSameMonth,
-  startOfDay,
-  startOfMonth,
-  startOfWeek,
-  startOfYear,
-} from "date-fns";
+import { format, isSameDay } from "date-fns";
 import {
   Box,
   CalendarDays,
@@ -103,36 +90,10 @@ export function TimelineGrid() {
 
   const gridRef = useRef<HTMLDivElement>(null);
 
-  const timeSlots = useMemo(() => {
-    switch (viewMode) {
-      case "day": {
-        const dayStart = startOfDay(currentDate);
-        return eachHourOfInterval({
-          start: dayStart,
-          end: addHours(dayStart, 23),
-        });
-      }
-      case "week": {
-        const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-        const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
-        return eachDayOfInterval({ start: weekStart, end: weekEnd });
-      }
-      case "month": {
-        const monthStart = startOfMonth(currentDate);
-        const monthEnd = endOfMonth(currentDate);
-        return eachDayOfInterval({ start: monthStart, end: monthEnd });
-      }
-      case "year": {
-        const yearStart = startOfYear(currentDate);
-        return eachMonthOfInterval({
-          start: yearStart,
-          end: new Date(currentDate.getFullYear(), 11, 31),
-        });
-      }
-      default:
-        return [];
-    }
-  }, [viewMode, currentDate]);
+  const timeSlots = useMemo(
+    () => getTimeSlots(viewMode, currentDate),
+    [viewMode, currentDate],
+  );
 
   const formatHeader = (date: Date): string => {
     switch (viewMode) {
@@ -144,105 +105,26 @@ export function TimelineGrid() {
         return format(date, "d", { locale: dateFnsLocale });
       case "year":
         return format(date, "MMM", { locale: dateFnsLocale });
-      default:
-        return "";
     }
   };
 
-  const viewRange = useMemo(() => {
-    if (timeSlots.length === 0) return null;
-    return {
-      start: timeSlots[0],
-      end:
-        viewMode === "day"
-          ? endOfDay(timeSlots[timeSlots.length - 1])
-          : viewMode === "year"
-            ? endOfMonth(timeSlots[timeSlots.length - 1])
-            : endOfDay(timeSlots[timeSlots.length - 1]),
-    };
-  }, [timeSlots, viewMode]);
+  const viewRange = useMemo(
+    () => getViewRange(timeSlots, viewMode),
+    [timeSlots, viewMode],
+  );
 
   const getEntriesForEquipment = useCallback(
     (equipmentId: string) => {
       if (!viewRange) return [];
-
-      return entries.filter((entry) => {
-        if (entry.equipmentId !== equipmentId) return false;
-
-        const entryStart = new Date(entry.startTime);
-        const entryEnd = new Date(entry.endTime);
-
-        // Overlap check: (StartA <= EndB) and (EndA >= StartB)
-        return entryStart <= viewRange.end && entryEnd >= viewRange.start;
-      });
+      return entries.filter(
+        (entry) =>
+          entry.equipmentId === equipmentId &&
+          new Date(entry.startTime) <= viewRange.end &&
+          new Date(entry.endTime) >= viewRange.start,
+      );
     },
     [entries, viewRange],
   );
-
-  const getEntryStartSlotIndex = (entry: MaintenanceEntry): number => {
-    const entryStart = new Date(entry.startTime);
-
-    // Find the first slot that contains or starts after the entry start
-    let lastIndex = -1;
-    for (let i = 0; i < timeSlots.length; i++) {
-      const slot = timeSlots[i];
-      let isMatch = false;
-
-      switch (viewMode) {
-        case "day":
-          isMatch = isSameHour(entryStart, slot) || entryStart > slot;
-          break;
-        case "week":
-        case "month":
-          isMatch = isSameDay(entryStart, slot) || entryStart > slot;
-          break;
-        case "year":
-          isMatch = isSameMonth(entryStart, slot) || entryStart > slot;
-          break;
-      }
-
-      if (isMatch) {
-        lastIndex = i;
-      } else {
-        break;
-      }
-    }
-
-    if (lastIndex === -1 && entryStart < timeSlots[0]) return 0;
-    return lastIndex;
-  };
-
-  const getEntrySpan = (entry: MaintenanceEntry): number => {
-    const entryStart = new Date(entry.startTime);
-    const entryEnd = new Date(entry.endTime);
-
-    // Clamp start/end to view range for span calculation
-    const effectiveStart =
-      viewRange && entryStart < viewRange.start ? viewRange.start : entryStart;
-    const effectiveEnd =
-      viewRange && entryEnd > viewRange.end ? viewRange.end : entryEnd;
-
-    switch (viewMode) {
-      case "day": {
-        const hours = Math.ceil(
-          (effectiveEnd.getTime() - effectiveStart.getTime()) /
-            (1000 * 60 * 60),
-        );
-        return Math.max(1, hours);
-      }
-      case "week":
-      case "month": {
-        const days = differenceInDays(effectiveEnd, effectiveStart) + 1;
-        return Math.max(1, days);
-      }
-      case "year": {
-        const months = effectiveEnd.getMonth() - effectiveStart.getMonth() + 1;
-        return Math.max(1, months);
-      }
-      default:
-        return 1;
-    }
-  };
 
   const handleCellClick = (date: Date, equipmentId: string) => {
     setSelectedCell({ date, equipmentId });
@@ -300,20 +182,7 @@ export function TimelineGrid() {
     setDragOverCell(null);
   };
 
-  const isToday = (date: Date): boolean => {
-    const today = new Date();
-    switch (viewMode) {
-      case "day":
-        return isSameHour(date, today);
-      case "week":
-      case "month":
-        return isSameDay(date, today);
-      case "year":
-        return isSameMonth(date, today);
-      default:
-        return false;
-    }
-  };
+  const isToday = (date: Date) => isSameSlot(date, new Date(), viewMode);
 
   const handleEditEquip = (equip: Equipment) => {
     setEditingEquipment(equip);
@@ -467,56 +336,13 @@ export function TimelineGrid() {
                 const equipEntries = getEntriesForEquipment(equip.id);
                 const pendingCount = getPendingMaintenanceCount(equip.id);
 
-                // Group and process overlapping entries by visual slot ranges
-                const processedEntries = equipEntries
-                  .map((entry) => {
-                    const startIdx = getEntryStartSlotIndex(entry);
-                    const span = getEntrySpan(entry);
-                    const totalSlots = timeSlots.length;
-                    const effectiveSpan = Math.min(span, totalSlots - startIdx);
-                    return {
-                      entry,
-                      startIdx,
-                      effectiveSpan,
-                      endIdx: startIdx + effectiveSpan,
-                    };
-                  })
-                  .filter((item) => item.startIdx >= 0);
-
-                // Sort by startIdx ascending, then effectiveSpan descending
-                processedEntries.sort((a, b) => {
-                  if (a.startIdx !== b.startIdx) {
-                    return a.startIdx - b.startIdx;
-                  }
-                  return b.effectiveSpan - a.effectiveSpan;
-                });
-
-                // Assign track indices using greedy interval coloring
-                const trackEndSlots: number[] = [];
-                const entryTrackMap = new Map<string, number>();
-
-                processedEntries.forEach((item) => {
-                  let assignedTrack = -1;
-                  for (let i = 0; i < trackEndSlots.length; i++) {
-                    if (trackEndSlots[i] <= item.startIdx) {
-                      assignedTrack = i;
-                      break;
-                    }
-                  }
-
-                  if (assignedTrack === -1) {
-                    assignedTrack = trackEndSlots.length;
-                    trackEndSlots.push(item.endIdx);
-                  } else {
-                    trackEndSlots[assignedTrack] = item.endIdx;
-                  }
-
-                  entryTrackMap.set(item.entry.id, assignedTrack);
-                });
-
-                const numTracks = Math.max(1, trackEndSlots.length);
-                const rowHeight =
-                  numTracks > 1 ? Math.max(56, numTracks * 36) : 56;
+                const { items: processedEntries, trackCount, height: rowHeight } =
+                  layoutEquipmentRow(
+                    equipEntries,
+                    timeSlots,
+                    viewRange,
+                    viewMode,
+                  );
 
                 return (
                   <div
@@ -611,9 +437,7 @@ export function TimelineGrid() {
                         const isDragOver =
                           dragOverCell &&
                           dragOverCell.equipmentId === equip.id &&
-                          (viewMode === "day"
-                            ? isSameHour(dragOverCell.date, slot)
-                            : isSameDay(dragOverCell.date, slot));
+                          isSameSlot(dragOverCell.date, slot, viewMode);
 
                         return (
                           <button
@@ -687,32 +511,22 @@ export function TimelineGrid() {
                       {/* Render entries as overlay */}
                       {!isLoading &&
                         processedEntries.map(
-                          ({ entry, startIdx, effectiveSpan }) => {
+                          ({ entry, startIdx, effectiveSpan, track }) => {
                             const totalSlots = timeSlots.length;
                             const startPercent = (startIdx / totalSlots) * 100;
                             const widthPercent =
                               (effectiveSpan / totalSlots) * 100;
-
-                            // Check if this entry overlaps with any other visible entry on this equipment
-                            const hasOverlaps = processedEntries.some(
-                              (other) =>
-                                other.entry.id !== entry.id &&
-                                Math.max(startIdx, other.startIdx) <
-                                  Math.min(
-                                    startIdx + effectiveSpan,
-                                    other.startIdx + other.effectiveSpan,
-                                  ),
-                            );
-
-                            const trackIndex = entryTrackMap.get(entry.id) ?? 0;
-                            const topStyle =
-                              numTracks > 1 && hasOverlaps
-                                ? `calc(4px + ${trackIndex} * ((100% - 4px) / ${numTracks}))`
-                                : "4px";
-                            const heightStyle =
-                              numTracks > 1 && hasOverlaps
-                                ? `calc((100% - 4px) / ${numTracks} - 4px)`
-                                : "calc(100% - 8px)";
+                            const stacked =
+                              trackCount > 1 &&
+                              processedEntries.some(
+                                (other) =>
+                                  other.entry.id !== entry.id &&
+                                  Math.max(startIdx, other.startIdx) <
+                                    Math.min(
+                                      startIdx + effectiveSpan,
+                                      other.startIdx + other.effectiveSpan,
+                                    ),
+                              );
 
                             return (
                               <MaintenanceEntryBlock
@@ -723,8 +537,12 @@ export function TimelineGrid() {
                                   position: "absolute",
                                   left: `calc(${startPercent}% + 2px)`,
                                   width: `calc(${widthPercent}% - 4px)`,
-                                  top: topStyle,
-                                  height: heightStyle,
+                                  top: stacked
+                                    ? `calc(4px + ${track} * ((100% - 4px) / ${trackCount}))`
+                                    : "4px",
+                                  height: stacked
+                                    ? `calc((100% - 4px) / ${trackCount} - 4px)`
+                                    : "calc(100% - 8px)",
                                 }}
                                 onDragStart={() => handleDragStart(entry)}
                                 isDragging={draggedEntry?.id === entry.id}

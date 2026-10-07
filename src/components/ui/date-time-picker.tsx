@@ -65,6 +65,8 @@ export function DateTimePicker({
       const parsedDate = date instanceof Date ? date : new Date(date);
 
       if (!isNaN(parsedDate.getTime())) {
+        // Mirrors the controlled `date` prop into the editable time and calendar state.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setHoursState(format(parsedDate, "HH", { locale: dateFnsLocale }));
         setMinutesState(format(parsedDate, "mm", { locale: dateFnsLocale }));
         setCurrentMonth(parsedDate);

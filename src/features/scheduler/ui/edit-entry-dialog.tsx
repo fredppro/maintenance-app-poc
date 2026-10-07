@@ -45,7 +45,7 @@ import { areIntervalsOverlapping } from "date-fns";
 import { Download, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
@@ -226,17 +226,12 @@ export function EditEntryDialog({
     },
   );
 
-  const watchStatus = form.watch("status");
-  const watchStartTime = form.watch("startTime");
-  const watchEndTime = form.watch("endTime");
-  const watchWorkerIds = form.watch("workerIds");
-  const watchEquipmentId = form.watch("equipmentId");
-
-  // Serialize IDs into a primitive string key to prevent the sync effect from tracking shallow array instances
-  const workerIdsKey = useMemo(
-    () => (watchWorkerIds || []).join(","),
-    [watchWorkerIds],
-  );
+  const watchStatus = useWatch({ control: form.control, name: "status" });
+  const watchStartTime = useWatch({ control: form.control, name: "startTime" });
+  const watchEndTime = useWatch({ control: form.control, name: "endTime" });
+  const watchWorkerIds = useWatch({ control: form.control, name: "workerIds" });
+  const watchEquipmentId = useWatch({ control: form.control, name: "equipmentId" });
+  const watchType = useWatch({ control: form.control, name: "type" });
 
   // Decoupled log sync: stops constantly running and wiping element states on every single date/time update
   useEffect(() => {
@@ -263,7 +258,7 @@ export function EditEntryDialog({
     });
 
     replaceWorkerLogs(newLogs);
-  }, [workerIdsKey, replaceWorkerLogs, initialStartTime, initialEndTime, form]);
+  }, [watchWorkerIds, replaceWorkerLogs, initialStartTime, initialEndTime, form]);
 
   const hasConflict = useMemo(() => {
     if (!watchStartTime || !watchEndTime || watchEndTime <= watchStartTime) {
@@ -558,7 +553,7 @@ export function EditEntryDialog({
               <Field>
                 <FieldLabel htmlFor="task-type">{t("taskType")}</FieldLabel>
                 <Select
-                  value={form.watch("type")}
+                  value={watchType}
                   onValueChange={(v) =>
                     form.setValue("type", v as TaskType, { shouldDirty: true })
                   }

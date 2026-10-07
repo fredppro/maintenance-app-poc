@@ -21,7 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { addHours, areIntervalsOverlapping } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { TaskType } from "../../../../prisma/generated/prisma/enums";
@@ -82,9 +82,11 @@ export function AddEntryDialog({
     },
   });
 
-  const watchEquipmentId = form.watch("equipmentId");
-  const watchStartTime = form.watch("startTime");
-  const watchEndTime = form.watch("endTime");
+  const watchEquipmentId = useWatch({ control: form.control, name: "equipmentId" });
+  const watchStartTime = useWatch({ control: form.control, name: "startTime" });
+  const watchEndTime = useWatch({ control: form.control, name: "endTime" });
+  const watchType = useWatch({ control: form.control, name: "type" });
+  const watchWorkerIds = useWatch({ control: form.control, name: "workerIds" });
 
   const hasConflict = useMemo(() => {
     if (
@@ -192,7 +194,7 @@ export function AddEntryDialog({
             <Field>
               <FieldLabel htmlFor="task-equipment">{t("equipment")}</FieldLabel>
               <Select
-                value={form.watch("equipmentId")}
+                value={watchEquipmentId}
                 onValueChange={(v) =>
                   form.setValue("equipmentId", v, { shouldValidate: true })
                 }
@@ -218,7 +220,7 @@ export function AddEntryDialog({
             <Field>
               <FieldLabel htmlFor="task-type">{t("taskType")}</FieldLabel>
               <Select
-                value={form.watch("type")}
+                value={watchType}
                 onValueChange={(v) => form.setValue("type", v as TaskType)}
               >
                 <SelectTrigger id="task-type" className="w-full">
@@ -254,7 +256,7 @@ export function AddEntryDialog({
             <MultiSelect
               id="task-workers"
               options={workerOptions}
-              selected={form.watch("workerIds")}
+              selected={watchWorkerIds}
               onChange={(v) =>
                 form.setValue("workerIds", v, { shouldValidate: true })
               }

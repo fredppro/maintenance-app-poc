@@ -22,6 +22,10 @@ const eslintConfig = [
       "react-hooks/set-state-in-effect": "warn",
     },
   },
+  {
+    files: ["**/*.test.{ts,tsx}", "vitest.setup.ts", "vitest/**"],
+    rules: { "@typescript-eslint/no-explicit-any": "off" },
+  },
 ];
 
 export default eslintConfig;

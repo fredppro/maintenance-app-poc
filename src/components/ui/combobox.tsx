@@ -106,6 +106,8 @@ function ComboboxContent({
 
   React.useEffect(() => {
     // We target the dialog content so the combobox is inside the focus trap
+    // Reads the dialog node from the DOM, which only exists after mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setContainer(
       document.querySelector<HTMLElement>('[data-slot="dialog-content"]'),
     );
@@ -282,7 +284,6 @@ function ComboboxChip({
 
 function ComboboxChipsInput({
   className,
-  children,
   ...props
 }: ComboboxPrimitive.Input.Props) {
   return (

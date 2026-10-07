@@ -16,10 +16,12 @@ export function TimePicker({ date, onChange, label }: TimePickerProps) {
   const [minutes, setMinutes] = React.useState(date.getMinutes().toString().padStart(2, '0'))
 
   // Sync state if date prop changes from outside
-  React.useEffect(() => {
+  const [syncedDate, setSyncedDate] = React.useState(date)
+  if (syncedDate !== date) {
+    setSyncedDate(date)
     setHours(date.getHours().toString().padStart(2, '0'))
     setMinutes(date.getMinutes().toString().padStart(2, '0'))
-  }, [date])
+  }
 
   const handleHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(-2)

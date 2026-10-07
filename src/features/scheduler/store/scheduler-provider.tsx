@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useRef } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 import { useStore } from "zustand";
 import {
   createSchedulerStore,
@@ -20,14 +20,10 @@ export function SchedulerStoreProvider({
   children,
   initialState,
 }: SchedulerStoreProviderProps) {
-  const storeRef = useRef<SchedulerStore | null>(null);
-
-  if (!storeRef.current) {
-    storeRef.current = createSchedulerStore(initialState);
-  }
+  const [store] = useState(() => createSchedulerStore(initialState));
 
   return (
-    <SchedulerStoreContext.Provider value={storeRef.current}>
+    <SchedulerStoreContext.Provider value={store}>
       {children}
     </SchedulerStoreContext.Provider>
   );

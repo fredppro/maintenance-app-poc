@@ -2,7 +2,7 @@
 
 import { BarChart3 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { PageBody, PageHeader } from "@/components/app-shell/page-header";
 import {
   Card,
@@ -44,9 +44,10 @@ export function MetricsPageClient() {
   const entries = useSchedulerStore((s) => s.entries);
   const equipment = useSchedulerStore((s) => s.equipment);
 
+  const [now] = useState(() => Date.now());
   const m = useMemo(
-    () => summarizeMetrics(entries, equipment, Date.now()),
-    [entries, equipment],
+    () => summarizeMetrics(entries, equipment, now),
+    [entries, equipment, now],
   );
   const types = [
     { label: t("preventive"), value: m.byType.preventive },

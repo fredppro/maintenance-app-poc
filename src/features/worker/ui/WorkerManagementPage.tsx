@@ -367,6 +367,8 @@ export default function WorkerManagementPage({
     [t, tCommon],
   );
 
+  // TanStack Table returns unmemoizable functions; React Compiler skips this component.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: workers,
     columns,

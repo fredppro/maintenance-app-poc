@@ -90,6 +90,8 @@ export function EquipmentDialog({
 
   useEffect(() => {
     if (!open) return;
+    // Form state is re-seeded each time the dialog opens or its subject changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setName(equipment?.name ?? "");
     setCategory(equipment?.category ?? "");
     setImage({ fileId: equipment?.imageFileId ?? null, pending: null });
