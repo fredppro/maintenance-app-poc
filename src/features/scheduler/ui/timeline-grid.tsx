@@ -1,6 +1,5 @@
 "use client";
 
-import { EquipmentThumbnail } from "./equipment-thumbnail";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -10,12 +9,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { APPLICATION_LOCALES } from "src/i18n/config";
 import { getValidLocale, LOCALE_MAP } from "src/i18n/locale";
@@ -38,10 +31,7 @@ import { format, isSameDay } from "date-fns";
 import {
   Box,
   CalendarDays,
-  MoreVertical,
   Plus,
-  Pencil,
-  Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -56,7 +46,6 @@ export function TimelineGrid() {
   const dateFnsLocale = LOCALE_MAP[locale];
   const config = APPLICATION_LOCALES[locale];
   const t = useTranslations("Grid");
-  const tCommon = useTranslations("Common");
 
   const equipment = useSchedulerStore((state) => state.equipment);
   const entries = useSchedulerStore((state) => state.entries);

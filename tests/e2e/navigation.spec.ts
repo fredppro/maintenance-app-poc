@@ -19,7 +19,10 @@ async function signIn(page: Page) {
     name: "Choose an organization",
   });
   if (await selector.isVisible()) {
-    await selector.selectOption({ label: "E2E Playwright Organization" });
+    await expect(async () => {
+      await selector.selectOption({ label: "E2E Playwright Organization" });
+      await expect(page).toHaveURL(/\/en$/, { timeout: 2000 });
+    }).toPass();
   }
   await expect(page).toHaveURL(/\/en$/);
 }

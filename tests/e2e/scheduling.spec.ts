@@ -20,9 +20,12 @@ test("schedule a task from the dashboard with accessible form controls", async (
     name: "Choose an organization",
   });
   if (await organizationSelector.isVisible()) {
-    await organizationSelector.selectOption({
-      label: "E2E Playwright Organization",
-    });
+    await expect(async () => {
+      await organizationSelector.selectOption({
+        label: "E2E Playwright Organization",
+      });
+      await expect(page).toHaveURL(/\/en$/, { timeout: 2000 });
+    }).toPass();
   }
 
   await expect(page).toHaveURL(/\/en$/);
