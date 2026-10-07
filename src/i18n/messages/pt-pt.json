@@ -19,9 +19,11 @@
       "account": "Conta",
       "workers": "Trabalhadores",
       "members": "Membros da organização",
-      "logout": "Sair"
+      "logout": "Sair",
+      "userMenu": "Menu do utilizador"
     },
-    "toggleTheme": "Alternar tema de cores"
+    "toggleTheme": "Alternar tema de cores",
+    "toggleLanguage": "Alterar idioma"
   },
   "Invitation": {
     "title": "Aderir à organização",
@@ -72,11 +74,24 @@
     "imageHint": "Largue uma imagem aqui ou procure. PNG, JPEG ou WebP.",
     "imageInvalid": "Escolha uma imagem PNG, JPEG ou WebP com menos de 10 MB.",
     "site": "Local",
-    "keepSite": "Manter no local atual",
     "moveSiteHint": "Mover este equipamento e as suas tarefas para outro local.",
     "saveAndMove": "Guardar e mover",
     "equipmentMoved": "Equipamento movido para {site}",
-    "equipmentDialogDescription": "Detalhes do equipamento"
+    "equipmentDialogDescription": "Detalhes do equipamento",
+    "section": "Secção",
+    "noSection": "Sem secção",
+    "newSection": "Nova secção",
+    "newSectionPlaceholder": "Nome da nova secção",
+    "addSection": "Adicionar",
+    "location": "Localização",
+    "locationHistory": "Histórico de localização",
+    "historyMoved": "{from} → {to}",
+    "historyPlaced": "Colocado em {to}",
+    "failedAddSection": "Falha ao adicionar secção",
+    "failedUploadImage": "Falha ao carregar a foto",
+    "searchSection": "Pesquisar secções…",
+    "noSectionsYet": "Ainda não há secções neste local.",
+    "createSection": "Criar secção"
   },
   "Toolbar": {
     "previous": "Período anterior",
@@ -397,5 +412,100 @@
     "errorTitle": "Algo correu mal",
     "errorDescription": "Ocorreu um erro inesperado. Tente novamente ou volte ao painel.",
     "retry": "Tentar novamente"
+  },
+  "Nav": {
+    "groups": {
+      "operations": "Operações",
+      "assets": "Ativos",
+      "people": "Pessoas"
+    },
+    "items": {
+      "schedule": "Calendário",
+      "metrics": "Métricas",
+      "equipment": "Equipamentos",
+      "sites": "Locais",
+      "inventory": "Inventário",
+      "workers": "Técnicos",
+      "members": "Colaboradores"
+    },
+    "noContext": "Sem local",
+    "switchContext": "Mudar de local",
+    "toggleSidebar": "Alternar barra lateral"
+  },
+  "EquipmentPage": {
+    "title": "Equipamentos",
+    "description": "Todos os equipamentos do local atual, com manutenção futura e passada.",
+    "search": "Pesquisar equipamentos…",
+    "add": "Adicionar equipamento",
+    "columns": {
+      "name": "Equipamento",
+      "category": "Categoria",
+      "section": "Secção",
+      "upcoming": "Pendentes",
+      "next": "Próxima manutenção",
+      "last": "Última manutenção"
+    },
+    "none": "—",
+    "unassigned": "Sem secção",
+    "viewInSchedule": "Ver no calendário",
+    "emptyTitle": "Ainda sem equipamentos",
+    "emptyDescription": "Adicione o primeiro equipamento para começar a agendar manutenções.",
+    "noResults": "Nenhum equipamento corresponde à pesquisa.",
+    "count": "{count} itens"
+  },
+  "SitesPage": {
+    "title": "Locais",
+    "description": "Locais e as secções que contêm. Os equipamentos são atribuídos a uma secção.",
+    "sections": "Secções",
+    "noSections": "Ainda sem secções.",
+    "equipmentCount": "{count} equipamentos",
+    "current": "Atual",
+    "newSection": "Nome da nova secção",
+    "addSection": "Adicionar secção",
+    "rename": "Renomear",
+    "delete": "Eliminar",
+    "save": "Guardar",
+    "failed": "Algo correu mal. Tente novamente.",
+    "deleteTitle": "Eliminar secção?",
+    "deleteDescription": "Os equipamentos desta secção permanecem no local e ficam sem secção.",
+    "unassigned": "Equipamentos sem secção",
+    "emptyTitle": "Sem locais",
+    "emptyDescription": "Os locais são criados quando configura a organização."
+  },
+  "InventoryPage": {
+    "title": "Inventário",
+    "description": "Materiais usados nas tarefas de manutenção agendadas neste local.",
+    "search": "Pesquisar materiais…",
+    "columns": {
+      "name": "Material",
+      "reference": "Referência",
+      "quantity": "Quantidade total",
+      "unit": "Unidade",
+      "tasks": "Tarefas",
+      "cost": "Custo est."
+    },
+    "emptyTitle": "Ainda sem materiais",
+    "emptyDescription": "Os materiais adicionados às tarefas de manutenção são resumidos aqui.",
+    "noResults": "Nenhum material corresponde à pesquisa.",
+    "none": "—"
+  },
+  "MetricsPage": {
+    "title": "Métricas",
+    "description": "Atividade de manutenção do local atual.",
+    "total": "Total de tarefas",
+    "completion": "Taxa de conclusão",
+    "overdue": "Em atraso",
+    "upcoming": "Futuras",
+    "byType": "Tarefas por tipo",
+    "byStatus": "Tarefas por estado",
+    "topEquipment": "Equipamentos com mais manutenção",
+    "preventive": "Preventiva",
+    "corrective": "Corretiva",
+    "inspection": "Inspeção",
+    "scheduled": "Agendada",
+    "inProgress": "Em curso",
+    "completed": "Concluída",
+    "emptyTitle": "Ainda sem dados",
+    "emptyDescription": "As métricas surgem quando existirem tarefas de manutenção agendadas."
   }
 }

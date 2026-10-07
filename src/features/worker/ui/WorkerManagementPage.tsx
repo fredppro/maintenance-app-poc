@@ -84,7 +84,7 @@ type WorkerRow = {
 };
 
 type WorkerManagementPageProps = {
-  onBack: () => void;
+  onBack?: () => void;
   onWorkersChange: (workers: WorkerEntity[]) => void;
 };
 
@@ -413,13 +413,15 @@ export default function WorkerManagementPage({
     <div className="flex min-h-full w-full flex-col gap-4 overflow-hidden rounded-lg border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold">{t("title")}</h2>
+          <h1 className="text-xl font-semibold sm:text-2xl">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" size="default" onClick={onBack}>
-            {t("backToSchedule")}
-          </Button>
+          {onBack && (
+            <Button variant="secondary" size="default" onClick={onBack}>
+              {t("backToSchedule")}
+            </Button>
+          )}
           <Button size="default" onClick={() => handleOpenDrawer(undefined)}>
             {t("createWorker")}
           </Button>

@@ -46,3 +46,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 /generated/prisma
+.storage/

@@ -9,6 +9,9 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/Equipment'
+export type * from './models/StoredFile'
+export type * from './models/Section'
+export type * from './models/EquipmentRelocation'
 export type * from './models/MaintenanceTask'
 export type * from './models/Material'
 export type * from './models/MaintenanceTaskAssignment'

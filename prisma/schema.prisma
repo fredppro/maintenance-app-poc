@@ -10,20 +10,75 @@ generator client {
 }
 
 model Equipment {
-  id             String            @id @default(cuid())
+  id             String                @id @default(cuid())
   name           String
   category       String?
-  image          String?
+  imageFileId    String?
+  sectionId      String?
   organizationId String
   siteId         String
-  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  site           Site              @relation(fields: [siteId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  site           Site                  @relation(fields: [siteId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  imageFile      StoredFile?           @relation(fields: [imageFileId], references: [id], onDelete: SetNull)
+  // Optional area within `site`; the application keeps section.siteId === siteId.
+  section        Section?              @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   tasks          MaintenanceTask[]
-  createdAt      DateTime          @default(now())
+  relocations    EquipmentRelocation[]
+  createdAt      DateTime              @default(now())
 
   @@unique([id, organizationId])
   @@unique([organizationId, name])
   @@index([siteId, organizationId])
+  @@index([sectionId])
+  @@index([imageFileId])
+}
+
+// Metadata for an object kept in S3-compatible storage; the bytes never live in Postgres.
+model StoredFile {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  key            String       @unique
+  filename       String
+  contentType    String
+  size           Int
+  uploadedById   String?
+  equipment      Equipment[]
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+}
+
+// A named area inside a site, e.g. "Boiler room" or "Line 2".
+model Section {
+  id             String       @id @default(cuid())
+  name           String
+  organizationId String
+  siteId         String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  site           Site         @relation(fields: [siteId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  equipment      Equipment[]
+  createdAt      DateTime     @default(now())
+
+  @@unique([id, organizationId])
+  @@unique([siteId, name])
+}
+
+// Append-only location history. Names are snapshots so history survives renames and deletions.
+model EquipmentRelocation {
+  id              String    @id @default(cuid())
+  equipmentId     String
+  organizationId  String
+  equipment       Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  fromSiteName    String?
+  fromSectionName String?
+  toSiteName      String
+  toSectionName   String?
+  movedById       String?
+  movedAt         DateTime  @default(now())
+
+  @@index([equipmentId, movedAt])
+  @@index([organizationId])
 }
 
 model MaintenanceTask {
@@ -231,6 +286,8 @@ model Organization {
   members     Member[]
   invitations Invitation[]
   sites       Site[]
+  sections    Section[]
+  files       StoredFile[]
   equipment   Equipment[]
   tasks       MaintenanceTask[]
   workers     Worker[]
@@ -247,6 +304,7 @@ model Site {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   equipment      Equipment[]
+  sections       Section[]
   createdAt      DateTime     @default(now())
 
   @@unique([id, organizationId])

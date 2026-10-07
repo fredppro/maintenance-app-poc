@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+import { PageBody, PageHeader } from "@/components/app-shell/page-header";
 import { notFound } from "next/navigation";
 import { MemberAdministration } from "@/features/organization/ui/member-administration";
 import { getTenantContext } from "@/lib/tenant-context";
@@ -11,6 +13,7 @@ export default async function MembersPage({
 }) {
   const { locale } = await params;
   if (!localeSchema.safeParse(locale).success) notFound();
+  const t = await getTranslations("Members");
   const tenant = await getTenantContext("manageMembers");
   const members = await prisma.member.findMany({
     where: { organizationId: tenant.organizationId },
@@ -28,10 +31,8 @@ export default async function MembersPage({
   });
 
   return (
-    <main className="flex min-h-screen flex-col items-center gap-6 bg-muted/40 p-6">
-      <div className="w-full max-w-3xl">
-        <h1 className="text-2xl font-semibold">Organization members</h1>
-      </div>
+    <PageBody>
+      <PageHeader title={t("membersTitle")} />
       <MemberAdministration
         actorId={tenant.userId}
         actorRole={tenant.role}
@@ -43,6 +44,6 @@ export default async function MembersPage({
         }))}
         invitations={invitations}
       />
-    </main>
+    </PageBody>
   );
 }

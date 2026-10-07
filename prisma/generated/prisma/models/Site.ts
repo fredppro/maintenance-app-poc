@@ -176,6 +176,7 @@ export type SiteWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   equipment?: Prisma.EquipmentListRelationFilter
+  sections?: Prisma.SectionListRelationFilter
 }
 
 export type SiteOrderByWithRelationInput = {
@@ -185,6 +186,7 @@ export type SiteOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   organization?: Prisma.OrganizationOrderByWithRelationInput
   equipment?: Prisma.EquipmentOrderByRelationAggregateInput
+  sections?: Prisma.SectionOrderByRelationAggregateInput
 }
 
 export type SiteWhereUniqueInput = Prisma.AtLeast<{
@@ -199,6 +201,7 @@ export type SiteWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   equipment?: Prisma.EquipmentListRelationFilter
+  sections?: Prisma.SectionListRelationFilter
 }, "id" | "id_organizationId" | "organizationId_name">
 
 export type SiteOrderByWithAggregationInput = {
@@ -227,6 +230,7 @@ export type SiteCreateInput = {
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutSitesInput
   equipment?: Prisma.EquipmentCreateNestedManyWithoutSiteInput
+  sections?: Prisma.SectionCreateNestedManyWithoutSiteInput
 }
 
 export type SiteUncheckedCreateInput = {
@@ -235,6 +239,7 @@ export type SiteUncheckedCreateInput = {
   organizationId: string
   createdAt?: Date | string
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutSiteInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutSiteInput
 }
 
 export type SiteUpdateInput = {
@@ -243,6 +248,7 @@ export type SiteUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutSitesNestedInput
   equipment?: Prisma.EquipmentUpdateManyWithoutSiteNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteUncheckedUpdateInput = {
@@ -251,6 +257,7 @@ export type SiteUncheckedUpdateInput = {
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutSiteNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteCreateManyInput = {
@@ -333,6 +340,20 @@ export type SiteUpdateOneRequiredWithoutEquipmentNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SiteUpdateToOneWithWhereWithoutEquipmentInput, Prisma.SiteUpdateWithoutEquipmentInput>, Prisma.SiteUncheckedUpdateWithoutEquipmentInput>
 }
 
+export type SiteCreateNestedOneWithoutSectionsInput = {
+  create?: Prisma.XOR<Prisma.SiteCreateWithoutSectionsInput, Prisma.SiteUncheckedCreateWithoutSectionsInput>
+  connectOrCreate?: Prisma.SiteCreateOrConnectWithoutSectionsInput
+  connect?: Prisma.SiteWhereUniqueInput
+}
+
+export type SiteUpdateOneRequiredWithoutSectionsNestedInput = {
+  create?: Prisma.XOR<Prisma.SiteCreateWithoutSectionsInput, Prisma.SiteUncheckedCreateWithoutSectionsInput>
+  connectOrCreate?: Prisma.SiteCreateOrConnectWithoutSectionsInput
+  upsert?: Prisma.SiteUpsertWithoutSectionsInput
+  connect?: Prisma.SiteWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SiteUpdateToOneWithWhereWithoutSectionsInput, Prisma.SiteUpdateWithoutSectionsInput>, Prisma.SiteUncheckedUpdateWithoutSectionsInput>
+}
+
 export type SiteCreateNestedManyWithoutOrganizationInput = {
   create?: Prisma.XOR<Prisma.SiteCreateWithoutOrganizationInput, Prisma.SiteUncheckedCreateWithoutOrganizationInput> | Prisma.SiteCreateWithoutOrganizationInput[] | Prisma.SiteUncheckedCreateWithoutOrganizationInput[]
   connectOrCreate?: Prisma.SiteCreateOrConnectWithoutOrganizationInput | Prisma.SiteCreateOrConnectWithoutOrganizationInput[]
@@ -380,6 +401,7 @@ export type SiteCreateWithoutEquipmentInput = {
   name: string
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutSitesInput
+  sections?: Prisma.SectionCreateNestedManyWithoutSiteInput
 }
 
 export type SiteUncheckedCreateWithoutEquipmentInput = {
@@ -387,6 +409,7 @@ export type SiteUncheckedCreateWithoutEquipmentInput = {
   name: string
   organizationId: string
   createdAt?: Date | string
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutSiteInput
 }
 
 export type SiteCreateOrConnectWithoutEquipmentInput = {
@@ -410,6 +433,7 @@ export type SiteUpdateWithoutEquipmentInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutSitesNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteUncheckedUpdateWithoutEquipmentInput = {
@@ -417,6 +441,55 @@ export type SiteUncheckedUpdateWithoutEquipmentInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutSiteNestedInput
+}
+
+export type SiteCreateWithoutSectionsInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutSitesInput
+  equipment?: Prisma.EquipmentCreateNestedManyWithoutSiteInput
+}
+
+export type SiteUncheckedCreateWithoutSectionsInput = {
+  id?: string
+  name: string
+  organizationId: string
+  createdAt?: Date | string
+  equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutSiteInput
+}
+
+export type SiteCreateOrConnectWithoutSectionsInput = {
+  where: Prisma.SiteWhereUniqueInput
+  create: Prisma.XOR<Prisma.SiteCreateWithoutSectionsInput, Prisma.SiteUncheckedCreateWithoutSectionsInput>
+}
+
+export type SiteUpsertWithoutSectionsInput = {
+  update: Prisma.XOR<Prisma.SiteUpdateWithoutSectionsInput, Prisma.SiteUncheckedUpdateWithoutSectionsInput>
+  create: Prisma.XOR<Prisma.SiteCreateWithoutSectionsInput, Prisma.SiteUncheckedCreateWithoutSectionsInput>
+  where?: Prisma.SiteWhereInput
+}
+
+export type SiteUpdateToOneWithWhereWithoutSectionsInput = {
+  where?: Prisma.SiteWhereInput
+  data: Prisma.XOR<Prisma.SiteUpdateWithoutSectionsInput, Prisma.SiteUncheckedUpdateWithoutSectionsInput>
+}
+
+export type SiteUpdateWithoutSectionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutSitesNestedInput
+  equipment?: Prisma.EquipmentUpdateManyWithoutSiteNestedInput
+}
+
+export type SiteUncheckedUpdateWithoutSectionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteCreateWithoutOrganizationInput = {
@@ -424,6 +497,7 @@ export type SiteCreateWithoutOrganizationInput = {
   name: string
   createdAt?: Date | string
   equipment?: Prisma.EquipmentCreateNestedManyWithoutSiteInput
+  sections?: Prisma.SectionCreateNestedManyWithoutSiteInput
 }
 
 export type SiteUncheckedCreateWithoutOrganizationInput = {
@@ -431,6 +505,7 @@ export type SiteUncheckedCreateWithoutOrganizationInput = {
   name: string
   createdAt?: Date | string
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutSiteInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutSiteInput
 }
 
 export type SiteCreateOrConnectWithoutOrganizationInput = {
@@ -480,6 +555,7 @@ export type SiteUpdateWithoutOrganizationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUpdateManyWithoutSiteNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteUncheckedUpdateWithoutOrganizationInput = {
@@ -487,6 +563,7 @@ export type SiteUncheckedUpdateWithoutOrganizationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutSiteNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteUncheckedUpdateManyWithoutOrganizationInput = {
@@ -502,10 +579,12 @@ export type SiteUncheckedUpdateManyWithoutOrganizationInput = {
 
 export type SiteCountOutputType = {
   equipment: number
+  sections: number
 }
 
 export type SiteCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   equipment?: boolean | SiteCountOutputTypeCountEquipmentArgs
+  sections?: boolean | SiteCountOutputTypeCountSectionsArgs
 }
 
 /**
@@ -525,6 +604,13 @@ export type SiteCountOutputTypeCountEquipmentArgs<ExtArgs extends runtime.Types.
   where?: Prisma.EquipmentWhereInput
 }
 
+/**
+ * SiteCountOutputType without action
+ */
+export type SiteCountOutputTypeCountSectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SectionWhereInput
+}
+
 
 export type SiteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -533,6 +619,7 @@ export type SiteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.Site$equipmentArgs<ExtArgs>
+  sections?: boolean | Prisma.Site$sectionsArgs<ExtArgs>
   _count?: boolean | Prisma.SiteCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["site"]>
 
@@ -563,6 +650,7 @@ export type SiteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type SiteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.Site$equipmentArgs<ExtArgs>
+  sections?: boolean | Prisma.Site$sectionsArgs<ExtArgs>
   _count?: boolean | Prisma.SiteCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SiteIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -577,6 +665,7 @@ export type $SitePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     organization: Prisma.$OrganizationPayload<ExtArgs>
     equipment: Prisma.$EquipmentPayload<ExtArgs>[]
+    sections: Prisma.$SectionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -979,6 +1068,7 @@ export interface Prisma__SiteClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   equipment<T extends Prisma.Site$equipmentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Site$equipmentArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EquipmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sections<T extends Prisma.Site$sectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Site$sectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1434,6 +1524,30 @@ export type Site$equipmentArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.EquipmentScalarFieldEnum | Prisma.EquipmentScalarFieldEnum[]
+}
+
+/**
+ * Site.sections
+ */
+export type Site$sectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Section
+   */
+  select?: Prisma.SectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Section
+   */
+  omit?: Prisma.SectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SectionInclude<ExtArgs> | null
+  where?: Prisma.SectionWhereInput
+  orderBy?: Prisma.SectionOrderByWithRelationInput | Prisma.SectionOrderByWithRelationInput[]
+  cursor?: Prisma.SectionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SectionScalarFieldEnum | Prisma.SectionScalarFieldEnum[]
 }
 
 /**

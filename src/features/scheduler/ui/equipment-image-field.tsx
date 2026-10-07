@@ -13,13 +13,12 @@ import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils";
 import { ImagePlus, Trash2, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
-import { EQUIPMENT_IMAGE_MAX_LENGTH } from "../server/schemas";
+import { useEffect, useRef, useState } from "react";
 
 const MAX_SOURCE_BYTES = 10 * 1024 * 1024;
-const MAX_EDGE = 320;
+const MAX_EDGE = 640;
 
-async function toThumbnail(file: File): Promise<string> {
+async function toThumbnail(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
@@ -27,11 +26,29 @@ async function toThumbnail(file: File): Promise<string> {
   canvas.height = Math.max(1, Math.round(bitmap.height * scale));
   canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
-  for (const quality of [0.82, 0.65, 0.5]) {
-    const url = canvas.toDataURL("image/jpeg", quality);
-    if (url.length <= EQUIPMENT_IMAGE_MAX_LENGTH) return url;
-  }
-  throw new Error("too-large");
+  return await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("encode"))),
+      "image/jpeg",
+      0.85,
+    ),
+  );
+}
+
+export type EquipmentImageValue = {
+  /** Already-stored file, served from /api/files/[id]. */
+  fileId: string | null;
+  /** Resized image waiting to be uploaded when the form is saved. */
+  pending: Blob | null;
+};
+
+/** Uploads a pending image and returns the stored file id. */
+export async function uploadEquipmentImage(blob: Blob): Promise<string> {
+  const body = new FormData();
+  body.append("file", blob, "equipment.jpg");
+  const response = await fetch("/api/files", { method: "POST", body });
+  if (!response.ok) throw new Error("upload failed");
+  return ((await response.json()) as { id: string }).id;
 }
 
 /** Click or drop an image; it is downscaled in the browser before being saved. */
@@ -40,8 +57,8 @@ export function EquipmentImageField({
   onChange,
   disabled,
 }: {
-  value: string | null;
-  onChange: (value: string | null) => void;
+  value: EquipmentImageValue;
+  onChange: (value: EquipmentImageValue) => void;
   disabled?: boolean;
 }) {
   const t = useTranslations("Grid");
@@ -49,6 +66,19 @@ export function EquipmentImageField({
   const [dragging, setDragging] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!value.pending) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(value.pending);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [value.pending]);
+  const src =
+    previewUrl ?? (value.fileId ? `/api/files/${value.fileId}` : null);
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
@@ -59,7 +89,7 @@ export function EquipmentImageField({
     }
     setProcessing(true);
     try {
-      onChange(await toThumbnail(file));
+      onChange({ fileId: value.fileId, pending: await toThumbnail(file) });
     } catch {
       setError(t("imageInvalid"));
     } finally {
@@ -85,12 +115,12 @@ export function EquipmentImageField({
 
   return (
     <div className="flex flex-col gap-2">
-      {value ? (
+      {src ? (
         <div className="flex items-center gap-3 rounded-lg border border-border p-2">
           {/* Data URL thumbnail; next/image adds nothing here. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={value}
+            src={src}
             alt={t("equipmentImage")}
             className="size-16 shrink-0 rounded-md border border-border object-cover"
           />
@@ -111,7 +141,7 @@ export function EquipmentImageField({
             variant="danger"
             size="sm"
             disabled={disabled}
-            onClick={() => onChange(null)}
+            onClick={() => onChange({ fileId: null, pending: null })}
           >
             <Trash2 />
           </IconButton>

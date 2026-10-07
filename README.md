@@ -28,6 +28,13 @@ migrations but do not add sample data. To seed development data, set
 `SEED_ADMIN_EMAIL` in `.env` to the email of that organization owner and run
 `pnpm prisma:seed`.
 
+`pnpm dev` only boots with `DATABASE_URL`, `BETTER_AUTH_SECRET` (at least 32
+characters) and `BETTER_AUTH_URL` set; `.env.example` provides working
+local values except the secret, which you must replace (see
+[Environment variables](#environment-variables)). Everything else is optional
+in development. Without them the server fails at startup with a message such as
+`BETTER_AUTH_SECRET must contain at least 32 characters`.
+
 Stop the local PostgreSQL service without deleting its data with
 `pnpm db:down`. The detailed setup and test instructions below cover other
 workflows and production configuration.
@@ -59,6 +66,14 @@ Create your local environment file **before installing dependencies**.
 
 ```sh
 cp .env.example .env
+```
+
+Then generate the authentication secret and paste it over the placeholder
+`BETTER_AUTH_SECRET` value in `.env` (the placeholder is shorter than the
+required 32 characters, so the app will not start until you replace it):
+
+```sh
+openssl rand -base64 32
 ```
 
 The example values target the local Compose databases. For a hosted database,
@@ -292,6 +307,12 @@ transition.
 | `E2E_DATABASE_URL` | Playwright browser tests and E2E migration command | Dedicated test database connection string. `.env.example` points to a separate local database on port 5433. The database name must end in `_test` and target a different host/port/database from `DATABASE_URL`. |
 | `BETTER_AUTH_SECRET` | App runtime and auth tests | Secret used to sign Better Auth sessions; use a random secret of at least 32 characters and keep it private. |
 | `BETTER_AUTH_URL` | App runtime and auth tests | Canonical application origin, for example `http://localhost:3000` locally or the deployed HTTPS origin. |
+| `S3_BUCKET` | Optional in development; required in production | Enables S3-compatible file storage (equipment photos) when set. If unset, development stores files on local disk and production refuses to start uploads. See [File storage](#file-storage). |
+| `S3_ENDPOINT` | Optional | Custom endpoint for MinIO or another S3-compatible service (for example `http://localhost:9000`). Omit for AWS S3. |
+| `S3_REGION` | Optional | Bucket region. Defaults to `us-east-1`. |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Required when `S3_BUCKET` is set | Storage credentials. For the bundled MinIO they are `minioadmin` / `minioadmin`. |
+| `S3_FORCE_PATH_STYLE` | Optional | `true` or `false`. Defaults to `true` when `S3_ENDPOINT` is set, otherwise `false`. |
+| `STORAGE_LOCAL_DIR` | Optional | Local-disk directory used when `S3_BUCKET` is unset. Defaults to `.storage` (git-ignored). |
 | `RESEND_API_KEY` | Production verification, password recovery, and invitations | Resend API credential. Configure through a secret manager; no key is needed for local login/signup without email delivery. |
 | `AUTH_EMAIL_FROM` | Production verification, password recovery, and invitations | Verified sender in Resend, e.g. `Maintenance Scheduler <accounts@example.com>`. |
 | `PILOT_BOOTSTRAP_EMAIL` | Initial production owner setup | Email permitted to create the first production account while no customer organization exists. An unclaimed legacy workspace is ignored. Remove after initial setup. |
@@ -304,9 +325,40 @@ transition.
 | `CONFIRM_LEGACY_OWNERSHIP` | Legacy data assignment only | Exact confirmation: `ASSIGN LEGACY DATA TO <LEGACY_OWNER_EMAIL>`. |
 | `SEED_ADMIN_EMAIL` | Optional development seeding | Email of an existing organization owner. Seeding adds sample data to that owner's first organization/site and fails if the owner or site does not exist. |
 
+### Required versus optional
+
+| Goal | Variables |
+| --- | --- |
+| Boot the dev server | `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` |
+| Upload files locally | none (falls back to `.storage/`); optionally the `S3_*` set for MinIO |
+| Run browser tests | adds `E2E_DATABASE_URL` |
+| Production | adds `S3_BUCKET` + credentials, `RESEND_API_KEY`, `AUTH_EMAIL_FROM`, `PILOT_BOOTSTRAP_EMAIL` |
+
+Where to obtain values: `DATABASE_URL` comes from `docker-compose.yml` locally
+or your PostgreSQL provider's connection string; `BETTER_AUTH_SECRET` is
+generated with `openssl rand -base64 32`; `BETTER_AUTH_URL` is the origin you
+open in the browser; `RESEND_API_KEY` and `AUTH_EMAIL_FROM` come from your
+Resend account with a verified sender domain; `S3_*` come from your storage
+provider, or the fixed MinIO defaults above.
+
 Playwright reads `E2E_DATABASE_URL` for its server and fixtures. The
 `pnpm prisma:migrate:e2e` command validates and uses that URL without changing
 the development database configuration.
+
+## File storage
+
+Equipment photos are stored outside the database. Postgres keeps only a
+`StoredFile` metadata row; the bytes live in object storage and are served
+through the authenticated `/api/files/[id]` route.
+
+- **Default (development):** with no `S3_*` variables, files are written under
+  `.storage/`. Nothing else to set up.
+- **MinIO (S3-compatible, local):** start it and create the bucket with
+  `docker compose --profile storage up -d minio minio-init`, then uncomment the
+  `S3_*` block in `.env` and restart `pnpm dev`. The MinIO console is at
+  [http://localhost:9001](http://localhost:9001) (`minioadmin` / `minioadmin`).
+- **Production:** set `S3_BUCKET` and credentials for AWS S3, MinIO, R2 or any
+  S3-compatible service. Without `S3_BUCKET`, production refuses to store files.
 
 ## Production and staging operations
 

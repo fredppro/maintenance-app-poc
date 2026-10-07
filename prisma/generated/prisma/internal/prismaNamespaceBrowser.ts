@@ -52,6 +52,9 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Equipment: 'Equipment',
+  StoredFile: 'StoredFile',
+  Section: 'Section',
+  EquipmentRelocation: 'EquipmentRelocation',
   MaintenanceTask: 'MaintenanceTask',
   Material: 'Material',
   MaintenanceTaskAssignment: 'MaintenanceTaskAssignment',
@@ -90,13 +93,54 @@ export const EquipmentScalarFieldEnum = {
   id: 'id',
   name: 'name',
   category: 'category',
-  image: 'image',
+  imageFileId: 'imageFileId',
+  sectionId: 'sectionId',
   organizationId: 'organizationId',
   siteId: 'siteId',
   createdAt: 'createdAt'
 } as const
 
 export type EquipmentScalarFieldEnum = (typeof EquipmentScalarFieldEnum)[keyof typeof EquipmentScalarFieldEnum]
+
+
+export const StoredFileScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  key: 'key',
+  filename: 'filename',
+  contentType: 'contentType',
+  size: 'size',
+  uploadedById: 'uploadedById',
+  createdAt: 'createdAt'
+} as const
+
+export type StoredFileScalarFieldEnum = (typeof StoredFileScalarFieldEnum)[keyof typeof StoredFileScalarFieldEnum]
+
+
+export const SectionScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  organizationId: 'organizationId',
+  siteId: 'siteId',
+  createdAt: 'createdAt'
+} as const
+
+export type SectionScalarFieldEnum = (typeof SectionScalarFieldEnum)[keyof typeof SectionScalarFieldEnum]
+
+
+export const EquipmentRelocationScalarFieldEnum = {
+  id: 'id',
+  equipmentId: 'equipmentId',
+  organizationId: 'organizationId',
+  fromSiteName: 'fromSiteName',
+  fromSectionName: 'fromSectionName',
+  toSiteName: 'toSiteName',
+  toSectionName: 'toSectionName',
+  movedById: 'movedById',
+  movedAt: 'movedAt'
+} as const
+
+export type EquipmentRelocationScalarFieldEnum = (typeof EquipmentRelocationScalarFieldEnum)[keyof typeof EquipmentRelocationScalarFieldEnum]
 
 
 export const MaintenanceTaskScalarFieldEnum = {

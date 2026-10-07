@@ -34,7 +34,8 @@ const equipment: Equipment = {
   id: "equipment-1",
   name: "Workshop Lathe",
   category: "Tools",
-  image: null,
+  imageFileId: null,
+  sectionId: null,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
 };
 const entry: MaintenanceEntry = {

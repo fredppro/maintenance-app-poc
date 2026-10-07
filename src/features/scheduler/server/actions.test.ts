@@ -5,6 +5,7 @@ import {
   getEquipment,
   addEquipment,
   updateEquipment,
+  relocateEquipment,
   deleteEquipment,
   getTasks,
   createTask,
@@ -20,6 +21,7 @@ vi.mock("@/lib/tenant-context", () => ({
     userId: "user-1",
     organizationId: "org-1",
     siteId: "site-1",
+    siteName: "Plant",
     role: "owner",
   }),
 }));
@@ -82,7 +84,20 @@ describe("scheduler server actions", () => {
         expect(getTenantContext).toHaveBeenCalledWith("manageMaintenance");
         expect(result).toEqual(created);
         expect(createMock).toHaveBeenCalledWith({
-          data: { ...newEquip, organizationId: "org-1", siteId: "site-1" },
+          data: {
+            ...newEquip,
+            sectionId: null,
+            organizationId: "org-1",
+            siteId: "site-1",
+            relocations: {
+              create: {
+                organizationId: "org-1",
+                toSiteName: "Plant",
+                toSectionName: null,
+                movedById: "user-1",
+              },
+            },
+          },
         });
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/");
@@ -110,6 +125,69 @@ describe("scheduler server actions", () => {
       } finally {
         updateMock.mockRestore();
       }
+    });
+
+    describe("relocateEquipment", () => {
+      const current = {
+        id: "eq-1",
+        siteId: "site-1",
+        sectionId: null,
+        site: { name: "Plant" },
+        section: null,
+      };
+
+      it("moves equipment to another site and section and records history", async () => {
+        vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue(current as never);
+        vi.spyOn(prisma.site, "findFirst").mockResolvedValue({ id: "site-2", name: "Depot" } as never);
+        vi.spyOn(prisma.section, "findFirst").mockResolvedValue({ id: "sec-1", name: "Dock" } as never);
+        const update = vi.spyOn(prisma.equipment, "update").mockResolvedValue({ id: "eq-1" } as never);
+
+        await relocateEquipment("eq-1", { siteId: "site-2", sectionId: "sec-1" });
+
+        expect(prisma.section.findFirst).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { id: "sec-1", organizationId: "org-1", siteId: "site-2" },
+          }),
+        );
+        expect(update).toHaveBeenCalledWith({
+          where: { id: "eq-1" },
+          data: {
+            siteId: "site-2",
+            sectionId: "sec-1",
+            relocations: {
+              create: {
+                organizationId: "org-1",
+                fromSiteName: "Plant",
+                fromSectionName: null,
+                toSiteName: "Depot",
+                toSectionName: "Dock",
+                movedById: "user-1",
+              },
+            },
+          },
+        });
+      });
+
+      it("rejects a section that does not belong to the target site", async () => {
+        vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue(current as never);
+        vi.spyOn(prisma.site, "findFirst").mockResolvedValue({ id: "site-2", name: "Depot" } as never);
+        vi.spyOn(prisma.section, "findFirst").mockResolvedValue(null);
+        const update = vi.spyOn(prisma.equipment, "update");
+
+        await expect(
+          relocateEquipment("eq-1", { siteId: "site-2", sectionId: "other" }),
+        ).rejects.toThrow("Section not found");
+        expect(update).not.toHaveBeenCalled();
+      });
+
+      it("does nothing when the location is unchanged", async () => {
+        vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue(current as never);
+        vi.spyOn(prisma.site, "findFirst").mockResolvedValue({ id: "site-1", name: "Plant" } as never);
+        const update = vi.spyOn(prisma.equipment, "update");
+
+        await relocateEquipment("eq-1", { siteId: "site-1", sectionId: null });
+        expect(update).not.toHaveBeenCalled();
+      });
     });
 
     it("deleteEquipment deletes record and revalidates path", async () => {

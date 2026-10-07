@@ -193,6 +193,8 @@ export type OrganizationWhereInput = {
   members?: Prisma.MemberListRelationFilter
   invitations?: Prisma.InvitationListRelationFilter
   sites?: Prisma.SiteListRelationFilter
+  sections?: Prisma.SectionListRelationFilter
+  files?: Prisma.StoredFileListRelationFilter
   equipment?: Prisma.EquipmentListRelationFilter
   tasks?: Prisma.MaintenanceTaskListRelationFilter
   workers?: Prisma.WorkerListRelationFilter
@@ -210,6 +212,8 @@ export type OrganizationOrderByWithRelationInput = {
   members?: Prisma.MemberOrderByRelationAggregateInput
   invitations?: Prisma.InvitationOrderByRelationAggregateInput
   sites?: Prisma.SiteOrderByRelationAggregateInput
+  sections?: Prisma.SectionOrderByRelationAggregateInput
+  files?: Prisma.StoredFileOrderByRelationAggregateInput
   equipment?: Prisma.EquipmentOrderByRelationAggregateInput
   tasks?: Prisma.MaintenanceTaskOrderByRelationAggregateInput
   workers?: Prisma.WorkerOrderByRelationAggregateInput
@@ -230,6 +234,8 @@ export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
   members?: Prisma.MemberListRelationFilter
   invitations?: Prisma.InvitationListRelationFilter
   sites?: Prisma.SiteListRelationFilter
+  sections?: Prisma.SectionListRelationFilter
+  files?: Prisma.StoredFileListRelationFilter
   equipment?: Prisma.EquipmentListRelationFilter
   tasks?: Prisma.MaintenanceTaskListRelationFilter
   workers?: Prisma.WorkerListRelationFilter
@@ -271,6 +277,8 @@ export type OrganizationCreateInput = {
   members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
@@ -288,6 +296,8 @@ export type OrganizationUncheckedCreateInput = {
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileUncheckedCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
@@ -305,6 +315,8 @@ export type OrganizationUpdateInput = {
   members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
@@ -322,6 +334,8 @@ export type OrganizationUncheckedUpdateInput = {
   members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUncheckedUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -400,6 +414,34 @@ export type OrganizationUpdateOneRequiredWithoutEquipmentNestedInput = {
   upsert?: Prisma.OrganizationUpsertWithoutEquipmentInput
   connect?: Prisma.OrganizationWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationUpdateToOneWithWhereWithoutEquipmentInput, Prisma.OrganizationUpdateWithoutEquipmentInput>, Prisma.OrganizationUncheckedUpdateWithoutEquipmentInput>
+}
+
+export type OrganizationCreateNestedOneWithoutFilesInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutFilesInput, Prisma.OrganizationUncheckedCreateWithoutFilesInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutFilesInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+}
+
+export type OrganizationUpdateOneRequiredWithoutFilesNestedInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutFilesInput, Prisma.OrganizationUncheckedCreateWithoutFilesInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutFilesInput
+  upsert?: Prisma.OrganizationUpsertWithoutFilesInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationUpdateToOneWithWhereWithoutFilesInput, Prisma.OrganizationUpdateWithoutFilesInput>, Prisma.OrganizationUncheckedUpdateWithoutFilesInput>
+}
+
+export type OrganizationCreateNestedOneWithoutSectionsInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutSectionsInput, Prisma.OrganizationUncheckedCreateWithoutSectionsInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutSectionsInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+}
+
+export type OrganizationUpdateOneRequiredWithoutSectionsNestedInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutSectionsInput, Prisma.OrganizationUncheckedCreateWithoutSectionsInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutSectionsInput
+  upsert?: Prisma.OrganizationUpsertWithoutSectionsInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationUpdateToOneWithWhereWithoutSectionsInput, Prisma.OrganizationUpdateWithoutSectionsInput>, Prisma.OrganizationUncheckedUpdateWithoutSectionsInput>
 }
 
 export type OrganizationCreateNestedOneWithoutTasksInput = {
@@ -510,6 +552,8 @@ export type OrganizationCreateWithoutEquipmentInput = {
   members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
@@ -526,6 +570,8 @@ export type OrganizationUncheckedCreateWithoutEquipmentInput = {
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileUncheckedCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
@@ -558,6 +604,8 @@ export type OrganizationUpdateWithoutEquipmentInput = {
   members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
@@ -574,6 +622,184 @@ export type OrganizationUncheckedUpdateWithoutEquipmentInput = {
   members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUncheckedUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput
+  tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
+  workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
+  vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationCreateWithoutFilesInput = {
+  id: string
+  name: string
+  slug: string
+  logo?: string | null
+  createdAt: Date | string
+  metadata?: string | null
+  members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
+  sites?: Prisma.SiteCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionCreateNestedManyWithoutOrganizationInput
+  equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
+  tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
+  workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
+  vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationUncheckedCreateWithoutFilesInput = {
+  id: string
+  name: string
+  slug: string
+  logo?: string | null
+  createdAt: Date | string
+  metadata?: string | null
+  members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
+  sites?: Prisma.SiteUncheckedCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutOrganizationInput
+  equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
+  tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
+  workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
+  vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationCreateOrConnectWithoutFilesInput = {
+  where: Prisma.OrganizationWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutFilesInput, Prisma.OrganizationUncheckedCreateWithoutFilesInput>
+}
+
+export type OrganizationUpsertWithoutFilesInput = {
+  update: Prisma.XOR<Prisma.OrganizationUpdateWithoutFilesInput, Prisma.OrganizationUncheckedUpdateWithoutFilesInput>
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutFilesInput, Prisma.OrganizationUncheckedCreateWithoutFilesInput>
+  where?: Prisma.OrganizationWhereInput
+}
+
+export type OrganizationUpdateToOneWithWhereWithoutFilesInput = {
+  where?: Prisma.OrganizationWhereInput
+  data: Prisma.XOR<Prisma.OrganizationUpdateWithoutFilesInput, Prisma.OrganizationUncheckedUpdateWithoutFilesInput>
+}
+
+export type OrganizationUpdateWithoutFilesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
+  sites?: Prisma.SiteUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutOrganizationNestedInput
+  equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
+  tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
+  workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
+  vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationUncheckedUpdateWithoutFilesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
+  sites?: Prisma.SiteUncheckedUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutOrganizationNestedInput
+  equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+  tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
+  workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
+  vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationCreateWithoutSectionsInput = {
+  id: string
+  name: string
+  slug: string
+  logo?: string | null
+  createdAt: Date | string
+  metadata?: string | null
+  members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
+  sites?: Prisma.SiteCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileCreateNestedManyWithoutOrganizationInput
+  equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
+  tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
+  workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
+  vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationUncheckedCreateWithoutSectionsInput = {
+  id: string
+  name: string
+  slug: string
+  logo?: string | null
+  createdAt: Date | string
+  metadata?: string | null
+  members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
+  sites?: Prisma.SiteUncheckedCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileUncheckedCreateNestedManyWithoutOrganizationInput
+  equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
+  tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
+  workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
+  vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationCreateOrConnectWithoutSectionsInput = {
+  where: Prisma.OrganizationWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutSectionsInput, Prisma.OrganizationUncheckedCreateWithoutSectionsInput>
+}
+
+export type OrganizationUpsertWithoutSectionsInput = {
+  update: Prisma.XOR<Prisma.OrganizationUpdateWithoutSectionsInput, Prisma.OrganizationUncheckedUpdateWithoutSectionsInput>
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutSectionsInput, Prisma.OrganizationUncheckedCreateWithoutSectionsInput>
+  where?: Prisma.OrganizationWhereInput
+}
+
+export type OrganizationUpdateToOneWithWhereWithoutSectionsInput = {
+  where?: Prisma.OrganizationWhereInput
+  data: Prisma.XOR<Prisma.OrganizationUpdateWithoutSectionsInput, Prisma.OrganizationUncheckedUpdateWithoutSectionsInput>
+}
+
+export type OrganizationUpdateWithoutSectionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
+  sites?: Prisma.SiteUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUpdateManyWithoutOrganizationNestedInput
+  equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
+  tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
+  workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
+  vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationUncheckedUpdateWithoutSectionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
+  sites?: Prisma.SiteUncheckedUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput
+  equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -590,6 +816,8 @@ export type OrganizationCreateWithoutTasksInput = {
   members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
@@ -606,6 +834,8 @@ export type OrganizationUncheckedCreateWithoutTasksInput = {
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileUncheckedCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
@@ -638,6 +868,8 @@ export type OrganizationUpdateWithoutTasksInput = {
   members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
@@ -654,6 +886,8 @@ export type OrganizationUncheckedUpdateWithoutTasksInput = {
   members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUncheckedUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -670,6 +904,8 @@ export type OrganizationCreateWithoutWorkersInput = {
   members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
@@ -686,6 +922,8 @@ export type OrganizationUncheckedCreateWithoutWorkersInput = {
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileUncheckedCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
@@ -718,6 +956,8 @@ export type OrganizationUpdateWithoutWorkersInput = {
   members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
@@ -734,6 +974,8 @@ export type OrganizationUncheckedUpdateWithoutWorkersInput = {
   members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUncheckedUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -750,6 +992,8 @@ export type OrganizationCreateWithoutVendorsInput = {
   members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
@@ -766,6 +1010,8 @@ export type OrganizationUncheckedCreateWithoutVendorsInput = {
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileUncheckedCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
@@ -798,6 +1044,8 @@ export type OrganizationUpdateWithoutVendorsInput = {
   members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
@@ -814,6 +1062,8 @@ export type OrganizationUncheckedUpdateWithoutVendorsInput = {
   members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUncheckedUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -829,6 +1079,8 @@ export type OrganizationCreateWithoutSitesInput = {
   metadata?: string | null
   members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
@@ -845,6 +1097,8 @@ export type OrganizationUncheckedCreateWithoutSitesInput = {
   metadata?: string | null
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileUncheckedCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
@@ -877,6 +1131,8 @@ export type OrganizationUpdateWithoutSitesInput = {
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
@@ -893,6 +1149,8 @@ export type OrganizationUncheckedUpdateWithoutSitesInput = {
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -909,6 +1167,8 @@ export type OrganizationCreateWithoutMembersInput = {
   metadata?: string | null
   invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
@@ -925,6 +1185,8 @@ export type OrganizationUncheckedCreateWithoutMembersInput = {
   metadata?: string | null
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileUncheckedCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
@@ -957,6 +1219,8 @@ export type OrganizationUpdateWithoutMembersInput = {
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
@@ -973,6 +1237,8 @@ export type OrganizationUncheckedUpdateWithoutMembersInput = {
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUncheckedUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -989,6 +1255,8 @@ export type OrganizationCreateWithoutInvitationsInput = {
   metadata?: string | null
   members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
@@ -1005,6 +1273,8 @@ export type OrganizationUncheckedCreateWithoutInvitationsInput = {
   metadata?: string | null
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileUncheckedCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1037,6 +1307,8 @@ export type OrganizationUpdateWithoutInvitationsInput = {
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
@@ -1053,6 +1325,8 @@ export type OrganizationUncheckedUpdateWithoutInvitationsInput = {
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUncheckedUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1070,6 +1344,8 @@ export type OrganizationCreateWithoutAuditEventsInput = {
   members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
@@ -1086,6 +1362,8 @@ export type OrganizationUncheckedCreateWithoutAuditEventsInput = {
   members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileUncheckedCreateNestedManyWithoutOrganizationInput
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1118,6 +1396,8 @@ export type OrganizationUpdateWithoutAuditEventsInput = {
   members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
@@ -1134,6 +1414,8 @@ export type OrganizationUncheckedUpdateWithoutAuditEventsInput = {
   members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   sites?: Prisma.SiteUncheckedUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1149,6 +1431,8 @@ export type OrganizationCountOutputType = {
   members: number
   invitations: number
   sites: number
+  sections: number
+  files: number
   equipment: number
   tasks: number
   workers: number
@@ -1160,6 +1444,8 @@ export type OrganizationCountOutputTypeSelect<ExtArgs extends runtime.Types.Exte
   members?: boolean | OrganizationCountOutputTypeCountMembersArgs
   invitations?: boolean | OrganizationCountOutputTypeCountInvitationsArgs
   sites?: boolean | OrganizationCountOutputTypeCountSitesArgs
+  sections?: boolean | OrganizationCountOutputTypeCountSectionsArgs
+  files?: boolean | OrganizationCountOutputTypeCountFilesArgs
   equipment?: boolean | OrganizationCountOutputTypeCountEquipmentArgs
   tasks?: boolean | OrganizationCountOutputTypeCountTasksArgs
   workers?: boolean | OrganizationCountOutputTypeCountWorkersArgs
@@ -1196,6 +1482,20 @@ export type OrganizationCountOutputTypeCountInvitationsArgs<ExtArgs extends runt
  */
 export type OrganizationCountOutputTypeCountSitesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.SiteWhereInput
+}
+
+/**
+ * OrganizationCountOutputType without action
+ */
+export type OrganizationCountOutputTypeCountSectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SectionWhereInput
+}
+
+/**
+ * OrganizationCountOutputType without action
+ */
+export type OrganizationCountOutputTypeCountFilesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.StoredFileWhereInput
 }
 
 /**
@@ -1244,6 +1544,8 @@ export type OrganizationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   members?: boolean | Prisma.Organization$membersArgs<ExtArgs>
   invitations?: boolean | Prisma.Organization$invitationsArgs<ExtArgs>
   sites?: boolean | Prisma.Organization$sitesArgs<ExtArgs>
+  sections?: boolean | Prisma.Organization$sectionsArgs<ExtArgs>
+  files?: boolean | Prisma.Organization$filesArgs<ExtArgs>
   equipment?: boolean | Prisma.Organization$equipmentArgs<ExtArgs>
   tasks?: boolean | Prisma.Organization$tasksArgs<ExtArgs>
   workers?: boolean | Prisma.Organization$workersArgs<ExtArgs>
@@ -1284,6 +1586,8 @@ export type OrganizationInclude<ExtArgs extends runtime.Types.Extensions.Interna
   members?: boolean | Prisma.Organization$membersArgs<ExtArgs>
   invitations?: boolean | Prisma.Organization$invitationsArgs<ExtArgs>
   sites?: boolean | Prisma.Organization$sitesArgs<ExtArgs>
+  sections?: boolean | Prisma.Organization$sectionsArgs<ExtArgs>
+  files?: boolean | Prisma.Organization$filesArgs<ExtArgs>
   equipment?: boolean | Prisma.Organization$equipmentArgs<ExtArgs>
   tasks?: boolean | Prisma.Organization$tasksArgs<ExtArgs>
   workers?: boolean | Prisma.Organization$workersArgs<ExtArgs>
@@ -1300,6 +1604,8 @@ export type $OrganizationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     members: Prisma.$MemberPayload<ExtArgs>[]
     invitations: Prisma.$InvitationPayload<ExtArgs>[]
     sites: Prisma.$SitePayload<ExtArgs>[]
+    sections: Prisma.$SectionPayload<ExtArgs>[]
+    files: Prisma.$StoredFilePayload<ExtArgs>[]
     equipment: Prisma.$EquipmentPayload<ExtArgs>[]
     tasks: Prisma.$MaintenanceTaskPayload<ExtArgs>[]
     workers: Prisma.$WorkerPayload<ExtArgs>[]
@@ -1710,6 +2016,8 @@ export interface Prisma__OrganizationClient<T, Null = never, ExtArgs extends run
   members<T extends Prisma.Organization$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   invitations<T extends Prisma.Organization$invitationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$invitationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sites<T extends Prisma.Organization$sitesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$sitesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sections<T extends Prisma.Organization$sectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$sectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  files<T extends Prisma.Organization$filesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$filesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoredFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   equipment<T extends Prisma.Organization$equipmentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$equipmentArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EquipmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   tasks<T extends Prisma.Organization$tasksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$tasksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   workers<T extends Prisma.Organization$workersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$workersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2212,6 +2520,54 @@ export type Organization$sitesArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.SiteScalarFieldEnum | Prisma.SiteScalarFieldEnum[]
+}
+
+/**
+ * Organization.sections
+ */
+export type Organization$sectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Section
+   */
+  select?: Prisma.SectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Section
+   */
+  omit?: Prisma.SectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SectionInclude<ExtArgs> | null
+  where?: Prisma.SectionWhereInput
+  orderBy?: Prisma.SectionOrderByWithRelationInput | Prisma.SectionOrderByWithRelationInput[]
+  cursor?: Prisma.SectionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SectionScalarFieldEnum | Prisma.SectionScalarFieldEnum[]
+}
+
+/**
+ * Organization.files
+ */
+export type Organization$filesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the StoredFile
+   */
+  select?: Prisma.StoredFileSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the StoredFile
+   */
+  omit?: Prisma.StoredFileOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StoredFileInclude<ExtArgs> | null
+  where?: Prisma.StoredFileWhereInput
+  orderBy?: Prisma.StoredFileOrderByWithRelationInput | Prisma.StoredFileOrderByWithRelationInput[]
+  cursor?: Prisma.StoredFileWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.StoredFileScalarFieldEnum | Prisma.StoredFileScalarFieldEnum[]
 }
 
 /**

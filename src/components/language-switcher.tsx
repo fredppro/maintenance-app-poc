@@ -11,10 +11,11 @@ import { APPLICATION_LOCALES } from "src/i18n/config";
 import { AppLocale, getValidLocale } from "src/i18n/locale";
 import { usePathname, useRouter } from "src/i18n/routing";
 import { Languages } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 export default function LanguageSwitcher() {
   const currentLocale = getValidLocale(useLocale());
+  const t = useTranslations("Dashboard");
   const router = useRouter();
   const pathname = usePathname();
 
@@ -34,8 +35,8 @@ export default function LanguageSwitcher() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon">
-          <Languages className="h-[1.2rem] w-[1.2rem]" />
-          <span className="sr-only">Toggle language</span>
+          <Languages aria-hidden="true" />
+          <span className="sr-only">{t("toggleLanguage")}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

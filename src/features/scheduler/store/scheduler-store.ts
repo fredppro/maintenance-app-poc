@@ -14,11 +14,18 @@ export interface SiteOption {
   current: boolean;
 }
 
+export interface SectionOption {
+  id: string;
+  name: string;
+  siteId: string;
+}
+
 export interface SchedulerState {
   equipment: Equipment[];
   entries: MaintenanceEntry[];
   workers: Worker[];
   sites: SiteOption[];
+  sections: SectionOption[];
   viewMode: ViewMode;
   currentDate: Date;
   selectedEntry: MaintenanceEntry | null;
@@ -32,6 +39,8 @@ export interface SchedulerState {
   addEquipment: (equipment: Equipment) => void;
   updateEquipment: (equipment: Equipment) => void;
   removeEquipment: (id: string) => void;
+  addSection: (section: SectionOption) => void;
+  setSections: (sections: SectionOption[]) => void;
   addEntry: (entry: MaintenanceEntry) => void;
   updateEntry: (id: string, updates: UpdateEntryPayload) => void;
   replaceEntry: (id: string, entry: MaintenanceEntry) => void;
@@ -58,6 +67,7 @@ export type SchedulerInitialState = Partial<
     | "entries"
     | "workers"
     | "sites"
+    | "sections"
     | "viewMode"
     | "currentDate"
     | "selectedEntry"
@@ -72,6 +82,7 @@ const defaultSchedulerState = (): Pick<
   | "entries"
   | "workers"
   | "sites"
+  | "sections"
   | "viewMode"
   | "currentDate"
   | "selectedEntry"
@@ -82,6 +93,7 @@ const defaultSchedulerState = (): Pick<
   entries: [],
   workers: [],
   sites: [],
+  sections: [],
   viewMode: "week",
   currentDate: new Date(),
   selectedEntry: null,
@@ -115,6 +127,16 @@ export function createSchedulerStore(initialState: SchedulerInitialState = {}) {
         ),
       })),
 
+    setSections: (sections) => set({ sections }),
+
+    addSection: (section) =>
+      set((state) => ({
+        sections: state.sections.some((s) => s.id === section.id)
+          ? state.sections
+          : [...state.sections, section].sort((a, b) =>
+              a.name.localeCompare(b.name),
+            ),
+      })),
     removeEquipment: (id) =>
       set((state) => ({
         equipment: state.equipment.filter((item) => item.id !== id),

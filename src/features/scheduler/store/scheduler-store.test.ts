@@ -11,7 +11,8 @@ describe("scheduler store", () => {
     id: "eq-1",
     name: "Conveyor Belt A",
     category: "Logistics",
-    image: null,
+    imageFileId: null,
+    sectionId: null,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
   };
 
@@ -71,7 +72,8 @@ describe("scheduler store", () => {
         id: "eq-2",
         name: "Hydraulic Press",
         category: "Heavy Machinery",
-        image: null,
+        imageFileId: null,
+        sectionId: null,
         createdAt: new Date(),
       };
       store.getState().addEquipment(eq2);

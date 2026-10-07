@@ -47,6 +47,21 @@ export { Prisma }
  */
 export type Equipment = Prisma.EquipmentModel
 /**
+ * Model StoredFile
+ * 
+ */
+export type StoredFile = Prisma.StoredFileModel
+/**
+ * Model Section
+ * 
+ */
+export type Section = Prisma.SectionModel
+/**
+ * Model EquipmentRelocation
+ * 
+ */
+export type EquipmentRelocation = Prisma.EquipmentRelocationModel
+/**
  * Model MaintenanceTask
  * 
  */

@@ -78,7 +78,7 @@ export function SchedulerToolbar() {
 
   return (
     <TooltipProvider>
-      <div className="grid grid-cols-1 items-center gap-2 rounded-lg border border-border bg-card p-2 sm:gap-3 sm:p-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-border bg-card p-2 sm:gap-3 sm:p-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
         {/* Left side: Navigation */}
         <div className="flex min-w-0 items-center gap-2">
           <ButtonGroup>
@@ -90,7 +90,7 @@ export function SchedulerToolbar() {
                   aria-label={t("previous")}
                   onClick={navigateBackward}
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft  />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t("previous")}</TooltipContent>
@@ -104,7 +104,7 @@ export function SchedulerToolbar() {
                   aria-label={t("today")}
                   onClick={handleToday}
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <RotateCcw  />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t("today")}</TooltipContent>
@@ -118,7 +118,7 @@ export function SchedulerToolbar() {
                   aria-label={t("next")}
                   onClick={navigateForward}
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight  />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t("next")}</TooltipContent>
@@ -134,14 +134,14 @@ export function SchedulerToolbar() {
         </div>
 
         {/* Center: View Mode Buttons */}
-        <ButtonGroup className="lg:justify-self-center" aria-label={t("viewSelector")}>
+        <ButtonGroup className="col-span-2 row-start-2 w-full lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:justify-self-center" aria-label={t("viewSelector")}>
           {viewModeOrder.map((mode) => (
             <Button
               key={mode}
               variant={viewMode === mode ? "default" : "outline"}
               aria-pressed={viewMode === mode}
               onClick={() => setViewMode(mode)}
-              className="h-8 px-2 text-xs capitalize sm:h-9 sm:px-3 sm:text-sm"
+              className="h-9 flex-1 px-2 text-sm capitalize pointer-coarse:h-10 lg:flex-none lg:px-3"
             >
               {t(mode)}
             </Button>
@@ -149,7 +149,7 @@ export function SchedulerToolbar() {
         </ButtonGroup>
 
         {/* Right side: Zoom Controls */}
-        <div className="flex items-center gap-2 lg:justify-self-end">
+        <div className="col-start-2 row-start-1 flex items-center gap-2 lg:col-start-3 lg:justify-self-end">
           <ButtonGroup>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -160,7 +160,7 @@ export function SchedulerToolbar() {
                   onClick={handleZoomIn}
                   disabled={!canZoomIn}
                 >
-                  <ZoomIn className="w-4 h-4" />
+                  <ZoomIn  />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t("zoomIn")}</TooltipContent>
@@ -175,7 +175,7 @@ export function SchedulerToolbar() {
                   onClick={handleZoomOut}
                   disabled={!canZoomOut}
                 >
-                  <ZoomOut className="w-4 h-4" />
+                  <ZoomOut  />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t("zoomOut")}</TooltipContent>

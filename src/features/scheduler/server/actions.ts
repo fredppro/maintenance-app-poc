@@ -3,11 +3,14 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
+import { deleteStoredFile } from "@/features/files/server/files";
 import { getTenantContext } from "@/lib/tenant-context";
 import {
   equipmentIdSchema,
   equipmentSchema,
   equipmentUpdateSchema,
+  relocationSchema,
+  sectionNameSchema,
   createTaskSchema,
   updateTaskSchema,
 } from "./schemas";
@@ -21,11 +24,56 @@ export async function getEquipment() {
   });
 }
 
-export async function addEquipment(data: { name: string; category?: string; image?: string | null }) {
-  const { organizationId, siteId } = await getTenantContext("manageMaintenance");
+async function assertOwnFile(fileId: string | null | undefined, organizationId: string) {
+  if (!fileId) return;
+  const file = await prisma.storedFile.findFirst({
+    where: { id: fileId, organizationId },
+    select: { id: true },
+  });
+  if (!file) throw new Error("File not found in the active organization");
+}
+
+async function assertSectionInSite(
+  sectionId: string | null | undefined,
+  organizationId: string,
+  siteId: string,
+) {
+  if (!sectionId) return null;
+  const section = await prisma.section.findFirst({
+    where: { id: sectionId, organizationId, siteId },
+    select: { id: true, name: true },
+  });
+  if (!section) throw new Error("Section not found in the target site");
+  return section;
+}
+
+export async function addEquipment(data: {
+  name: string;
+  category?: string | null;
+  imageFileId?: string | null;
+  sectionId?: string | null;
+}) {
+  const { organizationId, siteId, siteName, userId } =
+    await getTenantContext("manageMaintenance");
   const input = equipmentSchema.parse(data);
+  await assertOwnFile(input.imageFileId, organizationId);
+  const section = await assertSectionInSite(input.sectionId, organizationId, siteId);
+
   const equipment = await prisma.equipment.create({
-    data: { ...input, organizationId, siteId },
+    data: {
+      ...input,
+      sectionId: section?.id ?? null,
+      organizationId,
+      siteId,
+      relocations: {
+        create: {
+          organizationId,
+          toSiteName: siteName,
+          toSectionName: section?.name ?? null,
+          movedById: userId,
+        },
+      },
+    },
   });
   revalidatePath("/");
   return equipment;
@@ -33,46 +81,159 @@ export async function addEquipment(data: { name: string; category?: string; imag
 
 export async function updateEquipment(
   id: string,
-  data: { name: string; category?: string; image?: string | null },
+  data: { name?: string; category?: string | null; imageFileId?: string | null },
 ) {
   const { organizationId, siteId } = await getTenantContext("manageMaintenance");
   const equipmentId = equipmentIdSchema.parse(id);
   const input = equipmentUpdateSchema.parse(data);
+  await assertOwnFile(input.imageFileId, organizationId);
+
+  const previous = await prisma.equipment.findFirst({
+    where: { id: equipmentId, organizationId, siteId },
+    select: { imageFileId: true },
+  });
+  if (!previous) throw new Error("Equipment not found");
+
   const equipment = await prisma.equipment.update({
     where: { id: equipmentId, organizationId, siteId },
     data: input,
+  });
+
+  if (
+    input.imageFileId !== undefined &&
+    previous.imageFileId &&
+    previous.imageFileId !== input.imageFileId
+  ) {
+    await deleteStoredFile(previous.imageFileId, organizationId);
+  }
+  revalidatePath("/");
+  return equipment;
+}
+
+/**
+ * Places equipment at a site and (optionally) a section of that site, recording the
+ * change in the location history. Tasks follow the equipment automatically.
+ */
+export async function relocateEquipment(
+  id: string,
+  target: { siteId: string; sectionId?: string | null },
+) {
+  const { organizationId, siteId, userId } =
+    await getTenantContext("manageMaintenance");
+  const equipmentId = equipmentIdSchema.parse(id);
+  const input = relocationSchema.parse(target);
+
+  const [current, targetSite] = await Promise.all([
+    prisma.equipment.findFirst({
+      where: { id: equipmentId, organizationId, siteId },
+      include: { site: { select: { name: true } }, section: { select: { name: true } } },
+    }),
+    prisma.site.findFirst({
+      where: { id: input.siteId, organizationId },
+      select: { id: true, name: true },
+    }),
+  ]);
+  if (!current) throw new Error("Equipment not found");
+  if (!targetSite) throw new Error("Target site not found in the active organization");
+
+  const section = await assertSectionInSite(input.sectionId, organizationId, targetSite.id);
+  if (current.siteId === targetSite.id && current.sectionId === (section?.id ?? null)) {
+    return current;
+  }
+
+  const equipment = await prisma.equipment.update({
+    where: { id: equipmentId },
+    data: {
+      siteId: targetSite.id,
+      sectionId: section?.id ?? null,
+      relocations: {
+        create: {
+          organizationId,
+          fromSiteName: current.site.name,
+          fromSectionName: current.section?.name ?? null,
+          toSiteName: targetSite.name,
+          toSectionName: section?.name ?? null,
+          movedById: userId,
+        },
+      },
+    },
   });
   revalidatePath("/");
   return equipment;
 }
 
-export async function moveEquipment(id: string, targetSiteId: string) {
-  const { organizationId, siteId } = await getTenantContext("manageMaintenance");
+export async function getEquipmentRelocations(id: string) {
+  const { organizationId, siteId } = await getTenantContext("viewMaintenance");
   const equipmentId = equipmentIdSchema.parse(id);
-  const targetId = equipmentIdSchema.parse(targetSiteId);
-
-  const targetSite = await prisma.site.findFirst({
-    where: { id: targetId, organizationId },
-    select: { id: true },
+  return await prisma.equipmentRelocation.findMany({
+    where: { equipmentId, organizationId, equipment: { siteId } },
+    orderBy: { movedAt: "desc" },
+    take: 20,
   });
-  if (!targetSite) {
-    throw new Error("Target site not found in the active organization");
-  }
-
-  // Tasks follow the equipment because they are scoped through it.
-  const equipment = await prisma.equipment.update({
-    where: { id: equipmentId, organizationId, siteId },
-    data: { siteId: targetSite.id },
-  });
-  revalidatePath("/");
-  return equipment;
 }
 
 export async function deleteEquipment(id: string) {
   const { organizationId, siteId } = await getTenantContext("deleteMaintenance");
   const equipmentId = equipmentIdSchema.parse(id);
+  const equipment = await prisma.equipment.findFirst({
+    where: { id: equipmentId, organizationId, siteId },
+    select: { imageFileId: true },
+  });
   await prisma.equipment.delete({
     where: { id: equipmentId, organizationId, siteId },
+  });
+  if (equipment?.imageFileId) {
+    await deleteStoredFile(equipment.imageFileId, organizationId);
+  }
+  revalidatePath("/");
+}
+
+// Section Actions
+export async function getSections() {
+  const { organizationId } = await getTenantContext("viewMaintenance");
+  return await prisma.section.findMany({
+    where: { organizationId },
+    select: { id: true, name: true, siteId: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function createSection(siteId: string, name: string) {
+  const { organizationId } = await getTenantContext("manageMaintenance");
+  const targetSiteId = equipmentIdSchema.parse(siteId);
+  const sectionName = sectionNameSchema.parse(name);
+  const site = await prisma.site.findFirst({
+    where: { id: targetSiteId, organizationId },
+    select: { id: true },
+  });
+  if (!site) throw new Error("Site not found in the active organization");
+
+  const section = await prisma.section.upsert({
+    where: { siteId_name: { siteId: site.id, name: sectionName } },
+    create: { name: sectionName, siteId: site.id, organizationId },
+    update: {},
+    select: { id: true, name: true, siteId: true },
+  });
+  revalidatePath("/");
+  return section;
+}
+
+export async function renameSection(id: string, name: string) {
+  const { organizationId } = await getTenantContext("manageSites");
+  const section = await prisma.section.update({
+    where: { id: equipmentIdSchema.parse(id), organizationId },
+    data: { name: sectionNameSchema.parse(name) },
+    select: { id: true, name: true, siteId: true },
+  });
+  revalidatePath("/");
+  return section;
+}
+
+/** Equipment in the section is kept and simply becomes unassigned. */
+export async function deleteSection(id: string) {
+  const { organizationId } = await getTenantContext("manageSites");
+  await prisma.section.delete({
+    where: { id: equipmentIdSchema.parse(id), organizationId },
   });
   revalidatePath("/");
 }

@@ -51,11 +51,11 @@ export function TenantContextSelector({
   const selected = options.find((option) => option.siteId === selectedSiteId);
 
   return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span>{label}</span>
+    <label className="flex min-w-0 flex-col gap-1 text-sm">
+      <span className="sr-only">{label}</span>
       <select
         aria-label={label}
-        className="h-9 rounded-md border border-input bg-background px-3 text-foreground"
+        className="h-9 w-full min-w-0 max-w-56 truncate rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:h-10"
         disabled={pending}
         value={
           selected

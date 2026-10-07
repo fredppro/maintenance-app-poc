@@ -65,7 +65,7 @@ import {
   CalendarDays,
   MoreVertical,
   Plus,
-  Settings,
+  Pencil,
   Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -350,6 +350,15 @@ export function TimelineGrid() {
     }
   };
 
+  const sections = useSchedulerStore((s) => s.sections);
+  const locationLabel = (equip: Equipment) =>
+    [
+      equip.category,
+      sections.find((section) => section.id === equip.sectionId)?.name,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
   const getPendingMaintenanceCount = (equipmentId: string) => {
     return entries.filter(
       (e) => e.equipmentId === equipmentId && e.status !== "completed",
@@ -390,19 +399,19 @@ export function TimelineGrid() {
         aria-busy={isLoading}
         className="relative flex-1 overflow-auto rounded-lg border border-border bg-card"
       >
-        {isLoading && (
-          <TimelineGridSkeleton
-            boundaryClasses={timeSlots.map((_, index) =>
-              getTimelineBoundaryClass(timeSlots, viewMode, index),
-            )}
-            rowCount={Math.min(Math.max(equipment.length, 3), 6)}
-            yAxisWidth={yAxisWidth}
-            cellWidth={cellWidth}
-            label={t("loading")}
-          />
-        )}
+        <div className="relative flex h-full min-w-full w-fit flex-col">
+          {isLoading && (
+            <TimelineGridSkeleton
+              boundaryClasses={timeSlots.map((_, index) =>
+                getTimelineBoundaryClass(timeSlots, viewMode, index),
+              )}
+              rowCount={Math.min(Math.max(equipment.length, 3), 6)}
+              yAxisWidth={yAxisWidth}
+              cellWidth={cellWidth}
+              label={t("loading")}
+            />
+          )}
 
-        <div className="flex h-full min-w-full w-fit flex-col">
           {/* Header row */}
           <div className="sticky top-0 z-20 flex min-w-full w-fit shrink-0 border-b border-border bg-card">
             <div
@@ -537,10 +546,10 @@ export function TimelineGrid() {
                     >
                       <div className="flex min-w-0 items-center gap-2">
                         <div className="relative">
-                          {equip.image ? (
+                          {equip.imageFileId ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
-                              src={equip.image}
+                              src={`/api/files/${equip.imageFileId}`}
                               alt=""
                               className="size-7 shrink-0 rounded-lg border border-border object-cover"
                             />
@@ -568,12 +577,15 @@ export function TimelineGrid() {
                             {equip.name}
                           </div>
                           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                            {equip.category && (
-                              <span className="max-w-[6rem] truncate">
-                                {equip.category}
+                            {locationLabel(equip) && (
+                              <span
+                                className="max-w-[7rem] truncate"
+                                title={locationLabel(equip)}
+                              >
+                                {locationLabel(equip)}
                               </span>
                             )}
-                            {equip.category && pendingCount > 0 && (
+                            {locationLabel(equip) && pendingCount > 0 && (
                               <span>•</span>
                             )}
                             {pendingCount > 0 && (
@@ -604,8 +616,8 @@ export function TimelineGrid() {
                             className="gap-2"
                             onClick={() => handleEditEquip(equip)}
                           >
-                            <Settings className="w-4 h-4" />
-                            {tCommon("settings")}
+                            <Pencil />
+                            {tCommon("edit")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="gap-2 text-destructive focus:text-destructive"
@@ -658,7 +670,13 @@ export function TimelineGrid() {
                               ),
                               "hover:bg-accent/50 active:bg-accent/80",
                               isDragOver && "bg-primary-muted",
-                              isToday(slot) && "bg-primary-muted/30",
+                              isToday(slot) &&
+                                !processedEntries.some(
+                                  ({ startIdx, effectiveSpan }) =>
+                                    slotIdx >= startIdx &&
+                                    slotIdx < startIdx + effectiveSpan,
+                                ) &&
+                                "bg-primary-muted/30",
                             )}
                             style={{ height: `${rowHeight}px` }}
                             onClick={() => handleCellClick(slot, equip.id)}
@@ -682,7 +700,7 @@ export function TimelineGrid() {
                         isSameDay(currentDate, now) && (
                           <div
                             aria-hidden="true"
-                            className="pointer-events-none absolute inset-y-0 z-10 border-l border-primary"
+                            className="pointer-events-none absolute inset-y-0 border-l border-primary"
                             style={{
                               left: `${currentTimePosition}%`,
                             }}
@@ -837,17 +855,17 @@ function TimelineGridSkeleton({
     <div
       role="status"
       aria-label={label}
-      className="pointer-events-auto absolute inset-0 z-30 overflow-hidden bg-background/80"
+      className="pointer-events-auto absolute inset-0 z-40 bg-card"
     >
       <div
         aria-hidden="true"
         className="flex h-full min-w-full w-fit flex-col"
       >
-        <div className="flex min-w-full flex-none border-b border-border">
+        <div className="sticky top-0 z-20 flex min-w-full flex-none border-b border-border bg-card">
           <div
             className={cn(
               yAxisWidth,
-              "sticky left-0 z-10 flex h-10 items-center border-r border-border bg-card px-2",
+              "sticky left-0 z-10 flex h-12 items-center border-r border-border bg-card px-2",
             )}
           >
             <Skeleton className="h-4 w-24" />

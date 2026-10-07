@@ -7,6 +7,7 @@ const replaceMock = vi.fn();
 
 vi.mock("next-intl", () => ({
   useLocale: () => "en",
+  useTranslations: () => (key: string) => key,
 }));
 
 vi.mock("src/i18n/routing", () => ({

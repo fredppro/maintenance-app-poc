@@ -28,7 +28,8 @@ export type EquipmentMinAggregateOutputType = {
   id: string | null
   name: string | null
   category: string | null
-  image: string | null
+  imageFileId: string | null
+  sectionId: string | null
   organizationId: string | null
   siteId: string | null
   createdAt: Date | null
@@ -38,7 +39,8 @@ export type EquipmentMaxAggregateOutputType = {
   id: string | null
   name: string | null
   category: string | null
-  image: string | null
+  imageFileId: string | null
+  sectionId: string | null
   organizationId: string | null
   siteId: string | null
   createdAt: Date | null
@@ -48,7 +50,8 @@ export type EquipmentCountAggregateOutputType = {
   id: number
   name: number
   category: number
-  image: number
+  imageFileId: number
+  sectionId: number
   organizationId: number
   siteId: number
   createdAt: number
@@ -60,7 +63,8 @@ export type EquipmentMinAggregateInputType = {
   id?: true
   name?: true
   category?: true
-  image?: true
+  imageFileId?: true
+  sectionId?: true
   organizationId?: true
   siteId?: true
   createdAt?: true
@@ -70,7 +74,8 @@ export type EquipmentMaxAggregateInputType = {
   id?: true
   name?: true
   category?: true
-  image?: true
+  imageFileId?: true
+  sectionId?: true
   organizationId?: true
   siteId?: true
   createdAt?: true
@@ -80,7 +85,8 @@ export type EquipmentCountAggregateInputType = {
   id?: true
   name?: true
   category?: true
-  image?: true
+  imageFileId?: true
+  sectionId?: true
   organizationId?: true
   siteId?: true
   createdAt?: true
@@ -163,7 +169,8 @@ export type EquipmentGroupByOutputType = {
   id: string
   name: string
   category: string | null
-  image: string | null
+  imageFileId: string | null
+  sectionId: string | null
   organizationId: string
   siteId: string
   createdAt: Date
@@ -194,26 +201,34 @@ export type EquipmentWhereInput = {
   id?: Prisma.StringFilter<"Equipment"> | string
   name?: Prisma.StringFilter<"Equipment"> | string
   category?: Prisma.StringNullableFilter<"Equipment"> | string | null
-  image?: Prisma.StringNullableFilter<"Equipment"> | string | null
+  imageFileId?: Prisma.StringNullableFilter<"Equipment"> | string | null
+  sectionId?: Prisma.StringNullableFilter<"Equipment"> | string | null
   organizationId?: Prisma.StringFilter<"Equipment"> | string
   siteId?: Prisma.StringFilter<"Equipment"> | string
   createdAt?: Prisma.DateTimeFilter<"Equipment"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   site?: Prisma.XOR<Prisma.SiteScalarRelationFilter, Prisma.SiteWhereInput>
+  imageFile?: Prisma.XOR<Prisma.StoredFileNullableScalarRelationFilter, Prisma.StoredFileWhereInput> | null
+  section?: Prisma.XOR<Prisma.SectionNullableScalarRelationFilter, Prisma.SectionWhereInput> | null
   tasks?: Prisma.MaintenanceTaskListRelationFilter
+  relocations?: Prisma.EquipmentRelocationListRelationFilter
 }
 
 export type EquipmentOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   category?: Prisma.SortOrderInput | Prisma.SortOrder
-  image?: Prisma.SortOrderInput | Prisma.SortOrder
+  imageFileId?: Prisma.SortOrderInput | Prisma.SortOrder
+  sectionId?: Prisma.SortOrderInput | Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   organization?: Prisma.OrganizationOrderByWithRelationInput
   site?: Prisma.SiteOrderByWithRelationInput
+  imageFile?: Prisma.StoredFileOrderByWithRelationInput
+  section?: Prisma.SectionOrderByWithRelationInput
   tasks?: Prisma.MaintenanceTaskOrderByRelationAggregateInput
+  relocations?: Prisma.EquipmentRelocationOrderByRelationAggregateInput
 }
 
 export type EquipmentWhereUniqueInput = Prisma.AtLeast<{
@@ -225,20 +240,25 @@ export type EquipmentWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.EquipmentWhereInput | Prisma.EquipmentWhereInput[]
   name?: Prisma.StringFilter<"Equipment"> | string
   category?: Prisma.StringNullableFilter<"Equipment"> | string | null
-  image?: Prisma.StringNullableFilter<"Equipment"> | string | null
+  imageFileId?: Prisma.StringNullableFilter<"Equipment"> | string | null
+  sectionId?: Prisma.StringNullableFilter<"Equipment"> | string | null
   organizationId?: Prisma.StringFilter<"Equipment"> | string
   siteId?: Prisma.StringFilter<"Equipment"> | string
   createdAt?: Prisma.DateTimeFilter<"Equipment"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   site?: Prisma.XOR<Prisma.SiteScalarRelationFilter, Prisma.SiteWhereInput>
+  imageFile?: Prisma.XOR<Prisma.StoredFileNullableScalarRelationFilter, Prisma.StoredFileWhereInput> | null
+  section?: Prisma.XOR<Prisma.SectionNullableScalarRelationFilter, Prisma.SectionWhereInput> | null
   tasks?: Prisma.MaintenanceTaskListRelationFilter
+  relocations?: Prisma.EquipmentRelocationListRelationFilter
 }, "id" | "id_organizationId" | "organizationId_name">
 
 export type EquipmentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   category?: Prisma.SortOrderInput | Prisma.SortOrder
-  image?: Prisma.SortOrderInput | Prisma.SortOrder
+  imageFileId?: Prisma.SortOrderInput | Prisma.SortOrder
+  sectionId?: Prisma.SortOrderInput | Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -254,7 +274,8 @@ export type EquipmentScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Equipment"> | string
   name?: Prisma.StringWithAggregatesFilter<"Equipment"> | string
   category?: Prisma.StringNullableWithAggregatesFilter<"Equipment"> | string | null
-  image?: Prisma.StringNullableWithAggregatesFilter<"Equipment"> | string | null
+  imageFileId?: Prisma.StringNullableWithAggregatesFilter<"Equipment"> | string | null
+  sectionId?: Prisma.StringNullableWithAggregatesFilter<"Equipment"> | string | null
   organizationId?: Prisma.StringWithAggregatesFilter<"Equipment"> | string
   siteId?: Prisma.StringWithAggregatesFilter<"Equipment"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Equipment"> | Date | string
@@ -264,51 +285,60 @@ export type EquipmentCreateInput = {
   id?: string
   name: string
   category?: string | null
-  image?: string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
   site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
+  imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
+  section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateInput = {
   id?: string
   name: string
   category?: string | null
-  image?: string | null
+  imageFileId?: string | null
+  sectionId?: string | null
   organizationId: string
   siteId: string
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
   site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
+  imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
+  section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateManyInput = {
   id?: string
   name: string
   category?: string | null
-  image?: string | null
+  imageFileId?: string | null
+  sectionId?: string | null
   organizationId: string
   siteId: string
   createdAt?: Date | string
@@ -318,7 +348,6 @@ export type EquipmentUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -326,7 +355,8 @@ export type EquipmentUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -346,7 +376,8 @@ export type EquipmentCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   category?: Prisma.SortOrder
-  image?: Prisma.SortOrder
+  imageFileId?: Prisma.SortOrder
+  sectionId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -356,7 +387,8 @@ export type EquipmentMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   category?: Prisma.SortOrder
-  image?: Prisma.SortOrder
+  imageFileId?: Prisma.SortOrder
+  sectionId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -366,15 +398,11 @@ export type EquipmentMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   category?: Prisma.SortOrder
-  image?: Prisma.SortOrder
+  imageFileId?: Prisma.SortOrder
+  sectionId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   siteId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-}
-
-export type EquipmentScalarRelationFilter = {
-  is?: Prisma.EquipmentWhereInput
-  isNot?: Prisma.EquipmentWhereInput
 }
 
 export type EquipmentListRelationFilter = {
@@ -387,6 +415,11 @@ export type EquipmentOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type EquipmentScalarRelationFilter = {
+  is?: Prisma.EquipmentWhereInput
+  isNot?: Prisma.EquipmentWhereInput
+}
+
 export type StringFieldUpdateOperationsInput = {
   set?: string
 }
@@ -397,6 +430,104 @@ export type NullableStringFieldUpdateOperationsInput = {
 
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type EquipmentCreateNestedManyWithoutImageFileInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutImageFileInput, Prisma.EquipmentUncheckedCreateWithoutImageFileInput> | Prisma.EquipmentCreateWithoutImageFileInput[] | Prisma.EquipmentUncheckedCreateWithoutImageFileInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutImageFileInput | Prisma.EquipmentCreateOrConnectWithoutImageFileInput[]
+  createMany?: Prisma.EquipmentCreateManyImageFileInputEnvelope
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+}
+
+export type EquipmentUncheckedCreateNestedManyWithoutImageFileInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutImageFileInput, Prisma.EquipmentUncheckedCreateWithoutImageFileInput> | Prisma.EquipmentCreateWithoutImageFileInput[] | Prisma.EquipmentUncheckedCreateWithoutImageFileInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutImageFileInput | Prisma.EquipmentCreateOrConnectWithoutImageFileInput[]
+  createMany?: Prisma.EquipmentCreateManyImageFileInputEnvelope
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+}
+
+export type EquipmentUpdateManyWithoutImageFileNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutImageFileInput, Prisma.EquipmentUncheckedCreateWithoutImageFileInput> | Prisma.EquipmentCreateWithoutImageFileInput[] | Prisma.EquipmentUncheckedCreateWithoutImageFileInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutImageFileInput | Prisma.EquipmentCreateOrConnectWithoutImageFileInput[]
+  upsert?: Prisma.EquipmentUpsertWithWhereUniqueWithoutImageFileInput | Prisma.EquipmentUpsertWithWhereUniqueWithoutImageFileInput[]
+  createMany?: Prisma.EquipmentCreateManyImageFileInputEnvelope
+  set?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  disconnect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  delete?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  update?: Prisma.EquipmentUpdateWithWhereUniqueWithoutImageFileInput | Prisma.EquipmentUpdateWithWhereUniqueWithoutImageFileInput[]
+  updateMany?: Prisma.EquipmentUpdateManyWithWhereWithoutImageFileInput | Prisma.EquipmentUpdateManyWithWhereWithoutImageFileInput[]
+  deleteMany?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
+}
+
+export type EquipmentUncheckedUpdateManyWithoutImageFileNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutImageFileInput, Prisma.EquipmentUncheckedCreateWithoutImageFileInput> | Prisma.EquipmentCreateWithoutImageFileInput[] | Prisma.EquipmentUncheckedCreateWithoutImageFileInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutImageFileInput | Prisma.EquipmentCreateOrConnectWithoutImageFileInput[]
+  upsert?: Prisma.EquipmentUpsertWithWhereUniqueWithoutImageFileInput | Prisma.EquipmentUpsertWithWhereUniqueWithoutImageFileInput[]
+  createMany?: Prisma.EquipmentCreateManyImageFileInputEnvelope
+  set?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  disconnect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  delete?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  update?: Prisma.EquipmentUpdateWithWhereUniqueWithoutImageFileInput | Prisma.EquipmentUpdateWithWhereUniqueWithoutImageFileInput[]
+  updateMany?: Prisma.EquipmentUpdateManyWithWhereWithoutImageFileInput | Prisma.EquipmentUpdateManyWithWhereWithoutImageFileInput[]
+  deleteMany?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
+}
+
+export type EquipmentCreateNestedManyWithoutSectionInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutSectionInput, Prisma.EquipmentUncheckedCreateWithoutSectionInput> | Prisma.EquipmentCreateWithoutSectionInput[] | Prisma.EquipmentUncheckedCreateWithoutSectionInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutSectionInput | Prisma.EquipmentCreateOrConnectWithoutSectionInput[]
+  createMany?: Prisma.EquipmentCreateManySectionInputEnvelope
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+}
+
+export type EquipmentUncheckedCreateNestedManyWithoutSectionInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutSectionInput, Prisma.EquipmentUncheckedCreateWithoutSectionInput> | Prisma.EquipmentCreateWithoutSectionInput[] | Prisma.EquipmentUncheckedCreateWithoutSectionInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutSectionInput | Prisma.EquipmentCreateOrConnectWithoutSectionInput[]
+  createMany?: Prisma.EquipmentCreateManySectionInputEnvelope
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+}
+
+export type EquipmentUpdateManyWithoutSectionNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutSectionInput, Prisma.EquipmentUncheckedCreateWithoutSectionInput> | Prisma.EquipmentCreateWithoutSectionInput[] | Prisma.EquipmentUncheckedCreateWithoutSectionInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutSectionInput | Prisma.EquipmentCreateOrConnectWithoutSectionInput[]
+  upsert?: Prisma.EquipmentUpsertWithWhereUniqueWithoutSectionInput | Prisma.EquipmentUpsertWithWhereUniqueWithoutSectionInput[]
+  createMany?: Prisma.EquipmentCreateManySectionInputEnvelope
+  set?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  disconnect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  delete?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  update?: Prisma.EquipmentUpdateWithWhereUniqueWithoutSectionInput | Prisma.EquipmentUpdateWithWhereUniqueWithoutSectionInput[]
+  updateMany?: Prisma.EquipmentUpdateManyWithWhereWithoutSectionInput | Prisma.EquipmentUpdateManyWithWhereWithoutSectionInput[]
+  deleteMany?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
+}
+
+export type EquipmentUncheckedUpdateManyWithoutSectionNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutSectionInput, Prisma.EquipmentUncheckedCreateWithoutSectionInput> | Prisma.EquipmentCreateWithoutSectionInput[] | Prisma.EquipmentUncheckedCreateWithoutSectionInput[]
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutSectionInput | Prisma.EquipmentCreateOrConnectWithoutSectionInput[]
+  upsert?: Prisma.EquipmentUpsertWithWhereUniqueWithoutSectionInput | Prisma.EquipmentUpsertWithWhereUniqueWithoutSectionInput[]
+  createMany?: Prisma.EquipmentCreateManySectionInputEnvelope
+  set?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  disconnect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  delete?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  connect?: Prisma.EquipmentWhereUniqueInput | Prisma.EquipmentWhereUniqueInput[]
+  update?: Prisma.EquipmentUpdateWithWhereUniqueWithoutSectionInput | Prisma.EquipmentUpdateWithWhereUniqueWithoutSectionInput[]
+  updateMany?: Prisma.EquipmentUpdateManyWithWhereWithoutSectionInput | Prisma.EquipmentUpdateManyWithWhereWithoutSectionInput[]
+  deleteMany?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
+}
+
+export type EquipmentCreateNestedOneWithoutRelocationsInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutRelocationsInput, Prisma.EquipmentUncheckedCreateWithoutRelocationsInput>
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutRelocationsInput
+  connect?: Prisma.EquipmentWhereUniqueInput
+}
+
+export type EquipmentUpdateOneRequiredWithoutRelocationsNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutRelocationsInput, Prisma.EquipmentUncheckedCreateWithoutRelocationsInput>
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutRelocationsInput
+  upsert?: Prisma.EquipmentUpsertWithoutRelocationsInput
+  connect?: Prisma.EquipmentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EquipmentUpdateToOneWithWhereWithoutRelocationsInput, Prisma.EquipmentUpdateWithoutRelocationsInput>, Prisma.EquipmentUncheckedUpdateWithoutRelocationsInput>
 }
 
 export type EquipmentCreateNestedOneWithoutTasksInput = {
@@ -497,24 +628,206 @@ export type EquipmentUncheckedUpdateManyWithoutSiteNestedInput = {
   deleteMany?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
 }
 
+export type EquipmentCreateWithoutImageFileInput = {
+  id?: string
+  name: string
+  category?: string | null
+  createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
+  site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
+  section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
+  tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentUncheckedCreateWithoutImageFileInput = {
+  id?: string
+  name: string
+  category?: string | null
+  sectionId?: string | null
+  organizationId: string
+  siteId: string
+  createdAt?: Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentCreateOrConnectWithoutImageFileInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutImageFileInput, Prisma.EquipmentUncheckedCreateWithoutImageFileInput>
+}
+
+export type EquipmentCreateManyImageFileInputEnvelope = {
+  data: Prisma.EquipmentCreateManyImageFileInput | Prisma.EquipmentCreateManyImageFileInput[]
+  skipDuplicates?: boolean
+}
+
+export type EquipmentUpsertWithWhereUniqueWithoutImageFileInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  update: Prisma.XOR<Prisma.EquipmentUpdateWithoutImageFileInput, Prisma.EquipmentUncheckedUpdateWithoutImageFileInput>
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutImageFileInput, Prisma.EquipmentUncheckedCreateWithoutImageFileInput>
+}
+
+export type EquipmentUpdateWithWhereUniqueWithoutImageFileInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateWithoutImageFileInput, Prisma.EquipmentUncheckedUpdateWithoutImageFileInput>
+}
+
+export type EquipmentUpdateManyWithWhereWithoutImageFileInput = {
+  where: Prisma.EquipmentScalarWhereInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateManyMutationInput, Prisma.EquipmentUncheckedUpdateManyWithoutImageFileInput>
+}
+
+export type EquipmentScalarWhereInput = {
+  AND?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
+  OR?: Prisma.EquipmentScalarWhereInput[]
+  NOT?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
+  id?: Prisma.StringFilter<"Equipment"> | string
+  name?: Prisma.StringFilter<"Equipment"> | string
+  category?: Prisma.StringNullableFilter<"Equipment"> | string | null
+  imageFileId?: Prisma.StringNullableFilter<"Equipment"> | string | null
+  sectionId?: Prisma.StringNullableFilter<"Equipment"> | string | null
+  organizationId?: Prisma.StringFilter<"Equipment"> | string
+  siteId?: Prisma.StringFilter<"Equipment"> | string
+  createdAt?: Prisma.DateTimeFilter<"Equipment"> | Date | string
+}
+
+export type EquipmentCreateWithoutSectionInput = {
+  id?: string
+  name: string
+  category?: string | null
+  createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
+  site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
+  imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
+  tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentUncheckedCreateWithoutSectionInput = {
+  id?: string
+  name: string
+  category?: string | null
+  imageFileId?: string | null
+  organizationId: string
+  siteId: string
+  createdAt?: Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentCreateOrConnectWithoutSectionInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutSectionInput, Prisma.EquipmentUncheckedCreateWithoutSectionInput>
+}
+
+export type EquipmentCreateManySectionInputEnvelope = {
+  data: Prisma.EquipmentCreateManySectionInput | Prisma.EquipmentCreateManySectionInput[]
+  skipDuplicates?: boolean
+}
+
+export type EquipmentUpsertWithWhereUniqueWithoutSectionInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  update: Prisma.XOR<Prisma.EquipmentUpdateWithoutSectionInput, Prisma.EquipmentUncheckedUpdateWithoutSectionInput>
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutSectionInput, Prisma.EquipmentUncheckedCreateWithoutSectionInput>
+}
+
+export type EquipmentUpdateWithWhereUniqueWithoutSectionInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateWithoutSectionInput, Prisma.EquipmentUncheckedUpdateWithoutSectionInput>
+}
+
+export type EquipmentUpdateManyWithWhereWithoutSectionInput = {
+  where: Prisma.EquipmentScalarWhereInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateManyMutationInput, Prisma.EquipmentUncheckedUpdateManyWithoutSectionInput>
+}
+
+export type EquipmentCreateWithoutRelocationsInput = {
+  id?: string
+  name: string
+  category?: string | null
+  createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
+  site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
+  imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
+  section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
+  tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentUncheckedCreateWithoutRelocationsInput = {
+  id?: string
+  name: string
+  category?: string | null
+  imageFileId?: string | null
+  sectionId?: string | null
+  organizationId: string
+  siteId: string
+  createdAt?: Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentCreateOrConnectWithoutRelocationsInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutRelocationsInput, Prisma.EquipmentUncheckedCreateWithoutRelocationsInput>
+}
+
+export type EquipmentUpsertWithoutRelocationsInput = {
+  update: Prisma.XOR<Prisma.EquipmentUpdateWithoutRelocationsInput, Prisma.EquipmentUncheckedUpdateWithoutRelocationsInput>
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutRelocationsInput, Prisma.EquipmentUncheckedCreateWithoutRelocationsInput>
+  where?: Prisma.EquipmentWhereInput
+}
+
+export type EquipmentUpdateToOneWithWhereWithoutRelocationsInput = {
+  where?: Prisma.EquipmentWhereInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateWithoutRelocationsInput, Prisma.EquipmentUncheckedUpdateWithoutRelocationsInput>
+}
+
+export type EquipmentUpdateWithoutRelocationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
+  site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
+  imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
+  section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
+  tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateWithoutRelocationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
+}
+
 export type EquipmentCreateWithoutTasksInput = {
   id?: string
   name: string
   category?: string | null
-  image?: string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
   site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
+  imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
+  section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutTasksInput = {
   id?: string
   name: string
   category?: string | null
-  image?: string | null
+  imageFileId?: string | null
+  sectionId?: string | null
   organizationId: string
   siteId: string
   createdAt?: Date | string
+  relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutTasksInput = {
@@ -537,40 +850,48 @@ export type EquipmentUpdateWithoutTasksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
   site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
+  imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
+  section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutTasksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateWithoutOrganizationInput = {
   id?: string
   name: string
   category?: string | null
-  image?: string | null
   createdAt?: Date | string
   site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
+  imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
+  section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutOrganizationInput = {
   id?: string
   name: string
   category?: string | null
-  image?: string | null
+  imageFileId?: string | null
+  sectionId?: string | null
   siteId: string
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutOrganizationInput = {
@@ -599,36 +920,27 @@ export type EquipmentUpdateManyWithWhereWithoutOrganizationInput = {
   data: Prisma.XOR<Prisma.EquipmentUpdateManyMutationInput, Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationInput>
 }
 
-export type EquipmentScalarWhereInput = {
-  AND?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
-  OR?: Prisma.EquipmentScalarWhereInput[]
-  NOT?: Prisma.EquipmentScalarWhereInput | Prisma.EquipmentScalarWhereInput[]
-  id?: Prisma.StringFilter<"Equipment"> | string
-  name?: Prisma.StringFilter<"Equipment"> | string
-  category?: Prisma.StringNullableFilter<"Equipment"> | string | null
-  image?: Prisma.StringNullableFilter<"Equipment"> | string | null
-  organizationId?: Prisma.StringFilter<"Equipment"> | string
-  siteId?: Prisma.StringFilter<"Equipment"> | string
-  createdAt?: Prisma.DateTimeFilter<"Equipment"> | Date | string
-}
-
 export type EquipmentCreateWithoutSiteInput = {
   id?: string
   name: string
   category?: string | null
-  image?: string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
+  imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
+  section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutSiteInput = {
   id?: string
   name: string
   category?: string | null
-  image?: string | null
+  imageFileId?: string | null
+  sectionId?: string | null
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutSiteInput = {
@@ -657,11 +969,100 @@ export type EquipmentUpdateManyWithWhereWithoutSiteInput = {
   data: Prisma.XOR<Prisma.EquipmentUpdateManyMutationInput, Prisma.EquipmentUncheckedUpdateManyWithoutSiteInput>
 }
 
+export type EquipmentCreateManyImageFileInput = {
+  id?: string
+  name: string
+  category?: string | null
+  sectionId?: string | null
+  organizationId: string
+  siteId: string
+  createdAt?: Date | string
+}
+
+export type EquipmentUpdateWithoutImageFileInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
+  site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
+  section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
+  tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateWithoutImageFileInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateManyWithoutImageFileInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type EquipmentCreateManySectionInput = {
+  id?: string
+  name: string
+  category?: string | null
+  imageFileId?: string | null
+  organizationId: string
+  siteId: string
+  createdAt?: Date | string
+}
+
+export type EquipmentUpdateWithoutSectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
+  site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
+  imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
+  tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateWithoutSectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateManyWithoutSectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type EquipmentCreateManyOrganizationInput = {
   id?: string
   name: string
   category?: string | null
-  image?: string | null
+  imageFileId?: string | null
+  sectionId?: string | null
   siteId: string
   createdAt?: Date | string
 }
@@ -670,27 +1071,32 @@ export type EquipmentUpdateWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
+  imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
+  section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateManyWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   siteId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -699,7 +1105,8 @@ export type EquipmentCreateManySiteInput = {
   id?: string
   name: string
   category?: string | null
-  image?: string | null
+  imageFileId?: string | null
+  sectionId?: string | null
   createdAt?: Date | string
 }
 
@@ -707,26 +1114,31 @@ export type EquipmentUpdateWithoutSiteInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
+  imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
+  section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutSiteInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateManyWithoutSiteInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -737,10 +1149,12 @@ export type EquipmentUncheckedUpdateManyWithoutSiteInput = {
 
 export type EquipmentCountOutputType = {
   tasks: number
+  relocations: number
 }
 
 export type EquipmentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tasks?: boolean | EquipmentCountOutputTypeCountTasksArgs
+  relocations?: boolean | EquipmentCountOutputTypeCountRelocationsArgs
 }
 
 /**
@@ -760,18 +1174,29 @@ export type EquipmentCountOutputTypeCountTasksArgs<ExtArgs extends runtime.Types
   where?: Prisma.MaintenanceTaskWhereInput
 }
 
+/**
+ * EquipmentCountOutputType without action
+ */
+export type EquipmentCountOutputTypeCountRelocationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EquipmentRelocationWhereInput
+}
+
 
 export type EquipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
   category?: boolean
-  image?: boolean
+  imageFileId?: boolean
+  sectionId?: boolean
   organizationId?: boolean
   siteId?: boolean
   createdAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
+  imageFile?: boolean | Prisma.Equipment$imageFileArgs<ExtArgs>
+  section?: boolean | Prisma.Equipment$sectionArgs<ExtArgs>
   tasks?: boolean | Prisma.Equipment$tasksArgs<ExtArgs>
+  relocations?: boolean | Prisma.Equipment$relocationsArgs<ExtArgs>
   _count?: boolean | Prisma.EquipmentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["equipment"]>
 
@@ -779,50 +1204,64 @@ export type EquipmentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   id?: boolean
   name?: boolean
   category?: boolean
-  image?: boolean
+  imageFileId?: boolean
+  sectionId?: boolean
   organizationId?: boolean
   siteId?: boolean
   createdAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
+  imageFile?: boolean | Prisma.Equipment$imageFileArgs<ExtArgs>
+  section?: boolean | Prisma.Equipment$sectionArgs<ExtArgs>
 }, ExtArgs["result"]["equipment"]>
 
 export type EquipmentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
   category?: boolean
-  image?: boolean
+  imageFileId?: boolean
+  sectionId?: boolean
   organizationId?: boolean
   siteId?: boolean
   createdAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
+  imageFile?: boolean | Prisma.Equipment$imageFileArgs<ExtArgs>
+  section?: boolean | Prisma.Equipment$sectionArgs<ExtArgs>
 }, ExtArgs["result"]["equipment"]>
 
 export type EquipmentSelectScalar = {
   id?: boolean
   name?: boolean
   category?: boolean
-  image?: boolean
+  imageFileId?: boolean
+  sectionId?: boolean
   organizationId?: boolean
   siteId?: boolean
   createdAt?: boolean
 }
 
-export type EquipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "category" | "image" | "organizationId" | "siteId" | "createdAt", ExtArgs["result"]["equipment"]>
+export type EquipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "category" | "imageFileId" | "sectionId" | "organizationId" | "siteId" | "createdAt", ExtArgs["result"]["equipment"]>
 export type EquipmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
+  imageFile?: boolean | Prisma.Equipment$imageFileArgs<ExtArgs>
+  section?: boolean | Prisma.Equipment$sectionArgs<ExtArgs>
   tasks?: boolean | Prisma.Equipment$tasksArgs<ExtArgs>
+  relocations?: boolean | Prisma.Equipment$relocationsArgs<ExtArgs>
   _count?: boolean | Prisma.EquipmentCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EquipmentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
+  imageFile?: boolean | Prisma.Equipment$imageFileArgs<ExtArgs>
+  section?: boolean | Prisma.Equipment$sectionArgs<ExtArgs>
 }
 export type EquipmentIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   site?: boolean | Prisma.SiteDefaultArgs<ExtArgs>
+  imageFile?: boolean | Prisma.Equipment$imageFileArgs<ExtArgs>
+  section?: boolean | Prisma.Equipment$sectionArgs<ExtArgs>
 }
 
 export type $EquipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -830,13 +1269,17 @@ export type $EquipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalA
   objects: {
     organization: Prisma.$OrganizationPayload<ExtArgs>
     site: Prisma.$SitePayload<ExtArgs>
+    imageFile: Prisma.$StoredFilePayload<ExtArgs> | null
+    section: Prisma.$SectionPayload<ExtArgs> | null
     tasks: Prisma.$MaintenanceTaskPayload<ExtArgs>[]
+    relocations: Prisma.$EquipmentRelocationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
     category: string | null
-    image: string | null
+    imageFileId: string | null
+    sectionId: string | null
     organizationId: string
     siteId: string
     createdAt: Date
@@ -1236,7 +1679,10 @@ export interface Prisma__EquipmentClient<T, Null = never, ExtArgs extends runtim
   readonly [Symbol.toStringTag]: "PrismaPromise"
   organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   site<T extends Prisma.SiteDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SiteDefaultArgs<ExtArgs>>): Prisma.Prisma__SiteClient<runtime.Types.Result.GetResult<Prisma.$SitePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  imageFile<T extends Prisma.Equipment$imageFileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$imageFileArgs<ExtArgs>>): Prisma.Prisma__StoredFileClient<runtime.Types.Result.GetResult<Prisma.$StoredFilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  section<T extends Prisma.Equipment$sectionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$sectionArgs<ExtArgs>>): Prisma.Prisma__SectionClient<runtime.Types.Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   tasks<T extends Prisma.Equipment$tasksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$tasksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  relocations<T extends Prisma.Equipment$relocationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$relocationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EquipmentRelocationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1269,7 +1715,8 @@ export interface EquipmentFieldRefs {
   readonly id: Prisma.FieldRef<"Equipment", 'String'>
   readonly name: Prisma.FieldRef<"Equipment", 'String'>
   readonly category: Prisma.FieldRef<"Equipment", 'String'>
-  readonly image: Prisma.FieldRef<"Equipment", 'String'>
+  readonly imageFileId: Prisma.FieldRef<"Equipment", 'String'>
+  readonly sectionId: Prisma.FieldRef<"Equipment", 'String'>
   readonly organizationId: Prisma.FieldRef<"Equipment", 'String'>
   readonly siteId: Prisma.FieldRef<"Equipment", 'String'>
   readonly createdAt: Prisma.FieldRef<"Equipment", 'DateTime'>
@@ -1674,6 +2121,44 @@ export type EquipmentDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Int
 }
 
 /**
+ * Equipment.imageFile
+ */
+export type Equipment$imageFileArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the StoredFile
+   */
+  select?: Prisma.StoredFileSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the StoredFile
+   */
+  omit?: Prisma.StoredFileOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StoredFileInclude<ExtArgs> | null
+  where?: Prisma.StoredFileWhereInput
+}
+
+/**
+ * Equipment.section
+ */
+export type Equipment$sectionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Section
+   */
+  select?: Prisma.SectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Section
+   */
+  omit?: Prisma.SectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SectionInclude<ExtArgs> | null
+  where?: Prisma.SectionWhereInput
+}
+
+/**
  * Equipment.tasks
  */
 export type Equipment$tasksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1695,6 +2180,30 @@ export type Equipment$tasksArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.MaintenanceTaskScalarFieldEnum | Prisma.MaintenanceTaskScalarFieldEnum[]
+}
+
+/**
+ * Equipment.relocations
+ */
+export type Equipment$relocationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EquipmentRelocation
+   */
+  select?: Prisma.EquipmentRelocationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the EquipmentRelocation
+   */
+  omit?: Prisma.EquipmentRelocationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EquipmentRelocationInclude<ExtArgs> | null
+  where?: Prisma.EquipmentRelocationWhereInput
+  orderBy?: Prisma.EquipmentRelocationOrderByWithRelationInput | Prisma.EquipmentRelocationOrderByWithRelationInput[]
+  cursor?: Prisma.EquipmentRelocationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EquipmentRelocationScalarFieldEnum | Prisma.EquipmentRelocationScalarFieldEnum[]
 }
 
 /**

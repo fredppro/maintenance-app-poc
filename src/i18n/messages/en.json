@@ -19,9 +19,11 @@
       "account": "Account",
       "workers": "Workers",
       "members": "Organization members",
-      "logout": "Logout"
+      "logout": "Logout",
+      "userMenu": "User menu"
     },
-    "toggleTheme": "Toggle color theme"
+    "toggleTheme": "Toggle color theme",
+    "toggleLanguage": "Change language"
   },
   "Invitation": {
     "title": "Join organization",
@@ -72,11 +74,24 @@
     "imageHint": "Drop an image here or browse. PNG, JPEG or WebP.",
     "imageInvalid": "Choose a PNG, JPEG or WebP image under 10 MB.",
     "site": "Site",
-    "keepSite": "Keep in current site",
     "moveSiteHint": "Move this equipment and its tasks to another site.",
     "saveAndMove": "Save and move",
     "equipmentMoved": "Equipment moved to {site}",
-    "equipmentDialogDescription": "Equipment details"
+    "equipmentDialogDescription": "Equipment details",
+    "section": "Section",
+    "noSection": "No section",
+    "newSection": "New section",
+    "newSectionPlaceholder": "New section name",
+    "addSection": "Add",
+    "location": "Location",
+    "locationHistory": "Location history",
+    "historyMoved": "{from} → {to}",
+    "historyPlaced": "Placed at {to}",
+    "failedAddSection": "Failed to add section",
+    "failedUploadImage": "Failed to upload photo",
+    "searchSection": "Search sections…",
+    "noSectionsYet": "No sections at this site yet.",
+    "createSection": "Create section"
   },
   "Toolbar": {
     "previous": "Previous period",
@@ -397,5 +412,100 @@
     "errorTitle": "Something went wrong",
     "errorDescription": "An unexpected error occurred. Try again, or return to the dashboard.",
     "retry": "Try again"
+  },
+  "Nav": {
+    "groups": {
+      "operations": "Operations",
+      "assets": "Assets",
+      "people": "People"
+    },
+    "items": {
+      "schedule": "Schedule",
+      "metrics": "Metrics",
+      "equipment": "Equipment",
+      "sites": "Sites",
+      "inventory": "Inventory",
+      "workers": "Workers",
+      "members": "Collaborators"
+    },
+    "noContext": "No site",
+    "switchContext": "Switch site",
+    "toggleSidebar": "Toggle sidebar"
+  },
+  "EquipmentPage": {
+    "title": "Equipment",
+    "description": "All equipment at the current site, with upcoming and past maintenance.",
+    "search": "Search equipment…",
+    "add": "Add equipment",
+    "columns": {
+      "name": "Equipment",
+      "category": "Category",
+      "section": "Section",
+      "upcoming": "Upcoming",
+      "next": "Next maintenance",
+      "last": "Last maintenance"
+    },
+    "none": "—",
+    "unassigned": "Unassigned",
+    "viewInSchedule": "View in schedule",
+    "emptyTitle": "No equipment yet",
+    "emptyDescription": "Add your first piece of equipment to start scheduling maintenance.",
+    "noResults": "No equipment matches your search.",
+    "count": "{count} items"
+  },
+  "SitesPage": {
+    "title": "Sites",
+    "description": "Sites and the sections inside them. Equipment is assigned to a section.",
+    "sections": "Sections",
+    "noSections": "No sections yet.",
+    "equipmentCount": "{count} equipment",
+    "current": "Current",
+    "newSection": "New section name",
+    "addSection": "Add section",
+    "rename": "Rename",
+    "delete": "Delete",
+    "save": "Save",
+    "failed": "Something went wrong. Please try again.",
+    "deleteTitle": "Delete section?",
+    "deleteDescription": "Equipment in this section stays at the site and becomes unassigned.",
+    "unassigned": "Unassigned equipment",
+    "emptyTitle": "No sites",
+    "emptyDescription": "Sites are created when you set up your organization."
+  },
+  "InventoryPage": {
+    "title": "Inventory",
+    "description": "Materials used across scheduled maintenance tasks at this site.",
+    "search": "Search materials…",
+    "columns": {
+      "name": "Material",
+      "reference": "Reference",
+      "quantity": "Total quantity",
+      "unit": "Unit",
+      "tasks": "Tasks",
+      "cost": "Est. cost"
+    },
+    "emptyTitle": "No materials yet",
+    "emptyDescription": "Materials added to maintenance tasks are summarised here.",
+    "noResults": "No materials match your search.",
+    "none": "—"
+  },
+  "MetricsPage": {
+    "title": "Metrics",
+    "description": "Maintenance activity at the current site.",
+    "total": "Total tasks",
+    "completion": "Completion rate",
+    "overdue": "Overdue",
+    "upcoming": "Upcoming",
+    "byType": "Tasks by type",
+    "byStatus": "Tasks by status",
+    "topEquipment": "Most maintained equipment",
+    "preventive": "Preventive",
+    "corrective": "Corrective",
+    "inspection": "Inspection",
+    "scheduled": "Scheduled",
+    "inProgress": "In progress",
+    "completed": "Completed",
+    "emptyTitle": "No data yet",
+    "emptyDescription": "Metrics appear once maintenance tasks are scheduled."
   }
 }
