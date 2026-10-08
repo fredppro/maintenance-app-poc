@@ -34,6 +34,14 @@
   "OrganizationSelection": {
     "label": "Escolher uma organização",
     "placeholder": "Selecionar uma organização",
+    "tenantContextPlaceholder": "Selecionar uma organização e local",
+    "siteSelectionTitle": "Escolha um local",
+    "siteSelectionLabel": "Local",
+    "siteSelectionPlaceholder": "Selecionar um local",
+    "tenantContextUnavailable": "A organização ou o local não estão disponíveis para a sua conta.",
+    "tenantContextSwitchError": "Não foi possível alterar o local ativo. Tente novamente.",
+    "noSiteConfigured": "A sua organização não tem um local configurado. Contacte um proprietário ou administrador da organização.",
+    "noAvailableContext": "Não existe nenhum local de organização disponível para esta conta.",
     "error": "Não foi possível selecionar a organização. Atualize a página e tente novamente."
   },
   "Grid": {

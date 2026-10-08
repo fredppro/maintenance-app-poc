@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { chooseOrganizationIfAsked } from "./organization-selection";
 
 async function signIn(page: Page) {
   await page.goto("/en/login");
@@ -15,15 +16,7 @@ async function signIn(page: Page) {
   await page.getByRole("button", { name: "Sign in" }).click();
   expect((await response).ok()).toBeTruthy();
   await expect(page).toHaveURL(/\/en(?:\/onboarding)?$/);
-  const selector = page.getByRole("combobox", {
-    name: "Choose an organization",
-  });
-  if (await selector.isVisible()) {
-    await expect(async () => {
-      await selector.selectOption({ label: "E2E Playwright Organization" });
-      await expect(page).toHaveURL(/\/en$/, { timeout: 8000 });
-    }).toPass();
-  }
+  await chooseOrganizationIfAsked(page, "E2E Playwright Organization");
   await expect(page).toHaveURL(/\/en$/);
 }
 

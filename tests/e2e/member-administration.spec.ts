@@ -5,6 +5,7 @@ import {
   TENANT_A_ADMIN_INVITATION_ID,
   TENANT_A_MEMBER_EMAIL,
 } from "./tenant-fixtures";
+import { chooseOrganizationIfAsked } from "./organization-selection";
 
 async function signIn(page: Page, email: string, password: string) {
   await page.goto("/en/login");
@@ -23,13 +24,7 @@ async function selectOrganization(
   page: Page,
   organizationName: string,
 ) {
-  await expect(page).toHaveURL(/\/en(?:\/onboarding)?$/);
-  const organizationSelector = page.getByRole("combobox", {
-    name: "Choose an organization",
-  });
-  if (await organizationSelector.isVisible()) {
-    await organizationSelector.selectOption({ label: organizationName });
-  }
+  await chooseOrganizationIfAsked(page, organizationName);
 
   const organizationsResponse = await page.request.get(
     "/api/auth/organization/list",

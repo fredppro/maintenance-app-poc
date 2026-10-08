@@ -218,11 +218,7 @@ export function TimelineGrid() {
   );
 
   const cellWidth = getTimelineCellMinWidth(viewMode);
-  // With no equipment the column only needs to fit the title and add button.
-  const hasEquipment = equipment.length > 0;
-  const yAxisWidth = hasEquipment
-    ? "w-44 min-w-44 md:w-48 md:min-w-48 xl:w-52 xl:min-w-52"
-    : "w-40 min-w-40";
+  const yAxisWidth = "w-44 min-w-44 md:w-48 md:min-w-48 xl:w-52 xl:min-w-52";
 
   const totalTasksInView = useMemo(() => {
     return equipment.reduce(
@@ -265,7 +261,7 @@ export function TimelineGrid() {
             <div
               className={cn(
                 yAxisWidth,
-                "sticky left-0 z-30 flex items-center justify-between border-r border-border bg-card px-2 py-2",
+                "sticky left-0 z-30 flex items-center justify-between border-r border-border bg-card px-6 py-2",
               )}
             >
               <span className="truncate font-semibold text-sm text-foreground">
@@ -275,7 +271,7 @@ export function TimelineGrid() {
               <Button
                 size="icon"
                 variant="ghost"
-                className="size-8"
+                className="size-8 -mr-2"
                 aria-label={t("addEquipment")}
                 onClick={() => {
                   setEditingEquipment(null);
@@ -483,7 +479,7 @@ export function TimelineGrid() {
                     "sticky left-0 z-10 flex overflow-hidden border-r border-border bg-card",
                   )}
                 >
-                  <Empty className="min-h-0 min-w-0 flex-1 gap-3 rounded-none border-0 p-3 md:p-3">
+                  <Empty className="min-h-0 min-w-0 flex-1 gap-3 rounded-none border-0 p-6 md:p-6">
                     <EmptyHeader className="gap-1">
                       <EmptyMedia variant="icon">
                         <Box aria-hidden="true" />

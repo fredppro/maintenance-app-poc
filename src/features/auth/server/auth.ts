@@ -206,6 +206,7 @@ export const auth = betterAuth({
     organization({
       ac: organizationAccess,
       roles: organizationRoles,
+      disableOrganizationDeletion: true,
       organizationHooks: {
         beforeCreateInvitation: async ({ invitation, inviter }) => {
           const actorRole = await requireOrganizationManagerRole(

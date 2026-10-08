@@ -1,8 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { switchTenantContext } from "@/features/organization/server/actions";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export type TenantContextOption = {
   organizationId: string;
@@ -16,11 +25,14 @@ export function TenantContextSelector({
   options,
   selectedSiteId,
   label,
+  displayOrganizationName = true,
 }: {
   options: TenantContextOption[];
   selectedSiteId?: string;
   label: string;
+  displayOrganizationName?: boolean;
 }) {
+  const t = useTranslations("OrganizationSelection");
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +44,7 @@ export function TenantContextSelector({
         option.organizationId === organizationId && option.siteId === siteId,
     );
     if (!selected) {
-      setError("That organization or site is not available to your account.");
+      setError(t("tenantContextUnavailable"));
       return;
     }
 
@@ -43,7 +55,7 @@ export function TenantContextSelector({
       router.replace("/");
       router.refresh();
     } catch {
-      setError("Could not switch the active site. Please try again.");
+      setError(t("tenantContextSwitchError"));
       setPending(false);
     }
   }
@@ -53,27 +65,42 @@ export function TenantContextSelector({
   return (
     <label className="flex min-w-0 flex-col gap-1 text-sm">
       <span className="sr-only">{label}</span>
-      <select
-        aria-label={label}
-        className="h-9 w-full min-w-0 max-w-56 truncate rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:h-10"
+      <Select
         disabled={pending}
         value={
           selected
             ? `${selected.organizationId}:${selected.siteId}`
-            : ""
+            : undefined
         }
-        onChange={(event) => void selectContext(event.currentTarget.value)}
+        onValueChange={(value) => void selectContext(value)}
       >
-        {!selected && <option value="">Select organization and site</option>}
-        {options.map((option) => (
-          <option
-            key={`${option.organizationId}:${option.siteId}`}
-            value={`${option.organizationId}:${option.siteId}`}
-          >
-            {option.organizationName} — {option.siteName}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger
+          aria-label={label}
+          className="w-full min-w-0 max-w-56"
+        >
+          <SelectValue
+            placeholder={
+              displayOrganizationName
+                ? t("tenantContextPlaceholder")
+                : t("siteSelectionPlaceholder")
+            }
+          />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            {options.map((option) => (
+              <SelectItem
+                key={`${option.organizationId}:${option.siteId}`}
+                value={`${option.organizationId}:${option.siteId}`}
+              >
+                {displayOrganizationName
+                  ? `${option.organizationName} — ${option.siteName}`
+                  : option.siteName}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
       {error && <span role="alert" className="text-destructive">{error}</span>}
     </label>
   );

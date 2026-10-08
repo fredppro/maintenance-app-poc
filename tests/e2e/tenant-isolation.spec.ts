@@ -3,6 +3,7 @@ import {
   TENANT_A_TASK_ID,
   TENANT_B_TASK_ID,
 } from "./tenant-fixtures";
+import { chooseOrganizationIfAsked } from "./organization-selection";
 
 async function signIn(page: Page, email: string, password: string) {
   await page.goto("/en/login");
@@ -18,16 +19,7 @@ async function signIn(page: Page, email: string, password: string) {
 }
 
 async function selectOrganization(page: Page, organizationName: string) {
-  await expect(page).toHaveURL(/\/en(?:\/onboarding)?$/);
-  const organizationSelector = page.getByRole("combobox", {
-    name: "Choose an organization",
-  });
-  if (await organizationSelector.isVisible()) {
-    await expect(async () => {
-      await organizationSelector.selectOption({ label: organizationName });
-      await expect(page).toHaveURL(/\/en$/, { timeout: 8000 });
-    }).toPass();
-  }
+  await chooseOrganizationIfAsked(page, organizationName);
 }
 
 test("tenant A cannot view tenant B dashboard records or reports", async ({

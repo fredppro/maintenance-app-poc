@@ -34,6 +34,14 @@
   "OrganizationSelection": {
     "label": "Choose an organization",
     "placeholder": "Select an organization",
+    "tenantContextPlaceholder": "Select an organization and site",
+    "siteSelectionTitle": "Choose a site",
+    "siteSelectionLabel": "Site",
+    "siteSelectionPlaceholder": "Select a site",
+    "tenantContextUnavailable": "That organization or site is not available to your account.",
+    "tenantContextSwitchError": "Could not switch the active site. Please try again.",
+    "noSiteConfigured": "Your organization has no site configured. Contact an organization owner or admin.",
+    "noAvailableContext": "No organization site is available to this account.",
     "error": "The organization could not be selected. Refresh and try again."
   },
   "Grid": {

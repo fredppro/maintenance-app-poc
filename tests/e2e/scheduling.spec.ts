@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { chooseOrganizationIfAsked } from "./organization-selection";
 
 test("schedule a task from the dashboard with accessible form controls", async ({
   page,
@@ -16,17 +17,7 @@ test("schedule a task from the dashboard with accessible form controls", async (
   expect((await signInResponse).ok()).toBeTruthy();
   await expect(page).toHaveURL(/\/en(?:\/onboarding)?$/);
 
-  const organizationSelector = page.getByRole("combobox", {
-    name: "Choose an organization",
-  });
-  if (await organizationSelector.isVisible()) {
-    await expect(async () => {
-      await organizationSelector.selectOption({
-        label: "E2E Playwright Organization",
-      });
-      await expect(page).toHaveURL(/\/en$/, { timeout: 8000 });
-    }).toPass();
-  }
+  await chooseOrganizationIfAsked(page, "E2E Playwright Organization");
 
   await expect(page).toHaveURL(/\/en$/);
 

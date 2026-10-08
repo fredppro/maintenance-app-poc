@@ -12,6 +12,11 @@ describe("organization member role policy", () => {
     expect(organizationRoles.admin.statements.member).toEqual([]);
   });
 
+  it("keeps organization deletion on the owner-only grace-period flow", () => {
+    expect(organizationRoles.owner.statements.organization).not.toContain("delete");
+    expect(organizationRoles.admin.statements.organization).not.toContain("delete");
+  });
+
   it("allows only owners to invite admins and never permits owner invitations", () => {
     expect(canAssignOrganizationRole("owner", "admin")).toBe(true);
     expect(canAssignOrganizationRole("admin", "admin")).toBe(false);
