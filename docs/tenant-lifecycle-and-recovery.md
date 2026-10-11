@@ -1,5 +1,18 @@
 # Tenant lifecycle, data portability and recovery
 
+## Creating a customer
+
+Production sign-up is invite-only, so customers are created by an operator:
+
+```sh
+pnpm ops:tenant create "ACME Facilities" joao@acme.pt "Lisbon" [--locale pt-pt] [--no-email] [--allow-duplicate-name]
+pnpm ops:tenant list          # status, owner (or the pending invitation), members, sites, equipment, last sign-in
+```
+
+`create` makes the organization, its first site and a 7-day pending **owner** invitation, records an `organization.provisioned` audit event and emails the link (it is always printed too, for when email is not configured). The owner opens the link, signs up with that exact address, accepts, and becomes the owner. It needs `BETTER_AUTH_URL` (the link base) and, to send the email, `RESEND_API_KEY` and `AUTH_EMAIL_FROM`. It refuses a company name that already exists unless `--allow-duplicate-name` is given.
+
+The invitation's required inviter is a credential-less `platform-operator@system.invalid` user; it can be referenced but never signed in to.
+
 ## Tenant lifecycle
 
 Each organization has a `tenant_settings` row (`status`, `isolationTier`). A missing row means `ACTIVE`.

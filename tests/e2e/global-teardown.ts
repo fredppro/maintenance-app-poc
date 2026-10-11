@@ -37,6 +37,7 @@ export default async function globalTeardown() {
       where: {
         OR: [
           { email: { startsWith: "playwright-onboarding-" } },
+          { email: "platform-operator@system.invalid" },
           { email: TENANT_B_EMAIL },
         ],
       },

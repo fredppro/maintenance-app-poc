@@ -8,6 +8,12 @@ export async function chooseOrganizationIfAsked(page: Page, organizationName: st
 
   await expect(async () => {
     if (!(await selector.isVisible())) return;
+    if (await selector.isDisabled()) {
+      // A selection is already being applied (the dev server may still be compiling the dashboard):
+      // wait for it instead of clicking a disabled control.
+      await expect(page).toHaveURL(/\/en$/, { timeout: 20_000 });
+      return;
+    }
     await selector.click();
     await page.getByRole("option", { name: organizationName, exact: true }).click();
     await expect(page).toHaveURL(/\/en$/, { timeout: 8000 });

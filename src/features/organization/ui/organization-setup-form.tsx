@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/features/auth/client";
 import { createInitialSite } from "@/features/organization/server/actions";
+import { organizationSlug } from "@/features/organization/shared/slug";
 
 export function OrganizationSetupForm({
   activeOrganizationId,
@@ -49,17 +50,9 @@ export function OrganizationSetupForm({
         });
         if (result.error) throw new Error(result.error.message);
       } else {
-        const slug = organizationName
-          .normalize("NFKD")
-          .replace(/\p{Diacritic}/gu, "")
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "")
-          .slice(0, 48);
-        if (!slug) throw new Error("Organization name cannot form a URL slug");
         const result = await authClient.organization.create({
           name: organizationName,
-          slug: `${slug}-${crypto.randomUUID().slice(0, 8)}`,
+          slug: organizationSlug(organizationName),
         });
         if (result.error) throw new Error(result.error.message);
         organizationId = result.data.id;

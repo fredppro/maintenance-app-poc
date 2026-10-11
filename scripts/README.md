@@ -29,7 +29,8 @@ Everything here is invoked through `pnpm <name>` (see `package.json`). Run
 | `pnpm db:seed` | Sample data (refuses remote DBs) | | Never |
 | `pnpm db:verify-role` | | | Run with the runtime `DATABASE_URL` |
 | `pnpm db:backup`, `db:restore-test` | | | Scheduled (`backup.yml`) |
-| `pnpm ops:tenant`, `ops:purge-trash`, `ops:retention`, `ops:privacy` | | | Scheduled (`maintenance-jobs.yml`) or manual, owner credential |
+| `pnpm ops:tenant create` / `list` | | | Manual: onboard a customer, inspect customers (owner credential) |
+| `pnpm ops:tenant` (other commands), `ops:purge-trash`, `ops:retention`, `ops:privacy` | | | Scheduled (`maintenance-jobs.yml`) or manual, owner credential |
 | `pnpm legacy:assign-owner`, `test:legacy-ownership` | | CI | One-off, only for pre-tenancy data |
 
 Operational scripts load `MIGRATION_DATABASE_URL` (the owner role). Treat that
