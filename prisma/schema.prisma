@@ -40,16 +40,17 @@ model Equipment {
 
 // Metadata for an object kept in S3-compatible storage; the bytes never live in Postgres.
 model StoredFile {
-  id             String       @id @default(cuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  key            String       @unique
-  filename       String
-  contentType    String
-  size           Int
-  uploadedById   String?
-  equipment      Equipment[]
-  createdAt      DateTime     @default(now())
+  id                String           @id @default(cuid())
+  organizationId    String
+  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  key               String           @unique
+  filename          String
+  contentType       String
+  size              Int
+  uploadedById      String?
+  equipment         Equipment[]
+  organizationLogos TenantSettings[]
+  createdAt         DateTime         @default(now())
 
   @@unique([id, organizationId])
   @@index([organizationId])
@@ -402,15 +403,26 @@ enum IsolationTier {
 
 // One row per organization once its lifecycle is changed; a missing row means ACTIVE and POOLED.
 model TenantSettings {
-  organizationId       String        @id
-  organization         Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  status               TenantStatus  @default(ACTIVE)
-  isolationTier        IsolationTier @default(POOLED)
-  statusReason         String?
-  deletionRequestedAt  DateTime?
-  deletionScheduledFor DateTime?
-  updatedAt            DateTime      @updatedAt
+  organizationId        String        @id
+  organization          Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  status                TenantStatus  @default(ACTIVE)
+  isolationTier         IsolationTier @default(POOLED)
+  statusReason          String?
+  deletionRequestedAt   DateTime?
+  deletionScheduledFor  DateTime?
+  // Set when an owner or admin hides the "Getting started" checklist; applies to the whole organization.
+  onboardingDismissedAt DateTime?
+  // Company profile and regional defaults, edited by owners and admins. Null means "not set".
+  contactEmail          String?
+  contactPhone          String?
+  timezone              String?
+  locale                String?
+  // The logo is a StoredFile of the same organization (enforced by the tenant_settings_same_tenant trigger).
+  logoFileId            String?
+  logoFile              StoredFile?   @relation(fields: [logoFileId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime      @updatedAt
 
+  @@index([logoFileId])
   @@map("tenant_settings")
 }
 

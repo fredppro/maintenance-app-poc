@@ -31,6 +31,12 @@ export type TenantSettingsMinAggregateOutputType = {
   statusReason: string | null
   deletionRequestedAt: Date | null
   deletionScheduledFor: Date | null
+  onboardingDismissedAt: Date | null
+  contactEmail: string | null
+  contactPhone: string | null
+  timezone: string | null
+  locale: string | null
+  logoFileId: string | null
   updatedAt: Date | null
 }
 
@@ -41,6 +47,12 @@ export type TenantSettingsMaxAggregateOutputType = {
   statusReason: string | null
   deletionRequestedAt: Date | null
   deletionScheduledFor: Date | null
+  onboardingDismissedAt: Date | null
+  contactEmail: string | null
+  contactPhone: string | null
+  timezone: string | null
+  locale: string | null
+  logoFileId: string | null
   updatedAt: Date | null
 }
 
@@ -51,6 +63,12 @@ export type TenantSettingsCountAggregateOutputType = {
   statusReason: number
   deletionRequestedAt: number
   deletionScheduledFor: number
+  onboardingDismissedAt: number
+  contactEmail: number
+  contactPhone: number
+  timezone: number
+  locale: number
+  logoFileId: number
   updatedAt: number
   _all: number
 }
@@ -63,6 +81,12 @@ export type TenantSettingsMinAggregateInputType = {
   statusReason?: true
   deletionRequestedAt?: true
   deletionScheduledFor?: true
+  onboardingDismissedAt?: true
+  contactEmail?: true
+  contactPhone?: true
+  timezone?: true
+  locale?: true
+  logoFileId?: true
   updatedAt?: true
 }
 
@@ -73,6 +97,12 @@ export type TenantSettingsMaxAggregateInputType = {
   statusReason?: true
   deletionRequestedAt?: true
   deletionScheduledFor?: true
+  onboardingDismissedAt?: true
+  contactEmail?: true
+  contactPhone?: true
+  timezone?: true
+  locale?: true
+  logoFileId?: true
   updatedAt?: true
 }
 
@@ -83,6 +113,12 @@ export type TenantSettingsCountAggregateInputType = {
   statusReason?: true
   deletionRequestedAt?: true
   deletionScheduledFor?: true
+  onboardingDismissedAt?: true
+  contactEmail?: true
+  contactPhone?: true
+  timezone?: true
+  locale?: true
+  logoFileId?: true
   updatedAt?: true
   _all?: true
 }
@@ -166,6 +202,12 @@ export type TenantSettingsGroupByOutputType = {
   statusReason: string | null
   deletionRequestedAt: Date | null
   deletionScheduledFor: Date | null
+  onboardingDismissedAt: Date | null
+  contactEmail: string | null
+  contactPhone: string | null
+  timezone: string | null
+  locale: string | null
+  logoFileId: string | null
   updatedAt: Date
   _count: TenantSettingsCountAggregateOutputType | null
   _min: TenantSettingsMinAggregateOutputType | null
@@ -197,8 +239,15 @@ export type TenantSettingsWhereInput = {
   statusReason?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
   deletionRequestedAt?: Prisma.DateTimeNullableFilter<"TenantSettings"> | Date | string | null
   deletionScheduledFor?: Prisma.DateTimeNullableFilter<"TenantSettings"> | Date | string | null
+  onboardingDismissedAt?: Prisma.DateTimeNullableFilter<"TenantSettings"> | Date | string | null
+  contactEmail?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  contactPhone?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  timezone?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  locale?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  logoFileId?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"TenantSettings"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
+  logoFile?: Prisma.XOR<Prisma.StoredFileNullableScalarRelationFilter, Prisma.StoredFileWhereInput> | null
 }
 
 export type TenantSettingsOrderByWithRelationInput = {
@@ -208,8 +257,15 @@ export type TenantSettingsOrderByWithRelationInput = {
   statusReason?: Prisma.SortOrderInput | Prisma.SortOrder
   deletionRequestedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   deletionScheduledFor?: Prisma.SortOrderInput | Prisma.SortOrder
+  onboardingDismissedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  contactEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  contactPhone?: Prisma.SortOrderInput | Prisma.SortOrder
+  timezone?: Prisma.SortOrderInput | Prisma.SortOrder
+  locale?: Prisma.SortOrderInput | Prisma.SortOrder
+  logoFileId?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   organization?: Prisma.OrganizationOrderByWithRelationInput
+  logoFile?: Prisma.StoredFileOrderByWithRelationInput
 }
 
 export type TenantSettingsWhereUniqueInput = Prisma.AtLeast<{
@@ -222,8 +278,15 @@ export type TenantSettingsWhereUniqueInput = Prisma.AtLeast<{
   statusReason?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
   deletionRequestedAt?: Prisma.DateTimeNullableFilter<"TenantSettings"> | Date | string | null
   deletionScheduledFor?: Prisma.DateTimeNullableFilter<"TenantSettings"> | Date | string | null
+  onboardingDismissedAt?: Prisma.DateTimeNullableFilter<"TenantSettings"> | Date | string | null
+  contactEmail?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  contactPhone?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  timezone?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  locale?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  logoFileId?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"TenantSettings"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
+  logoFile?: Prisma.XOR<Prisma.StoredFileNullableScalarRelationFilter, Prisma.StoredFileWhereInput> | null
 }, "organizationId">
 
 export type TenantSettingsOrderByWithAggregationInput = {
@@ -233,6 +296,12 @@ export type TenantSettingsOrderByWithAggregationInput = {
   statusReason?: Prisma.SortOrderInput | Prisma.SortOrder
   deletionRequestedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   deletionScheduledFor?: Prisma.SortOrderInput | Prisma.SortOrder
+  onboardingDismissedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  contactEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  contactPhone?: Prisma.SortOrderInput | Prisma.SortOrder
+  timezone?: Prisma.SortOrderInput | Prisma.SortOrder
+  locale?: Prisma.SortOrderInput | Prisma.SortOrder
+  logoFileId?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.TenantSettingsCountOrderByAggregateInput
   _max?: Prisma.TenantSettingsMaxOrderByAggregateInput
@@ -249,6 +318,12 @@ export type TenantSettingsScalarWhereWithAggregatesInput = {
   statusReason?: Prisma.StringNullableWithAggregatesFilter<"TenantSettings"> | string | null
   deletionRequestedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TenantSettings"> | Date | string | null
   deletionScheduledFor?: Prisma.DateTimeNullableWithAggregatesFilter<"TenantSettings"> | Date | string | null
+  onboardingDismissedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TenantSettings"> | Date | string | null
+  contactEmail?: Prisma.StringNullableWithAggregatesFilter<"TenantSettings"> | string | null
+  contactPhone?: Prisma.StringNullableWithAggregatesFilter<"TenantSettings"> | string | null
+  timezone?: Prisma.StringNullableWithAggregatesFilter<"TenantSettings"> | string | null
+  locale?: Prisma.StringNullableWithAggregatesFilter<"TenantSettings"> | string | null
+  logoFileId?: Prisma.StringNullableWithAggregatesFilter<"TenantSettings"> | string | null
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"TenantSettings"> | Date | string
 }
 
@@ -258,8 +333,14 @@ export type TenantSettingsCreateInput = {
   statusReason?: string | null
   deletionRequestedAt?: Date | string | null
   deletionScheduledFor?: Date | string | null
+  onboardingDismissedAt?: Date | string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
+  timezone?: string | null
+  locale?: string | null
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutSettingsInput
+  logoFile?: Prisma.StoredFileCreateNestedOneWithoutOrganizationLogosInput
 }
 
 export type TenantSettingsUncheckedCreateInput = {
@@ -269,6 +350,12 @@ export type TenantSettingsUncheckedCreateInput = {
   statusReason?: string | null
   deletionRequestedAt?: Date | string | null
   deletionScheduledFor?: Date | string | null
+  onboardingDismissedAt?: Date | string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
+  timezone?: string | null
+  locale?: string | null
+  logoFileId?: string | null
   updatedAt?: Date | string
 }
 
@@ -278,8 +365,14 @@ export type TenantSettingsUpdateInput = {
   statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletionRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletionScheduledFor?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contactEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutSettingsNestedInput
+  logoFile?: Prisma.StoredFileUpdateOneWithoutOrganizationLogosNestedInput
 }
 
 export type TenantSettingsUncheckedUpdateInput = {
@@ -289,6 +382,12 @@ export type TenantSettingsUncheckedUpdateInput = {
   statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletionRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletionScheduledFor?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contactEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -299,6 +398,12 @@ export type TenantSettingsCreateManyInput = {
   statusReason?: string | null
   deletionRequestedAt?: Date | string | null
   deletionScheduledFor?: Date | string | null
+  onboardingDismissedAt?: Date | string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
+  timezone?: string | null
+  locale?: string | null
+  logoFileId?: string | null
   updatedAt?: Date | string
 }
 
@@ -308,6 +413,11 @@ export type TenantSettingsUpdateManyMutationInput = {
   statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletionRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletionScheduledFor?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contactEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -318,7 +428,23 @@ export type TenantSettingsUncheckedUpdateManyInput = {
   statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletionRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletionScheduledFor?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contactEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type TenantSettingsListRelationFilter = {
+  every?: Prisma.TenantSettingsWhereInput
+  some?: Prisma.TenantSettingsWhereInput
+  none?: Prisma.TenantSettingsWhereInput
+}
+
+export type TenantSettingsOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type TenantSettingsNullableScalarRelationFilter = {
@@ -333,6 +459,12 @@ export type TenantSettingsCountOrderByAggregateInput = {
   statusReason?: Prisma.SortOrder
   deletionRequestedAt?: Prisma.SortOrder
   deletionScheduledFor?: Prisma.SortOrder
+  onboardingDismissedAt?: Prisma.SortOrder
+  contactEmail?: Prisma.SortOrder
+  contactPhone?: Prisma.SortOrder
+  timezone?: Prisma.SortOrder
+  locale?: Prisma.SortOrder
+  logoFileId?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -343,6 +475,12 @@ export type TenantSettingsMaxOrderByAggregateInput = {
   statusReason?: Prisma.SortOrder
   deletionRequestedAt?: Prisma.SortOrder
   deletionScheduledFor?: Prisma.SortOrder
+  onboardingDismissedAt?: Prisma.SortOrder
+  contactEmail?: Prisma.SortOrder
+  contactPhone?: Prisma.SortOrder
+  timezone?: Prisma.SortOrder
+  locale?: Prisma.SortOrder
+  logoFileId?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -353,7 +491,55 @@ export type TenantSettingsMinOrderByAggregateInput = {
   statusReason?: Prisma.SortOrder
   deletionRequestedAt?: Prisma.SortOrder
   deletionScheduledFor?: Prisma.SortOrder
+  onboardingDismissedAt?: Prisma.SortOrder
+  contactEmail?: Prisma.SortOrder
+  contactPhone?: Prisma.SortOrder
+  timezone?: Prisma.SortOrder
+  locale?: Prisma.SortOrder
+  logoFileId?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type TenantSettingsCreateNestedManyWithoutLogoFileInput = {
+  create?: Prisma.XOR<Prisma.TenantSettingsCreateWithoutLogoFileInput, Prisma.TenantSettingsUncheckedCreateWithoutLogoFileInput> | Prisma.TenantSettingsCreateWithoutLogoFileInput[] | Prisma.TenantSettingsUncheckedCreateWithoutLogoFileInput[]
+  connectOrCreate?: Prisma.TenantSettingsCreateOrConnectWithoutLogoFileInput | Prisma.TenantSettingsCreateOrConnectWithoutLogoFileInput[]
+  createMany?: Prisma.TenantSettingsCreateManyLogoFileInputEnvelope
+  connect?: Prisma.TenantSettingsWhereUniqueInput | Prisma.TenantSettingsWhereUniqueInput[]
+}
+
+export type TenantSettingsUncheckedCreateNestedManyWithoutLogoFileInput = {
+  create?: Prisma.XOR<Prisma.TenantSettingsCreateWithoutLogoFileInput, Prisma.TenantSettingsUncheckedCreateWithoutLogoFileInput> | Prisma.TenantSettingsCreateWithoutLogoFileInput[] | Prisma.TenantSettingsUncheckedCreateWithoutLogoFileInput[]
+  connectOrCreate?: Prisma.TenantSettingsCreateOrConnectWithoutLogoFileInput | Prisma.TenantSettingsCreateOrConnectWithoutLogoFileInput[]
+  createMany?: Prisma.TenantSettingsCreateManyLogoFileInputEnvelope
+  connect?: Prisma.TenantSettingsWhereUniqueInput | Prisma.TenantSettingsWhereUniqueInput[]
+}
+
+export type TenantSettingsUpdateManyWithoutLogoFileNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantSettingsCreateWithoutLogoFileInput, Prisma.TenantSettingsUncheckedCreateWithoutLogoFileInput> | Prisma.TenantSettingsCreateWithoutLogoFileInput[] | Prisma.TenantSettingsUncheckedCreateWithoutLogoFileInput[]
+  connectOrCreate?: Prisma.TenantSettingsCreateOrConnectWithoutLogoFileInput | Prisma.TenantSettingsCreateOrConnectWithoutLogoFileInput[]
+  upsert?: Prisma.TenantSettingsUpsertWithWhereUniqueWithoutLogoFileInput | Prisma.TenantSettingsUpsertWithWhereUniqueWithoutLogoFileInput[]
+  createMany?: Prisma.TenantSettingsCreateManyLogoFileInputEnvelope
+  set?: Prisma.TenantSettingsWhereUniqueInput | Prisma.TenantSettingsWhereUniqueInput[]
+  disconnect?: Prisma.TenantSettingsWhereUniqueInput | Prisma.TenantSettingsWhereUniqueInput[]
+  delete?: Prisma.TenantSettingsWhereUniqueInput | Prisma.TenantSettingsWhereUniqueInput[]
+  connect?: Prisma.TenantSettingsWhereUniqueInput | Prisma.TenantSettingsWhereUniqueInput[]
+  update?: Prisma.TenantSettingsUpdateWithWhereUniqueWithoutLogoFileInput | Prisma.TenantSettingsUpdateWithWhereUniqueWithoutLogoFileInput[]
+  updateMany?: Prisma.TenantSettingsUpdateManyWithWhereWithoutLogoFileInput | Prisma.TenantSettingsUpdateManyWithWhereWithoutLogoFileInput[]
+  deleteMany?: Prisma.TenantSettingsScalarWhereInput | Prisma.TenantSettingsScalarWhereInput[]
+}
+
+export type TenantSettingsUncheckedUpdateManyWithoutLogoFileNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantSettingsCreateWithoutLogoFileInput, Prisma.TenantSettingsUncheckedCreateWithoutLogoFileInput> | Prisma.TenantSettingsCreateWithoutLogoFileInput[] | Prisma.TenantSettingsUncheckedCreateWithoutLogoFileInput[]
+  connectOrCreate?: Prisma.TenantSettingsCreateOrConnectWithoutLogoFileInput | Prisma.TenantSettingsCreateOrConnectWithoutLogoFileInput[]
+  upsert?: Prisma.TenantSettingsUpsertWithWhereUniqueWithoutLogoFileInput | Prisma.TenantSettingsUpsertWithWhereUniqueWithoutLogoFileInput[]
+  createMany?: Prisma.TenantSettingsCreateManyLogoFileInputEnvelope
+  set?: Prisma.TenantSettingsWhereUniqueInput | Prisma.TenantSettingsWhereUniqueInput[]
+  disconnect?: Prisma.TenantSettingsWhereUniqueInput | Prisma.TenantSettingsWhereUniqueInput[]
+  delete?: Prisma.TenantSettingsWhereUniqueInput | Prisma.TenantSettingsWhereUniqueInput[]
+  connect?: Prisma.TenantSettingsWhereUniqueInput | Prisma.TenantSettingsWhereUniqueInput[]
+  update?: Prisma.TenantSettingsUpdateWithWhereUniqueWithoutLogoFileInput | Prisma.TenantSettingsUpdateWithWhereUniqueWithoutLogoFileInput[]
+  updateMany?: Prisma.TenantSettingsUpdateManyWithWhereWithoutLogoFileInput | Prisma.TenantSettingsUpdateManyWithWhereWithoutLogoFileInput[]
+  deleteMany?: Prisma.TenantSettingsScalarWhereInput | Prisma.TenantSettingsScalarWhereInput[]
 }
 
 export type TenantSettingsCreateNestedOneWithoutOrganizationInput = {
@@ -396,13 +582,94 @@ export type EnumIsolationTierFieldUpdateOperationsInput = {
   set?: $Enums.IsolationTier
 }
 
+export type TenantSettingsCreateWithoutLogoFileInput = {
+  status?: $Enums.TenantStatus
+  isolationTier?: $Enums.IsolationTier
+  statusReason?: string | null
+  deletionRequestedAt?: Date | string | null
+  deletionScheduledFor?: Date | string | null
+  onboardingDismissedAt?: Date | string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
+  timezone?: string | null
+  locale?: string | null
+  updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutSettingsInput
+}
+
+export type TenantSettingsUncheckedCreateWithoutLogoFileInput = {
+  organizationId: string
+  status?: $Enums.TenantStatus
+  isolationTier?: $Enums.IsolationTier
+  statusReason?: string | null
+  deletionRequestedAt?: Date | string | null
+  deletionScheduledFor?: Date | string | null
+  onboardingDismissedAt?: Date | string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
+  timezone?: string | null
+  locale?: string | null
+  updatedAt?: Date | string
+}
+
+export type TenantSettingsCreateOrConnectWithoutLogoFileInput = {
+  where: Prisma.TenantSettingsWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantSettingsCreateWithoutLogoFileInput, Prisma.TenantSettingsUncheckedCreateWithoutLogoFileInput>
+}
+
+export type TenantSettingsCreateManyLogoFileInputEnvelope = {
+  data: Prisma.TenantSettingsCreateManyLogoFileInput | Prisma.TenantSettingsCreateManyLogoFileInput[]
+  skipDuplicates?: boolean
+}
+
+export type TenantSettingsUpsertWithWhereUniqueWithoutLogoFileInput = {
+  where: Prisma.TenantSettingsWhereUniqueInput
+  update: Prisma.XOR<Prisma.TenantSettingsUpdateWithoutLogoFileInput, Prisma.TenantSettingsUncheckedUpdateWithoutLogoFileInput>
+  create: Prisma.XOR<Prisma.TenantSettingsCreateWithoutLogoFileInput, Prisma.TenantSettingsUncheckedCreateWithoutLogoFileInput>
+}
+
+export type TenantSettingsUpdateWithWhereUniqueWithoutLogoFileInput = {
+  where: Prisma.TenantSettingsWhereUniqueInput
+  data: Prisma.XOR<Prisma.TenantSettingsUpdateWithoutLogoFileInput, Prisma.TenantSettingsUncheckedUpdateWithoutLogoFileInput>
+}
+
+export type TenantSettingsUpdateManyWithWhereWithoutLogoFileInput = {
+  where: Prisma.TenantSettingsScalarWhereInput
+  data: Prisma.XOR<Prisma.TenantSettingsUpdateManyMutationInput, Prisma.TenantSettingsUncheckedUpdateManyWithoutLogoFileInput>
+}
+
+export type TenantSettingsScalarWhereInput = {
+  AND?: Prisma.TenantSettingsScalarWhereInput | Prisma.TenantSettingsScalarWhereInput[]
+  OR?: Prisma.TenantSettingsScalarWhereInput[]
+  NOT?: Prisma.TenantSettingsScalarWhereInput | Prisma.TenantSettingsScalarWhereInput[]
+  organizationId?: Prisma.StringFilter<"TenantSettings"> | string
+  status?: Prisma.EnumTenantStatusFilter<"TenantSettings"> | $Enums.TenantStatus
+  isolationTier?: Prisma.EnumIsolationTierFilter<"TenantSettings"> | $Enums.IsolationTier
+  statusReason?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  deletionRequestedAt?: Prisma.DateTimeNullableFilter<"TenantSettings"> | Date | string | null
+  deletionScheduledFor?: Prisma.DateTimeNullableFilter<"TenantSettings"> | Date | string | null
+  onboardingDismissedAt?: Prisma.DateTimeNullableFilter<"TenantSettings"> | Date | string | null
+  contactEmail?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  contactPhone?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  timezone?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  locale?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  logoFileId?: Prisma.StringNullableFilter<"TenantSettings"> | string | null
+  updatedAt?: Prisma.DateTimeFilter<"TenantSettings"> | Date | string
+}
+
 export type TenantSettingsCreateWithoutOrganizationInput = {
   status?: $Enums.TenantStatus
   isolationTier?: $Enums.IsolationTier
   statusReason?: string | null
   deletionRequestedAt?: Date | string | null
   deletionScheduledFor?: Date | string | null
+  onboardingDismissedAt?: Date | string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
+  timezone?: string | null
+  locale?: string | null
   updatedAt?: Date | string
+  logoFile?: Prisma.StoredFileCreateNestedOneWithoutOrganizationLogosInput
 }
 
 export type TenantSettingsUncheckedCreateWithoutOrganizationInput = {
@@ -411,6 +678,12 @@ export type TenantSettingsUncheckedCreateWithoutOrganizationInput = {
   statusReason?: string | null
   deletionRequestedAt?: Date | string | null
   deletionScheduledFor?: Date | string | null
+  onboardingDismissedAt?: Date | string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
+  timezone?: string | null
+  locale?: string | null
+  logoFileId?: string | null
   updatedAt?: Date | string
 }
 
@@ -436,7 +709,13 @@ export type TenantSettingsUpdateWithoutOrganizationInput = {
   statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletionRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletionScheduledFor?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contactEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  logoFile?: Prisma.StoredFileUpdateOneWithoutOrganizationLogosNestedInput
 }
 
 export type TenantSettingsUncheckedUpdateWithoutOrganizationInput = {
@@ -445,6 +724,72 @@ export type TenantSettingsUncheckedUpdateWithoutOrganizationInput = {
   statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deletionRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletionScheduledFor?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contactEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type TenantSettingsCreateManyLogoFileInput = {
+  organizationId: string
+  status?: $Enums.TenantStatus
+  isolationTier?: $Enums.IsolationTier
+  statusReason?: string | null
+  deletionRequestedAt?: Date | string | null
+  deletionScheduledFor?: Date | string | null
+  onboardingDismissedAt?: Date | string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
+  timezone?: string | null
+  locale?: string | null
+  updatedAt?: Date | string
+}
+
+export type TenantSettingsUpdateWithoutLogoFileInput = {
+  status?: Prisma.EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+  isolationTier?: Prisma.EnumIsolationTierFieldUpdateOperationsInput | $Enums.IsolationTier
+  statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletionRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletionScheduledFor?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contactEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutSettingsNestedInput
+}
+
+export type TenantSettingsUncheckedUpdateWithoutLogoFileInput = {
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+  isolationTier?: Prisma.EnumIsolationTierFieldUpdateOperationsInput | $Enums.IsolationTier
+  statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletionRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletionScheduledFor?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contactEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type TenantSettingsUncheckedUpdateManyWithoutLogoFileInput = {
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+  isolationTier?: Prisma.EnumIsolationTierFieldUpdateOperationsInput | $Enums.IsolationTier
+  statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletionRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletionScheduledFor?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  contactEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -457,8 +802,15 @@ export type TenantSettingsSelect<ExtArgs extends runtime.Types.Extensions.Intern
   statusReason?: boolean
   deletionRequestedAt?: boolean
   deletionScheduledFor?: boolean
+  onboardingDismissedAt?: boolean
+  contactEmail?: boolean
+  contactPhone?: boolean
+  timezone?: boolean
+  locale?: boolean
+  logoFileId?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+  logoFile?: boolean | Prisma.TenantSettings$logoFileArgs<ExtArgs>
 }, ExtArgs["result"]["tenantSettings"]>
 
 export type TenantSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -468,8 +820,15 @@ export type TenantSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   statusReason?: boolean
   deletionRequestedAt?: boolean
   deletionScheduledFor?: boolean
+  onboardingDismissedAt?: boolean
+  contactEmail?: boolean
+  contactPhone?: boolean
+  timezone?: boolean
+  locale?: boolean
+  logoFileId?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+  logoFile?: boolean | Prisma.TenantSettings$logoFileArgs<ExtArgs>
 }, ExtArgs["result"]["tenantSettings"]>
 
 export type TenantSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -479,8 +838,15 @@ export type TenantSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   statusReason?: boolean
   deletionRequestedAt?: boolean
   deletionScheduledFor?: boolean
+  onboardingDismissedAt?: boolean
+  contactEmail?: boolean
+  contactPhone?: boolean
+  timezone?: boolean
+  locale?: boolean
+  logoFileId?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+  logoFile?: boolean | Prisma.TenantSettings$logoFileArgs<ExtArgs>
 }, ExtArgs["result"]["tenantSettings"]>
 
 export type TenantSettingsSelectScalar = {
@@ -490,24 +856,34 @@ export type TenantSettingsSelectScalar = {
   statusReason?: boolean
   deletionRequestedAt?: boolean
   deletionScheduledFor?: boolean
+  onboardingDismissedAt?: boolean
+  contactEmail?: boolean
+  contactPhone?: boolean
+  timezone?: boolean
+  locale?: boolean
+  logoFileId?: boolean
   updatedAt?: boolean
 }
 
-export type TenantSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"organizationId" | "status" | "isolationTier" | "statusReason" | "deletionRequestedAt" | "deletionScheduledFor" | "updatedAt", ExtArgs["result"]["tenantSettings"]>
+export type TenantSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"organizationId" | "status" | "isolationTier" | "statusReason" | "deletionRequestedAt" | "deletionScheduledFor" | "onboardingDismissedAt" | "contactEmail" | "contactPhone" | "timezone" | "locale" | "logoFileId" | "updatedAt", ExtArgs["result"]["tenantSettings"]>
 export type TenantSettingsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+  logoFile?: boolean | Prisma.TenantSettings$logoFileArgs<ExtArgs>
 }
 export type TenantSettingsIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+  logoFile?: boolean | Prisma.TenantSettings$logoFileArgs<ExtArgs>
 }
 export type TenantSettingsIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+  logoFile?: boolean | Prisma.TenantSettings$logoFileArgs<ExtArgs>
 }
 
 export type $TenantSettingsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "TenantSettings"
   objects: {
     organization: Prisma.$OrganizationPayload<ExtArgs>
+    logoFile: Prisma.$StoredFilePayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     organizationId: string
@@ -516,6 +892,12 @@ export type $TenantSettingsPayload<ExtArgs extends runtime.Types.Extensions.Inte
     statusReason: string | null
     deletionRequestedAt: Date | null
     deletionScheduledFor: Date | null
+    onboardingDismissedAt: Date | null
+    contactEmail: string | null
+    contactPhone: string | null
+    timezone: string | null
+    locale: string | null
+    logoFileId: string | null
     updatedAt: Date
   }, ExtArgs["result"]["tenantSettings"]>
   composites: {}
@@ -912,6 +1294,7 @@ readonly fields: TenantSettingsFieldRefs;
 export interface Prisma__TenantSettingsClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  logoFile<T extends Prisma.TenantSettings$logoFileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantSettings$logoFileArgs<ExtArgs>>): Prisma.Prisma__StoredFileClient<runtime.Types.Result.GetResult<Prisma.$StoredFilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -947,6 +1330,12 @@ export interface TenantSettingsFieldRefs {
   readonly statusReason: Prisma.FieldRef<"TenantSettings", 'String'>
   readonly deletionRequestedAt: Prisma.FieldRef<"TenantSettings", 'DateTime'>
   readonly deletionScheduledFor: Prisma.FieldRef<"TenantSettings", 'DateTime'>
+  readonly onboardingDismissedAt: Prisma.FieldRef<"TenantSettings", 'DateTime'>
+  readonly contactEmail: Prisma.FieldRef<"TenantSettings", 'String'>
+  readonly contactPhone: Prisma.FieldRef<"TenantSettings", 'String'>
+  readonly timezone: Prisma.FieldRef<"TenantSettings", 'String'>
+  readonly locale: Prisma.FieldRef<"TenantSettings", 'String'>
+  readonly logoFileId: Prisma.FieldRef<"TenantSettings", 'String'>
   readonly updatedAt: Prisma.FieldRef<"TenantSettings", 'DateTime'>
 }
     
@@ -1346,6 +1735,25 @@ export type TenantSettingsDeleteManyArgs<ExtArgs extends runtime.Types.Extension
    * Limit how many TenantSettings to delete.
    */
   limit?: number
+}
+
+/**
+ * TenantSettings.logoFile
+ */
+export type TenantSettings$logoFileArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the StoredFile
+   */
+  select?: Prisma.StoredFileSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the StoredFile
+   */
+  omit?: Prisma.StoredFileOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StoredFileInclude<ExtArgs> | null
+  where?: Prisma.StoredFileWhereInput
 }
 
 /**

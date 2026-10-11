@@ -373,6 +373,12 @@ export const TenantSettingsScalarFieldEnum = {
   statusReason: 'statusReason',
   deletionRequestedAt: 'deletionRequestedAt',
   deletionScheduledFor: 'deletionScheduledFor',
+  onboardingDismissedAt: 'onboardingDismissedAt',
+  contactEmail: 'contactEmail',
+  contactPhone: 'contactPhone',
+  timezone: 'timezone',
+  locale: 'locale',
+  logoFileId: 'logoFileId',
   updatedAt: 'updatedAt'
 } as const
 

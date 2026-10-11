@@ -99,4 +99,58 @@ describe.skipIf(!url)("tenant isolation in PostgreSQL", () => {
       asTenant(ids.a, (tx) => tx.tenantExport.create({ data: { organizationId: ids.b, requestedById: "u" } })),
     ).rejects.toThrow();
   });
+
+  it("lets an organization use its own file as the logo", async () => {
+    const settings = await asTenant(ids.a, (tx) =>
+      tx.tenantSettings.upsert({
+        where: { organizationId: ids.a },
+        create: { organizationId: ids.a, logoFileId: `${ids.a}-file`, timezone: "UTC", locale: "en" },
+        update: { logoFileId: `${ids.a}-file` },
+      }),
+    );
+    expect(settings.logoFileId).toBe(`${ids.a}-file`);
+  });
+
+  it("rejects another organization's file as the logo, for inserts and updates", async () => {
+    await expect(
+      asTenant(ids.a, (tx) =>
+        tx.tenantSettings.update({ where: { organizationId: ids.a }, data: { logoFileId: `${ids.b}-file` } }),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      asTenant(ids.b, (tx) =>
+        tx.tenantSettings.create({ data: { organizationId: ids.b, logoFileId: `${ids.a}-file` } }),
+      ),
+    ).rejects.toThrow();
+    expect((await db.tenantSettings.findUnique({ where: { organizationId: ids.b } }))?.logoFileId ?? null).toBeNull();
+  });
+
+  it("keeps lifecycle writes working without touching the logo", async () => {
+    await asTenant(ids.a, (tx) =>
+      tx.tenantSettings.update({ where: { organizationId: ids.a }, data: { status: "SUSPENDED" } }),
+    );
+    const row = await db.tenantSettings.findUnique({ where: { organizationId: ids.a } });
+    expect(row).toMatchObject({ status: "SUSPENDED", logoFileId: `${ids.a}-file` });
+  });
+
+  it("clears the logo when its stored file is deleted", async () => {
+    await asTenant(ids.a, (tx) => tx.storedFile.delete({ where: { id: `${ids.a}-file` } }));
+    expect((await db.tenantSettings.findUnique({ where: { organizationId: ids.a } }))?.logoFileId).toBeNull();
+  });
+
+  it("deletes an organization together with its logo, file and settings", async () => {
+    const id = `rls-c-${Date.now()}`;
+    await db.organization.create({ data: { id, name: "c", slug: id, createdAt: new Date() } });
+    await db.storedFile.create({
+      data: { id: `${id}-file`, organizationId: id, key: `${id}/f.png`, filename: "f.png", contentType: "image/png", size: 1 },
+    });
+    await asTenant(id, (tx) =>
+      tx.tenantSettings.create({ data: { organizationId: id, logoFileId: `${id}-file`, timezone: "UTC" } }),
+    );
+
+    await db.organization.delete({ where: { id } });
+
+    expect(await db.tenantSettings.findUnique({ where: { organizationId: id } })).toBeNull();
+    expect(await db.storedFile.findUnique({ where: { id: `${id}-file` } })).toBeNull();
+  });
 });

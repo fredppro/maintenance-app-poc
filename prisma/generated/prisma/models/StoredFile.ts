@@ -242,6 +242,7 @@ export type StoredFileWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"StoredFile"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   equipment?: Prisma.EquipmentListRelationFilter
+  organizationLogos?: Prisma.TenantSettingsListRelationFilter
 }
 
 export type StoredFileOrderByWithRelationInput = {
@@ -255,6 +256,7 @@ export type StoredFileOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   organization?: Prisma.OrganizationOrderByWithRelationInput
   equipment?: Prisma.EquipmentOrderByRelationAggregateInput
+  organizationLogos?: Prisma.TenantSettingsOrderByRelationAggregateInput
 }
 
 export type StoredFileWhereUniqueInput = Prisma.AtLeast<{
@@ -272,6 +274,7 @@ export type StoredFileWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"StoredFile"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   equipment?: Prisma.EquipmentListRelationFilter
+  organizationLogos?: Prisma.TenantSettingsListRelationFilter
 }, "id" | "key" | "id_organizationId">
 
 export type StoredFileOrderByWithAggregationInput = {
@@ -314,6 +317,7 @@ export type StoredFileCreateInput = {
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutFilesInput
   equipment?: Prisma.EquipmentCreateNestedManyWithoutImageFileInput
+  organizationLogos?: Prisma.TenantSettingsCreateNestedManyWithoutLogoFileInput
 }
 
 export type StoredFileUncheckedCreateInput = {
@@ -326,6 +330,7 @@ export type StoredFileUncheckedCreateInput = {
   uploadedById?: string | null
   createdAt?: Date | string
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutImageFileInput
+  organizationLogos?: Prisma.TenantSettingsUncheckedCreateNestedManyWithoutLogoFileInput
 }
 
 export type StoredFileUpdateInput = {
@@ -338,6 +343,7 @@ export type StoredFileUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutFilesNestedInput
   equipment?: Prisma.EquipmentUpdateManyWithoutImageFileNestedInput
+  organizationLogos?: Prisma.TenantSettingsUpdateManyWithoutLogoFileNestedInput
 }
 
 export type StoredFileUncheckedUpdateInput = {
@@ -350,6 +356,7 @@ export type StoredFileUncheckedUpdateInput = {
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutImageFileNestedInput
+  organizationLogos?: Prisma.TenantSettingsUncheckedUpdateManyWithoutLogoFileNestedInput
 }
 
 export type StoredFileCreateManyInput = {
@@ -511,6 +518,22 @@ export type StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput = {
   deleteMany?: Prisma.StoredFileScalarWhereInput | Prisma.StoredFileScalarWhereInput[]
 }
 
+export type StoredFileCreateNestedOneWithoutOrganizationLogosInput = {
+  create?: Prisma.XOR<Prisma.StoredFileCreateWithoutOrganizationLogosInput, Prisma.StoredFileUncheckedCreateWithoutOrganizationLogosInput>
+  connectOrCreate?: Prisma.StoredFileCreateOrConnectWithoutOrganizationLogosInput
+  connect?: Prisma.StoredFileWhereUniqueInput
+}
+
+export type StoredFileUpdateOneWithoutOrganizationLogosNestedInput = {
+  create?: Prisma.XOR<Prisma.StoredFileCreateWithoutOrganizationLogosInput, Prisma.StoredFileUncheckedCreateWithoutOrganizationLogosInput>
+  connectOrCreate?: Prisma.StoredFileCreateOrConnectWithoutOrganizationLogosInput
+  upsert?: Prisma.StoredFileUpsertWithoutOrganizationLogosInput
+  disconnect?: Prisma.StoredFileWhereInput | boolean
+  delete?: Prisma.StoredFileWhereInput | boolean
+  connect?: Prisma.StoredFileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.StoredFileUpdateToOneWithWhereWithoutOrganizationLogosInput, Prisma.StoredFileUpdateWithoutOrganizationLogosInput>, Prisma.StoredFileUncheckedUpdateWithoutOrganizationLogosInput>
+}
+
 export type StoredFileCreateWithoutEquipmentInput = {
   id?: string
   key: string
@@ -520,6 +543,7 @@ export type StoredFileCreateWithoutEquipmentInput = {
   uploadedById?: string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutFilesInput
+  organizationLogos?: Prisma.TenantSettingsCreateNestedManyWithoutLogoFileInput
 }
 
 export type StoredFileUncheckedCreateWithoutEquipmentInput = {
@@ -531,6 +555,7 @@ export type StoredFileUncheckedCreateWithoutEquipmentInput = {
   size: number
   uploadedById?: string | null
   createdAt?: Date | string
+  organizationLogos?: Prisma.TenantSettingsUncheckedCreateNestedManyWithoutLogoFileInput
 }
 
 export type StoredFileCreateOrConnectWithoutEquipmentInput = {
@@ -558,6 +583,7 @@ export type StoredFileUpdateWithoutEquipmentInput = {
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutFilesNestedInput
+  organizationLogos?: Prisma.TenantSettingsUpdateManyWithoutLogoFileNestedInput
 }
 
 export type StoredFileUncheckedUpdateWithoutEquipmentInput = {
@@ -569,6 +595,7 @@ export type StoredFileUncheckedUpdateWithoutEquipmentInput = {
   size?: Prisma.IntFieldUpdateOperationsInput | number
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organizationLogos?: Prisma.TenantSettingsUncheckedUpdateManyWithoutLogoFileNestedInput
 }
 
 export type StoredFileCreateWithoutOrganizationInput = {
@@ -580,6 +607,7 @@ export type StoredFileCreateWithoutOrganizationInput = {
   uploadedById?: string | null
   createdAt?: Date | string
   equipment?: Prisma.EquipmentCreateNestedManyWithoutImageFileInput
+  organizationLogos?: Prisma.TenantSettingsCreateNestedManyWithoutLogoFileInput
 }
 
 export type StoredFileUncheckedCreateWithoutOrganizationInput = {
@@ -591,6 +619,7 @@ export type StoredFileUncheckedCreateWithoutOrganizationInput = {
   uploadedById?: string | null
   createdAt?: Date | string
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutImageFileInput
+  organizationLogos?: Prisma.TenantSettingsUncheckedCreateNestedManyWithoutLogoFileInput
 }
 
 export type StoredFileCreateOrConnectWithoutOrganizationInput = {
@@ -633,6 +662,70 @@ export type StoredFileScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"StoredFile"> | Date | string
 }
 
+export type StoredFileCreateWithoutOrganizationLogosInput = {
+  id?: string
+  key: string
+  filename: string
+  contentType: string
+  size: number
+  uploadedById?: string | null
+  createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutFilesInput
+  equipment?: Prisma.EquipmentCreateNestedManyWithoutImageFileInput
+}
+
+export type StoredFileUncheckedCreateWithoutOrganizationLogosInput = {
+  id?: string
+  organizationId: string
+  key: string
+  filename: string
+  contentType: string
+  size: number
+  uploadedById?: string | null
+  createdAt?: Date | string
+  equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutImageFileInput
+}
+
+export type StoredFileCreateOrConnectWithoutOrganizationLogosInput = {
+  where: Prisma.StoredFileWhereUniqueInput
+  create: Prisma.XOR<Prisma.StoredFileCreateWithoutOrganizationLogosInput, Prisma.StoredFileUncheckedCreateWithoutOrganizationLogosInput>
+}
+
+export type StoredFileUpsertWithoutOrganizationLogosInput = {
+  update: Prisma.XOR<Prisma.StoredFileUpdateWithoutOrganizationLogosInput, Prisma.StoredFileUncheckedUpdateWithoutOrganizationLogosInput>
+  create: Prisma.XOR<Prisma.StoredFileCreateWithoutOrganizationLogosInput, Prisma.StoredFileUncheckedCreateWithoutOrganizationLogosInput>
+  where?: Prisma.StoredFileWhereInput
+}
+
+export type StoredFileUpdateToOneWithWhereWithoutOrganizationLogosInput = {
+  where?: Prisma.StoredFileWhereInput
+  data: Prisma.XOR<Prisma.StoredFileUpdateWithoutOrganizationLogosInput, Prisma.StoredFileUncheckedUpdateWithoutOrganizationLogosInput>
+}
+
+export type StoredFileUpdateWithoutOrganizationLogosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  key?: Prisma.StringFieldUpdateOperationsInput | string
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  contentType?: Prisma.StringFieldUpdateOperationsInput | string
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutFilesNestedInput
+  equipment?: Prisma.EquipmentUpdateManyWithoutImageFileNestedInput
+}
+
+export type StoredFileUncheckedUpdateWithoutOrganizationLogosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  key?: Prisma.StringFieldUpdateOperationsInput | string
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  contentType?: Prisma.StringFieldUpdateOperationsInput | string
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutImageFileNestedInput
+}
+
 export type StoredFileCreateManyOrganizationInput = {
   id?: string
   key: string
@@ -652,6 +745,7 @@ export type StoredFileUpdateWithoutOrganizationInput = {
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUpdateManyWithoutImageFileNestedInput
+  organizationLogos?: Prisma.TenantSettingsUpdateManyWithoutLogoFileNestedInput
 }
 
 export type StoredFileUncheckedUpdateWithoutOrganizationInput = {
@@ -663,6 +757,7 @@ export type StoredFileUncheckedUpdateWithoutOrganizationInput = {
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutImageFileNestedInput
+  organizationLogos?: Prisma.TenantSettingsUncheckedUpdateManyWithoutLogoFileNestedInput
 }
 
 export type StoredFileUncheckedUpdateManyWithoutOrganizationInput = {
@@ -682,10 +777,12 @@ export type StoredFileUncheckedUpdateManyWithoutOrganizationInput = {
 
 export type StoredFileCountOutputType = {
   equipment: number
+  organizationLogos: number
 }
 
 export type StoredFileCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   equipment?: boolean | StoredFileCountOutputTypeCountEquipmentArgs
+  organizationLogos?: boolean | StoredFileCountOutputTypeCountOrganizationLogosArgs
 }
 
 /**
@@ -705,6 +802,13 @@ export type StoredFileCountOutputTypeCountEquipmentArgs<ExtArgs extends runtime.
   where?: Prisma.EquipmentWhereInput
 }
 
+/**
+ * StoredFileCountOutputType without action
+ */
+export type StoredFileCountOutputTypeCountOrganizationLogosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TenantSettingsWhereInput
+}
+
 
 export type StoredFileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -717,6 +821,7 @@ export type StoredFileSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   createdAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.StoredFile$equipmentArgs<ExtArgs>
+  organizationLogos?: boolean | Prisma.StoredFile$organizationLogosArgs<ExtArgs>
   _count?: boolean | Prisma.StoredFileCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["storedFile"]>
 
@@ -759,6 +864,7 @@ export type StoredFileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs
 export type StoredFileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.StoredFile$equipmentArgs<ExtArgs>
+  organizationLogos?: boolean | Prisma.StoredFile$organizationLogosArgs<ExtArgs>
   _count?: boolean | Prisma.StoredFileCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type StoredFileIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -773,6 +879,7 @@ export type $StoredFilePayload<ExtArgs extends runtime.Types.Extensions.Internal
   objects: {
     organization: Prisma.$OrganizationPayload<ExtArgs>
     equipment: Prisma.$EquipmentPayload<ExtArgs>[]
+    organizationLogos: Prisma.$TenantSettingsPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1179,6 +1286,7 @@ export interface Prisma__StoredFileClient<T, Null = never, ExtArgs extends runti
   readonly [Symbol.toStringTag]: "PrismaPromise"
   organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   equipment<T extends Prisma.StoredFile$equipmentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StoredFile$equipmentArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EquipmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  organizationLogos<T extends Prisma.StoredFile$organizationLogosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StoredFile$organizationLogosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantSettingsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1638,6 +1746,30 @@ export type StoredFile$equipmentArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.EquipmentScalarFieldEnum | Prisma.EquipmentScalarFieldEnum[]
+}
+
+/**
+ * StoredFile.organizationLogos
+ */
+export type StoredFile$organizationLogosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TenantSettings
+   */
+  select?: Prisma.TenantSettingsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TenantSettings
+   */
+  omit?: Prisma.TenantSettingsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TenantSettingsInclude<ExtArgs> | null
+  where?: Prisma.TenantSettingsWhereInput
+  orderBy?: Prisma.TenantSettingsOrderByWithRelationInput | Prisma.TenantSettingsOrderByWithRelationInput[]
+  cursor?: Prisma.TenantSettingsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TenantSettingsScalarFieldEnum | Prisma.TenantSettingsScalarFieldEnum[]
 }
 
 /**
