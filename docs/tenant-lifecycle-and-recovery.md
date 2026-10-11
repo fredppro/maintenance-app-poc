@@ -19,6 +19,14 @@ Owners and admins see a compact "Getting started" card at the top of the Schedul
 
 Hiding the card (the X, or "Dismiss" once everything is done) sets `tenant_settings.onboardingDismissedAt` for the whole organization; there is no restore control yet (clear the column to bring it back).
 
+## Organization settings
+
+Owners and admins (`manageOrganization`) edit the company profile and regional defaults on the **Organization** page: display name, optional contact email and phone, logo, time zone and default language. The organization is always the authenticated session's; the save writes only those fields (the name, never the slug, plus `tenant_settings.contactEmail/contactPhone/timezone/locale/logoFileId`) and never lifecycle state or membership. Changes are audited as `organization.settings_updated` with the field names only.
+
+- **Logo:** a `StoredFile` of the organization (PNG/JPEG/WebP, validated by content on upload, resized in the browser), served by the authenticated `/api/files/<id>`. The `tenant_settings_same_tenant` trigger rejects another organization's file; `ON DELETE SET NULL` clears the logo if the file goes. Replacing or removing it deletes the old file unless equipment uses it.
+- **Language:** the language of invitation links (`/<locale>/accept-invitation`). **Time zone:** the time zone of dates in generated PDF reports. The scheduler UI still shows times in the browser's time zone.
+- Unset values fall back to `en` and `Europe/Lisbon`; the first save writes them explicitly.
+
 ## Tenant lifecycle
 
 Each organization has a `tenant_settings` row (`status`, `isolationTier`). A missing row means `ACTIVE`.

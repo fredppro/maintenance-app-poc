@@ -1,14 +1,26 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as getTaskModule from "../server/get-task";
+import * as streamModule from "../pdf/stream";
 import {
   buildMaintenanceReportPDF,
   buildReportResponse,
   ReportTaskNotFoundError,
 } from "./report.service";
 
+const { settingsFind } = vi.hoisted(() => ({ settingsFind: vi.fn() }));
+
+vi.mock("@/lib/prisma", () => ({
+  default: { tenantSettings: { findUnique: settingsFind } },
+}));
+
 const db = {} as never;
 
 describe("report service", () => {
+  beforeEach(() => {
+    settingsFind.mockReset();
+    settingsFind.mockResolvedValue(null);
+  });
+
   const mockTask = {
     id: "task-abcdef123456",
     title: "Quarterly Pump Maintenance",
@@ -43,6 +55,33 @@ describe("report service", () => {
       expect(getTaskMock.mock.calls.length).toBe(1);
     } finally {
       getTaskMock.mockRestore();
+    }
+  });
+
+  it("formats report dates in the organization's time zone, falling back to the default", async () => {
+    const getTaskMock = vi.spyOn(getTaskModule, "getMaintenanceTask").mockResolvedValue(mockTask);
+    const streamMock = vi.spyOn(streamModule, "createMaintenanceReportPDFStream");
+
+    try {
+      settingsFind.mockResolvedValue({ timezone: "America/Sao_Paulo" });
+      await buildMaintenanceReportPDF(db, "task-abcdef123456", "org-1", "site-1", "en");
+      expect(settingsFind).toHaveBeenCalledWith({
+        where: { organizationId: "org-1" },
+        select: { timezone: true },
+      });
+      expect(streamMock).toHaveBeenLastCalledWith(mockTask, "en", "America/Sao_Paulo");
+
+      settingsFind.mockResolvedValue(null);
+      await buildMaintenanceReportPDF(db, "task-abcdef123456", "org-1", "site-1", "en");
+      expect(streamMock).toHaveBeenLastCalledWith(mockTask, "en", "Europe/Lisbon");
+
+      // A stored zone this runtime does not know must not break report generation.
+      settingsFind.mockResolvedValue({ timezone: "Mars/Olympus" });
+      await buildMaintenanceReportPDF(db, "task-abcdef123456", "org-1", "site-1", "en");
+      expect(streamMock).toHaveBeenLastCalledWith(mockTask, "en", "Europe/Lisbon");
+    } finally {
+      getTaskMock.mockRestore();
+      streamMock.mockRestore();
     }
   });
 

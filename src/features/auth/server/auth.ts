@@ -11,6 +11,7 @@ import {
   canManageOrganizationMember,
   isOrganizationManager,
 } from "@/features/organization/shared/member-policy";
+import { buildInvitationUrl } from "@/features/organization/server/invitation-link";
 import { isEmailVerificationRequired } from "./email-verification";
 import { isPublicSignupAllowed, mayCreateAccount, mayCreateOrganization } from "./signup-policy";
 
@@ -244,8 +245,7 @@ export const auth = betterAuth({
       allowUserToCreateOrganization: (user) => mayCreateOrganization(user.email, signupPolicy),
       requireEmailVerificationOnInvitation: isEmailVerificationRequired(),
       sendInvitationEmail: async ({ id, email, organization: invitedOrg }) => {
-        const invitationUrl = new URL("/en/accept-invitation", authOrigin);
-        invitationUrl.searchParams.set("id", id);
+        const invitationUrl = await buildInvitationUrl(invitedOrg.id, id, authOrigin);
 
         await sendTransactionalEmail({
           to: email,

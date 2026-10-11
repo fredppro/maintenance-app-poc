@@ -1,4 +1,8 @@
-import type { TenantDb } from "@/lib/prisma";
+import {
+  DEFAULT_ORGANIZATION_TIMEZONE,
+  supportedTimeZones,
+} from "@/features/organization/shared/organization-settings";
+import prisma, { type TenantDb } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { Readable } from "node:stream";
 import { getMaintenanceTask } from "../server/get-task";
@@ -25,7 +29,18 @@ export async function buildMaintenanceReportPDF(
     throw new ReportTaskNotFoundError(taskId);
   }
 
-  const stream = createMaintenanceReportPDFStream(task, locale);
+  // Report dates follow the organization's time zone, not the server's.
+  const settings = await prisma.tenantSettings.findUnique({
+    where: { organizationId },
+    select: { timezone: true },
+  });
+  const stream = createMaintenanceReportPDFStream(
+    task,
+    locale,
+    settings?.timezone && supportedTimeZones().includes(settings.timezone)
+      ? settings.timezone
+      : DEFAULT_ORGANIZATION_TIMEZONE,
+  );
 
   return {
     stream,

@@ -33,6 +33,7 @@ export function AppShell({
   tenantContexts,
   selectedSiteId,
   canManageMembers,
+  organizationLogoId = null,
   defaultSidebarOpen,
 }: {
   children: ReactNode;
@@ -40,6 +41,8 @@ export function AppShell({
   tenantContexts: TenantContextOption[];
   selectedSiteId: string;
   canManageMembers: boolean;
+  /** Stored file id of the organization logo, if it has one. */
+  organizationLogoId?: string | null;
   defaultSidebarOpen: boolean;
 }) {
   const t = useTranslations("Nav");
@@ -63,6 +66,11 @@ export function AppShell({
       <AppSidebar
         user={user}
         canManageMembers={canManageMembers}
+        logo={
+          organizationLogoId && selected
+            ? { src: `/api/files/${organizationLogoId}`, alt: selected.organizationName }
+            : undefined
+        }
         onSignOut={signOut}
         contextLabel={
           selected

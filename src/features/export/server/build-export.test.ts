@@ -12,6 +12,18 @@ vi.mock("@/lib/prisma", () => ({
       ]),
     },
     organizationAuditEvent: { findMany: vi.fn().mockResolvedValue([]) },
+    organization: {
+      findUnique: vi.fn().mockResolvedValue({ id: "org-1", name: "ACME", slug: "acme-1", createdAt: new Date(0) }),
+    },
+    tenantSettings: {
+      findUnique: vi.fn().mockResolvedValue({
+        contactEmail: "office@acme.pt",
+        contactPhone: null,
+        timezone: "Europe/Lisbon",
+        locale: "en",
+        logoFileId: "f1",
+      }),
+    },
   },
 }));
 
@@ -58,6 +70,18 @@ describe("buildTenantExport", () => {
     expect(manifest.organizationId).toBe("org-1");
     expect(manifest.rowCounts.members).toBe(1);
     expect(strFromU8(files["data/members.csv"])).toContain("ana@example.com");
+
+    const [profile] = JSON.parse(strFromU8(files["data/organization.json"]));
+    expect(profile).toMatchObject({
+      id: "org-1",
+      name: "ACME",
+      contactEmail: "office@acme.pt",
+      timezone: "Europe/Lisbon",
+      locale: "en",
+      logoFileId: "f1",
+    });
+    expect(profile).not.toHaveProperty("status");
+    expect(manifest.rowCounts.organization).toBe(1);
   });
 
   it("reports files missing from storage instead of failing", async () => {

@@ -16,6 +16,7 @@ const messagesMap: Record<AppLocale, typeof enMessages> = {
 export function createMaintenanceReportPDFStream(
   entry: MaintenanceEntry,
   locale: AppLocale = routing.defaultLocale,
+  timeZone?: string,
 ) {
  
   const t = messagesMap[locale].PDF;
@@ -32,7 +33,7 @@ export function createMaintenanceReportPDFStream(
   doc.pipe(stream);
 
   try {
-    renderMaintenanceReport(doc, entry, t, dateLocale);
+    renderMaintenanceReport(doc, entry, t, dateLocale, timeZone);
     doc.end();
   } catch (err) {
     stream.destroy(err as Error);

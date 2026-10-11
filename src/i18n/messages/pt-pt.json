@@ -521,7 +521,6 @@
     "pendingDeletion": "Esta organização está agendada para eliminação permanente em {date}."
   },
   "OrganizationData": {
-    "title": "Dados da organização",
     "exportTitle": "Exportar os seus dados",
     "exportDescription": "Transfira um ZIP com todos os registos e ficheiros carregados em CSV e JSON. As transferências ficam disponíveis durante 7 dias.",
     "exportEmpty": "Ainda sem exportações.",
@@ -591,6 +590,62 @@
         "description": "Convide técnicos, gestores e outros utilizadores.",
         "action": "Convidar equipa",
         "done": "Equipa convidada"
+      }
+    }
+  },
+  "OrganizationSettings": {
+    "title": "Definições da organização",
+    "description": "Gira o perfil da empresa e as preferências regionais.",
+    "profileTitle": "Perfil da empresa",
+    "profileDescription": "Como a sua organização é identificada pela equipa.",
+    "name": "Nome da organização",
+    "contactEmail": "Email de contacto",
+    "contactEmailHint": "Opcional. Um endereço geral da empresa.",
+    "contactPhone": "Telefone de contacto",
+    "contactPhoneHint": "Opcional. Inclua o indicativo do país, p. ex. +351.",
+    "logo": "Logótipo",
+    "logoHint": "PNG, JPEG ou WebP. É redimensionado automaticamente.",
+    "logoAlt": "Logótipo de {name}",
+    "logoNone": "Sem logótipo",
+    "logoUpload": "Carregar logótipo",
+    "logoReplace": "Substituir logótipo",
+    "logoRemove": "Remover logótipo",
+    "logoInvalid": "Escolha uma imagem PNG, JPEG ou WebP até 10 MB.",
+    "logoUploadFailed": "Não foi possível carregar o logótipo. Tente novamente.",
+    "regionalTitle": "Preferências regionais",
+    "regionalDescription": "Predefinições para toda a organização.",
+    "timezone": "Fuso horário",
+    "timezoneHint": "As datas nos relatórios gerados usam este fuso horário.",
+    "timezonePlaceholder": "Selecionar um fuso horário",
+    "timezoneSearch": "Pesquisar fusos horários...",
+    "timezoneEmpty": "Nenhum fuso horário encontrado.",
+    "locale": "Idioma predefinido",
+    "localeHint": "Idioma das ligações de convite enviadas a novos membros.",
+    "save": "Guardar alterações",
+    "saved": "Definições da organização guardadas.",
+    "saveError": "Não foi possível guardar as definições. Tente novamente.",
+    "errors": {
+      "name": {
+        "tooShort": "Introduza pelo menos 2 caracteres.",
+        "tooLong": "Use 100 caracteres ou menos.",
+        "invalid": "Remova os caracteres especiais do nome."
+      },
+      "contactEmail": {
+        "tooLong": "Use 254 caracteres ou menos.",
+        "invalid": "Introduza um endereço de email válido."
+      },
+      "contactPhone": {
+        "tooLong": "Use 30 caracteres ou menos.",
+        "invalid": "Introduza um número de telefone válido, p. ex. +351 21 000 0000."
+      },
+      "timezone": {
+        "invalid": "Escolha um fuso horário da lista."
+      },
+      "locale": {
+        "invalid": "Escolha um idioma suportado."
+      },
+      "logoFileId": {
+        "invalid": "Este logótipo não pode ser usado. Carregue-o novamente."
       }
     }
   }

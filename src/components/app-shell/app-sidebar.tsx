@@ -47,6 +47,7 @@ export function AppSidebar({
   canManageMembers,
   contextControl,
   contextLabel,
+  logo,
   onSignOut,
 }: {
   user: AppUser;
@@ -54,6 +55,8 @@ export function AppSidebar({
   /** Site/organization switcher; falls back to a static label. */
   contextControl?: ReactNode;
   contextLabel: string;
+  /** Organization logo shown in place of the default mark. */
+  logo?: { src: string; alt: string };
   onSignOut: () => void;
 }) {
   const t = useTranslations("Nav");
@@ -65,9 +68,17 @@ export function AppSidebar({
     <Sidebar collapsible="icon">
       <SidebarHeader className="gap-3">
         <div className="flex items-center gap-2 px-1 pt-1">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Wrench className="size-4" aria-hidden="true" />
-          </div>
+          {logo ? (
+            <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-sidebar-accent">
+              {/* Same-origin, authenticated file; next/image adds nothing here. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={logo.src} alt={logo.alt} className="size-full object-contain" />
+            </div>
+          ) : (
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Wrench className="size-4" aria-hidden="true" />
+            </div>
+          )}
           <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
             {tDashboard("title")}
           </span>

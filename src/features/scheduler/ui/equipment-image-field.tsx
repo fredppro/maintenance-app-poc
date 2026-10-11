@@ -10,30 +10,18 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { IconButton } from "@/components/ui/icon-button";
+import {
+  ACCEPTED_IMAGE_TYPES,
+  isAcceptableImage,
+  resizeImage,
+  uploadImage,
+} from "@/features/files/client/image";
 import { cn } from "@/lib/utils";
 import { ImagePlus, Trash2, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
-const MAX_SOURCE_BYTES = 10 * 1024 * 1024;
 const MAX_EDGE = 640;
-
-async function toThumbnail(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  return await new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("encode"))),
-      "image/jpeg",
-      0.85,
-    ),
-  );
-}
 
 export type EquipmentImageValue = {
   /** Already-stored file, served from /api/files/[id]. */
@@ -43,12 +31,8 @@ export type EquipmentImageValue = {
 };
 
 /** Uploads a pending image and returns the stored file id. */
-export async function uploadEquipmentImage(blob: Blob): Promise<string> {
-  const body = new FormData();
-  body.append("file", blob, "equipment.jpg");
-  const response = await fetch("/api/files", { method: "POST", body });
-  if (!response.ok) throw new Error("upload failed");
-  return ((await response.json()) as { id: string }).id;
+export function uploadEquipmentImage(blob: Blob): Promise<string> {
+  return uploadImage(blob, "equipment.jpg");
 }
 
 /** Click or drop an image; it is downscaled in the browser before being saved. */
@@ -85,13 +69,16 @@ export function EquipmentImageField({
   async function handleFile(file: File | undefined) {
     if (!file) return;
     setError(null);
-    if (!file.type.startsWith("image/") || file.size > MAX_SOURCE_BYTES) {
+    if (!isAcceptableImage(file)) {
       setError(t("imageInvalid"));
       return;
     }
     setProcessing(true);
     try {
-      onChange({ fileId: value.fileId, pending: await toThumbnail(file) });
+      onChange({
+        fileId: value.fileId,
+        pending: await resizeImage(file, { maxEdge: MAX_EDGE, type: "image/jpeg" }),
+      });
     } catch {
       setError(t("imageInvalid"));
     } finally {
@@ -103,7 +90,7 @@ export function EquipmentImageField({
     <input
       ref={inputRef}
       type="file"
-      accept="image/png,image/jpeg,image/webp"
+      accept={ACCEPTED_IMAGE_TYPES}
       className="sr-only"
       tabIndex={-1}
       aria-label={t("uploadImage")}

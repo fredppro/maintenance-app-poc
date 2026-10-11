@@ -57,6 +57,8 @@ export async function buildTenantExport(db: TenantDb, organizationId: string) {
     files,
     members,
     auditEvents,
+    organization,
+    profile,
   ] = await Promise.all([
     db.site.findMany({ where: own }),
     db.section.findMany({ where: own }),
@@ -73,9 +75,19 @@ export async function buildTenantExport(db: TenantDb, organizationId: string) {
       select: { id: true, role: true, createdAt: true, user: { select: { name: true, email: true } } },
     }),
     prisma.organizationAuditEvent.findMany({ where: { organizationId }, orderBy: { createdAt: "asc" } }),
+    prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { id: true, name: true, slug: true, createdAt: true },
+    }),
+    prisma.tenantSettings.findUnique({
+      where: { organizationId },
+      select: { contactEmail: true, contactPhone: true, timezone: true, locale: true, logoFileId: true },
+    }),
   ]);
 
   const tables: Record<string, Row[]> = {
+    // The company profile; lifecycle state and internal flags are not customer data.
+    organization: organization ? [{ ...organization, ...profile }] : [],
     sites,
     sections,
     equipment,

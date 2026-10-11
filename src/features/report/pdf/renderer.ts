@@ -15,6 +15,7 @@ function renderMaintenanceReport(
   entry: MaintenanceEntry,
   t: ReportTranslations,
   dateLocale: string,
+  timeZone?: string,
 ) {
   // 1. Header Block (Company Information & Vector Logo)
   // Vector logo: Draw a beautiful slate-colored industrial gear
@@ -84,6 +85,7 @@ function renderMaintenanceReport(
     .text(t.headerTitle, 36, 95);
 
   const generationTime = new Date().toLocaleString(dateLocale, {
+    timeZone,
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -235,6 +237,7 @@ function renderMaintenanceReport(
 
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleString(dateLocale, {
+      timeZone,
       day: "2-digit",
       month: "2-digit",
       year: "numeric",

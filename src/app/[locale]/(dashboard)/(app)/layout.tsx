@@ -44,10 +44,16 @@ export default async function AppLayout({
       getAvailableTenantContexts(),
       cookies(),
     ]);
-  const user = await prisma.user.findUnique({
-    where: { id: tenant.userId },
-    select: { name: true, email: true },
-  });
+  const [user, branding] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: tenant.userId },
+      select: { name: true, email: true },
+    }),
+    prisma.tenantSettings.findUnique({
+      where: { organizationId: tenant.organizationId },
+      select: { logoFileId: true },
+    }),
+  ]);
 
   return (
     <SchedulerStoreProvider
@@ -72,6 +78,7 @@ export default async function AppLayout({
         tenantContexts={tenantContexts}
         selectedSiteId={tenant.siteId}
         canManageMembers={roleCan(tenant.role, "manageMembers")}
+        organizationLogoId={branding?.logoFileId ?? null}
         defaultSidebarOpen={cookieStore.get("sidebar_state")?.value !== "false"}
       >
         {children}

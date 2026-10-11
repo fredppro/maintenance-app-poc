@@ -521,7 +521,6 @@
     "pendingDeletion": "This organization is scheduled for permanent deletion on {date}."
   },
   "OrganizationData": {
-    "title": "Organization data",
     "exportTitle": "Export your data",
     "exportDescription": "Download a ZIP with every record and uploaded file as CSV and JSON. Downloads stay available for 7 days.",
     "exportEmpty": "No exports yet.",
@@ -591,6 +590,62 @@
         "description": "Invite technicians, managers and other users.",
         "action": "Invite team",
         "done": "Team invited"
+      }
+    }
+  },
+  "OrganizationSettings": {
+    "title": "Organization settings",
+    "description": "Manage your company profile and regional preferences.",
+    "profileTitle": "Company profile",
+    "profileDescription": "How your organization is identified for your team.",
+    "name": "Organization name",
+    "contactEmail": "Contact email",
+    "contactEmailHint": "Optional. A general address for your company.",
+    "contactPhone": "Contact phone",
+    "contactPhoneHint": "Optional. Include the country code, e.g. +351.",
+    "logo": "Logo",
+    "logoHint": "PNG, JPEG or WebP. It is resized to fit.",
+    "logoAlt": "{name} logo",
+    "logoNone": "No logo",
+    "logoUpload": "Upload logo",
+    "logoReplace": "Replace logo",
+    "logoRemove": "Remove logo",
+    "logoInvalid": "Choose a PNG, JPEG or WebP image up to 10 MB.",
+    "logoUploadFailed": "The logo could not be uploaded. Please try again.",
+    "regionalTitle": "Regional preferences",
+    "regionalDescription": "Defaults for your whole organization.",
+    "timezone": "Time zone",
+    "timezoneHint": "Dates in generated reports use this time zone.",
+    "timezonePlaceholder": "Select a time zone",
+    "timezoneSearch": "Search time zones...",
+    "timezoneEmpty": "No time zone found.",
+    "locale": "Default language",
+    "localeHint": "Language of the invitation links sent to new members.",
+    "save": "Save changes",
+    "saved": "Organization settings saved.",
+    "saveError": "The settings could not be saved. Please try again.",
+    "errors": {
+      "name": {
+        "tooShort": "Enter at least 2 characters.",
+        "tooLong": "Use 100 characters or fewer.",
+        "invalid": "Remove special characters from the name."
+      },
+      "contactEmail": {
+        "tooLong": "Use 254 characters or fewer.",
+        "invalid": "Enter a valid email address."
+      },
+      "contactPhone": {
+        "tooLong": "Use 30 characters or fewer.",
+        "invalid": "Enter a valid phone number, e.g. +351 21 000 0000."
+      },
+      "timezone": {
+        "invalid": "Choose a time zone from the list."
+      },
+      "locale": {
+        "invalid": "Choose a supported language."
+      },
+      "logoFileId": {
+        "invalid": "This logo cannot be used. Upload it again."
       }
     }
   }
