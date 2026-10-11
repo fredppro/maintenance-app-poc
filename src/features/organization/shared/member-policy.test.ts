@@ -12,9 +12,10 @@ describe("organization member role policy", () => {
     expect(organizationRoles.admin.statements.member).toEqual([]);
   });
 
-  it("keeps organization deletion on the owner-only grace-period flow", () => {
-    expect(organizationRoles.owner.statements.organization).not.toContain("delete");
-    expect(organizationRoles.admin.statements.organization).not.toContain("delete");
+  it("keeps organization update and delete off Better Auth's endpoints for every role", () => {
+    for (const role of Object.values(organizationRoles)) {
+      expect(role.statements.organization).toEqual([]);
+    }
   });
 
   it("allows only owners to invite admins and never permits owner invitations", () => {

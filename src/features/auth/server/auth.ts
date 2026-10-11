@@ -4,7 +4,6 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { organization } from "better-auth/plugins";
 import prisma from "@/lib/prisma";
 import { recordAuditEvent } from "@/lib/audit";
-import { LEGACY_ORGANIZATION_SLUG } from "@/lib/tenant-constants";
 import { sendTransactionalEmail } from "./email";
 import { organizationAccess, organizationRoles } from "../shared/organization-access";
 import {
@@ -13,21 +12,16 @@ import {
   isOrganizationManager,
 } from "@/features/organization/shared/member-policy";
 import { isEmailVerificationRequired } from "./email-verification";
+import { isPublicSignupAllowed, mayCreateAccount, mayCreateOrganization } from "./signup-policy";
 
 const secret = process.env.BETTER_AUTH_SECRET;
 const baseURL = process.env.BETTER_AUTH_URL;
 const isProduction = process.env.NODE_ENV === "production";
-// Explicit opt-in that opens self-service sign-up and organisation creation in production (e.g. previews).
-const allowPublicSignup = process.env.ALLOW_PUBLIC_SIGNUP === "true";
+// Explicit opt-in that opens self-service sign-up and organisation creation outside real production (previews).
+const allowPublicSignup = isPublicSignupAllowed();
 const bootstrapEmail = process.env.PILOT_BOOTSTRAP_EMAIL?.trim().toLowerCase();
 
-async function hasNoCustomerOrganizations() {
-  return (
-    (await prisma.organization.count({
-      where: { slug: { not: LEGACY_ORGANIZATION_SLUG } },
-    })) === 0
-  );
-}
+const signupPolicy = { isProduction, allowPublicSignup, bootstrapEmail };
 
 async function requireOrganizationManagerRole(
   organizationId: string,
@@ -176,29 +170,8 @@ export const auth = betterAuth({
     },
     user: {
       create: {
-        before: async (user) => {
-          if (!isProduction || allowPublicSignup) return { data: user };
-
-          const email = user.email.trim().toLowerCase();
-          if (
-            bootstrapEmail &&
-            email === bootstrapEmail &&
-            (await hasNoCustomerOrganizations())
-          ) {
-            return { data: user };
-          }
-
-          const pendingInvitation = await prisma.invitation.findFirst({
-            where: {
-              email,
-              status: "pending",
-              expiresAt: { gt: new Date() },
-            },
-            select: { id: true },
-          });
-
-          return pendingInvitation ? { data: user } : false;
-        },
+        before: async (user) =>
+          (await mayCreateAccount(user.email, signupPolicy)) ? { data: user } : false,
       },
     },
   },
@@ -268,14 +241,7 @@ export const auth = betterAuth({
           });
         },
       },
-      allowUserToCreateOrganization: async (user) => {
-        if (!isProduction || allowPublicSignup) return true;
-        return Boolean(
-          bootstrapEmail &&
-            user.email.trim().toLowerCase() === bootstrapEmail &&
-          (await hasNoCustomerOrganizations()),
-        );
-      },
+      allowUserToCreateOrganization: (user) => mayCreateOrganization(user.email, signupPolicy),
       requireEmailVerificationOnInvitation: isEmailVerificationRequired(),
       sendInvitationEmail: async ({ id, email, organization: invitedOrg }) => {
         const invitationUrl = new URL("/en/accept-invitation", authOrigin);

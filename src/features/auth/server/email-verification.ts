@@ -1,5 +1,7 @@
-// Production requires verified emails unless REQUIRE_EMAIL_VERIFICATION is explicitly "false"
-// (for previews without an email provider). Never relaxed outside production's own opt-out.
+// Production requires verified emails. REQUIRE_EMAIL_VERIFICATION=false relaxes that for previews without
+// an email provider, and is ignored on the Vercel production environment so a mis-scoped variable cannot
+// weaken real customers' sign-in.
 export function isEmailVerificationRequired(env: NodeJS.ProcessEnv = process.env) {
-  return env.NODE_ENV === "production" && env.REQUIRE_EMAIL_VERIFICATION !== "false";
+  if (env.NODE_ENV !== "production") return false;
+  return env.VERCEL_ENV === "production" || env.REQUIRE_EMAIL_VERIFICATION !== "false";
 }

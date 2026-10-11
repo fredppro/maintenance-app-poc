@@ -306,14 +306,16 @@ its pooled endpoint when the deployment creates many short-lived connections.
 Connection limits, TLS, and pooler behavior remain provider-specific settings.
 
 **Vercel / Neon.** Vercel runs `pnpm vercel-build` automatically. It applies migrations
-(`prisma migrate deploy`, using `MIGRATION_DATABASE_URL`), then creates or updates the
-restricted runtime role named in `DATABASE_URL` (`pnpm db:provision-role`, idempotent), then
-builds. Set these Vercel variables for the build: `MIGRATION_DATABASE_URL` (Neon owner),
-`DATABASE_URL` (the runtime role and the password you choose; it is created for you; if a
-provider integration owns `DATABASE_URL`, set `APP_DATABASE_URL` instead, which takes priority),
-`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`. Run `pnpm db:verify-role` against `DATABASE_URL` to
-confirm RLS cannot be bypassed. Use a Production-only `MIGRATION_DATABASE_URL` if previews
-should not migrate your database.
+(`prisma migrate deploy`, with the owner connection: `MIGRATION_DATABASE_URL`, else the integration's
+`DATABASE_URL_UNPOOLED`), then creates or updates the restricted runtime role
+(`pnpm db:provision-role`, idempotent), then builds. With the Neon integration, `DATABASE_URL` is the
+owner; on Vercel the app and the build derive a restricted role from it, named
+`maintenance_runtime_<VERCEL_ENV>` (for example `maintenance_runtime_production`), with a password
+derived from `BETTER_AUTH_SECRET`. Each environment has its own role because every build resets its role's
+password. Keep `BETTER_AUTH_SECRET` identical between builds of the same environment, and run
+`pnpm db:verify-role` against the deployed runtime connection to confirm RLS cannot be bypassed.
+`APP_DATABASE_URL`, when set, takes priority over the derivation (the owner-role scripts ignore it).
+Use a Production-only `MIGRATION_DATABASE_URL` if previews should not migrate your database.
 
 The committed migration history initializes the schema, including the
 historical `MaterialConsumed` creation and rename migrations. A forward
@@ -354,8 +356,8 @@ transition.
 | `STORAGE_LOCAL_DIR` | Optional | Local-disk directory used when `S3_BUCKET` is unset. Defaults to `.storage` (git-ignored). |
 | `RESEND_API_KEY` | Production verification, password recovery, and invitations | Resend API credential. Configure through a secret manager; no key is needed for local login/signup without email delivery. |
 | `AUTH_EMAIL_FROM` | Production verification, password recovery, and invitations | Verified sender in Resend, e.g. `Maintenance Scheduler <accounts@example.com>`. |
-| `REQUIRE_EMAIL_VERIFICATION` | Optional (previews) | Set to `false` to skip email verification in production when no email provider is configured. Leave unset in real production. |
-| `ALLOW_PUBLIC_SIGNUP` | Optional (previews) | Set to `true` to allow anyone to sign up and create an organisation in production. Leave unset for the invite-only pilot. |
+| `REQUIRE_EMAIL_VERIFICATION` | Optional (previews) | Set to `false` to skip email verification on a preview with no email provider. Ignored when `VERCEL_ENV=production`. |
+| `ALLOW_PUBLIC_SIGNUP` | Optional (previews) | Set to `true` to allow anyone to sign up and create an organisation on a preview. Ignored when `VERCEL_ENV=production`; leave unset for the invite-only pilot. |
 | `PILOT_BOOTSTRAP_EMAIL` | Initial production owner setup | Email permitted to create the first production account while no customer organization exists. An unclaimed legacy workspace is ignored. Remove after initial setup. |
 | `LEGACY_OWNER_EMAIL` | Legacy data assignment only | Verified existing account selected to own migrated legacy data. |
 | `LEGACY_ORGANIZATION_NAME` | Legacy data assignment only | Approved customer organization name to replace the legacy workspace name. |

@@ -1,9 +1,10 @@
 import { createAccessControl } from "better-auth/plugins/access";
 
-// Deleting an organization goes through the owner-only deletion request (30-day grace period, export,
-// audit trail) and the operator purge job, never through Better Auth's immediate delete endpoint.
+// Renaming and profile changes go through the audited Organization Settings action, and deleting goes
+// through the owner-only deletion request (30-day grace period, export, audit trail) and the operator
+// purge job. Better Auth's own update and delete endpoints stay closed to every role.
 const fullOrganizationAccess = {
-  organization: ["update"],
+  organization: [],
   member: [],
   invitation: ["create", "cancel"],
   team: ["create", "update", "delete"],
@@ -11,7 +12,7 @@ const fullOrganizationAccess = {
 } as const;
 
 const adminOrganizationAccess = {
-  organization: ["update"],
+  organization: [],
   member: [],
   invitation: ["create", "cancel"],
   team: ["create", "update", "delete"],
