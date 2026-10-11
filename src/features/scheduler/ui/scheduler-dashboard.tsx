@@ -3,13 +3,22 @@
 import { useTranslations } from "next-intl";
 import { TaskType } from "../../../../prisma/generated/prisma/enums";
 import { Separator } from "@/components/ui/separator";
+import type { OnboardingProgress } from "@/features/organization/shared/onboarding";
 import { cn } from "@/lib/utils";
 import { useSchedulerStore } from "../store/scheduler-provider";
+import { GettingStarted } from "./getting-started";
 import { SchedulerToolbar } from "./scheduler-toolbar";
 import { TimelineGrid } from "./timeline-grid";
 
-/** Schedule page body: summary strip, toolbar, timeline and legend. */
-export function SchedulerDashboard() {
+/**
+ * Schedule page body: optional getting-started checklist, summary strip, toolbar, timeline and legend.
+ * `onboarding` is null when the checklist should not show.
+ */
+export function SchedulerDashboard({
+  onboarding = null,
+}: {
+  onboarding?: OnboardingProgress | null;
+}) {
   const entries = useSchedulerStore((state) => state.entries);
   const equipment = useSchedulerStore((state) => state.equipment);
   const t = useTranslations("Dashboard");
@@ -25,6 +34,7 @@ export function SchedulerDashboard() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-3 sm:p-4">
       <h1 className="sr-only">{t("title")}</h1>
+      {onboarding && <GettingStarted progress={onboarding} />}
       <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2 text-sm">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Stat

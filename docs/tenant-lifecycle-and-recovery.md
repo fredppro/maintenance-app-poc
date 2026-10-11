@@ -13,6 +13,12 @@ pnpm ops:tenant list          # status, owner (or the pending invitation), membe
 
 The invitation's required inviter is a credential-less `platform-operator@system.invalid` user; it can be referenced but never signed in to.
 
+## Getting started checklist
+
+Owners and admins see a compact "Getting started" card at the top of the Schedule page. Nothing about progress is stored: each step is derived from organization data on every load — a site exists, equipment exists, a worker exists (a task needs one), a task exists, and the team step is done when there is a second member or a non-owner invitation was sent (the operator-created owner invitation does not count). Equipment and worker counts come from the tenant client (`db`, RLS), members and invitations from app-level tables filtered by `organizationId`; the logic is in `src/features/organization/server/onboarding.ts` and `shared/onboarding.ts`.
+
+Hiding the card (the X, or "Dismiss" once everything is done) sets `tenant_settings.onboardingDismissedAt` for the whole organization; there is no restore control yet (clear the column to bring it back).
+
 ## Tenant lifecycle
 
 Each organization has a `tenant_settings` row (`status`, `isolationTier`). A missing row means `ACTIVE`.

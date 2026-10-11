@@ -545,5 +545,53 @@
     "confirmDescription": "Everyone loses access immediately. Export your data first; it is permanently deleted after 30 days.",
     "keep": "Keep organization",
     "confirmDeletion": "Schedule deletion"
+  },
+  "Onboarding": {
+    "title": "Getting started",
+    "remaining": "{count, plural, one {# step remaining} other {# steps remaining}}",
+    "completeTitle": "You're all set",
+    "completeDescription": "Your organization is fully set up.",
+    "progress": "{done} of {total} steps complete",
+    "collapse": "Collapse getting started",
+    "expand": "Expand getting started",
+    "hide": "Hide getting started",
+    "dismiss": "Dismiss",
+    "dismissError": "Could not hide the checklist. Please try again.",
+    "steps": {
+      "organization": {
+        "done": "Organization set up"
+      },
+      "site": {
+        "title": "Add your first site",
+        "description": "Sites group your equipment by location.",
+        "action": "Add site",
+        "done": "First site added"
+      },
+      "equipment": {
+        "title": "Add your equipment",
+        "description": "Register the equipment you need to maintain.",
+        "action": "Add equipment",
+        "done": "Equipment added"
+      },
+      "workers": {
+        "title": "Add your workers",
+        "description": "Add the technicians who carry out maintenance.",
+        "action": "Add workers",
+        "done": "Workers added"
+      },
+      "task": {
+        "title": "Schedule your first maintenance",
+        "description": "Plan a task for one of your equipment.",
+        "needsPrerequisites": "Add equipment and at least one worker first, then schedule maintenance.",
+        "action": "Schedule maintenance",
+        "done": "First maintenance scheduled"
+      },
+      "team": {
+        "title": "Invite your team",
+        "description": "Invite technicians, managers and other users.",
+        "action": "Invite team",
+        "done": "Team invited"
+      }
+    }
   }
 }

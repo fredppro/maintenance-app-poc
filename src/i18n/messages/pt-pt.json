@@ -545,5 +545,53 @@
     "confirmDescription": "Todos perdem o acesso de imediato. Exporte primeiro os dados; são eliminados permanentemente após 30 dias.",
     "keep": "Manter organização",
     "confirmDeletion": "Agendar eliminação"
+  },
+  "Onboarding": {
+    "title": "Primeiros passos",
+    "remaining": "{count, plural, one {Falta # passo} other {Faltam # passos}}",
+    "completeTitle": "Tudo pronto",
+    "completeDescription": "A sua organização está totalmente configurada.",
+    "progress": "{done} de {total} passos concluídos",
+    "collapse": "Recolher primeiros passos",
+    "expand": "Expandir primeiros passos",
+    "hide": "Ocultar primeiros passos",
+    "dismiss": "Dispensar",
+    "dismissError": "Não foi possível ocultar a lista. Tente novamente.",
+    "steps": {
+      "organization": {
+        "done": "Organização configurada"
+      },
+      "site": {
+        "title": "Adicione o seu primeiro local",
+        "description": "Os locais agrupam o seu equipamento por localização.",
+        "action": "Adicionar local",
+        "done": "Primeiro local adicionado"
+      },
+      "equipment": {
+        "title": "Adicione o seu equipamento",
+        "description": "Registe o equipamento que precisa de manter.",
+        "action": "Adicionar equipamento",
+        "done": "Equipamento adicionado"
+      },
+      "workers": {
+        "title": "Adicione os seus trabalhadores",
+        "description": "Adicione os técnicos que realizam a manutenção.",
+        "action": "Adicionar trabalhadores",
+        "done": "Trabalhadores adicionados"
+      },
+      "task": {
+        "title": "Agende a primeira manutenção",
+        "description": "Planeie uma tarefa para um dos seus equipamentos.",
+        "needsPrerequisites": "Adicione primeiro equipamento e pelo menos um trabalhador, e depois agende a manutenção.",
+        "action": "Agendar manutenção",
+        "done": "Primeira manutenção agendada"
+      },
+      "team": {
+        "title": "Convide a sua equipa",
+        "description": "Convide técnicos, gestores e outros utilizadores.",
+        "action": "Convidar equipa",
+        "done": "Equipa convidada"
+      }
+    }
   }
 }
