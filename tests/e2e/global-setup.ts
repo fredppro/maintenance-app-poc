@@ -11,6 +11,14 @@ import {
   TENANT_B_TASK_ID,
 } from "./tenant-fixtures";
 
+/** Midweek of the current week, so the seeded tasks are on the week the timeline opens on whatever day this runs. */
+function currentWeekSlot(startHour: number) {
+  const start = new Date();
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7) + 2);
+  start.setHours(startHour, 0, 0, 0);
+  return { startTime: start, endTime: new Date(start.getTime() + 60 * 60 * 1000) };
+}
+
 export default async function globalSetup() {
   const databaseUrl = validateE2EDatabaseUrl(
     process.env.E2E_DATABASE_URL,
@@ -204,14 +212,14 @@ export default async function globalSetup() {
         organizationId: organization.id,
         equipmentId: equipment.id,
         title: "E2E - Tenant A private maintenance record",
+        ...currentWeekSlot(9),
       },
       create: {
         id: TENANT_A_TASK_ID,
         organizationId: organization.id,
         equipmentId: equipment.id,
         title: "E2E - Tenant A private maintenance record",
-        startTime: new Date("2026-10-06T08:00:00.000Z"),
-        endTime: new Date("2026-10-06T09:00:00.000Z"),
+        ...currentWeekSlot(9),
       },
     });
 
@@ -270,14 +278,14 @@ export default async function globalSetup() {
         organizationId: tenantBOrganization.id,
         equipmentId: tenantBEquipment.id,
         title: "E2E - Tenant B confidential maintenance record",
+        ...currentWeekSlot(11),
       },
       create: {
         id: TENANT_B_TASK_ID,
         organizationId: tenantBOrganization.id,
         equipmentId: tenantBEquipment.id,
         title: "E2E - Tenant B confidential maintenance record",
-        startTime: new Date("2026-10-06T10:00:00.000Z"),
-        endTime: new Date("2026-10-06T11:00:00.000Z"),
+        ...currentWeekSlot(11),
       },
     });
   } finally {

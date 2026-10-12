@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { auth } from "@/features/auth/server/auth";
 import prisma, { forTenant } from "@/lib/prisma";
@@ -140,9 +141,12 @@ export async function setActiveSiteCookie(siteId: string) {
   });
 }
 
-export async function getOrganizationContext(
-  permission: TenantPermission = "viewMaintenance",
-) {
+/**
+ * Who is making the request and in which organization. Cached per request: a dashboard page renders a
+ * layout and several loaders that each need it, and it costs a session, membership and status lookup.
+ * It is deliberately not cached across requests, so a role or status change applies on the next request.
+ */
+const loadMembership = cache(async () => {
   const requestHeaders = await headers();
   const session = await auth.api.getSession({ headers: requestHeaders });
 
@@ -168,19 +172,41 @@ export async function getOrganizationContext(
     where: { organizationId },
     select: { status: true },
   });
-  if (settings && settings.status !== "ACTIVE") {
-    throw new TenantInactiveError(settings.status);
-  }
-
-  if (!roleCan(membership.role, permission)) {
-    throw new PermissionDeniedError(permission);
-  }
 
   return {
     userId: session.user.id,
     organizationId,
-    db: forTenant(organizationId),
     role: membership.role,
+    status: settings?.status ?? "ACTIVE",
+  };
+});
+
+const loadSites = cache(async (organizationId: string) =>
+  forTenant(organizationId).site.findMany({
+    where: { organizationId },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  }),
+);
+
+export async function getOrganizationContext(
+  permission: TenantPermission = "viewMaintenance",
+) {
+  const { userId, organizationId, role, status } = await loadMembership();
+
+  if (status !== "ACTIVE") {
+    throw new TenantInactiveError(status);
+  }
+
+  if (!roleCan(role, permission)) {
+    throw new PermissionDeniedError(permission);
+  }
+
+  return {
+    userId,
+    organizationId,
+    db: forTenant(organizationId),
+    role,
   };
 }
 
@@ -189,11 +215,7 @@ export async function getTenantContext(
 ) {
   const { userId, organizationId, db, role } =
     await getOrganizationContext(permission);
-  const sites = await db.site.findMany({
-    where: { organizationId },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  const sites = await loadSites(organizationId);
 
   if (sites.length === 0) {
     throw new SiteSetupRequiredError();

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
+import { TASK_STATUSES } from "../task-status";
 
 const idSchema = z.string().trim().min(1);
 
@@ -30,7 +31,7 @@ export const createTaskSchema = z
     startTime: z.coerce.date(),
     endTime: z.coerce.date(),
     equipmentId: idSchema,
-    status: z.string().trim().min(1).optional(),
+    status: z.enum(TASK_STATUSES).optional(),
     workerIds: z.array(idSchema).default([]),
     materials: z.array(materialSchema).optional(),
   })
@@ -51,7 +52,7 @@ export const updateTaskSchema = z
     startTime: z.coerce.date().optional(),
     endTime: z.coerce.date().optional(),
     equipmentId: idSchema.optional(),
-    status: z.string().trim().min(1).optional(),
+    status: z.enum(TASK_STATUSES).optional(),
     workerIds: z.array(idSchema).optional(),
     workerLogs: z.array(workerLogSchema).optional(),
     materials: z.array(materialSchema).optional(),

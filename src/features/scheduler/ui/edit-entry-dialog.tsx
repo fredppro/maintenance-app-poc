@@ -37,6 +37,7 @@ import { notifyTaskUpdated } from "@/features/scheduler/events";
 import { getValidLocale } from "src/i18n/locale";
 import { deleteTask, updateTask } from "../server/actions";
 import { MaintenanceEntry, UpdateEntryPayload } from "../types";
+import { TASK_STATUSES } from "../task-status";
 import { useSchedulerStore } from "../store/scheduler-provider";
 import { useRouter } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
@@ -418,7 +419,7 @@ export function EditEntryDialog({
     value: w.id,
   }));
 
-  const statusOptions = ["scheduled", "in-progress", "completed"] as const;
+  const statusOptions = TASK_STATUSES;
   const equipSubtitle = [equip?.name, equip?.category]
     .filter(Boolean)
     .join(" - ");
