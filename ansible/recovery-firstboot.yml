@@ -1,0 +1,268 @@
+---
+- name: Bootstrap WireGuard access on a clean recovery VPS
+  hosts: recovery
+  become: true
+  gather_facts: false
+
+  vars:
+    wireguard_interface: wg0
+    wireguard_port: 51820
+
+  pre_tasks:
+    - name: Verify the recovery address and bootstrap source are explicit
+      ansible.builtin.assert:
+        that:
+          - recovery_public_ipv4 is defined
+          - ansible_host == recovery_public_ipv4
+          - bootstrap_ssh_source_cidr is defined
+          - bootstrap_ssh_source_cidr is match('^([0-9]{1,3}\\.){3}[0-9]{1,3}/32$')
+          - wireguard_server_ip is defined
+          - wireguard_client_ip is defined
+          - wireguard_client_public_key is defined
+          - operator_ssh_public_key_path is defined
+        fail_msg: "Set the recovery address, operator /32, WireGuard values, and public-key path in the recovery inventory."
+
+    - name: Ensure Python is available for Ansible modules
+      ansible.builtin.raw: |
+        if test -x /usr/bin/python3; then
+          echo PYTHON_PRESENT
+        else
+          apt-get update && apt-get install -y python3 && echo PYTHON_INSTALLED
+        fi
+      register: python_bootstrap
+      changed_when: "'PYTHON_INSTALLED' in python_bootstrap.stdout"
+
+    - name: Gather host facts
+      ansible.builtin.setup:
+
+    - name: Require Ubuntu 24.04
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == "Ubuntu"
+          - ansible_distribution_version == "24.04"
+        fail_msg: "This recovery bootstrap is written for the Contabo Ubuntu 24.04 image."
+
+    - name: Verify the operator public key is readable on the controller
+      ansible.builtin.assert:
+        that:
+          - lookup('ansible.builtin.file', operator_ssh_public_key_path) is match('^ssh-ed25519 ')
+        fail_msg: "operator_ssh_public_key_path must point to the operator's public Ed25519 key."
+      delegate_to: localhost
+      become: false
+
+  tasks:
+    - name: Refresh apt metadata
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install first-boot network packages
+      ansible.builtin.apt:
+        name:
+          - ufw
+          - wireguard
+        state: present
+
+    - name: Set recovery hostname
+      ansible.builtin.hostname:
+        name: "{{ recovery_hostname }}"
+
+    - name: Ensure ops administrator account exists
+      ansible.builtin.user:
+        name: ops
+        groups: sudo
+        append: true
+        shell: /bin/bash
+
+    - name: Ensure ops SSH directory permissions
+      ansible.builtin.file:
+        path: /home/ops/.ssh
+        state: directory
+        owner: ops
+        group: ops
+        mode: "0700"
+
+    - name: Install the operator public key for ops
+      ansible.builtin.lineinfile:
+        path: /home/ops/.ssh/authorized_keys
+        line: "{{ lookup('ansible.builtin.file', operator_ssh_public_key_path) | trim }}"
+        create: true
+        owner: ops
+        group: ops
+        mode: "0600"
+
+    - name: Ensure WireGuard directory permissions
+      ansible.builtin.file:
+        path: /etc/wireguard
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Inspect the recovery WireGuard private key without reading it
+      ansible.builtin.stat:
+        path: /etc/wireguard/server_private.key
+      register: wireguard_private_key_file
+
+    - name: Generate a new server WireGuard private key on the VPS
+      ansible.builtin.command: wg genkey
+      register: generated_wireguard_private_key
+      changed_when: true
+      when: not wireguard_private_key_file.stat.exists
+      no_log: true
+
+    - name: Store the generated server WireGuard private key on the VPS
+      ansible.builtin.copy:
+        dest: /etc/wireguard/server_private.key
+        content: "{{ generated_wireguard_private_key.stdout }}\n"
+        owner: root
+        group: root
+        mode: "0600"
+      when: not wireguard_private_key_file.stat.exists
+      no_log: true
+
+    - name: Ensure server WireGuard private key permissions
+      ansible.builtin.file:
+        path: /etc/wireguard/server_private.key
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Derive the server WireGuard public key on the VPS
+      ansible.builtin.shell: wg pubkey < /etc/wireguard/server_private.key
+      args:
+        executable: /bin/bash
+      register: wireguard_server_public_key
+      changed_when: false
+      no_log: true
+
+    - name: Allow bootstrap SSH only from the operator IPv4 /32
+      community.general.ufw:
+        rule: allow
+        direction: in
+        from_ip: "{{ bootstrap_ssh_source_cidr }}"
+        port: "22"
+        proto: tcp
+        comment: Temporary recovery bootstrap SSH
+
+    - name: Allow WireGuard before enabling the host firewall
+      community.general.ufw:
+        rule: allow
+        port: "{{ wireguard_port }}"
+        proto: udp
+
+    - name: Allow intended web ports before enabling the host firewall
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "80"
+        - "443"
+
+    - name: Ensure UFW filters IPv6 too
+      ansible.builtin.lineinfile:
+        path: /etc/default/ufw
+        regexp: "^IPV6="
+        line: IPV6=yes
+        mode: "0644"
+
+    - name: Set UFW default incoming policy
+      community.general.ufw:
+        direction: incoming
+        default: deny
+
+    - name: Set UFW default outgoing policy
+      community.general.ufw:
+        direction: outgoing
+        default: allow
+
+    - name: Enable UFW with low-level logging
+      community.general.ufw:
+        state: enabled
+        logging: low
+
+    - name: Reconcile WireGuard configuration without exposing the private key
+      ansible.builtin.shell: |
+        set -eu
+        tmp="$(mktemp /etc/wireguard/wg0.conf.XXXXXX)"
+        trap 'rm -f "$tmp"' EXIT
+        {
+          printf '[Interface]\nAddress = %s/24\nListenPort = %s\nPrivateKey = ' '{{ wireguard_server_ip }}' '{{ wireguard_port }}'
+          cat /etc/wireguard/server_private.key
+          printf '\n\n[Peer]\nPublicKey = %s\nAllowedIPs = %s/32\n' '{{ wireguard_client_public_key }}' '{{ wireguard_client_ip }}'
+        } > "$tmp"
+        chmod 600 "$tmp"
+        if cmp -s "$tmp" /etc/wireguard/wg0.conf; then
+          echo unchanged
+        else
+          mv "$tmp" /etc/wireguard/wg0.conf
+          trap - EXIT
+          echo changed
+        fi
+      args:
+        executable: /bin/bash
+      register: wireguard_config
+      changed_when: wireguard_config.stdout | default('') == "changed"
+      no_log: true
+      notify: Restart WireGuard
+
+    - name: Apply WireGuard configuration before verification
+      ansible.builtin.meta: flush_handlers
+
+    - name: Ensure WireGuard starts at boot
+      ansible.builtin.systemd_service:
+        name: wg-quick@wg0
+        enabled: true
+        state: started
+
+    - name: Allow SSH through WireGuard
+      community.general.ufw:
+        rule: allow
+        direction: in
+        interface: "{{ wireguard_interface }}"
+        port: "22"
+        proto: tcp
+        comment: SSH via WireGuard
+
+    - name: Read the active WireGuard interface address
+      ansible.builtin.command: ip -o -4 addr show dev {{ wireguard_interface }}
+      register: wireguard_address
+      changed_when: false
+
+    - name: Read the active WireGuard listen port
+      ansible.builtin.command: wg show {{ wireguard_interface }} listen-port
+      register: wireguard_listen_port
+      changed_when: false
+
+    - name: Read active WireGuard peers
+      ansible.builtin.command: wg show {{ wireguard_interface }} peers
+      register: wireguard_peers
+      changed_when: false
+
+    - name: Verify the live recovery tunnel
+      ansible.builtin.assert:
+        that:
+          - "wireguard_server_ip + '/24' in wireguard_address.stdout"
+          - wireguard_listen_port.stdout | int == wireguard_port
+          - wireguard_peers.stdout_lines | length == 1
+          - wireguard_client_public_key in wireguard_peers.stdout_lines
+        fail_msg: "The live recovery WireGuard interface differs from the requested configuration."
+
+    - name: Store the server's public WireGuard key for profile setup
+      ansible.builtin.copy:
+        dest: /etc/wireguard/server_public.key
+        content: "{{ wireguard_server_public_key.stdout }}\n"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Display the new server public key for the local Mac profile
+      ansible.builtin.debug:
+        msg: "Recovery WireGuard server public key: {{ wireguard_server_public_key.stdout }}"
+
+  handlers:
+    - name: Restart WireGuard
+      ansible.builtin.systemd_service:
+        name: wg-quick@wg0
+        enabled: true
+        state: restarted

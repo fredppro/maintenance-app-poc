@@ -1,0 +1,486 @@
+---
+- name: Converge the maintenance VPS security baseline
+  hosts: maintenance
+  become: true
+  gather_facts: true
+
+  vars:
+    expected_host: 10.242.0.1
+    expected_hostname: maint-prod-01
+    wireguard_interface: wg0
+    wireguard_server_ip: 10.242.0.1
+    wireguard_client_ip: 10.242.0.2
+    wireguard_port: 51820
+    swap_size_bytes: 2147483648
+    fail2ban_maxretry: 5
+    fail2ban_findtime: 10m
+    fail2ban_bantime: 10m
+
+  pre_tasks:
+    - name: Require the expected Ubuntu release
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == "Ubuntu"
+          - ansible_distribution_version == "24.04"
+        fail_msg: "This playbook is written for the installed Ubuntu 24.04 VPS."
+
+    - name: Require the connection to use the VPN address
+      ansible.builtin.assert:
+        that:
+          - ansible_host == expected_host
+        fail_msg: "Run this playbook through WireGuard at 10.242.0.1, not over public SSH."
+
+    - name: Verify the WireGuard interface is already up
+      ansible.builtin.command: wg show {{ wireguard_interface }}
+      changed_when: false
+      check_mode: false
+
+    - name: Read the configured WireGuard interface address
+      ansible.builtin.command: ip -o -4 addr show dev {{ wireguard_interface }}
+      register: wireguard_address
+      changed_when: false
+      check_mode: false
+
+    - name: Read the active WireGuard listen port
+      ansible.builtin.command: wg show {{ wireguard_interface }} listen-port
+      register: wireguard_listen_port
+      changed_when: false
+      check_mode: false
+
+    - name: Require the expected WireGuard address and port
+      ansible.builtin.assert:
+        that:
+          - "wireguard_server_ip + '/24' in wireguard_address.stdout"
+          - wireguard_listen_port.stdout | int == wireguard_port
+        fail_msg: "The active WireGuard address or port differs from inventory; refusing to rewrite its configuration."
+
+    - name: Inspect the WireGuard server private-key file without reading its contents
+      ansible.builtin.stat:
+        path: /etc/wireguard/server_private.key
+      register: wireguard_private_key_file
+
+    - name: Require the existing server private key
+      ansible.builtin.assert:
+        that:
+          - wireguard_private_key_file.stat.exists
+        fail_msg: "The server private key is missing; refusing to rewrite WireGuard."
+
+    - name: Ensure WireGuard directory permissions
+      ansible.builtin.file:
+        path: /etc/wireguard
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Ensure server private key permissions
+      ansible.builtin.file:
+        path: /etc/wireguard/server_private.key
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Derive the server public key from the on-host private key
+      ansible.builtin.shell: wg pubkey < /etc/wireguard/server_private.key
+      args:
+        executable: /bin/bash
+      register: wireguard_keyfile_public
+      changed_when: false
+      check_mode: false
+
+    - name: Read the running WireGuard public key
+      ansible.builtin.command: wg show {{ wireguard_interface }} public-key
+      register: wireguard_running_public
+      changed_when: false
+      check_mode: false
+
+    - name: Refuse to rotate the active WireGuard identity
+      ansible.builtin.assert:
+        that:
+          - wireguard_keyfile_public.stdout == wireguard_running_public.stdout
+        fail_msg: "The on-disk server key differs from the active interface key; refusing to rewrite WireGuard."
+
+    - name: Read the configured WireGuard peer keys
+      ansible.builtin.command: wg show {{ wireguard_interface }} peers
+      register: wireguard_peers
+      changed_when: false
+      check_mode: false
+
+    - name: Require the expected Mac peer
+      ansible.builtin.assert:
+        that:
+          - wireguard_peers.stdout_lines | length == 1
+          - wireguard_client_public_key in wireguard_peers.stdout_lines
+        fail_msg: "The active WireGuard peer set differs from inventory.yml; refusing to replace it."
+
+  tasks:
+    - name: Refresh apt metadata
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install baseline packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - fail2ban
+          - ufw
+          - unattended-upgrades
+          - wireguard
+        state: present
+
+    - name: Set server hostname
+      ansible.builtin.hostname:
+        name: "{{ expected_hostname }}"
+
+    - name: Set UTC timezone
+      ansible.builtin.command: timedatectl set-timezone UTC
+      when: ansible_date_time.tz != "UTC"
+      changed_when: true
+
+    - name: Ensure ops remains a sudo administrator
+      ansible.builtin.user:
+        name: ops
+        groups: sudo
+        append: true
+        shell: /bin/bash
+
+    - name: Install SSH hardening policy
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/00-hardening.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+          PubkeyAuthentication yes
+          PermitRootLogin prohibit-password
+          AllowUsers ops root
+          MaxAuthTries 3
+          LoginGraceTime 20
+          X11Forwarding no
+          AllowAgentForwarding no
+          ClientAliveInterval 300
+          ClientAliveCountMax 2
+      notify: Validate and reload SSH
+
+    - name: Ensure Fail2ban SSH jail policy
+      ansible.builtin.copy:
+        dest: /etc/fail2ban/jail.d/zz-maintenance-sshd.local
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [sshd]
+          enabled = true
+          backend = systemd
+          maxretry = {{ fail2ban_maxretry }}
+          findtime = {{ fail2ban_findtime }}
+          bantime = {{ fail2ban_bantime }}
+      notify: Restart Fail2ban
+
+    - name: Enable and start Fail2ban
+      ansible.builtin.service:
+        name: fail2ban
+        enabled: true
+        state: started
+
+    - name: Persist the derived WireGuard server public key
+      ansible.builtin.copy:
+        dest: /etc/wireguard/server_public.key
+        content: "{{ wireguard_keyfile_public.stdout }}\n"
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Check WireGuard configuration drift without exposing the private key
+      ansible.builtin.shell: |
+        set -eu
+        tmp="$(mktemp /etc/wireguard/wg0.conf.XXXXXX)"
+        trap 'rm -f "$tmp"' EXIT
+        {
+          printf '[Interface]\nAddress = %s/24\nListenPort = %s\nPrivateKey = ' '{{ wireguard_server_ip }}' '{{ wireguard_port }}'
+          cat /etc/wireguard/server_private.key
+          printf '\n\n[Peer]\nPublicKey = %s\nAllowedIPs = %s/32\n' '{{ wireguard_client_public_key }}' '{{ wireguard_client_ip }}'
+        } > "$tmp"
+        chmod 600 "$tmp"
+        if cmp -s "$tmp" /etc/wireguard/wg0.conf; then
+          echo unchanged
+        else
+          echo changed
+        fi
+      args:
+        executable: /bin/bash
+      register: wireguard_config_check
+      changed_when: wireguard_config_check.stdout | default('') == "changed"
+      when: ansible_check_mode
+      check_mode: false
+      no_log: true
+
+    - name: Reconcile WireGuard configuration without exposing the private key
+      ansible.builtin.shell: |
+        set -eu
+        tmp="$(mktemp /etc/wireguard/wg0.conf.XXXXXX)"
+        trap 'rm -f "$tmp"' EXIT
+        {
+          printf '[Interface]\nAddress = %s/24\nListenPort = %s\nPrivateKey = ' '{{ wireguard_server_ip }}' '{{ wireguard_port }}'
+          cat /etc/wireguard/server_private.key
+          printf '\n\n[Peer]\nPublicKey = %s\nAllowedIPs = %s/32\n' '{{ wireguard_client_public_key }}' '{{ wireguard_client_ip }}'
+        } > "$tmp"
+        chmod 600 "$tmp"
+        if cmp -s "$tmp" /etc/wireguard/wg0.conf; then
+          echo unchanged
+        else
+          mv "$tmp" /etc/wireguard/wg0.conf
+          trap - EXIT
+          echo changed
+        fi
+      args:
+        executable: /bin/bash
+      register: wireguard_config
+      changed_when: wireguard_config.stdout | default('') == "changed"
+      when: not ansible_check_mode
+      no_log: true
+      notify: Sync WireGuard configuration
+
+    - name: Secure WireGuard configuration permissions
+      ansible.builtin.file:
+        path: /etc/wireguard/wg0.conf
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Ensure UFW filters IPv6 too
+      ansible.builtin.lineinfile:
+        path: /etc/default/ufw
+        regexp: "^IPV6="
+        line: IPV6=yes
+        mode: "0644"
+
+    - name: Set UFW default incoming policy
+      community.general.ufw:
+        direction: incoming
+        default: deny
+
+    - name: Set UFW default outgoing policy
+      community.general.ufw:
+        direction: outgoing
+        default: allow
+
+    - name: Allow SSH only through WireGuard
+      community.general.ufw:
+        rule: allow
+        direction: in
+        interface: "{{ wireguard_interface }}"
+        port: "22"
+        proto: tcp
+        comment: SSH via WireGuard
+
+    - name: Allow HTTP
+      community.general.ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+
+    - name: Allow HTTPS
+      community.general.ufw:
+        rule: allow
+        port: "443"
+        proto: tcp
+
+    - name: Allow WireGuard
+      community.general.ufw:
+        rule: allow
+        port: "{{ wireguard_port }}"
+        proto: udp
+
+    - name: Remove any public SSH allow rule
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+        delete: true
+
+    - name: Enable UFW with low-level logging
+      community.general.ufw:
+        state: enabled
+        logging: low
+
+    - name: Ensure WireGuard starts at boot
+      ansible.builtin.service:
+        name: wg-quick@wg0
+        enabled: true
+        state: started
+
+    - name: Verify the live WireGuard peer after configuration
+      ansible.builtin.command: wg show {{ wireguard_interface }} peers
+      register: live_wireguard_peers
+      changed_when: false
+      check_mode: false
+
+    - name: Require the expected live peer after configuration
+      ansible.builtin.assert:
+        that:
+          - live_wireguard_peers.stdout_lines | length == 1
+          - wireguard_client_public_key in live_wireguard_peers.stdout_lines
+        fail_msg: "The live WireGuard peer set does not match inventory.yml."
+
+    - name: Enable unattended package-list updates and security upgrades
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Unattended-Upgrade "1";
+
+    - name: Disable automatic reboot by unattended upgrades
+      ansible.builtin.lineinfile:
+        path: /etc/apt/apt.conf.d/50unattended-upgrades
+        regexp: '^\s*(//\s*)?Unattended-Upgrade::Automatic-Reboot\s+'
+        line: 'Unattended-Upgrade::Automatic-Reboot "false";'
+        mode: "0644"
+
+    - name: Inspect swap file
+      ansible.builtin.stat:
+        path: /swapfile
+      register: swapfile_stat
+
+    - name: Require any existing swap file to have the expected size
+      ansible.builtin.assert:
+        that:
+          - swapfile_stat.stat.size | int == swap_size_bytes
+        fail_msg: "Existing /swapfile is not 2 GiB; inspect it before changing it."
+      when: swapfile_stat.stat.exists
+
+    - name: Create 2 GiB swap file when absent
+      ansible.builtin.command: fallocate -l 2G /swapfile
+      args:
+        creates: /swapfile
+      register: swapfile_created
+
+    - name: Secure swap file permissions
+      ansible.builtin.file:
+        path: /swapfile
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Initialize newly created swap file
+      ansible.builtin.command: mkswap /swapfile
+      when: swapfile_created.changed
+
+    - name: Persist swap file in fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        regexp: "^/swapfile\\s+"
+        line: "/swapfile none swap sw 0 0"
+        state: present
+
+    - name: Read active swap areas
+      ansible.builtin.command: swapon --noheadings --raw --show=NAME
+      register: active_swap
+      changed_when: false
+      check_mode: false
+
+    - name: Activate swap file
+      ansible.builtin.command: swapon /swapfile
+      when: "'/swapfile' not in active_swap.stdout_lines"
+
+    - name: Set swap swappiness
+      ansible.builtin.lineinfile:
+        path: /etc/sysctl.d/90-swap.conf
+        regexp: '^\s*vm\.swappiness\s*='
+        line: vm.swappiness=10
+        create: true
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Apply sysctl settings
+
+    - name: Apply pending configuration handlers before validation
+      ansible.builtin.meta: flush_handlers
+
+    - name: Read effective SSH policy
+      ansible.builtin.command: sshd -T
+      register: effective_sshd
+      changed_when: false
+      check_mode: false
+
+    - name: Read UFW status
+      ansible.builtin.command: ufw status
+      register: effective_ufw
+      changed_when: false
+      check_mode: false
+
+    - name: Read effective Fail2ban settings
+      ansible.builtin.command: "fail2ban-client get sshd {{ item }}"
+      loop:
+        - maxretry
+        - findtime
+        - bantime
+      register: effective_fail2ban
+      changed_when: false
+      check_mode: false
+
+    - name: Read effective timezone
+      ansible.builtin.command: timedatectl show --property=Timezone --value
+      register: effective_timezone
+      changed_when: false
+      check_mode: false
+
+    - name: Read active swap areas after convergence
+      ansible.builtin.command: swapon --noheadings --raw --show=NAME
+      register: verified_active_swap
+      changed_when: false
+      check_mode: false
+
+    - name: Read unattended-upgrades settings
+      ansible.builtin.command: apt-config dump
+      register: effective_apt_config
+      changed_when: false
+      check_mode: false
+
+    - name: Verify security baseline
+      ansible.builtin.assert:
+        that:
+          - "'passwordauthentication no' in effective_sshd.stdout_lines"
+          - "'kbdinteractiveauthentication no' in effective_sshd.stdout_lines"
+          - "'permitrootlogin without-password' in effective_sshd.stdout_lines or 'permitrootlogin prohibit-password' in effective_sshd.stdout_lines"
+          - "'maxauthtries 3' in effective_sshd.stdout_lines"
+          - "'allowusers ops root' in effective_sshd.stdout or ('allowusers ops' in effective_sshd.stdout_lines and 'allowusers root' in effective_sshd.stdout_lines)"
+          - "'Status: active' in effective_ufw.stdout"
+          - "'22/tcp on wg0' in effective_ufw.stdout"
+          - "'22/tcp ALLOW IN Anywhere' not in effective_ufw.stdout"
+          - "'22/tcp (v6) ALLOW IN Anywhere (v6)' not in effective_ufw.stdout"
+          - "effective_fail2ban.results[0].stdout | int == fail2ban_maxretry"
+          - "effective_fail2ban.results[1].stdout | int == 600"
+          - "effective_fail2ban.results[2].stdout | int == 600"
+          - "'/swapfile' in verified_active_swap.stdout_lines"
+          - "effective_timezone.stdout == 'UTC'"
+          - "'APT::Periodic::Update-Package-Lists \"1\";' in effective_apt_config.stdout"
+          - "'APT::Periodic::Unattended-Upgrade \"1\";' in effective_apt_config.stdout"
+          - "'Unattended-Upgrade::Automatic-Reboot \"false\";' in effective_apt_config.stdout"
+        fail_msg: "A managed setting did not converge to the expected baseline; inspect the task output."
+
+  handlers:
+    - name: Validate and reload SSH
+      ansible.builtin.command: /bin/sh -c "sshd -t && systemctl reload ssh"
+      changed_when: true
+
+    - name: Sync WireGuard configuration
+      ansible.builtin.shell: wg syncconf wg0 <(wg-quick strip wg0)
+      args:
+        executable: /bin/bash
+      changed_when: true
+      no_log: true
+
+    - name: Restart Fail2ban
+      ansible.builtin.service:
+        name: fail2ban
+        state: restarted
+
+    - name: Apply sysctl settings
+      ansible.builtin.command: sysctl --system
+      changed_when: true

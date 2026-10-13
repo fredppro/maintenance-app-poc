@@ -1,0 +1,11 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+.recovery-session.json
+.recovery-session.json.tmp
+.recovery-plan-*/
+__pycache__/
+*.py[cod]
+crash.log
