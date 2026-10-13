@@ -1,0 +1,14 @@
+contabo_instance_id = 203660431
+
+web_ipv4_source_cidrs       = ["0.0.0.0/0"]
+web_ipv6_source_cidrs       = ["::/0"]
+wireguard_ipv4_source_cidrs = ["0.0.0.0/0"]
+wireguard_ipv6_source_cidrs = ["::/0"]
+
+# Recovery VPS provisioning is deliberately disabled by default.
+# Before enabling, verify the live product, price, and Ubuntu 24.04 image ID.
+# recovery_instance_enabled        = true
+# recovery_instance_image_id       = "CONTABO_UBUNTU_24_04_IMAGE_ID"
+# recovery_ssh_public_key_path     = "~/.ssh/maintenance_contabo_2026.pub"
+# bootstrap_ssh_enabled            = true
+# bootstrap_ssh_ipv4_source_cidrs  = ["YOUR_CURRENT_PUBLIC_IPV4/32"]

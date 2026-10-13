@@ -1,0 +1,128 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    env:
+      BETTER_AUTH_SECRET: test-secret-that-is-long-enough-for-builds
+      BETTER_AUTH_URL: http://localhost:3000
+      DATABASE_URL: postgresql://maintenance_app:maintenance_app@localhost:5432/maintenance_app_test?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm test:coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vitest-coverage
+          path: coverage/
+          if-no-files-found: error
+          retention-days: 14
+
+  browser:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_DB: maintenance_app_test
+          POSTGRES_USER: maintenance_app
+          POSTGRES_PASSWORD: maintenance_app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U maintenance_app -d maintenance_app_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      BETTER_AUTH_SECRET: test-secret-that-is-long-enough-for-builds
+      BETTER_AUTH_URL: http://localhost:3000
+      E2E_DATABASE_URL: postgresql://maintenance_app:maintenance_app@localhost:5432/maintenance_app_test?schema=public
+      DATABASE_URL: postgresql://maintenance_app:maintenance_app@localhost:5432/maintenance_app_build?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Create restricted app role
+        run: sh docker/db-init/01-app-role.sh
+        env:
+          PGHOST: localhost
+          PGPASSWORD: maintenance_app
+          POSTGRES_USER: maintenance_app
+          POSTGRES_DB: maintenance_app_test
+      - run: pnpm db:migrate:e2e
+      - run: pnpm test:legacy-ownership
+      - name: Tenant isolation (RLS) integration tests
+        run: pnpm test:rls
+        env:
+          RLS_TEST_DATABASE_URL: ${{ env.E2E_DATABASE_URL }}
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+
+  container-image:
+    needs: [unit, browser]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+    outputs:
+      image_digest: ${{ steps.publish.outputs.image_digest }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build production image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          tags: ${{ env.IMAGE }}
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Scan production image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: false
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish immutable commit image
+        if: github.event_name == 'push'
+        id: publish
+        run: |
+          docker push "$IMAGE"
+          manifest_digest="$(docker buildx imagetools inspect "$IMAGE" | awk '$1 == "Digest:" { print $2; exit }')"
+          if ! printf '%s' "$manifest_digest" | grep -Eq '^sha256:[0-9a-f]{64}$'; then
+            echo "::error::Could not resolve the pushed image digest."
+            exit 1
+          fi
+          echo "image_digest=${IMAGE%:*}@$manifest_digest" >> "$GITHUB_OUTPUT"

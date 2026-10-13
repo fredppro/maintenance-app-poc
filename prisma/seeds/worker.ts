@@ -1,10 +1,11 @@
-import { PrismaClient, WorkerType } from "../../generated/prisma/client";
+import { DB } from "@/lib/prisma";
+import { WorkerType } from "../generated/prisma/client";
 
-export async function seedWorkers(prisma: PrismaClient) {
+export async function seedWorkers(db: DB, organizationId: string) {
   console.log("👷 Seeding workers...");
 
-  const vendor = await prisma.vendor.findFirst({
-    where: { name: "TechFix Solutions" },
+  const vendor = await db.vendor.findFirst({
+    where: { organizationId, name: "TechFix Solutions" },
   });
 
   const workers = [
@@ -27,10 +28,12 @@ export async function seedWorkers(prisma: PrismaClient) {
   ];
 
   for (const w of workers) {
-    await prisma.worker.upsert({
-      where: { email: w.email },
+    await db.worker.upsert({
+      where: {
+        organizationId_email: { organizationId, email: w.email },
+      },
       update: { vendorId: w.vendorId },
-      create: w,
+      create: { ...w, organizationId },
     });
   }
 }

@@ -15,6 +15,8 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
 
 # next.js
 /.next/
@@ -36,6 +38,7 @@ yarn-error.log*
 
 # env files
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -43,3 +46,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 /generated/prisma
+.storage/

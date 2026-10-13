@@ -5,45 +5,124 @@ datasource db {
 }
 
 generator client {
-  provider        = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client"
+  output   = "./generated/prisma"
 }
 
 model Equipment {
-  id           String            @id @default(cuid())
-  name         String            @unique
-  category     String?
-  tasks        MaintenanceTask[]
-  createdAt    DateTime          @default(now())
+  id             String                @id @default(cuid())
+  name           String
+  category       String?
+  imageFileId    String?
+  sectionId      String?
+  organizationId String
+  siteId         String
+  deletedAt      DateTime?
+  deletedById    String?
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  site           Site                  @relation(fields: [siteId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  imageFile      StoredFile?           @relation(fields: [imageFileId], references: [id], onDelete: SetNull)
+  // Optional area within `site`. `imageFileId` and `sectionId` are single-column FKs because
+  // SET NULL can't null just one column of a composite FK; the equipment_same_tenant trigger
+  // enforces that both belong to the same organization.
+  section        Section?              @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  tasks          MaintenanceTask[]
+  relocations    EquipmentRelocation[]
+  createdAt      DateTime              @default(now())
+
+  @@unique([id, organizationId])
+  @@unique([organizationId, name])
+  @@index([siteId, organizationId])
+  @@index([sectionId])
+  @@index([imageFileId])
+  @@index([organizationId, deletedAt])
+}
+
+// Metadata for an object kept in S3-compatible storage; the bytes never live in Postgres.
+model StoredFile {
+  id                String           @id @default(cuid())
+  organizationId    String
+  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  key               String           @unique
+  filename          String
+  contentType       String
+  size              Int
+  uploadedById      String?
+  equipment         Equipment[]
+  organizationLogos TenantSettings[]
+  createdAt         DateTime         @default(now())
+
+  @@unique([id, organizationId])
+  @@index([organizationId])
+}
+
+// A named area inside a site, e.g. "Boiler room" or "Line 2".
+model Section {
+  id             String       @id @default(cuid())
+  name           String
+  organizationId String
+  siteId         String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  site           Site         @relation(fields: [siteId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  equipment      Equipment[]
+  createdAt      DateTime     @default(now())
+
+  @@unique([id, organizationId])
+  @@unique([siteId, name])
+}
+
+// Append-only location history. Names are snapshots so history survives renames and deletions.
+model EquipmentRelocation {
+  id              String    @id @default(cuid())
+  equipmentId     String
+  organizationId  String
+  equipment       Equipment @relation(fields: [equipmentId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  fromSiteName    String?
+  fromSectionName String?
+  toSiteName      String
+  toSectionName   String?
+  movedById       String?
+  movedAt         DateTime  @default(now())
+
+  @@index([equipmentId, movedAt])
+  @@index([organizationId])
 }
 
 model MaintenanceTask {
-  id           String    @id @default(cuid())
-  title        String
-  description  String?
-  type         TaskType  @default(PREVENTIVE)
-  startTime    DateTime
-  endTime      DateTime
-  equipmentId  String
-  equipment    Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  status       String    @default("scheduled") 
-  assignments MaintenanceTaskAssignment[]
-  materials   Material[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String                      @id @default(cuid())
+  title          String
+  description    String?
+  type           TaskType                    @default(PREVENTIVE)
+  startTime      DateTime
+  endTime        DateTime
+  equipmentId    String
+  organizationId String
+  organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  equipment      Equipment                   @relation(fields: [equipmentId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  status         String                      @default("scheduled")
+  assignments    MaintenanceTaskAssignment[]
+  materials      Material[]
+  deletedAt      DateTime?
+  deletedById    String?
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+
+  @@unique([id, organizationId])
+  @@index([organizationId, startTime])
+  @@index([organizationId, deletedAt])
 }
 
 model Material {
-  id        String          @id @default(cuid())
-  name      String
-  reference String?
-  quantity  Float
-  unit      MaterialUnit    @default(PC)
-  price     Decimal?        @db.Decimal(10, 2)
-  taskId    String
-  task      MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  id             String          @id @default(cuid())
+  name           String
+  reference      String?
+  quantity       Float
+  unit           MaterialUnit    @default(PC)
+  price          Decimal?        @db.Decimal(10, 2)
+  taskId         String
+  organizationId String
+  task           MaintenanceTask @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
 }
-
 
 enum TaskType {
   PREVENTIVE
@@ -52,35 +131,51 @@ enum TaskType {
 }
 
 model MaintenanceTaskAssignment {
-  id        String          @id @default(cuid())
-  taskId    String
-  workerId  String
-  startTime DateTime?
-  endTime   DateTime?
-  task      MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  worker    Worker          @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  id             String          @id @default(cuid())
+  taskId         String
+  workerId       String
+  organizationId String
+  startTime      DateTime?
+  endTime        DateTime?
+  task           MaintenanceTask @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  worker         Worker          @relation(fields: [workerId, organizationId], references: [id, organizationId], onDelete: Cascade)
+
   @@unique([taskId, workerId])
 }
 
 model Worker {
-  id        String      @id @default(cuid())
-  name      String
-  email     String      @unique
-  phone     String?
-  type      WorkerType  @default(INTERNAL)
-  vendorId  String?
-  vendor    Vendor?     @relation(fields: [vendorId], references: [id])
-  assignments MaintenanceTaskAssignment[]
-  createdAt DateTime @default(now())
+  id             String                      @id @default(cuid())
+  name           String
+  email          String
+  phone          String?
+  type           WorkerType                  @default(INTERNAL)
+  vendorId       String?
+  organizationId String
+  organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vendor         Vendor?                     @relation(fields: [vendorId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  assignments    MaintenanceTaskAssignment[]
+  deletedAt      DateTime?
+  deletedById    String?
+  createdAt      DateTime                    @default(now())
+
+  @@unique([id, organizationId])
+  @@unique([organizationId, email])
+  @@index([vendorId, organizationId])
+  @@index([organizationId, deletedAt])
 }
 
 model Vendor {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  contact   String?
-  email     String?
-  workers   Worker[]
-  createdAt DateTime @default(now())
+  id             String       @id @default(cuid())
+  name           String
+  contact        String?
+  email          String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workers        Worker[]
+  createdAt      DateTime     @default(now())
+
+  @@unique([id, organizationId])
+  @@unique([organizationId, name])
 }
 
 enum WorkerType {
@@ -90,30 +185,267 @@ enum WorkerType {
 
 enum MaterialUnit {
   // --- General Count & Packaging ---
-  PC        // Piece / Unit (screws, bolts, filters, valves)
-  BOX       // Box
-  SET       // Set / Pack
-  BAG       // Bag (sand, bulk fasteners, cable ties)
-  ROLL      // Roll (tape, wires, gaskets)
-  TUBE      // Tube (silicone, grease, adhesive)
-  CAN       // Can / Spray (WD-40, cleaner)
-  KIT       // Kit (O-ring repair kit, tool kit)
-  PAIR      // Pair (gloves, matching components)
+  PC // Piece / Unit (screws, bolts, filters, valves)
+  BOX // Box
+  SET // Set / Pack
+  BAG // Bag (sand, bulk fasteners, cable ties)
+  ROLL // Roll (tape, wires, gaskets)
+  TUBE // Tube (silicone, grease, adhesive)
+  CAN // Can / Spray (WD-40, cleaner)
+  KIT // Kit (O-ring repair kit, tool kit)
+  PAIR // Pair (gloves, matching components)
 
   // --- Volume & Fluids ---
-  L         // Liters
-  ML        // Milliliters
-  GAL       // Gallons
-  DRUM      // Drum (hydraulic oil, bulk fluids)
+  L // Liters
+  ML // Milliliters
+  GAL // Gallons
+  DRUM // Drum (hydraulic oil, bulk fluids)
 
   // --- Mass & Weight ---
-  G         // Grams
-  KG        // Kilograms
-  LB        // Pounds
+  G // Grams
+  KG // Kilograms
+  LB // Pounds
 
   // --- Length & Distance ---
-  MM        // Millimeters
-  M         // Meters
-  IN        // Inches
-  FT        // Feet
+  MM // Millimeters
+  M // Meters
+  IN // Inches
+  FT // Feet
+}
+
+model User {
+  id            String       @id
+  name          String
+  email         String
+  emailVerified Boolean      @default(false)
+  image         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  members       Member[]
+  invitations   Invitation[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id                   String   @id
+  expiresAt            DateTime
+  token                String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeOrganizationId String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model RateLimit {
+  id          String @id @default(cuid())
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@index([lastRequest])
+  @@map("rateLimit")
+}
+
+model Organization {
+  id          String                   @id
+  name        String
+  slug        String
+  logo        String?
+  createdAt   DateTime
+  metadata    String?
+  members     Member[]
+  invitations Invitation[]
+  sites       Site[]
+  sections    Section[]
+  files       StoredFile[]
+  equipment   Equipment[]
+  tasks       MaintenanceTask[]
+  workers     Worker[]
+  vendors     Vendor[]
+  auditEvents OrganizationAuditEvent[]
+  settings    TenantSettings?
+  exports     TenantExport[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model Site {
+  id             String       @id @default(cuid())
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  equipment      Equipment[]
+  sections       Section[]
+  createdAt      DateTime     @default(now())
+
+  @@unique([id, organizationId])
+  @@unique([organizationId, name])
+}
+
+model Member {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String       @default("member")
+  createdAt      DateTime
+
+  @@index([organizationId])
+  @@index([userId])
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String       @default("pending")
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  inviterId      String
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitation")
+}
+
+model LegacyOwnershipAssignment {
+  id                     String   @id
+  legacyOrganizationId   String   @unique
+  siteId                 String
+  ownerUserId            String
+  operator               String
+  ticket                 String
+  organizationNameBefore String
+  organizationSlugBefore String
+  siteNameBefore         String
+  assignedAt             DateTime @default(now())
+
+  @@index([ownerUserId])
+  @@map("legacy_ownership_assignment")
+}
+
+model OrganizationAuditEvent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actorUserId    String
+  action         String
+  subjectType    String
+  subjectId      String
+  details        Json         @default("{}")
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([subjectType, subjectId])
+  @@map("organization_audit_event")
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_DELETION
+}
+
+// `pooled` tenants share the database; `dedicated` is reserved for tenants moved to their own database.
+enum IsolationTier {
+  POOLED
+  DEDICATED
+}
+
+// One row per organization once its lifecycle is changed; a missing row means ACTIVE and POOLED.
+model TenantSettings {
+  organizationId        String        @id
+  organization          Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  status                TenantStatus  @default(ACTIVE)
+  isolationTier         IsolationTier @default(POOLED)
+  statusReason          String?
+  deletionRequestedAt   DateTime?
+  deletionScheduledFor  DateTime?
+  // Set when an owner or admin hides the "Getting started" checklist; applies to the whole organization.
+  onboardingDismissedAt DateTime?
+  // Company profile and regional defaults, edited by owners and admins. Null means "not set".
+  contactEmail          String?
+  contactPhone          String?
+  timezone              String?
+  locale                String?
+  // The logo is a StoredFile of the same organization (enforced by the tenant_settings_same_tenant trigger).
+  logoFileId            String?
+  logoFile              StoredFile?   @relation(fields: [logoFileId], references: [id], onDelete: SetNull)
+  updatedAt             DateTime      @updatedAt
+
+  @@index([logoFileId])
+  @@map("tenant_settings")
+}
+
+enum ExportStatus {
+  PENDING
+  RUNNING
+  READY
+  FAILED
+}
+
+model TenantExport {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestedById  String
+  status         ExportStatus @default(PENDING)
+  fileKey        String?
+  size           Int?
+  error          String?
+  createdAt      DateTime     @default(now())
+  completedAt    DateTime?
+  expiresAt      DateTime?
+
+  @@index([organizationId, createdAt])
+  @@map("tenant_export")
 }

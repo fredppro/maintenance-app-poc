@@ -1,0 +1,580 @@
+"use client";
+
+import {
+  Alert,
+  AlertDescription,
+} from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { deleteWorker, getWorkers } from "../server/actions";
+import type { Worker as WorkerEntity } from "../types";
+import {
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type UniqueIdentifier,
+} from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+  ColumnDef,
+  Row,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { GripVertical, MoreVertical } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import CreateUpdateWorker from "./CreateUpdateUser";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+
+type WorkerRow = {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  type: string;
+  createdAt: string;
+};
+
+type WorkerManagementPageProps = {
+  onBack?: () => void;
+  onWorkersChange: (workers: WorkerEntity[]) => void;
+};
+
+function DragHandle({
+  attributes,
+  listeners,
+}: {
+  attributes: ReturnType<typeof useSortable>["attributes"];
+  listeners: ReturnType<typeof useSortable>["listeners"];
+}) {
+  return (
+    <Button
+      {...attributes}
+      {...listeners}
+      variant="ghost"
+      size="icon"
+      className="size-7 text-muted-foreground hover:bg-transparent"
+    >
+      <GripVertical className="size-4" />
+      <span className="sr-only">Drag to reorder</span>
+    </Button>
+  );
+}
+
+function DraggableRow({
+  row,
+  onOpenDrawer,
+}: {
+  row: Row<WorkerRow>;
+  onOpenDrawer: (worker: WorkerRow) => void;
+}) {
+  const {
+    transform,
+    transition,
+    setNodeRef,
+    attributes,
+    listeners,
+    isDragging,
+  } = useSortable({ id: row.id });
+
+  return (
+    <TableRow
+      data-state={row.getIsSelected() && "selected"}
+      data-dragging={isDragging}
+      ref={setNodeRef}
+      onClick={() => onOpenDrawer(row.original)}
+      className="relative z-0 cursor-pointer data-[dragging=true]:z-10 data-[dragging=true]:opacity-80 hover:bg-muted"
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+    >
+      {row.getVisibleCells().map((cell) => (
+        <TableCell
+          key={cell.id}
+          onClick={(event) => {
+            if (
+              cell.column.id === "select" ||
+              cell.column.id === "actions" ||
+              cell.column.id === "drag"
+            ) {
+              event.stopPropagation();
+            }
+          }}
+        >
+          {cell.column.id === "drag" ? (
+            <DragHandle attributes={attributes} listeners={listeners} />
+          ) : (
+            flexRender(cell.column.columnDef.cell, cell.getContext())
+          )}
+        </TableCell>
+      ))}
+    </TableRow>
+  );
+}
+
+export default function WorkerManagementPage({
+  onBack,
+  onWorkersChange,
+}: WorkerManagementPageProps) {
+  const t = useTranslations("Workers");
+  const tCommon = useTranslations("Common");
+
+  const [workers, setWorkers] = useState<WorkerRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchFailed, setFetchFailed] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState<WorkerRow | undefined>(
+    undefined,
+  );
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDeleteWorker, setPendingDeleteWorker] = useState<
+    WorkerRow | undefined
+  >(undefined);
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const fetchWorkers = useCallback(async () => {
+    setLoading(true);
+    setFetchFailed(false);
+    try {
+      const data = await getWorkers();
+      const normalized = (data || []).map((worker) => ({
+        ...worker,
+        createdAt:
+          worker.createdAt instanceof Date
+            ? worker.createdAt.toISOString()
+            : worker.createdAt,
+      }));
+      setWorkers(normalized);
+      onWorkersChange(data);
+    } catch (err) {
+      console.error(err);
+      setFetchFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [onWorkersChange]);
+
+  useEffect(() => {
+    fetchWorkers();
+  }, [fetchWorkers]);
+
+  const handleOpenDrawer = (worker?: WorkerRow) => {
+    setSelectedWorker(worker);
+    setDrawerOpen(true);
+  };
+
+  const handleRequestDelete = (worker: WorkerRow) => {
+    setPendingDeleteWorker(worker);
+    setConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!pendingDeleteWorker) return;
+    try {
+      await deleteWorker(pendingDeleteWorker.id);
+      setConfirmOpen(false);
+      setPendingDeleteWorker(undefined);
+      await fetchWorkers();
+    } catch (err) {
+      console.error(err);
+      toast.error(t("failedDelete"));
+    }
+  };
+
+  const handleSaved = async () => {
+    setDrawerOpen(false);
+    setSelectedWorker(undefined);
+    await fetchWorkers();
+  };
+
+  const columns = useMemo<ColumnDef<WorkerRow>[]>(
+    () => [
+      {
+        id: "drag",
+        header: () => null,
+        cell: () => null,
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "select",
+        header: ({ table }) => (
+          <div className="flex items-center justify-center">
+            <Checkbox
+              className="
+                border-border bg-secondary
+                data-[state=checked]:border-secondary
+                "
+              checked={
+                table.getIsAllRowsSelected() ||
+                (table.getIsSomeRowsSelected() && "indeterminate")
+              }
+              onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+              aria-label={t("selectAll")}
+            />
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center justify-center">
+            <Checkbox
+              className="
+                border-border bg-secondary
+                data-[state=checked]:border-secondary
+                "
+              checked={row.getIsSelected()}
+              onCheckedChange={(value) => row.toggleSelected(!!value)}
+              aria-label={t("selectRow")}
+            />
+          </div>
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        accessorKey: "name",
+        header: t("columnName"),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2 min-w-0">
+            <Avatar className="size-6">
+              <AvatarFallback>
+                {row.original.name
+                  .split(" ")
+                  .map((s) => s[0])
+                  .slice(0, 2)
+                  .join("")}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 truncate">{row.original.name}</div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "email",
+        header: t("columnEmail"),
+        cell: ({ row }) => (
+          <div className="min-w-[12rem] truncate">{row.original.email}</div>
+        ),
+      },
+      {
+        accessorKey: "phone",
+        header: t("columnPhone"),
+        cell: ({ row }) => row.original.phone ?? "—",
+      },
+      {
+        accessorKey: "type",
+        header: t("columnType"),
+        cell: ({ row }) => (
+          <span className="rounded-full border border-border px-2 py-1 text-xs text-muted-foreground">
+            {t(row.original.type.toLowerCase())}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "createdAt",
+        header: t("columnCreated"),
+        cell: ({ row }) => new Date(row.original.createdAt).toLocaleString(),
+      },
+      {
+        id: "actions",
+        header: () => null,
+        cell: ({ row }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
+                size="icon"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenDrawer(row.original);
+                }}
+              >
+                {tCommon("edit")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRequestDelete(row.original);
+                }}
+              >
+                {tCommon("remove")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+    ],
+    [t, tCommon],
+  );
+
+  // TanStack Table returns unmemoizable functions; React Compiler skips this component.
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({
+    data: workers,
+    columns,
+    state: {
+      rowSelection,
+    },
+    getRowId: (row) => row.id,
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  const sensors = useSensors(
+    useSensor(MouseSensor),
+    useSensor(TouchSensor),
+    useSensor(KeyboardSensor),
+  );
+
+  const dataIds = useMemo<UniqueIdentifier[]>(
+    () => workers.map((worker) => worker.id),
+    [workers],
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active?.id && over?.id && active.id !== over.id) {
+      setWorkers((currentWorkers) => {
+        const oldIndex = currentWorkers.findIndex(
+          (item) => item.id === active.id,
+        );
+        const newIndex = currentWorkers.findIndex(
+          (item) => item.id === over.id,
+        );
+        return arrayMove(currentWorkers, oldIndex, newIndex);
+      });
+    }
+  };
+
+  return (
+    <div className="flex min-h-full w-full flex-col gap-4 overflow-hidden rounded-lg border border-border bg-card p-4">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold sm:text-2xl">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("description")}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <Button variant="secondary" size="default" onClick={onBack}>
+              {t("backToSchedule")}
+            </Button>
+          )}
+          <Button size="default" onClick={() => handleOpenDrawer(undefined)}>
+            {t("createWorker")}
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-hidden rounded-md border border-border bg-background">
+        {loading ? (
+          <div
+            role="status"
+            aria-label={t("loading")}
+            className="flex flex-col gap-4 p-4"
+          >
+            <Skeleton className="h-5 w-36" />
+            {Array.from({ length: 5 }, (_, row) => (
+              <div
+                key={row}
+                className="grid grid-cols-2 items-center gap-4 border-b border-border-subtle py-3 sm:grid-cols-4"
+              >
+                <Skeleton className="h-4 w-32 max-w-full" />
+                <Skeleton className="h-4 w-40 max-w-full" />
+                <Skeleton className="hidden h-4 w-24 sm:block" />
+                <Skeleton className="hidden h-4 w-20 sm:block" />
+              </div>
+            ))}
+            <span className="sr-only">{t("loading")}</span>
+          </div>
+        ) : fetchFailed ? (
+          <Alert className="m-4" variant="destructive" role="alert">
+            <AlertDescription className="flex items-center justify-between gap-4">
+              <span>{t("failedLoad")}</span>
+              <Button variant="outline" size="sm" onClick={fetchWorkers}>
+                {t("retry")}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : workers.length === 0 ? (
+          <div className="flex min-h-64 flex-col items-center justify-center gap-3 p-8 text-center">
+            <h3 className="font-medium">{t("noWorkers")}</h3>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              {t("noWorkersDescription")}
+            </p>
+            <Button onClick={() => handleOpenDrawer(undefined)}>
+              {t("createWorker")}
+            </Button>
+          </div>
+        ) : (
+          <div className="h-full min-w-full overflow-auto">
+            <div className="w-full overflow-x-auto">
+              <DndContext
+                collisionDetection={closestCenter}
+                modifiers={[restrictToVerticalAxis]}
+                onDragEnd={handleDragEnd}
+                sensors={sensors}
+              >
+                <Table>
+                  <TableHeader className="sticky top-0 z-10 bg-muted">
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead key={header.id} colSpan={header.colSpan}>
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows.length ? (
+                      <SortableContext
+                        items={dataIds}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        {table.getRowModel().rows.map((row) => (
+                          <DraggableRow
+                            key={row.id}
+                            row={row}
+                            onOpenDrawer={handleOpenDrawer}
+                          />
+                        ))}
+                      </SortableContext>
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={columns.length}
+                          className="h-24 text-center"
+                        >
+                          {t("noResults")}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </DndContext>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="right">
+        <DrawerContent className="w-full sm:max-w-md">
+          <DrawerHeader>
+            <DrawerTitle>
+              {selectedWorker ? t("editWorker") : t("createWorker")}
+            </DrawerTitle>
+            <DrawerDescription>{t("drawerDescription")}</DrawerDescription>
+          </DrawerHeader>
+
+          <div className="h-full overflow-y-auto px-4 pb-4">
+            <CreateUpdateWorker
+              initialData={selectedWorker}
+              onSaved={handleSaved}
+            />
+          </div>
+
+          <DrawerFooter>
+            <div className="flex w-full items-center justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setDrawerOpen(false)}
+                type="button"
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button type="submit" form="worker-form">
+                {selectedWorker ? tCommon("save") : t("createWorker")}
+              </Button>
+            </div>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteWorker")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("deleteConfirmation", {
+                name: pendingDeleteWorker?.name ?? t("thisWorker"),
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-2 justify-end">
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>
+              {t("delete")}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

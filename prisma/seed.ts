@@ -1,19 +1,61 @@
 // prisma/seed.ts
-import "dotenv/config";
-import prisma from "../lib/prisma.js";
+import "./seed-env";
+
+import prisma from "../src/lib/prisma";
 import { seedEquipments } from "./seeds/equipment";
 import { seedMaintenanceTasks } from "./seeds/maintenance-task";
 import { seedWorkers } from "./seeds/worker";
 import { seedVendors } from "./seeds/vendor";
 
+function assertLocalDatabase() {
+  const host = new URL(process.env.DATABASE_URL ?? "postgresql://unset@unset/db").hostname;
+  if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(host) && process.env.ALLOW_REMOTE_SEED !== "true") {
+    throw new Error(
+      "Seed data is synthetic and must not be loaded into a shared or production database. " +
+        "Set ALLOW_REMOTE_SEED=true to override.",
+    );
+  }
+}
+
 async function main() {
+  assertLocalDatabase();
   console.log("🌱 Starting database seeding...");
   
   try {
-    await seedEquipments(prisma);
-    await seedVendors(prisma);
-    await seedWorkers(prisma);
-    await seedMaintenanceTasks(prisma);
+    const adminEmail = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+    if (!adminEmail) {
+      throw new Error(
+        "Set SEED_ADMIN_EMAIL to an organization owner's email before seeding.",
+      );
+    }
+
+    const membership = await prisma.member.findFirst({
+      where: {
+        role: "owner",
+        user: { email: adminEmail },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    if (!membership) {
+      throw new Error(
+        `No organization owner account found for ${adminEmail}. Sign up and create a workspace first.`,
+      );
+    }
+
+    const site = await prisma.site.findFirst({
+      where: { organizationId: membership.organizationId },
+      orderBy: { createdAt: "asc" },
+    });
+    if (!site) {
+      throw new Error(
+        `The organization for ${adminEmail} has no site. Complete workspace setup first.`,
+      );
+    }
+
+    await seedEquipments(prisma, membership.organizationId, site.id);
+    await seedVendors(prisma, membership.organizationId);
+    await seedWorkers(prisma, membership.organizationId);
+    await seedMaintenanceTasks(prisma, membership.organizationId);
     
     console.log('✨ Global seed finished successfully.');
   } catch (error) {

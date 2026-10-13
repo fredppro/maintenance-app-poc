@@ -1,0 +1,9 @@
+export const TENANT_A_TASK_ID = "e2e-tenant-a-task";
+export const TENANT_B_TASK_ID = "e2e-tenant-b-task";
+export const TENANT_B_EMAIL = "playwright-tenant-b@example.test";
+export const TENANT_A_MEMBER_EMAIL = "playwright-member-a@example.test";
+export const TENANT_A_MEMBER_ID = "e2e-member-a";
+export const TENANT_A_INVITATION_ID = "e2e-pending-invitation-a";
+export const TENANT_A_ADMIN_EMAIL = "playwright-admin-a@example.test";
+export const TENANT_A_ADMIN_ID = "e2e-admin-a";
+export const TENANT_A_ADMIN_INVITATION_ID = "e2e-admin-invitation-a";

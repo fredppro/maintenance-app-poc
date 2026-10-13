@@ -1,0 +1,93 @@
+services:
+  postgres:
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    environment:
+      POSTGRES_DB: maintenance_app
+      POSTGRES_USER: maintenance_app
+      POSTGRES_PASSWORD: maintenance_app
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maintenance_app -d maintenance_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  # Full dev stack with no host Node/pnpm: `pnpm up` (see README).
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    profiles: ["app"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    working_dir: /app
+    command: ["sh", "docker/dev-entrypoint.sh"]
+    environment:
+      DATABASE_URL: postgresql://maintenance_app_runtime:maintenance_app_runtime@postgres:5432/maintenance_app?schema=public
+      MIGRATION_DATABASE_URL: postgresql://maintenance_app:maintenance_app@postgres:5432/maintenance_app?schema=public
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-local-development-secret-change-me-0123456789}
+      BETTER_AUTH_URL: http://localhost:3000
+      WATCHPACK_POLLING: "true"
+      CI: "true"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - .:/app
+      # Keep Linux-built dependencies and cache out of the host checkout.
+      - app-node-modules:/app/node_modules
+      - app-next:/app/.next
+      - pnpm-store:/root/.local/share/pnpm
+
+  postgres-e2e:
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    profiles: ["e2e"]
+    environment:
+      POSTGRES_DB: maintenance_app_test
+      POSTGRES_USER: maintenance_app
+      POSTGRES_PASSWORD: maintenance_app
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - ./docker/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maintenance_app -d maintenance_app_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  minio:
+    image: minio/minio:latest
+    profiles: ["storage"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio-data:/data
+
+  # Creates the bucket once MinIO is up.
+  minio-init:
+    image: minio/mc:latest
+    profiles: ["storage"]
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "until mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 1; done;
+      mc mb --ignore-existing local/maintenance-files"
+
+volumes:
+  app-node-modules:
+  app-next:
+  pnpm-store:
+  postgres-data:
+  minio-data:
