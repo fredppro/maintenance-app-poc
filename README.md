@@ -64,6 +64,19 @@ Stop the local PostgreSQL service without deleting its data with
 `pnpm db:down`. The detailed setup and test instructions below cover other
 workflows and production configuration.
 
+## CI and container image release
+
+GitHub Actions runs the unit and browser suites on pull requests and pushes to
+`main` or `develop`. After both pass, it builds the production [Dockerfile](Dockerfile)
+and scans the image for high and critical vulnerabilities. Pull requests do not
+publish images; successful branch pushes publish an immutable commit-tagged image
+to GHCR and expose its digest for a later staging/production promotion.
+
+The GHCR package must be kept private. This workflow builds and publishes images;
+it does not deploy to Coolify yet. Staging, its synthetic database, Coolify, and
+the migration-before-deploy procedure must be provisioned and verified before
+adding deployment credentials or enabling automatic staging/production deploys.
+
 ## Prerequisites
 
 - **Node.js 24**, pinned in `.node-version` and `package.json`.

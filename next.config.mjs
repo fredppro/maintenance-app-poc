@@ -4,6 +4,7 @@ const withNextIntl = createNextIntlPlugin();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: process.env.CONTAINER_BUILD === 'true' ? 'standalone' : undefined,
   images: {
     unoptimized: true,
   },

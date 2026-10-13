@@ -1,7 +1,6 @@
 # Self-hosted platform and dedicated-database plan
 
-Branch: `feature/MAINPOC-14-saas-self-hosted` · Status: **plan, revision 2 (2026-10-13: Contabo Cloud VPS 4, Coolify on the production server, single operator). Nothing described here is
-implemented yet**, and no server, account or secret has been created or changed.
+Branch: `feature/MAINPOC-14-saas-self-hosted` · Status: **plan, revision 2 (2026-10-13: Contabo Cloud VPS 4, Coolify on the production server, single operator).** The VPS application stack and Coolify deployment are not implemented. The repository has local Docker Compose development, GitHub Actions checks, and a new GHCR image-release job; this does not deploy an application or access a production database.
 
 This plan replaces the Vercel + Neon hosting model with a self-managed EU deployment (VPS + Coolify) and delivers the
 per-customer dedicated database on top of it. It supersedes the hosting-specific parts of
@@ -543,6 +542,14 @@ container liveness probe; split them.
   manual approval → production deploy of the same image digest → migrations job before the switch.
 - Rollback: Coolify rollbacks (rollbacks page) plus the N/N-1 migration rule, so a rollback never meets an
   incompatible schema.
+
+**Implementation status:** `tests.yml` now builds the pinned, non-root production Docker image only after its unit
+and browser jobs pass. Pull requests build and scan without publishing; pushes to `main` or `develop` scan first,
+then publish a commit-tagged image to GHCR and expose its digest for a later promotion step. High and critical
+Trivy findings fail the image job. The GHCR package must be verified private after its first publish. The workflow
+does not yet deploy: Coolify, the staging application/database, deployment credentials, and the staged migration
+procedure do not exist or have not been verified. Add automatic staging deployment and production promotion only
+after those prerequisites and the app readiness check are tested.
 
 ### 6.3 Maintenance and people
 
