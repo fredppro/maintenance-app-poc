@@ -554,8 +554,17 @@ Staging preparation added a non-root `migrator` Docker target and entrypoint tha
 migrations, provisions the restricted runtime role, and verifies that role. The workflow now builds, scans, and
 publishes a separate `-migrator` image and digest alongside the app image. The migrator target built locally and
 successfully applied all 18 migrations to a disposable PostgreSQL 17 database; runtime-role verification passed.
-The app runner built locally for ARM64. The local x64 runner build stalled under emulation, so the amd64 CI build
-must still verify it. These source and workflow changes are uncommitted; no migrator image has been published.
+The change merged to `develop` as `880e715`. Its lint, typecheck, unit, browser, and security jobs passed, but image
+publishing was blocked because Trivy found high-severity findings in the migrator image. The app image built and
+scanned successfully; neither image was published because the combined image job failed.
+
+The current remediation prunes development dependencies and removes the base image's npm/Corepack tooling from the
+migrator, moves Prisma CLI to production dependencies for that image, and pins patched `deepmerge-ts`, `fast-uri`,
+`mysql2`, `source-map-js`, and `undici` versions. Local AMD64 migrator and ARM64 app-runner builds pass; both images
+scan with no high or critical findings. The migrator again applied all 18 migrations and verified the restricted
+runtime role. Local lint, typecheck, production build, and coverage tests pass. The full dependency scan's only
+remaining advisory is unpatched `braces@3.0.3`, a development-only dependency excluded from the migrator image.
+These remediation changes still need to be committed to `develop` so CI can publish the images.
 
 Coolify 4.4.6 was installed on the Contabo host from the official installer, with automatic Coolify updates disabled.
 After an earlier local copy of its generated `.env` was exposed, Coolify's control-plane state and secrets were
@@ -570,9 +579,9 @@ The fresh Coolify `localhost` server is reachable and usable after restoring the
 is enabled, as confirmed in the Coolify profile on 2026-10-15. The new `/data/coolify/source/.env` is restricted to
 root (`0600`). The operator confirms an encrypted off-host backup is complete; the destination is not recorded,
 and the local plaintext copy has been removed. GHCR is configured on the host and an authenticated manifest request
-for the pinned image digest succeeded on 2026-10-15; token scopes and expiry remain unverified. Post-install
-root-key restriction, application secrets, staging application/database, readiness checks, and deployment pipeline
-are still pending. Do not add staging deployment or production promotion until the remaining controls and the
+for the pinned image digest succeeded on 2026-10-15; token scopes and expiry remain unverified. Coolify's Projects
+page still has no project. The staging app, database, Garage service, application secrets, readiness checks, and
+deployment pipeline are not yet configured. Do not add production promotion until the remaining controls and the
 application readiness check are tested.
 
 Staging choices confirmed on 2026-10-15: use `staging.maintenance.isosist.com` through Cloudflare; use the
@@ -581,10 +590,10 @@ persistent Garage `v2.4.1` single-node service on this VPS for synthetic staging
 mode has no data redundancy ([Garage quick start](https://garagehq.deuxfleurs.fr/documentation/quick-start/)); it
 does not replace the planned Scaleway production object storage or backup destination. Public Contabo information
 did not confirm an included S3 tier, and the [MinIO server repository is archived](https://github.com/minio/minio),
-so Garage is the staging alternative. Cloudflare DNS has not been changed: the hostname currently resolves to
-Cloudflare addresses and returns HTTP 404 / an HTTPS handshake failure. The Resend key and verified sender are
-reported ready but have not been entered into Coolify. The VPS currently has approximately 6.7 GiB memory available
-and 89 GiB disk free; recheck before deploying.
+so Garage is the staging alternative. On 2026-10-15, Cloudflare DNS was changed to DNS-only; public DNS now resolves
+the hostname directly to VPS IPv4 `169.58.161.222` and IPv6 `2a02:c207:2366:431::1`. The Resend key and verified
+sender are reported ready but have not been entered into Coolify. The VPS currently has approximately 6.7 GiB
+memory available and 89 GiB disk free; recheck before deploying.
 
 ### 6.3 Maintenance and people
 

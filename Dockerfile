@@ -28,7 +28,12 @@ ENV NODE_ENV=production \
     HOME=/tmp
 
 RUN addgroup -S -g 1001 nodejs \
-    && adduser -S -u 1001 -G nodejs nextjs
+    && adduser -S -u 1001 -G nodejs nextjs \
+    && DATABASE_URL="postgresql://maintenance_app:maintenance_app@127.0.0.1:5432/image_build?schema=public" \
+        MIGRATION_DATABASE_URL="postgresql://maintenance_app:maintenance_app@127.0.0.1:5432/image_build?schema=public" \
+        pnpm prune --prod \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    && rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
 COPY src/lib/database-url.ts ./src/lib/database-url.ts
 COPY scripts/db/provision-runtime-role.ts scripts/db/verify-runtime-role.ts ./scripts/db/

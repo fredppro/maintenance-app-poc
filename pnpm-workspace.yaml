@@ -11,3 +11,9 @@ onlyBuiltDependencies:
   - prisma
   - sharp
   - unrs-resolver
+overrides:
+  deepmerge-ts: 8.0.0
+  fast-uri: 3.1.8
+  mysql2: 3.23.1
+  source-map-js: 1.2.2
+  undici: 8.10.2
