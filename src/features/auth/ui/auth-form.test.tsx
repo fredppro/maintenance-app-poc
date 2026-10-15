@@ -34,6 +34,14 @@ function renderSignUpForm() {
   );
 }
 
+function renderSignInForm() {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <AuthForm mode="sign-in" locale="en" emailVerificationEnabled />
+    </NextIntlClientProvider>,
+  );
+}
+
 async function completeSignUp(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText("Name"), "Alex Example");
   await user.type(screen.getByLabelText("Email"), "operations@isosist.com");
@@ -93,6 +101,31 @@ describe("AuthForm email verification", () => {
     expect(
       await screen.findByText(
         "Could not resend the verification email. Please try again.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("lets an existing unverified user request a link from sign-in", async () => {
+    const user = userEvent.setup();
+    renderSignInForm();
+
+    await user.type(
+      screen.getByLabelText("Email"),
+      "operations@isosist.com",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Resend verification email" }),
+    );
+
+    await waitFor(() => {
+      expect(mocks.sendVerificationEmail).toHaveBeenCalledWith({
+        email: "operations@isosist.com",
+        callbackURL: "/en/onboarding",
+      });
+    });
+    expect(
+      await screen.findByText(
+        "If your account is still awaiting verification, a new link has been sent.",
       ),
     ).toBeInTheDocument();
   });

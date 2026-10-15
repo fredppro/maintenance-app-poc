@@ -369,6 +369,7 @@
     "resetPasswordSubmit": "Atualizar palavra-passe",
     "resetPasswordComplete": "Se a conta for elegível, foram enviadas instruções. Se redefiniu a palavra-passe, já pode iniciar sessão.",
     "verificationNotice": "Verifique o seu email para encontrar a ligação de confirmação antes de iniciar sessão.",
+    "verificationResendPrompt": "Já criou a conta, mas ainda precisa de confirmar o email?",
     "resendVerification": "Reenviar email de confirmação",
     "resendingVerification": "A reenviar email de confirmação…",
     "verificationResentNotice": "Se a sua conta ainda aguarda verificação, foi enviada uma nova ligação.",

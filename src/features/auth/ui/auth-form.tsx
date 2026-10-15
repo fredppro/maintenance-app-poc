@@ -50,11 +50,18 @@ export function AuthForm({
   const [verificationEmail, setVerificationEmail] = useState("");
   const [resendingVerification, setResendingVerification] = useState(false);
   const [verificationResent, setVerificationResent] = useState(false);
+  const [verificationResendError, setVerificationResendError] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const passwordHintId = useId();
   const callbackURL = invitationId
     ? `/${locale}/accept-invitation?id=${encodeURIComponent(invitationId)}`
     : `/${locale}/onboarding`;
+
+  function handleVerificationEmailChange(email: string) {
+    setVerificationEmail(email);
+    setVerificationResent(false);
+    setVerificationResendError(false);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,6 +71,7 @@ export function AuthForm({
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email"));
     const password = String(formData.get("password"));
+    handleVerificationEmailChange(email);
 
     try {
       const result =
@@ -86,7 +94,7 @@ export function AuthForm({
       }
 
       if (mode === "sign-up" && emailVerificationEnabled) {
-        setVerificationEmail(email);
+        handleVerificationEmailChange(email);
         setVerificationNotice(true);
         return;
       }
@@ -100,29 +108,30 @@ export function AuthForm({
   }
 
   async function handleResendVerification() {
-    if (!verificationEmail) {
-      setError(t("verificationResendError"));
+    const email = verificationEmail.trim();
+    if (!email) {
+      setVerificationResendError(true);
       return;
     }
 
-    setError(null);
+    setVerificationResendError(false);
     setVerificationResent(false);
     setResendingVerification(true);
 
     try {
       const result = await authClient.sendVerificationEmail({
-        email: verificationEmail,
+        email,
         callbackURL,
       });
 
       if (result.error) {
-        setError(t("verificationResendError"));
+        setVerificationResendError(true);
         return;
       }
 
       setVerificationResent(true);
     } catch {
-      setError(t("verificationResendError"));
+      setVerificationResendError(true);
     } finally {
       setResendingVerification(false);
     }
@@ -177,6 +186,9 @@ export function AuthForm({
                     }}
                     onInput={(event) =>
                       event.currentTarget.setCustomValidity("")
+                    }
+                    onChange={(event) =>
+                      handleVerificationEmailChange(event.currentTarget.value)
                     }
                     required
                   />
@@ -289,6 +301,11 @@ export function AuthForm({
                       : t("resendVerification")}
                   </Button>
                 )}
+                {verificationResendError && verificationNotice && (
+                  <FieldError role="alert" aria-live="polite">
+                    {t("verificationResendError")}
+                  </FieldError>
+                )}
                 <Button
                   type="submit"
                   disabled={pending || verificationNotice}
@@ -338,6 +355,9 @@ export function AuthForm({
                 name="email"
                 type="email"
                 autoComplete="email"
+                onChange={(event) =>
+                  handleVerificationEmailChange(event.currentTarget.value)
+                }
                 required
               />
             </Field>
@@ -386,6 +406,44 @@ export function AuthForm({
                 {t("forgotPassword")}
               </Link>
             </p>
+            {emailVerificationEnabled && verificationEmail.trim() && (
+              <>
+                <p className="text-center text-sm text-muted-foreground">
+                  {t("verificationResendPrompt")}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={resendingVerification}
+                  aria-busy={resendingVerification}
+                  onClick={handleResendVerification}
+                >
+                  {resendingVerification && (
+                    <Spinner
+                      data-icon="inline-start"
+                      aria-label={t("resendingVerification")}
+                    />
+                  )}
+                  {resendingVerification
+                    ? t("resendingVerification")
+                    : t("resendVerification")}
+                </Button>
+                {verificationResent && (
+                  <p
+                    role="status"
+                    aria-live="polite"
+                    className="text-sm text-muted-foreground"
+                  >
+                    {t("verificationResentNotice")}
+                  </p>
+                )}
+                {verificationResendError && (
+                  <FieldError role="alert" aria-live="polite">
+                    {t("verificationResendError")}
+                  </FieldError>
+                )}
+              </>
+            )}
           </FieldGroup>
         </form>
       </CardContent>
