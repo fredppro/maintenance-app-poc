@@ -22,6 +22,22 @@ RUN DATABASE_URL="postgresql://image-build:image-build@127.0.0.1:5432/image_buil
     MIGRATION_DATABASE_URL="postgresql://image-build:image-build@127.0.0.1:5432/image_build?schema=public" \
     pnpm install --frozen-lockfile
 
+FROM deps AS migrator
+
+ENV NODE_ENV=production \
+    HOME=/tmp
+
+RUN addgroup -S -g 1001 nodejs \
+    && adduser -S -u 1001 -G nodejs nextjs
+
+COPY src/lib/database-url.ts ./src/lib/database-url.ts
+COPY scripts/db/provision-runtime-role.ts scripts/db/verify-runtime-role.ts ./scripts/db/
+COPY docker/migrate-entrypoint.sh ./docker/migrate-entrypoint.sh
+
+USER nextjs
+
+ENTRYPOINT ["sh", "docker/migrate-entrypoint.sh"]
+
 FROM deps AS builder
 
 COPY . .

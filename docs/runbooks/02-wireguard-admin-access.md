@@ -35,6 +35,51 @@ Recorded on 2026-10-13:
   this apply.
 - The server private key is in `/etc/wireguard/server_private.key`; do not print, copy, or share it.
 
+## Coolify bootstrap status (2026-10-15)
+
+- Installed Coolify `4.4.6` from the official installer; Docker Engine is `29.9.0`. Automatic Coolify updates are
+  disabled so upgrades remain an explicit, reviewed operation.
+- The control plane and its generated secrets were reset and reinstalled on 2026-10-14 after an earlier local
+  `.env` backup was exposed. The new server `.env` is mode `0600`; the operator confirms an encrypted off-host
+  backup is complete. The local plaintext copy was removed after that confirmation. Its encrypted destination is
+  not recorded. Never restore the old backup, print `.env` contents, or paste them into chat.
+- Docker's default address pool is `172.30.0.0/16` with subnet size `24`, avoiding overlap with WireGuard's
+  `10.242.0.0/24`.
+- Coolify's `localhost` server uses `host.docker.internal` (`172.30.0.1`) for SSH. Its container is on
+  `172.30.1.0/24` via `br-9eb9aafa0153`; UFW initially allowed SSH only on `wg0`, so Coolify could not reach the
+  host. The prior bridge rule was removed during reset; restored a narrow allow rule from that subnet/interface to
+  `172.30.0.1:22`. After the rule, Coolify's live server recheck reported both reachable and usable. There is still
+  no public SSH allow rule. If Docker recreates this network, re-check the bridge and subnet and update the rule
+  accordingly.
+- The Coolify, PostgreSQL, and Redis containers reported healthy. From the operator Mac with WireGuard active,
+  `http://10.242.0.1:8000` returned HTTP 302.
+- Docker publishes Coolify ports `8000`, `6001`, and `6002` on IPv4 and IPv6 host interfaces. Direct public probes
+  from the operator Mac could not connect to those ports on either public address family. Docker-published ports can
+  bypass UFW, so retain the provider firewall and verify from an independent network in the plan's P2 scan.
+- The previous Coolify account and 2FA state were removed with the reset. The first root account has since been
+  recreated and `/register` redirects to `/login`, confirming registration is disabled. On 2026-10-15, the
+  Coolify profile showed 2FA **Enabled**.
+- No application or database has been deployed. The **new** `/data/coolify/source/.env` is mode `0600`. The operator
+  confirms an encrypted off-host backup is complete; its destination is not recorded. The local plaintext copy has
+  been removed. Never print or paste the file contents into chat.
+- The baseline snapshot predates WireGuard, so restoring it requires repeating this runbook before Coolify can be
+  reached.
+
+### Add the GHCR pull credential
+
+Sign in to Coolify over WireGuard, then use **Servers → the Contabo/local server → Registries → New** (the button
+opens **Log in to a registry**). If the server page is unavailable, use the main **Registries → Multi-server login**
+page and select only this server. Choose **GitHub Container Registry**; confirm the registry is `ghcr.io`; enter the
+GitHub username and a personal access token (classic) scoped to `read:packages` only; then click **Log in**. Confirm
+that the `ghcr.io` row shows a successful login. Do not use `repo`, `write:packages`, or `delete:packages`.
+
+Coolify runs `docker login` on the server. Docker stores the credential in `~/.docker/config.json` encoded but not
+encrypted, so treat it as a server secret and keep the token read-only and expiring. Never paste the token into chat.
+
+Status on 2026-10-15: the GHCR login is restored and `ghcr.io` appears in the host's Docker registry configuration.
+An authenticated manifest request for the pinned image digest succeeded. The token's scopes and expiry have not
+been independently verified; ensure it is read-only (`read:packages`) and expiring.
+
 ## Stage 1: permit SSH only on the VPN interface
 
 Keep the existing public-key root session open as a recovery path. The server has UFW active with default-deny
