@@ -12,7 +12,10 @@ import {
   isOrganizationManager,
 } from "@/features/organization/shared/member-policy";
 import { buildInvitationUrl } from "@/features/organization/server/invitation-link";
-import { isEmailVerificationRequired } from "./email-verification";
+import {
+  isEmailVerificationRequired,
+  resendVerificationOnExistingSignup,
+} from "./email-verification";
 import { isPublicSignupAllowed, mayCreateAccount, mayCreateOrganization } from "./signup-policy";
 
 const secret = process.env.BETTER_AUTH_SECRET;
@@ -127,6 +130,15 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: isEmailVerificationRequired(),
+    onExistingUserSignUp: async ({ user }, request): Promise<void> => {
+      await resendVerificationOnExistingSignup({
+        user,
+        request,
+        sendVerificationEmail: async (body): Promise<void> => {
+          await auth.api.sendVerificationEmail({ body });
+        },
+      });
+    },
     sendResetPassword: async ({ user, url }) =>
       sendTransactionalEmail({
         to: user.email,
