@@ -369,6 +369,10 @@
     "resetPasswordSubmit": "Update password",
     "resetPasswordComplete": "If the account is eligible, instructions have been sent. If you reset your password, you can now sign in.",
     "verificationNotice": "Check your email for a verification link before signing in.",
+    "resendVerification": "Resend verification email",
+    "resendingVerification": "Resending verification email…",
+    "verificationResentNotice": "If your account is still awaiting verification, a new link has been sent.",
+    "verificationResendError": "Could not resend the verification email. Please try again.",
     "error": "Authentication failed. Please check your details and try again.",
     "signOut": "Sign out"
   },
