@@ -1,6 +1,6 @@
 # Self-hosted platform and dedicated-database plan
 
-Branch: `feature/MAINPOC-14-saas-self-hosted` · Status: **plan, revision 2 (2026-10-15: Contabo Cloud VPS 4, Coolify on the production server, single operator).** Coolify was reinstalled with fresh secrets after an earlier local backup was exposed; the first administrator and 2FA are configured, GHCR access is verified, and the operator confirms the encrypted off-host secret backup is complete. The local plaintext copy has been removed. The application, staging database, and deployment pipeline are not deployed. The repository has local Docker Compose development, GitHub Actions checks, and a GHCR image-release job; this does not deploy an application or access a production database.
+Branch: `feature/MAINPOC-14-saas-self-hosted` · Status: **plan, revision 2 (2026-10-15: Contabo Cloud VPS 4, Coolify on the production server, single operator).** Coolify was reinstalled with fresh secrets after an earlier local backup was exposed; the first administrator and 2FA are configured, GHCR access is verified, and the operator confirms the encrypted off-host secret backup is complete. The local plaintext copy has been removed. The synthetic staging app and database are deployed at `staging.maintenance.isosist.com`; HTTPS and `/api/health` returned `{"status":"ok"}` on 2026-10-15. Production app/database and the staging deployment pipeline are not deployed. The repository has local Docker Compose development, GitHub Actions checks, and a GHCR image-release job; this does not deploy production or access a production database.
 
 This plan replaces the Vercel + Neon hosting model with a self-managed EU deployment (VPS + Coolify) and delivers the
 per-customer dedicated database on top of it. It supersedes the hosting-specific parts of
@@ -564,7 +564,7 @@ migrator, moves Prisma CLI to production dependencies for that image, and pins p
 scan with no high or critical findings. The migrator again applied all 18 migrations and verified the restricted
 runtime role. Local lint, typecheck, production build, and coverage tests pass. The full dependency scan's only
 remaining advisory is unpatched `braces@3.0.3`, a development-only dependency excluded from the migrator image.
-These remediation changes still need to be committed to `develop` so CI can publish the images.
+These remediation changes were committed to `develop` as `8bcc2fc`; image publication is gated on the CI tests and scans for that commit.
 
 Coolify 4.4.6 was installed on the Contabo host from the official installer, with automatic Coolify updates disabled.
 After an earlier local copy of its generated `.env` was exposed, Coolify's control-plane state and secrets were
@@ -579,10 +579,15 @@ The fresh Coolify `localhost` server is reachable and usable after restoring the
 is enabled, as confirmed in the Coolify profile on 2026-10-15. The new `/data/coolify/source/.env` is restricted to
 root (`0600`). The operator confirms an encrypted off-host backup is complete; the destination is not recorded,
 and the local plaintext copy has been removed. GHCR is configured on the host and an authenticated manifest request
-for the pinned image digest succeeded on 2026-10-15; token scopes and expiry remain unverified. Coolify's Projects
-page still has no project. The staging app, database, Garage service, application secrets, readiness checks, and
-deployment pipeline are not yet configured. Do not add production promotion until the remaining controls and the
-application readiness check are tested.
+for the pinned image digest succeeded on 2026-10-15; token scopes and expiry remain unverified. The Maintenance App
+Staging project now contains the staging database, private Garage service, migrator, and app. The one-shot migrator
+completed successfully and its container is stopped with Docker restart disabled; its `MIGRATION_DATABASE_URL`
+remains configured in the Coolify resource and should be removed after migration or supplied only for future
+migration runs. The app is deployed from the pinned digest below and Coolify reports it running without a container
+healthcheck. Its public HTTPS `/api/health` endpoint returned `{"status":"ok"}` on 2026-10-15. This verifies the
+application readiness endpoint, but email delivery, the owner account flow, and authenticated Garage
+upload/download still need end-to-end testing. Do not add production promotion until those tests and the remaining
+controls are complete.
 
 Staging choices confirmed on 2026-10-15: use `staging.maintenance.isosist.com` through Cloudflare; use the
 existing Resend integration and the same initial owner address as the Coolify administrator; and use a private,
@@ -592,8 +597,10 @@ does not replace the planned Scaleway production object storage or backup destin
 did not confirm an included S3 tier, and the [MinIO server repository is archived](https://github.com/minio/minio),
 so Garage is the staging alternative. On 2026-10-15, Cloudflare DNS was changed to DNS-only; public DNS now resolves
 the hostname directly to VPS IPv4 `169.58.161.222` and IPv6 `2a02:c207:2366:431::1`. The Resend key and verified
-sender are reported ready but have not been entered into Coolify. The VPS currently has approximately 6.7 GiB
-memory available and 89 GiB disk free; recheck before deploying.
+sender are configured in Coolify, but delivery has not been tested. The deployed app image is
+`ghcr.io/fredppro/maintenance-app-poc@sha256:2dcd1cce50060f25d6a820e914bb5e48a8db5d58a0e9f603a265802cb4a2601c`.
+The VPS had approximately 6.7 GiB memory available and 89 GiB disk free before deployment; recheck before
+increasing staging load.
 
 ### 6.3 Maintenance and people
 
