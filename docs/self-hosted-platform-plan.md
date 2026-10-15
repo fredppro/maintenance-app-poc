@@ -1,6 +1,6 @@
 # Self-hosted platform and dedicated-database plan
 
-Branch: `feature/MAINPOC-14-saas-self-hosted` · Status: **plan, revision 2 (2026-10-13: Contabo Cloud VPS 4, Coolify on the production server, single operator).** The VPS application stack and Coolify deployment are not implemented. The repository has local Docker Compose development, GitHub Actions checks, and a new GHCR image-release job; this does not deploy an application or access a production database.
+Branch: `feature/MAINPOC-14-saas-self-hosted` · Status: **plan, revision 2 (2026-10-15: Contabo Cloud VPS 4, Coolify on the production server, single operator).** Coolify was reinstalled with fresh secrets after an earlier local backup was exposed; the first administrator and 2FA are configured, GHCR access is verified, and the operator confirms the encrypted off-host secret backup is complete. The local plaintext copy has been removed. The application, staging database, and deployment pipeline are not deployed. The repository has local Docker Compose development, GitHub Actions checks, and a GHCR image-release job; this does not deploy an application or access a production database.
 
 This plan replaces the Vercel + Neon hosting model with a self-managed EU deployment (VPS + Coolify) and delivers the
 per-customer dedicated database on top of it. It supersedes the hosting-specific parts of
@@ -543,13 +543,48 @@ container liveness probe; split them.
 - Rollback: Coolify rollbacks (rollbacks page) plus the N/N-1 migration rule, so a rollback never meets an
   incompatible schema.
 
-**Implementation status:** `tests.yml` now builds the pinned, non-root production Docker image only after its unit
-and browser jobs pass. Pull requests build and scan without publishing; pushes to `main` or `develop` scan first,
-then publish a commit-tagged image to GHCR and expose its digest for a later promotion step. High and critical
-Trivy findings fail the image job. The GHCR package must be verified private after its first publish. The workflow
-does not yet deploy: Coolify, the staging application/database, deployment credentials, and the staged migration
-procedure do not exist or have not been verified. Add automatic staging deployment and production promotion only
-after those prerequisites and the app readiness check are tested.
+**Implementation status:** `tests.yml` builds the pinned, non-root production Docker image only after its unit and
+browser jobs pass. Pull requests build and scan without publishing; pushes to `main` or `develop` scan first, then
+publish a commit-tagged image to GHCR and expose its digest for a later promotion step. High and critical Trivy
+findings fail the image job. The GHCR package is private. The post-merge image is
+`ghcr.io/fredppro/maintenance-app-poc:164e55e4508afaa1c2995a297788f1994fcef69c`, digest
+`sha256:879e75e3f49d3edd751aa937690e6f87f9393776d3a417f208c75c33f21b27a8`.
+
+Staging preparation added a non-root `migrator` Docker target and entrypoint that applies committed Prisma
+migrations, provisions the restricted runtime role, and verifies that role. The workflow now builds, scans, and
+publishes a separate `-migrator` image and digest alongside the app image. The migrator target built locally and
+successfully applied all 18 migrations to a disposable PostgreSQL 17 database; runtime-role verification passed.
+The app runner built locally for ARM64. The local x64 runner build stalled under emulation, so the amd64 CI build
+must still verify it. These source and workflow changes are uncommitted; no migrator image has been published.
+
+Coolify 4.4.6 was installed on the Contabo host from the official installer, with automatic Coolify updates disabled.
+After an earlier local copy of its generated `.env` was exposed, Coolify's control-plane state and secrets were
+reset and the installer was rerun on 2026-10-14. Docker Engine 29.9.0 uses the `172.30.0.0/16` address pool (size
+24), avoiding overlap with WireGuard's `10.242.0.0/24`. The Coolify, PostgreSQL, and Redis containers are healthy.
+The dashboard responds over the VPN at `http://10.242.0.1:8000`; public IPv4/IPv6 probes from the operator's Mac
+did not connect to ports 8000, 6001, or 6002. Docker publishes those ports on all host interfaces, so the provider
+firewall remains a required control and the external scan in P2 is still a gate.
+
+The fresh Coolify `localhost` server is reachable and usable after restoring the narrow UFW SSH allow rule from
+`172.30.1.0/24` on `br-9eb9aafa0153` to `172.30.0.1:22`. The first administrator has been recreated over WireGuard and `/register` redirects to `/login`; the account's 2FA
+is enabled, as confirmed in the Coolify profile on 2026-10-15. The new `/data/coolify/source/.env` is restricted to
+root (`0600`). The operator confirms an encrypted off-host backup is complete; the destination is not recorded,
+and the local plaintext copy has been removed. GHCR is configured on the host and an authenticated manifest request
+for the pinned image digest succeeded on 2026-10-15; token scopes and expiry remain unverified. Post-install
+root-key restriction, application secrets, staging application/database, readiness checks, and deployment pipeline
+are still pending. Do not add staging deployment or production promotion until the remaining controls and the
+application readiness check are tested.
+
+Staging choices confirmed on 2026-10-15: use `staging.maintenance.isosist.com` through Cloudflare; use the
+existing Resend integration and the same initial owner address as the Coolify administrator; and use a private,
+persistent Garage `v2.4.1` single-node service on this VPS for synthetic staging files only. Garage single-node
+mode has no data redundancy ([Garage quick start](https://garagehq.deuxfleurs.fr/documentation/quick-start/)); it
+does not replace the planned Scaleway production object storage or backup destination. Public Contabo information
+did not confirm an included S3 tier, and the [MinIO server repository is archived](https://github.com/minio/minio),
+so Garage is the staging alternative. Cloudflare DNS has not been changed: the hostname currently resolves to
+Cloudflare addresses and returns HTTP 404 / an HTTPS handshake failure. The Resend key and verified sender are
+reported ready but have not been entered into Coolify. The VPS currently has approximately 6.7 GiB memory available
+and 89 GiB disk free; recheck before deploying.
 
 ### 6.3 Maintenance and people
 
