@@ -43,12 +43,17 @@ filesystem is approaching capacity, plan to expand storage or move data before
 it becomes full; a full disk can affect Garage and other services on the VPS.
 The utility does not delete data or change the server.
 
-## Garage portability validation (proposed; not tested)
+## Garage portability validation (proposed; provider test not run)
 
 The application uses a minimal object-storage interface (`put`, `get`, and
 `delete`). It does not provide an object-listing or bulk-copy operation, and
 this usage utility only measures the VPS; it does not prove that Garage data
 can be migrated or restored.
+
+The focused local `src/lib/storage/storage.test.ts` suite passed 7 tests on
+2026-10-29. Those tests cover local-file operations, storage backend selection,
+credential validation, and image-type detection; they do not issue S3 requests
+or validate Garage/provider portability.
 
 For a future portability rehearsal, use synthetic files and disposable source
 and destination buckets in an isolated environment. Inventory object keys

@@ -86,7 +86,16 @@ provider point-in-time recovery is configured and verified; **RTO 4 h**.
 Layers — replication is not a backup:
 
 1. **Provider PITR.** If the deployed PostgreSQL provider offers point-in-time recovery, confirm that it is enabled and record its actual retention. No provider or PITR setting is established by this repository.
-2. **Independent logical backup.** `.github/workflows/backup.yml` schedules `scripts/db/backup/backup-db.sh` daily and can copy a dump to `BACKUP_S3_URI`. The workflow skips when required URL or destination settings are absent; configuration, successful runs, destination isolation, and retention are unverified. A separate account, restrictive credentials, and versioning/object lock are recommendations, not confirmed settings.
+2. **Declared independent logical backup.** `.github/workflows/backup.yml` on
+   `develop` defines a daily schedule and manual dispatch, and
+   `scripts/db/backup/backup-db.sh` can copy a dump to `BACKUP_S3_URI`. The
+   workflow is absent from the default-branch workflow list, and no backup run
+   appears in the 14 recorded `develop` runs through 2026-10-15. It also skips
+   when its database URL or destination URI is absent. Treat this as a
+   repository implementation, not an active backup service. Configuration,
+   execution, destination isolation, retention, and application restore are
+   unverified. A separate account, restrictive credentials, and
+   versioning/object lock are recommendations, not confirmed settings.
 3. **Object storage.** Uploaded files and exports are separate from the database dump. Confirm the live storage service and configure an independent copy and recovery procedure; the application backup script does not copy these objects.
 
 ### Isolated restore test (not yet evidenced as run)

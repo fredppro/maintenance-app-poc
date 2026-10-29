@@ -27,12 +27,32 @@ Recorded on 2026-10-28:
   under `/data/coolify/backups/`.
 - Coolify has no validated S3 backup destination configured. Cloudflare R2 was not enabled because its setup
   requires a billing subscription and usage above the free allowance is billable.
-- The backup has **not** been restored or otherwise restore-tested. `pg_restore` was not installed on the Mac at the
-  time of this check.
+- As of 2026-10-28, the backup had **not** been restored or otherwise
+  restore-tested. `pg_restore` was not installed on the Mac at the time of this
+  check.
 
 The Contabo snapshot is an additional rollback aid, not an independent backup: it is held by the same provider as the
 VPS. The Mac copy is a separate offline copy, but it is operator-managed and is not an automated off-provider
 backup service.
+
+## Verification update (2026-10-29)
+
+A read-only inspection of Coolify's **Settings → Backup** page showed the
+backup enabled, with cron `0 0 * * *`, local retention set to 3 backups and 7
+days, and no validated S3 destination. Two executions were shown as successful
+(2026-10-29 00:00:16 UTC and 2026-10-28 22:40:06 UTC). This page inspection did
+not establish the schedule timezone or show restore history. The UI's
+max-storage value was `2`; its unit was not displayed. The page also displayed
+an unsaved-changes banner, so the displayed schedule and retention values are
+not confirmed as saved settings.
+
+The local copy at `~/Backups/coolify/coolify-pre-upgrade.dmp` was restored on
+2026-10-29 into a disposable PostgreSQL 17 container with networking disabled.
+`pg_restore --no-owner --no-acl --exit-on-error` completed, and 83 public base
+tables were present. The temporary container was removed. No row values were
+queried. This verifies a scratch database/schema restore of the Coolify dump;
+it does not verify owner/ACL restoration, Coolify service recovery, or
+application database and file recovery.
 
 ## Backup layers and boundaries
 
@@ -57,8 +77,12 @@ Coolify state.
 
 1. Connect to the server through WireGuard and open Coolify at `http://10.242.0.1:8000`.
 2. Go to **Settings → Backup**. Confirm the instance database points to Coolify's internal database (`coolify-db`).
-3. Confirm the schedule and retention values. The verified values are daily at `00:00 UTC`, with 3 local backups,
-   7 days, and a 2 GB local-storage cap.
+3. Confirm the intended schedule and retention values, save only if authorized,
+   then reload to verify persistence. The 2026-10-29 page displayed cron
+   `0 0 * * *`, local retention values of 3 backups and 7 days, and max-storage
+   value `2`; the timezone and max-storage unit were not displayed, and the page
+   showed an unsaved-changes banner. These settings are not confirmed as
+   persisted or effective.
 4. Click **Back up now**.
 5. In **Executions**, wait for the row to show **Success**. Record its timestamp, size, and exact archive path. Do
    not copy a row still marked **In progress** or **Failed**.

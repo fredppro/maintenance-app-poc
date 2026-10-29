@@ -40,7 +40,9 @@ belong in the [environment status record](reference/environment-status.md).
 - [WireGuard and admin access (runbook 02)](operations/wireguard-admin-access.md)
   — dated network and Coolify observations; live state unverified.
 - [Coolify backup and upgrade (runbook 03)](operations/coolify-backup-and-upgrade.md)
-  — dated control-plane backup report; restore and current schedule unverified.
+  — current backup observations and scratch-restore result; full service
+  recovery and remote destination remain unverified; displayed settings were
+  not confirmed saved.
 - [Storage capacity and portability (runbook 04)](operations/storage-capacity-and-portability.md)
   — read-only VPS usage procedure and an untested portability checklist.
 - [Secret rotation (runbook 05)](operations/secret-rotation.md) — procedures

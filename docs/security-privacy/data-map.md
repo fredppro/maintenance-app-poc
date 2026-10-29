@@ -7,8 +7,8 @@ review, **not** a legal record of processing (Art. 30 GDPR) and not a compliance
 
 ```
 Browser ─► Next.js app (live host unverified) ─► PostgreSQL (shared schema, RLS; live provider unverified)
-              │                                  └─► scheduled logical-backup workflow
-              │                                      (configuration, destination and runs unverified)
+              │                                  └─► declared backup workflow (develop only;
+              │                                      no runs evidenced; not on default branch)
               ├─► S3-compatible object storage (photos, export ZIPs; live service unverified)
               ├─► Resend API (integration in code; live account/settings unverified)
               └─► stdout JSON logs (scrubbing is limited; see logging note below)
@@ -45,10 +45,10 @@ Verify each against the provider's *current* DPA and region settings; nothing be
 | --- | --- | --- | --- | --- |
 | Application host | Next.js app; a dated plan identifies self-hosted Coolify/Contabo | Request metadata and application data | Candidate processor | Confirm live host, access, region, logs, retention, and applicable DPA |
 | PostgreSQL | Database and tenant records; provider is configurable in code | All database categories above | Candidate processor | Confirm live provider, account, region, backup/PITR, access policy, encryption, and DPA |
-| S3-compatible object storage | Photos and export ZIPs; backup workflow can upload database dumps | Photos, exports, and possibly database dumps | Candidate processor | Confirm each live bucket, provider, region, access policy, encryption, lifecycle, and independent recovery |
+| S3-compatible object storage | Photos and export ZIPs; the declared backup workflow can upload database dumps if activated | Photos, exports, and possibly database dumps | Candidate processor | Confirm each live bucket, provider, region, access policy, encryption, lifecycle, and independent recovery |
 | Resend | Transactional email integration | Recipient address and message | Candidate processor | Confirm whether configured, plus account, sending region, and DPA |
 | Vercel Analytics | Optional code integration | Page-view metadata | Candidate processor | Code is gated by production and an explicit flag; confirm live use before enabling or listing it as a processor |
-| GitHub Actions | Scheduled database-backup workflow | A dump is created on the runner and may be uploaded | Candidate processor | The script does not encrypt the dump; workflow configuration and runs are unverified. Confirm runner handling and destination encryption/access protections |
+| GitHub Actions | Database-backup workflow file on `develop`; no backup run evidenced | A dump would be created on the runner and may be uploaded if the workflow is active and configured | Candidate processor | The workflow is absent from the default-branch list and no `develop` backup run was found. The script does not encrypt the dump; confirm activation, runner handling, and destination encryption/access protections before relying on it. |
 
 `LEGAL/PRODUCT DECISION REQUIRED:` controller/processor roles per customer (the SaaS is likely a processor for
 tenant data and a controller for account data), DPA template, sub-processor list publication.

@@ -16,7 +16,7 @@ customer-facing retention claim.
 | Rate-limit counters | Removed after 24 h | `pnpm ops:retention` |
 | Tenant export archives | Expire after 7 days; object and row removed | `pnpm ops:retention` |
 | Audit events | **No automatic deletion** | The runtime DB role cannot update or delete them (migration `20261010000000_privacy_hardening`) |
-| Backups | Logical backup workflow has a daily schedule; provider PITR and actual backup retention are unknown | Workflow requires external configuration and may skip; bucket lifecycle and provider retention are unverified |
+| Backups | The application backup workflow file declares a daily schedule on `develop`, but is absent from the default-branch workflow list; no backup run was found in the recorded `develop` runs through 2026-10-15. Provider PITR and actual backup retention are unknown. | The workflow may skip when required settings are absent; it is not evidenced as active. Bucket lifecycle, provider retention, and application backup/restore remain unverified. |
 
 Run all jobs with the owner connection (`MIGRATION_DATABASE_URL`).
 `.github/workflows/maintenance-jobs.yml` is scheduled daily and skips when

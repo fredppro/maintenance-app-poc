@@ -11,10 +11,11 @@ publish images; successful branch pushes publish an immutable commit-tagged imag
 to GHCR and expose its digest for a later staging/production promotion.
 
 The GHCR package must be kept private. This workflow builds and publishes images;
-it does not deploy to Coolify. Dated repository reports conflict about whether
-staging was deployed; current staging and production status are unverified. Check
-[the environment status record](../reference/environment-status.md) before treating
-either report as current.
+it does not deploy to Coolify. On 2026-10-29, the operator confirmed both
+staging and production are deployed. Coolify showed the staging app, database,
+and Garage resource running, but the app had no health check; production was
+not independently viewed. See [the environment status record](../reference/environment-status.md)
+for the evidence and remaining verification.
 ## Production and staging operations
 
 The repository does not provision production/staging resources or configure

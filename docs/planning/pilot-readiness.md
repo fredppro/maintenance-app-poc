@@ -1,9 +1,10 @@
 # Invite-only pilot readiness
 
 This document describes application controls and deployment checks, not the
-live environment. Repository reports conflict about staging deployment; current
-staging and production status and provider configuration remain unverified.
-See [environment status](../reference/environment-status.md).
+live environment. The operator confirmed staging and production deployment on
+2026-10-29. Coolify showed staging resources running, but the app had no health
+check; production, provider, and region details were not independently
+verified. See [environment status](../reference/environment-status.md).
 
 ## Organization roles
 
@@ -154,9 +155,11 @@ history, CI logs, source control, or this documentation.
   responses additionally enable HSTS; TLS termination must be configured at
   the deployment ingress before enabling production traffic.
 - The repository contains no production deployment manifest or secret store.
-  Dated repository reports conflict about whether staging was deployed. A
-  backup workflow and restore-test script exist, but live configuration and
-  successful runs are unverified.
+  The operator reported staging and production deployed on 2026-10-29, but
+  production was not independently viewed. A backup workflow and restore-test
+  script exist, but the workflow file is only on `develop`, absent from the
+  default-branch workflow list, and has no recorded backup run. Live
+  configuration and application restore remain unverified.
 - Real email delivery, verification, password reset, and invitations require
   valid Resend credentials and a verified sender. The repository cannot
   validate deliverability without those credentials.
