@@ -7,6 +7,7 @@ Variable names and behavior documented from repository configuration. Do not cop
 | Variable | Required for | Description |
 | --- | --- | --- |
 | `DATABASE_URL` | Prisma client generation/configuration, database commands, and app runtime | PostgreSQL-compatible connection string. `.env.example` points to local development PostgreSQL. |
+| `APP_DATABASE_URL` | Optional app runtime | Explicit restricted runtime connection string. Takes precedence over `DATABASE_URL` when set. |
 | `MIGRATION_DATABASE_URL` | `prisma migrate`, `pnpm db:seed` | Optional owner connection string; falls back to `DATABASE_URL`. Required when `DATABASE_URL` is a restricted role (the local Docker default). |
 | `E2E_DATABASE_URL` | Playwright browser tests and E2E migration command | Dedicated test database connection string. `.env.example` points to a separate local database on port 5433. The database name must end in `_test` and target a different host/port/database from `DATABASE_URL`. |
 | `BETTER_AUTH_SECRET` | App runtime and auth tests | Secret used to sign Better Auth sessions; use a random secret of at least 32 characters and keep it private. |
@@ -19,8 +20,6 @@ Variable names and behavior documented from repository configuration. Do not cop
 | `STORAGE_LOCAL_DIR` | Optional | Local-disk directory used when `S3_BUCKET` is unset. Defaults to `.storage` (git-ignored). |
 | `RESEND_API_KEY` | Production verification, password recovery, and invitations | Resend API credential. Configure through a secret manager; no key is needed for local login/signup without email delivery. |
 | `AUTH_EMAIL_FROM` | Production verification, password recovery, and invitations | Verified sender in Resend, e.g. `Maintenance Scheduler <accounts@example.com>`. |
-| `REQUIRE_EMAIL_VERIFICATION` | Optional (previews) | Set to `false` to skip email verification on a preview with no email provider. Ignored when `VERCEL_ENV=production`. |
-| `ALLOW_PUBLIC_SIGNUP` | Optional (previews) | Set to `true` to allow anyone to sign up and create an organisation on a preview. Ignored when `VERCEL_ENV=production`; leave unset for the invite-only pilot. |
 | `PILOT_BOOTSTRAP_EMAIL` | Initial production owner setup | Email permitted to create the first production account while no customer organization exists. An unclaimed legacy workspace is ignored. Remove after initial setup. |
 | `LEGACY_OWNER_EMAIL` | Legacy data assignment only | Verified existing account selected to own migrated legacy data. |
 | `LEGACY_ORGANIZATION_NAME` | Legacy data assignment only | Approved customer organization name to replace the legacy workspace name. |
@@ -50,3 +49,8 @@ provider, or the fixed MinIO defaults above.
 Playwright reads `E2E_DATABASE_URL` for its server and fixtures. The
 `pnpm db:migrate:e2e` command validates and uses that URL without changing
 the development database configuration.
+
+Deployed environments use invite-only account creation (the initial bootstrap
+owner followed by organization invitations) and require verified email
+addresses. These policies are not relaxed through Vercel-specific environment
+variables. Local development and tests may sign up without email delivery.

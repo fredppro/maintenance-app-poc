@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { File as NodeFile } from "node:buffer";
 import { POST } from "./route";
 
 const { getTenantContext, saveImageFile, takeRateLimit } = vi.hoisted(() => ({
@@ -37,9 +38,16 @@ describe("POST /api/files", () => {
   });
 
   it("rejects uploads over the rate limit", async () => {
-    takeRateLimit.mockResolvedValue({ allowed: false });
+    takeRateLimit.mockResolvedValue({ allowed: false, reason: "limit" });
     const response = await upload(formWith(new File(["x"], "a.png")));
     expect(response.status).toBe(429);
+    expect(saveImageFile).not.toHaveBeenCalled();
+  });
+
+  it("returns unavailable when the rate-limit store cannot be checked", async () => {
+    takeRateLimit.mockResolvedValue({ allowed: false, reason: "unavailable" });
+    const response = await upload(formWith(new File(["x"], "a.png")));
+    expect(response.status).toBe(503);
     expect(saveImageFile).not.toHaveBeenCalled();
   });
 
@@ -56,6 +64,62 @@ describe("POST /api/files", () => {
       "content-length": String(50 * 1024 * 1024),
     });
     expect(response.status).toBe(413);
+  });
+
+  it("bounds streamed bodies without relying on Content-Length", async () => {
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array(5 * 1024 * 1024 + 64 * 1024 + 1));
+        controller.close();
+      },
+    });
+    const formData = vi.fn();
+    const response = await POST({
+      url: "http://x/api/files",
+      headers: new Headers({ "content-type": "multipart/form-data; boundary=test" }),
+      body,
+      formData,
+    } as unknown as Request);
+
+    expect(response.status).toBe(413);
+    expect(formData).not.toHaveBeenCalled();
+    expect(saveImageFile).not.toHaveBeenCalled();
+  });
+
+  it("parses a bounded multipart body and stores its file", async () => {
+    vi.stubGlobal("File", NodeFile);
+    saveImageFile.mockResolvedValue({ id: "f-2" });
+    const boundary = "maintenance-test-boundary";
+    const body = Buffer.from(
+      [
+        `--${boundary}`,
+        'Content-Disposition: form-data; name="file"; filename="pump.png"',
+        "Content-Type: image/png",
+        "",
+        "image bytes",
+        `--${boundary}--`,
+        "",
+      ].join("\r\n"),
+    );
+
+    try {
+      const request = new Request("http://x/api/files", {
+        method: "POST",
+        headers: {
+          "content-type": `multipart/form-data; boundary=${boundary}`,
+        },
+        body,
+      });
+      const response = await POST(request);
+
+      expect(response.status).toBe(201);
+      expect(await response.json()).toEqual({ id: "f-2" });
+      expect(saveImageFile).toHaveBeenCalledWith(
+        expect.objectContaining({ filename: "pump.png" }),
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("rejects requests without a file part", async () => {

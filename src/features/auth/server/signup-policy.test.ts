@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  isPublicSignupAllowed,
   mayCreateAccount,
   mayCreateOrganization,
   type SignupPolicyConfig,
@@ -16,7 +15,6 @@ vi.mock("@/lib/prisma", () => ({
 
 const production: SignupPolicyConfig = {
   isProduction: true,
-  allowPublicSignup: false,
   bootstrapEmail: "owner@pilot.example",
 };
 
@@ -28,9 +26,8 @@ describe("sign-up policy", () => {
   });
 
   describe("mayCreateAccount", () => {
-    it("is open outside production and when public sign-up is explicitly enabled", async () => {
+    it("is open only outside production", async () => {
       expect(await mayCreateAccount("anyone@example.com", { ...production, isProduction: false })).toBe(true);
-      expect(await mayCreateAccount("anyone@example.com", { ...production, allowPublicSignup: true })).toBe(true);
       expect(mocks.invitationFind).not.toHaveBeenCalled();
     });
 
@@ -68,9 +65,8 @@ describe("sign-up policy", () => {
   });
 
   describe("mayCreateOrganization", () => {
-    it("is open outside production and with public sign-up", async () => {
+    it("is open outside production", async () => {
       expect(await mayCreateOrganization("a@example.com", { ...production, isProduction: false })).toBe(true);
-      expect(await mayCreateOrganization("a@example.com", { ...production, allowPublicSignup: true })).toBe(true);
     });
 
     it("lets invited users join organizations but not create their own in production", async () => {
@@ -94,22 +90,5 @@ describe("sign-up policy", () => {
 
       expect(mocks.orgCount.mock.calls[0][0].where.slug.not).toBeTruthy();
     });
-  });
-});
-
-describe("isPublicSignupAllowed", () => {
-  it("honours ALLOW_PUBLIC_SIGNUP=true on previews and in plain production-mode hosting", () => {
-    expect(isPublicSignupAllowed({ ALLOW_PUBLIC_SIGNUP: "true", VERCEL_ENV: "preview" } as never)).toBe(true);
-    expect(isPublicSignupAllowed({ ALLOW_PUBLIC_SIGNUP: "true" } as never)).toBe(true);
-  });
-
-  it("is ignored on the Vercel production environment", () => {
-    expect(isPublicSignupAllowed({ ALLOW_PUBLIC_SIGNUP: "true", VERCEL_ENV: "production" } as never)).toBe(false);
-  });
-
-  it("needs the exact value true", () => {
-    for (const value of [undefined, "", "1", "TRUE", "yes", "false"]) {
-      expect(isPublicSignupAllowed({ ALLOW_PUBLIC_SIGNUP: value, VERCEL_ENV: "preview" } as never)).toBe(false);
-    }
   });
 });

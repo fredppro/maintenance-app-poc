@@ -2,15 +2,19 @@ import { randomUUID } from "node:crypto";
 import { logEvent } from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
+export type RateLimitResult =
+  | { allowed: true }
+  | { allowed: false; reason: "limit" | "unavailable" };
+
 /**
  * Fixed-window limiter backed by the shared `rateLimit` table, so the limit
- * holds across instances. Fails open: a limiter outage must not take the app down.
+ * holds across instances. Fails closed when the shared counter cannot be checked.
  */
 export async function takeRateLimit(
   bucket: string,
   subject: string,
   { limit, windowSeconds }: { limit: number; windowSeconds: number },
-) {
+): Promise<RateLimitResult> {
   const key = `app:${bucket}:${subject}`;
   const now = Date.now();
   const windowMs = windowSeconds * 1000;
@@ -22,9 +26,13 @@ export async function takeRateLimit(
         count = CASE WHEN "rateLimit"."lastRequest" < ${now - windowMs} THEN 1 ELSE "rateLimit".count + 1 END,
         "lastRequest" = CASE WHEN "rateLimit"."lastRequest" < ${now - windowMs} THEN ${now} ELSE "rateLimit"."lastRequest" END
       RETURNING count`;
-    return { allowed: Number(rows[0]?.count ?? 1) <= limit };
+    const count = rows[0]?.count;
+    if (count === undefined) throw new Error("Rate limiter returned no counter");
+    return Number(count) <= limit
+      ? { allowed: true }
+      : { allowed: false, reason: "limit" };
   } catch (error) {
     logEvent("error", "rate_limit.failed", { bucket, error });
-    return { allowed: true };
+    return { allowed: false, reason: "unavailable" };
   }
 }

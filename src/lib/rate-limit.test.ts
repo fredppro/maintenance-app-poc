@@ -15,11 +15,23 @@ describe("takeRateLimit", () => {
     queryRaw.mockResolvedValueOnce([{ count: 2 }]);
     expect((await takeRateLimit("upload", "u1", options)).allowed).toBe(true);
     queryRaw.mockResolvedValueOnce([{ count: 3 }]);
-    expect((await takeRateLimit("upload", "u1", options)).allowed).toBe(false);
+    expect(await takeRateLimit("upload", "u1", options)).toEqual({
+      allowed: false,
+      reason: "limit",
+    });
   });
 
-  it("fails open when the limiter store is unavailable", async () => {
+  it("fails closed when the limiter store is unavailable", async () => {
     queryRaw.mockRejectedValueOnce(new Error("db down"));
-    expect((await takeRateLimit("upload", "u1", { limit: 1, windowSeconds: 60 })).allowed).toBe(true);
+    expect(
+      await takeRateLimit("upload", "u1", { limit: 1, windowSeconds: 60 }),
+    ).toEqual({ allowed: false, reason: "unavailable" });
+  });
+
+  it("fails closed when the limiter returns no counter", async () => {
+    queryRaw.mockResolvedValueOnce([]);
+    expect(
+      await takeRateLimit("upload", "u1", { limit: 1, windowSeconds: 60 }),
+    ).toEqual({ allowed: false, reason: "unavailable" });
   });
 });

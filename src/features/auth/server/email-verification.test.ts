@@ -17,15 +17,15 @@ describe("isEmailVerificationRequired", () => {
     expect(isEmailVerificationRequired(env({ NODE_ENV: "production", VERCEL_ENV: "preview" }))).toBe(true);
   });
 
-  it("can be relaxed with REQUIRE_EMAIL_VERIFICATION=false on previews", () => {
-    expect(
-      isEmailVerificationRequired(env({ NODE_ENV: "production", VERCEL_ENV: "preview", REQUIRE_EMAIL_VERIFICATION: "false" })),
-    ).toBe(false);
-  });
-
-  it("cannot be relaxed on the Vercel production environment", () => {
+  it("requires verification on every production deployment regardless of override variables", () => {
     expect(
       isEmailVerificationRequired(env({ NODE_ENV: "production", VERCEL_ENV: "production", REQUIRE_EMAIL_VERIFICATION: "false" })),
+    ).toBe(true);
+    expect(
+      isEmailVerificationRequired(env({ NODE_ENV: "production", REQUIRE_EMAIL_VERIFICATION: "false" })),
+    ).toBe(true);
+    expect(
+      isEmailVerificationRequired(env({ NODE_ENV: "production", VERCEL_ENV: "preview", REQUIRE_EMAIL_VERIFICATION: "false" })),
     ).toBe(true);
   });
 });

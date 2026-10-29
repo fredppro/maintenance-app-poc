@@ -67,6 +67,8 @@ belong in the [environment status record](reference/environment-status.md).
   deployment checklist; live environment unverified.
 - [Self-hosted platform plan](planning/self-hosted-platform-plan.md) — plan
   and dated operator reports, not a live dashboard.
+- [Security and product readiness plan](planning/security-and-product-readiness-plan.md) —
+  prioritized implementation and validation gaps from the 2026-10-29 review.
 - [Environment status](reference/environment-status.md) — authoritative
   repository-evidence ledger and external confirmation checklist.
 
@@ -82,7 +84,8 @@ operational instructions:
 - [Dedicated database assessment](archive/dedicated-database-assessment.md) —
   historical assessment, partly superseded by the platform plan.
 - [Vercel and Neon compatibility notes](archive/vercel-neon-compatibility.md)
-  — retained code-path notes, not the current deployment recommendation.
+  — historical compatibility notes; Vercel is a last-resort fallback only,
+  not the active deployment target.
 
 Component-specific UI guidance remains in
 [`.agents/skills/shadcn/SKILL.md](../.agents/skills/shadcn/SKILL.md).

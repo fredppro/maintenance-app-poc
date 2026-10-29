@@ -1,16 +1,30 @@
-# Self-hosted platform and dedicated-database plan
+# Self-hosted platform plan (pooled multi-tenancy)
 
-Branch: `feature/MAINPOC-14-saas-self-hosted` · Status: **plan, revision 2 (2026-10-15: Contabo Cloud VPS 4, Coolify on the production server, single operator).** Coolify was reinstalled with fresh secrets after an earlier local backup was exposed; the first administrator and 2FA are configured, GHCR access is verified, and the operator confirms the encrypted off-host secret backup is complete. The local plaintext copy has been removed. The synthetic staging app and database are deployed at `staging.maintenance.isosist.com`; HTTPS and `/api/health` returned `{"status":"ok"}` on 2026-10-15. Production app/database and the staging deployment pipeline are not deployed. The repository has local Docker Compose development, GitHub Actions checks, and a GHCR image-release job; this does not deploy production or access a production database.
+Plan origin: `feature/MAINPOC-14-saas-self-hosted` · Status: **historical plan, revision 2 (2026-10-15: Contabo Cloud VPS 4, Coolify on the production server, single operator).** The deployment details in this paragraph describe the state recorded on 2026-10-15, not a live status. At that date, Coolify had been reinstalled with fresh secrets after an earlier local backup was exposed; the first administrator and 2FA were configured, GHCR access was verified, and the operator confirmed the encrypted off-host secret backup was complete. The local plaintext copy had been removed. The synthetic staging app and database were deployed at `staging.maintenance.isosist.com`; HTTPS and `/api/health` returned `{"status":"ok"}` on 2026-10-15. Production app/database and the staging deployment pipeline were reported not deployed. The repository had local Docker Compose development, GitHub Actions checks, and a GHCR image-release job; this did not deploy production or access a production database.
 
-This plan replaces the Vercel + Neon hosting model with a self-managed EU deployment (VPS + Coolify) and delivers the
-per-customer dedicated database on top of it. It supersedes the hosting-specific parts of
-[dedicated-database-assessment.md](../archive/dedicated-database-assessment.md); see section 14 for what still applies.
+On 2026-10-29, the operator reported that both staging and production were deployed. A read-only Coolify inspection showed the staging app, database, and Garage resource running; the app log reported Next.js ready, but no app health check was configured. Production was not independently viewed. This newer evidence updates deployment-existence reporting only: it does not establish production health, prove that the plan's pilot or go/no-go gates passed, or verify the deployed image and deployment method. See the [environment status ledger](../reference/environment-status.md) for the evidence and remaining unknowns.
+
+## Current scope (operator clarification, 2026-10-29)
+
+The active product scope is a VPS-hosted SaaS using pooled multi-tenancy and
+the existing tenant-isolation controls. This is the approach being developed
+on `develop`. Dedicated databases per customer are out of scope for now.
+Vercel is not an active deployment target; it may be considered only as a
+last-resort fallback if the VPS-based approach cannot be made viable and that
+change is explicitly approved.
+
+This document preserves the earlier platform plan and its dated evidence.
+Sections about dedicated databases are deferred design material, and the
+Vercel/Neon cutover content is historical. Neither authorizes work outside the
+current scope. Use the [security and product readiness plan](security-and-product-readiness-plan.md)
+for current application-hardening priorities and the [environment status ledger](../reference/environment-status.md)
+for evidence and live-state unknowns.
 
 Evidence rules: facts about Coolify come from its documentation (fetched 2026-10-13) and are cited by page; facts about
 this repository come from the code at the branch point (`889df26`); everything else is a **proposal** or marked
 **[verify]**. Nothing here is a compliance statement: it describes engineering readiness only.
 
-## 0. Decisions already taken and how this plan reads them
+## 0. Historical decisions (2026-10-13; superseded where they conflict with current scope)
 
 | Decision (operator, 2026-10-13) | Reading in this plan |
 | --- | --- |
@@ -34,8 +48,13 @@ quarterly full drills on a temporary second VPS.
 
 ### 0.2 Decision log: Vercel + Neon re-evaluated and not chosen (2026-10-13)
 
-The operator reconsidered the managed alternative because several external services are involved. Outcome: **the
-self-hosted plan stands.** Recorded so the reasoning and the triggers for revisiting are not lost.
+This historical decision log is not a current deployment recommendation.
+Vercel is only a last-resort fallback: first assess remediation within the VPS
+and self-hosted operating model. Reconsider Vercel only if that model cannot
+meet an essential security, availability, or operational requirement and the
+operator explicitly approves a scope change. The historical comparison below
+contains estimates and provider observations from 2026-10-13, not verified
+current prices or configurations.
 
 | Point | Finding |
 | --- | --- |
@@ -44,12 +63,6 @@ self-hosted plan stands.** Recorded so the reasoning and the triggers for revisi
 | Cost | Self-hosted roughly €8–15 per month; Vercel Pro ($20, includes $20 credit and one deploying seat) plus an always-on 0.25-unit Neon compute (about $19) plus storage is roughly $40–45; gap about $30 per month. A dedicated customer database is an extra Neon project (100 projects on Launch) versus RAM on the server |
 | Operations | Self-hosting adds permanent duties (patching, firewall, backups and restores, Coolify updates, monitoring) for a single operator with no deputy; the managed stack carries most of these. This is the main argument **for** the managed option and the reason section 6.3 limits what can be promised to customers |
 | Jurisdiction | Contabo, Scaleway and Hetzner are European companies; Vercel and Neon are US companies (data location can still be the EU). A data-location observation, not a compliance claim |
-
-**Triggers to revisit the managed option:** the pilot (P1–P16) fails a blocking check; Coolify's security record or an
-unpatched advisory makes the control plane unacceptable (fallback in section 12 first); operating the server proves
-too time-consuming; or the first customer requires an availability commitment that one operator cannot meet. If
-revisited, the schema, connection-manager, state-machine and gate designs carry over unchanged; only provisioning
-(Neon API instead of Coolify), secrets and backups change.
 
 Scale assumption (operator): customers have at most about 10 users each; this is a B2B maintenance tool, not a
 high-traffic product. Earlier capacity estimates (assumption-based) give roughly 15–300 database transactions per
@@ -61,13 +74,14 @@ Goals
 
 1. Run the whole product on infrastructure we control, in the EU, with a fixed and predictable monthly cost.
 2. Keep the existing pooled multi-tenant model (shared schema, RLS, restricted runtime role) as the default.
-3. Offer a **dedicated database instance** per customer as the first dedicated tier, provisioned by an operator tool
-   with verification gates, with no path that can fall back to the shared database.
+3. Keep the current SaaS customer lifecycle and tenant boundaries reliable on the pooled platform.
 4. Make security, recovery and operations first-class: TLS, firewall, hardening, backups with tested restores,
    monitoring, runbooks.
 
 Non-goals for the first release
 
+- Dedicated database instances per customer (explicitly out of current scope).
+- Vercel as an active deployment target; it is a last-resort fallback only.
 - Customer-controlled databases and customer-hosted application deployments (unchanged from the earlier decision).
 - Multi-region or automatic failover (a single production server is accepted, with a measured recovery time; see 5.4).
 - Automatic migration of existing tenant data from pooled to dedicated.
@@ -353,6 +367,11 @@ part of the cutover (section 9).
 
 ## 4. Database architecture
 
+The dedicated-instance architecture in this section is deferred design, not
+part of the current pooled SaaS scope. The shared `pg-shared` model is the
+current target; dedicated-instance tables, lifecycle, gates, and implementation
+steps must not be treated as approved current work.
+
 ### 4.1 Planes and schema
 
 Unchanged from the assessment (Option S): one schema everywhere; control-plane vs data-plane model classification;
@@ -459,6 +478,11 @@ Gates (all must pass; stored with a report hash; re-run at activation):
 - A tenant whose schema version is below the app's minimum shows a maintenance state; others are unaffected.
 
 ## 5. Backup, recovery and disaster recovery
+
+The layers, schedules, and objectives below are proposed target controls, not
+evidence of an active application backup configuration or a successful
+application restore. See the [environment status ledger](../reference/environment-status.md)
+and current recovery runbooks for verified observations.
 
 ### 5.1 Backup layers
 
@@ -597,8 +621,11 @@ remains configured in the Coolify resource and should be removed after migration
 migration runs. The app is deployed from the pinned digest below and Coolify reports it running without a container
 healthcheck. Its public HTTPS `/api/health` endpoint returned `{"status":"ok"}` on 2026-10-15. This verifies the
 application readiness endpoint, but email delivery, the owner account flow, and authenticated Garage
-upload/download still need end-to-end testing. Do not add production promotion until those tests and the remaining
-controls are complete.
+upload/download still needed end-to-end testing. The 2026-10-15 plan therefore did not authorize production
+promotion until those tests and the remaining controls were complete. The operator later reported production
+deployed on 2026-10-29; that report does not verify that those prerequisites or pilot gates passed. Treat production
+readiness as unverified until the [environment status ledger](../reference/environment-status.md) records independent
+evidence.
 
 Staging choices confirmed on 2026-10-15: use `staging.maintenance.isosist.com` through Cloudflare; use the
 existing Resend integration and the same initial owner address as the Coolify administrator; and use a private,
@@ -632,7 +659,7 @@ and for knowledge. What this means and how it is limited:
   channels.
 - Revisit as soon as there is a paying customer with availability expectations: add a deputy and a second server.
 
-### 6.4 Lifecycle for dedicated tenants
+### 6.4 Lifecycle for dedicated tenants (deferred; out of current scope)
 
 | Event | Procedure |
 | --- | --- |
@@ -642,9 +669,12 @@ and for knowledge. What this means and how it is limited:
 | Delete | `PENDING_DELETION` stops routing; at the scheduled time: final logical dump to restricted storage (retention D5), delete storage objects, delete the Coolify instance **and its volume and backups per policy**, then control rows; the `tenant_database` row is removed last so an interrupted run can resume |
 | Prolonged outage of one instance | `DEGRADED` after 3 min, `UNAVAILABLE` after 15; tenant-only 503 with `Retry-After`; restore from the latest dump/PITR into a new instance, new credential version, re-run gates G1–G8 |
 
-## 7. Repository changes required
+## 7. Original repository changes proposed (historical snapshot)
 
-Referenced from the code as it stands at the branch point.
+This table records work proposed against the code at branch point `889df26`.
+It is not a current repository status report; some listed changes have since
+been implemented or superseded. Current application work is tracked in the
+[security and product readiness plan](security-and-product-readiness-plan.md).
 
 | Area | Change |
 | --- | --- |
@@ -660,7 +690,7 @@ Referenced from the code as it stands at the branch point.
 | Docs | update `docs/security-privacy/gdpr-readiness.md`, `privacy-data-map.md`, `incident-response.md`, `tenant-isolation.md`, `tenant-lifecycle-and-recovery.md`, `README.md`; remove Vercel/Neon from the sub-processor list, add Contabo (hosting), Scaleway (object storage), Squarespace (domain/DNS), the email provider and the monitoring service (readiness documentation, not a compliance claim) |
 | Dedicated-database feature | as in the assessment (sections 3–5), with the adaptations in section 4 here |
 
-## 8. Dedicated-database implementation notes (delta from the assessment)
+## 8. Dedicated-database implementation notes (deferred; out of current scope)
 
 | Topic | Assessment (Vercel/Neon) | This plan |
 | --- | --- | --- |
@@ -672,7 +702,7 @@ Referenced from the code as it stands at the branch point.
 | Pilot | disposable Neon + Vercel | the real VPS stack (section 10) |
 | Cost per dedicated tenant | one Neon project each | RAM on the DB host; ~free until the host is full |
 
-## 9. Cutover from Vercel and Neon
+## 9. Cutover from Vercel and Neon (historical procedure; not current scope)
 
 Only needed if real data exists there (the development database holds one real organization; the state of the Neon
 production database is **[verify]**).
@@ -688,8 +718,14 @@ production database is **[verify]**).
 
 ## 10. Pilot validation on the target VPS stack
 
-Purpose: prove the real platform before committing to build the dedicated-database feature on it. No customer data.
+Purpose: validate the VPS platform without customer data.
 Thresholds are **proposals** to agree before running; M-numbers from the earlier assessment are retired.
+
+This validation set was drafted to support a future dedicated-database tier.
+Dedicated-specific checks (including provisioning and cross-instance checks)
+are not current release gates. Review and adapt the remaining checks to the
+pooled VPS SaaS before execution; none should be read as passed based only on
+this plan.
 
 | # | Check | Pass criterion |
 | --- | --- | --- |
@@ -710,10 +746,20 @@ Thresholds are **proposals** to agree before running; M-numbers from the earlier
 | P15 | Coolify upgrade and instance restore on the **temporary second VPS** | the documented upgrade procedure (snapshot + instance backup first) succeeds; instance restore with `APP_KEY` works |
 | **P16** | **Provider baseline on the Contabo VPS before any customer data:** 24 h soak with CPU load, `sysbench`/`fio`, network throughput test | CPU steal ≤ 5 % average and ≤ 15 % at p99; `fsync` latency p99 ≤ 10 ms and sustained 4k random write IOPS recorded; throughput ≥ 150 Mbit/s to an EU endpoint; no throttling notice; results recorded as the baseline for later comparison |
 
-**Go/no-go:** P2, P3, P4, P7, P9, P13 and P16 are blocking. P11 failing does not block (use the fallback), but it changes the
-estimate. If P4/P15 expose unacceptable Coolify risk, use plain Docker Compose + Caddy for deployments (section 12).
+**Historical go/no-go proposal:** P2, P3, P4, P7, P9, P13 and P16 were marked
+blocking for the original plan; P9, P11 and P13 include dedicated-database
+assumptions and are not current-scope gates. P11 failing was not a blocker in
+that proposal. Do not apply this gate set to the pooled SaaS without review.
+If P4/P15 expose unacceptable Coolify risk, the historical plan proposes plain
+Docker Compose + Caddy as a self-hosted alternative (section 12).
 
-## 11. Roadmap and estimates
+## 11. Historical roadmap and estimates (2026-10-13)
+
+The roadmap below is retained for planning history, not as the active delivery
+sequence. Phase E assumes a Vercel/Neon cutover, and phases F–G implement
+dedicated databases; none is current-scope work. The dedicated-database
+estimates and related runbooks are deferred. Use the security and product
+readiness plan for the current SaaS hardening work.
 
 Estimates are engineer-days for one person who knows the codebase; **U** = uncertainty.
 
@@ -801,9 +847,11 @@ IPv6); expected open ports are exactly those in the table in 3.1; confirm that n
 - [ ] Coolify: registration off, 2FA on, API off or IP-restricted, `APP_KEY` escrowed, instance backups to S3
 - [ ] TLS grade A, HSTS, CAA, certificate-expiry alert
 
-## Appendix C — Environment contract (target)
+## Appendix C — Historical target environment contract
 
-Replaces the Vercel-derived values. Names are indicative; the final list is produced in phase C.
+Names below were proposed for the original target architecture; this is not a
+record of deployed configuration. No environment variable may relax production
+signup restrictions or the email-verification requirement.
 
 | Variable | Purpose | Secret |
 | --- | --- | --- |
@@ -813,14 +861,14 @@ Replaces the Vercel-derived values. Names are indicative; the final list is prod
 | `TENANT_CREDENTIAL_KEYS` | key ring for tenant credentials | yes |
 | `S3_*` | object storage | yes |
 | `RESEND_API_KEY`, `AUTH_EMAIL_FROM` (or SMTP settings) | email | yes |
-| `APP_ENV` | `production` \| `staging`; replaces `VERCEL_ENV` guards for the preview-only sign-up flags | no |
+| `APP_ENV` | Proposed deployment label for scripts or diagnostics; it does not control production signup or verification policy | no |
 
 ## Appendix D — Runbooks to write (phase H, drafted as each area lands)
 
 1. Provision the server from scratch (Contabo order, OS image, hardening, VPN) and install Coolify (bootstrap and VPN runbooks: [01-server-bootstrap.md](../operations/server-bootstrap.md), [02-wireguard-admin-access.md](../operations/wireguard-admin-access.md); Ansible baseline: [../ansible/README.md](../../ansible/README.md); Contabo provider firewall API still to verify)
 2. Rebuild production after server loss using the staged [on-demand VPS recovery runbook](../operations/vps-recovery.md); Terraform VPS creation, first-boot Ansible, remote state, restore validation, and DNS cutover automation remain outstanding
-3. Restore `pg-shared` / restore a dedicated instance / PITR (phase 2)
-4. Provision, rotate credentials for, suspend, and decommission a dedicated instance
+3. Restore `pg-shared` / PITR (phase 2); dedicated-instance restore is deferred
+4. [Deferred] Provision, rotate credentials for, suspend, and decommission a dedicated instance
 5. Deploy, roll back, and run migrations (including a failed migration)
 6. Renew or replace certificates; regenerate the database CA
 7. Respond to a suspected compromise (rotate everything, rebuild, restore pre-compromise)

@@ -36,7 +36,10 @@ export async function GET(
     const tenant = await getTenantContext("viewReports");
     const limit = await takeRateLimit("report", tenant.userId, { limit: 20, windowSeconds: 60 });
     if (!limit.allowed) {
-      return NextResponse.json({ message: "Too many requests" }, { status: 429 });
+      return NextResponse.json(
+        { message: limit.reason === "unavailable" ? "Service temporarily unavailable" : "Too many requests" },
+        { status: limit.reason === "unavailable" ? 503 : 429 },
+      );
     }
     return await buildReportResponse(
       tenant.db,

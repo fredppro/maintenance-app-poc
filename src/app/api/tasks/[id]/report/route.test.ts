@@ -53,12 +53,27 @@ describe("GET /api/tasks/[id]/report", () => {
   });
 
   it("rate limits report generation", async () => {
-    vi.mocked(takeRateLimit).mockResolvedValueOnce({ allowed: false });
+    vi.mocked(takeRateLimit).mockResolvedValueOnce({
+      allowed: false,
+      reason: "limit",
+    });
     const response = await GET(
       new NextRequest("http://localhost:3000/api/tasks/task-1/report"),
       { params: Promise.resolve({ id: "task-1" }) },
     );
     expect(response.status).toBe(429);
+  });
+
+  it("returns unavailable when the rate-limit store cannot be checked", async () => {
+    vi.mocked(takeRateLimit).mockResolvedValueOnce({
+      allowed: false,
+      reason: "unavailable",
+    });
+    const response = await GET(
+      new NextRequest("http://localhost:3000/api/tasks/task-1/report"),
+      { params: Promise.resolve({ id: "task-1" }) },
+    );
+    expect(response.status).toBe(503);
   });
 
   it("requires an explicit site when the user has multiple sites", async () => {

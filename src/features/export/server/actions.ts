@@ -17,7 +17,13 @@ export async function requestTenantExport() {
   if (active) return { id: active.id };
 
   const limit = await takeRateLimit("export", organizationId, { limit: 3, windowSeconds: 3600 });
-  if (!limit.allowed) throw new Error("Too many export requests; try again later");
+  if (!limit.allowed) {
+    throw new Error(
+      limit.reason === "unavailable"
+        ? "Rate limiting is temporarily unavailable; try again later"
+        : "Too many export requests; try again later",
+    );
+  }
 
   const created = await db.tenantExport.create({
     data: { organizationId, requestedById: userId },
