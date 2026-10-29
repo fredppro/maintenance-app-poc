@@ -14,19 +14,28 @@ feasible, within 72 hours of becoming aware; processors must notify the controll
 - Revoke sessions: delete rows from `session` (owner connection) for the affected user(s) or everyone.
 - Rotate exposed secrets: `BETTER_AUTH_SECRET` (invalidates sessions), database passwords (`maintenance_app_runtime`,
   owner), `RESEND_API_KEY`, storage keys. Rotation is a manual, deliberate step.
+- Use the [secret and credential rotation runbook](secret-rotation.md) for consumers, cutover, and
+  verification steps.
 - Block a bad deploy by redeploying the previous build; check `pnpm db:verify-role` against the database.
 
 ## 3. Investigate
 - Audit trail: `organization_audit_event` (append-only for the app role) — sign-ins (`auth.sign_in`), exports
   (`export.requested/downloaded`), membership/role changes, deletions.
 - Per-person view: `pnpm ops:privacy access-report <email>`.
-- Logs: filter by `organizationId`; logs contain no secrets, URLs or email addresses.
+- Logs: filter by `organizationId` only where the configured log destination and
+  retention permit. The application logger scrubs email/URL strings and
+  sensitive-looking field names, but does not remove arbitrary secrets from
+  error-message text. Do not assume logs contain no personal or secret data;
+  confirm access and retention with the operator.
 - Not recorded today: failed sign-ins, file downloads, read access. State this limitation in the assessment.
 - Determine: which tenants, which data categories, how many data subjects, whether data was exposed, altered or lost.
 
 ## 4. Recover
-- Data loss/corruption: follow [tenant lifecycle and recovery](./tenant-lifecycle-and-recovery.md)
-  (PITR, `restore-test.sh`, tenant export). After any restore, re-run erasure/purge jobs and re-apply logged erasure requests.
+- Data loss/corruption: follow [tenant lifecycle and recovery](tenant-lifecycle-and-recovery.md)
+  (provider PITR only if confirmed, isolated `restore-test.sh`, tenant export).
+  The repository does not establish that PITR is enabled or that a restore has
+  succeeded. After any authorized restore, re-run erasure/purge jobs and
+  re-apply logged erasure requests.
 
 ## 5. Notify and document
 - Controller decisions and authority/data-subject notices are made by the responsible person with legal advice.

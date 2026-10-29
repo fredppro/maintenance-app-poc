@@ -42,7 +42,8 @@ Keep the following in the appropriate secure systems, not in this repository or 
 - The Mac's WireGuard client private key and profile, held locally. The server's WireGuard private key must be
   generated and kept on the replacement host.
 - DNS registrar access, Coolify/application secrets, the Coolify `APP_KEY`, object-storage access, and the latest
-  verified database and file backups.
+  verified database and file backups. See [runbook 03](coolify-backup-and-upgrade.md) for the Coolify instance
+  backup procedure; application databases and files need separate verified backups.
 - A known-good backup timestamp and an agreed recovery point/time objective. No tested RPO or RTO is established
   by this runbook.
 
@@ -53,7 +54,7 @@ and repeatable configuration; treat snapshots as a possible supplemental recover
 ## Recovery sequence
 
 Do not skip the access gates. Keep the failed/old VPS and its data intact until the replacement is verified, unless
-the incident requires isolation. If compromise is suspected, follow the [incident response runbook](../incident-response.md)
+the incident requires isolation. If compromise is suspected, follow the [incident response runbook](incident-response.md)
 and rotate credentials rather than copying identities or secrets from the suspect host.
 
 ### 1. Confirm the incident and preserve recovery material
@@ -160,6 +161,6 @@ instance only after checking its data, backups, billing, firewall attachment, an
    production host.
 6. Set and measure an RPO/RTO, then update the procedure with actual timings, costs, and verified provider behavior.
 
-Related procedures: [server baseline](01-server-bootstrap.md), [WireGuard and provider firewall](02-wireguard-admin-access.md),
+Related procedures: [server baseline](server-bootstrap.md), [WireGuard and provider firewall](wireguard-admin-access.md),
 [Ansible baseline](../../ansible/README.md), [Contabo Terraform firewall](../../infra/contabo-firewall/README.md),
-and [self-hosted platform plan](../self-hosted-platform-plan.md).
+and [self-hosted platform plan](../planning/self-hosted-platform-plan.md).

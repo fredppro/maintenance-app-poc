@@ -1,5 +1,10 @@
 # Invite-only pilot readiness
 
+This document describes application controls and deployment checks, not the
+live environment. Repository reports conflict about staging deployment; current
+staging and production status and provider configuration remain unverified.
+See [environment status](../reference/environment-status.md).
+
 ## Organization roles
 
 Every server operation checks the signed-in user's membership in the active
@@ -66,7 +71,9 @@ gate to simplify onboarding.
 Use a separate PostgreSQL database and credentials for every environment.
 Before deploying a schema change:
 
-1. Verify the target environment and take/confirm a provider-native backup.
+1. Verify the target environment and take/confirm a provider-native backup;
+   backup configuration and successful recovery are not established by this
+   repository.
 2. Test the migration against a staging database restored from a recent backup.
 3. Check status with `pnpm exec prisma migrate status` using the target
    environment's `DATABASE_URL`.
@@ -107,10 +114,11 @@ tamper-proof against a database administrator.
 
 ## Backup and restore
 
-See [tenant-lifecycle-and-recovery.md](tenant-lifecycle-and-recovery.md) for the
-recovery targets, the scheduled backup workflow, the restore test and the
-recovery procedure. Provider-managed PITR and an off-account backup bucket
-still have to be enabled by the deployment owner. Keep backup credentials
+See [tenant-lifecycle-and-recovery.md](../operations/tenant-lifecycle-and-recovery.md) for
+proposed recovery targets and the repository's backup and restore procedures.
+The workflow is conditional on external configuration; provider-managed PITR,
+an off-account backup bucket, retention, successful execution, and restore
+evidence must be confirmed by the deployment owner. Keep backup credentials
 separate from application credentials.
 
 For a portable logical backup where PostgreSQL client tools are available:
@@ -145,9 +153,10 @@ history, CI logs, source control, or this documentation.
   policy, and disabled camera/microphone/geolocation access. Production
   responses additionally enable HSTS; TLS termination must be configured at
   the deployment ingress before enabling production traffic.
-- The repository contains no production deployment manifest, staging
-  environment or secret store. A backup workflow and restore-test script
-  exist, but need the deployment owner's bucket and secrets.
+- The repository contains no production deployment manifest or secret store.
+  Dated repository reports conflict about whether staging was deployed. A
+  backup workflow and restore-test script exist, but live configuration and
+  successful runs are unverified.
 - Real email delivery, verification, password reset, and invitations require
   valid Resend credentials and a verified sender. The repository cannot
   validate deliverability without those credentials.

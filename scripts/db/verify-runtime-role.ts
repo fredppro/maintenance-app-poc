@@ -6,7 +6,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 // Tables deliberately outside RLS: the auth/lifecycle tables are read before a tenant is known
-// or by operators (docs/tenant-isolation.md). Anything else with organizationId must have RLS.
+// or by operators (docs/architecture/tenant-isolation.md). Anything else with organizationId must have RLS.
 const APP_LEVEL_ONLY = new Set(["member", "invitation", "organization_audit_event", "tenant_settings"]);
 
 async function main() {

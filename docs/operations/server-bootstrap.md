@@ -1,7 +1,7 @@
 # Runbook 01: bootstrap and harden the production server
 
-Part of [self-hosted-platform-plan.md](../self-hosted-platform-plan.md), phase B (platform foundation), part 1.
-Part 2 (WireGuard and admin firewall rules) continues in [02-wireguard-admin-access.md](02-wireguard-admin-access.md).
+Part of [self-hosted-platform-plan.md](../planning/self-hosted-platform-plan.md), phase B (platform foundation), part 1.
+Part 2 (WireGuard and admin firewall rules) continues in [02-wireguard-admin-access.md](wireguard-admin-access.md).
 
 **Scope:** a freshly installed **plain Ubuntu 24.04 LTS** server (no application image, no Docker, no Dokploy/Coolify)
 → a hardened baseline. **Operator-run**: you type the commands, nobody else needs access to the server or your keys.
@@ -287,7 +287,7 @@ Expected: the first two print `KEY_LOGIN_OK` and `ROOT_KEY_LOGIN_OK`; the passwo
 ## Stage 5: host firewall
 
 This is the initial-bootstrap state, before the VPN-only SSH transition in
-[runbook 02](02-wireguard-admin-access.md). For the current VPS, this stage has already been completed and public
+[runbook 02](wireguard-admin-access.md). For the current VPS, this stage has already been completed and public
 SSH has subsequently been removed. Do not rerun the temporary public-SSH allow rule unless performing an intentional
 recovery while another access path is unavailable.
 

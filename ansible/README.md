@@ -79,8 +79,8 @@ The runner requires exact interactive confirmations before billable provisioning
 It stops for host-key verification and WireGuard profile handoff; server private keys are generated on-host and
 never returned to Ansible. If interrupted, resume with `--resume`. It stops after infrastructure hardening:
 Coolify, application/data restore, health verification, and DNS/TLS cutover remain operator steps in the
-[recovery runbook](../docs/runbooks/00-on-demand-vps-recovery.md).
+[recovery runbook](../docs/operations/vps-recovery.md).
 
 For a rehearsal while the production VPS remains live, use a distinct VPN address and separate/test client profile;
 never run two live servers with `10.242.0.1`. This first-boot path does not restore Coolify, databases, files, DNS, or
-TLS. See the full [on-demand VPS recovery runbook](../docs/runbooks/00-on-demand-vps-recovery.md).
+TLS. See the full [on-demand VPS recovery runbook](../docs/operations/vps-recovery.md).

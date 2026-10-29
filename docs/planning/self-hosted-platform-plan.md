@@ -4,7 +4,7 @@ Branch: `feature/MAINPOC-14-saas-self-hosted` · Status: **plan, revision 2 (202
 
 This plan replaces the Vercel + Neon hosting model with a self-managed EU deployment (VPS + Coolify) and delivers the
 per-customer dedicated database on top of it. It supersedes the hosting-specific parts of
-[dedicated-database-assessment.md](dedicated-database-assessment.md); see section 14 for what still applies.
+[dedicated-database-assessment.md](../archive/dedicated-database-assessment.md); see section 14 for what still applies.
 
 Evidence rules: facts about Coolify come from its documentation (fetched 2026-10-13) and are cited by page; facts about
 this repository come from the code at the branch point (`889df26`); everything else is a **proposal** or marked
@@ -488,6 +488,13 @@ the bucket uses object lock/versioning) so a compromised server cannot delete hi
 the operator and the restore-test job; backups are encrypted (provider SSE at minimum; client-side encryption of dump
 files if the provider is not trusted for confidentiality: decision D7).
 
+**Current implementation status (2026-10-28):** Coolify's instance backup ran successfully to local disk and a verified
+copy was placed on the FileVault-protected operator Mac; local retention is set to 3 backups / 7 days / 2 GB. No
+validated S3 destination is configured in Coolify, so the planned off-provider backup layer is **not implemented**.
+The Contabo snapshot is supplemental and remains in the same provider/failure domain. The manual instance backup has
+not been restore-tested. It does not back up `pg-shared`, dedicated tenant databases, or Garage files. See
+[runbook 03](../operations/coolify-backup-and-upgrade.md) for the procedure and current evidence.
+
 ### 5.2 Restore testing
 
 - **Automated weekly (off-peak, resource-limited):** a restore job on the server restores the newest `pg-shared` dump
@@ -574,6 +581,10 @@ The dashboard responds over the VPN at `http://10.242.0.1:8000`; public IPv4/IPv
 did not connect to ports 8000, 6001, or 6002. Docker publishes those ports on all host interfaces, so the provider
 firewall remains a required control and the external scan in P2 is still a gate.
 
+On 2026-10-28, Coolify's update check reported no newer version available, and the PHP CLI in the running `coolify`
+container reported PHP 8.4.27. No manual upgrade was performed. See [runbook 03](../operations/coolify-backup-and-upgrade.md)
+for the pre-upgrade backup and verification procedure.
+
 The fresh Coolify `localhost` server is reachable and usable after restoring the narrow UFW SSH allow rule from
 `172.30.1.0/24` on `br-9eb9aafa0153` to `172.30.0.1:22`. The first administrator has been recreated over WireGuard and `/register` redirects to `/login`; the account's 2FA
 is enabled, as confirmed in the Coolify profile on 2026-10-15. The new `/data/coolify/source/.env` is restricted to
@@ -646,7 +657,7 @@ Referenced from the code as it stands at the branch point.
 | Scheduled jobs | `ops:retention`, `ops:purge-trash`, `ops:tenant purge-due` and backups move from GitHub Actions (`maintenance-jobs.yml`, `backup.yml`; they need a publicly reachable owner URL) to Coolify scheduled tasks or host timers on the server; workflows are kept only for tests/security |
 | Object storage | S3 settings already supported (`S3_*`); choose an EU provider; bucket private; lifecycle/versioning |
 | Email | currently Resend; decide whether to keep it or move to an EU SMTP provider (D9); update the sub-processor list |
-| Docs | update `docs/gdpr-readiness.md`, `privacy-data-map.md`, `incident-response.md`, `tenant-isolation.md`, `tenant-lifecycle-and-recovery.md`, `README.md`; remove Vercel/Neon from the sub-processor list, add Contabo (hosting), Scaleway (object storage), Squarespace (domain/DNS), the email provider and the monitoring service (readiness documentation, not a compliance claim) |
+| Docs | update `docs/security-privacy/gdpr-readiness.md`, `privacy-data-map.md`, `incident-response.md`, `tenant-isolation.md`, `tenant-lifecycle-and-recovery.md`, `README.md`; remove Vercel/Neon from the sub-processor list, add Contabo (hosting), Scaleway (object storage), Squarespace (domain/DNS), the email provider and the monitoring service (readiness documentation, not a compliance claim) |
 | Dedicated-database feature | as in the assessment (sections 3–5), with the adaptations in section 4 here |
 
 ## 8. Dedicated-database implementation notes (delta from the assessment)
@@ -767,7 +778,7 @@ G7 restore testing) pass.
 
 ## 14. What still applies from the earlier assessment
 
-[dedicated-database-assessment.md](dedicated-database-assessment.md) remains the reference for: the schema decision
+[dedicated-database-assessment.md](../archive/dedicated-database-assessment.md) remains the reference for: the schema decision
 (Option S, stub organization, logo move, `tenant_export`, boundary rules), the connection-registry race and rotation
 findings (4.2 experiment), the state machine and gates G0–G6, and the lifecycle design. **Superseded** by this plan: the
 Vercel/Neon feasibility and networking sections, Neon-specific backup and pricing statements, the serverless capacity
@@ -806,14 +817,14 @@ Replaces the Vercel-derived values. Names are indicative; the final list is prod
 
 ## Appendix D — Runbooks to write (phase H, drafted as each area lands)
 
-1. Provision the server from scratch (Contabo order, OS image, hardening, VPN) and install Coolify (bootstrap and VPN runbooks: [01-server-bootstrap.md](runbooks/01-server-bootstrap.md), [02-wireguard-admin-access.md](runbooks/02-wireguard-admin-access.md); Ansible baseline: [../ansible/README.md](../ansible/README.md); Contabo provider firewall API still to verify)
-2. Rebuild production after server loss using the staged [on-demand VPS recovery runbook](runbooks/00-on-demand-vps-recovery.md); Terraform VPS creation, first-boot Ansible, remote state, restore validation, and DNS cutover automation remain outstanding
+1. Provision the server from scratch (Contabo order, OS image, hardening, VPN) and install Coolify (bootstrap and VPN runbooks: [01-server-bootstrap.md](../operations/server-bootstrap.md), [02-wireguard-admin-access.md](../operations/wireguard-admin-access.md); Ansible baseline: [../ansible/README.md](../../ansible/README.md); Contabo provider firewall API still to verify)
+2. Rebuild production after server loss using the staged [on-demand VPS recovery runbook](../operations/vps-recovery.md); Terraform VPS creation, first-boot Ansible, remote state, restore validation, and DNS cutover automation remain outstanding
 3. Restore `pg-shared` / restore a dedicated instance / PITR (phase 2)
 4. Provision, rotate credentials for, suspend, and decommission a dedicated instance
 5. Deploy, roll back, and run migrations (including a failed migration)
 6. Renew or replace certificates; regenerate the database CA
 7. Respond to a suspected compromise (rotate everything, rebuild, restore pre-compromise)
-8. Patch, reboot and upgrade Coolify/Docker/Postgres (minor and major)
+8. Patch, reboot and upgrade Coolify/Docker/Postgres (minor and major; Coolify backup and pre-upgrade steps are in [runbook 03](../operations/coolify-backup-and-upgrade.md))
 9. Disk-full and out-of-memory incidents
 10. Operator absence: break-glass access and deputy procedure
 11. Quarterly DR drill and port-scan procedure

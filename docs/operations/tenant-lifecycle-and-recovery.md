@@ -1,5 +1,10 @@
 # Tenant lifecycle, data portability and recovery
 
+**Operational status:** the procedures and recovery values in this document
+are guidance and targets, not proof of configured backups or tested recovery.
+Confirm current providers and evidence in
+[environment status](../reference/environment-status.md) before relying on them.
+
 ## Creating a customer
 
 Production sign-up is invite-only, so customers are created by an operator:
@@ -74,22 +79,36 @@ Exports read through the tenant client, so RLS confines them to the organization
 
 ## Backups and recovery
 
-Targets to adopt (adjust to contract): **RPO 24 h** with logical backups alone, **RPO ≤ 5 min** once provider point-in-time recovery is enabled; **RTO 4 h**.
+Proposed targets to assess against the service contract (not measured or
+committed): **RPO 24 h** with logical backups alone, **RPO ≤ 5 min** only if
+provider point-in-time recovery is configured and verified; **RTO 4 h**.
 
 Layers — replication is not a backup:
 
-1. **Provider PITR** (Neon history retention / managed Postgres PITR). Enable it and set retention to your RPO; this is not configurable from this repository.
-2. **Independent logical backup.** `.github/workflows/backup.yml` runs `scripts/db/backup/backup-db.sh` daily and copies the dump to `BACKUP_S3_URI`. Use a bucket in a different account/provider whose write-only credentials the application and database cannot delete (enable object lock/versioning). The workflow skips itself until the `BACKUP_*` secrets exist.
-3. **Object storage.** Uploaded files and exports live in the S3 bucket. Enable bucket versioning and cross-region replication or a scheduled copy; the database dump alone does not contain files.
+1. **Provider PITR.** If the deployed PostgreSQL provider offers point-in-time recovery, confirm that it is enabled and record its actual retention. No provider or PITR setting is established by this repository.
+2. **Independent logical backup.** `.github/workflows/backup.yml` schedules `scripts/db/backup/backup-db.sh` daily and can copy a dump to `BACKUP_S3_URI`. The workflow skips when required URL or destination settings are absent; configuration, successful runs, destination isolation, and retention are unverified. A separate account, restrictive credentials, and versioning/object lock are recommendations, not confirmed settings.
+3. **Object storage.** Uploaded files and exports are separate from the database dump. Confirm the live storage service and configure an independent copy and recovery procedure; the application backup script does not copy these objects.
 
-Restore test (do this before go-live and on a schedule):
+### Isolated restore test (not yet evidenced as run)
+
+The repository restore helper creates a scratch database in a local Docker
+PostgreSQL container and drops it on exit. Before using it, verify the Docker
+context and container are disposable and local. Do not point it at production
+or a shared database. The procedure has not been confirmed by a recorded
+successful restore.
 
 ```sh
-BACKUP_DATABASE_URL=<unpooled owner url> sh scripts/db/backup/backup-db.sh
-sh scripts/db/backup/restore-test.sh backups/<file>.dump   # restores into a scratch DB, verifies, drops it
+# Supply BACKUP_DATABASE_URL through a protected local environment first.
+sh scripts/db/backup/backup-db.sh
+sh scripts/db/backup/restore-test.sh backups/<dump-file>.dump
 ```
 
-Recovery procedure:
+The backup may contain personal data. Keep it outside the repository, use
+protected secret injection rather than a literal connection string in shell
+history, and remove temporary local artifacts only under the approved retention
+procedure.
+
+### Generic recovery outline (not a tested production procedure)
 
 1. Provision a new database; restore the latest dump (`pg_restore --no-owner`) or use PITR to the instant before the incident.
 2. Run `pnpm db:migrate:deploy` with the owner URL, and create the restricted runtime role (`docker/db-init/01-app-role.sh` shows the grants).

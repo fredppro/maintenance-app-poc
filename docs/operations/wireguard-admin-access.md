@@ -1,14 +1,18 @@
 # Runbook 02: WireGuard and VPN-only SSH
 
-Part of [self-hosted-platform-plan.md](../self-hosted-platform-plan.md), phase B (platform foundation), part 2.
-Prerequisite: [runbook 01](01-server-bootstrap.md) Stage 9 passed and the `baseline-hardened` Contabo snapshot
+Part of [self-hosted-platform-plan.md](../planning/self-hosted-platform-plan.md), phase B (platform foundation), part 2.
+Prerequisite: [runbook 01](server-bootstrap.md) Stage 9 passed and the `baseline-hardened` Contabo snapshot
 exists.
 
 For repeatable host configuration after this one-time WireGuard setup, see the
 [Ansible baseline](../../ansible/README.md). Provider firewall creation and attachment are managed in
 [Terraform](../../infra/contabo-firewall/README.md).
 
-## Current server state
+## Dated server observations (2026-10-13)
+
+These are historical operator reports, not a live status check. See
+[environment status](../reference/environment-status.md) for the recorded conflict about
+staging deployment and the facts that still require external confirmation.
 
 Recorded on 2026-10-13:
 
@@ -59,7 +63,9 @@ Recorded on 2026-10-13:
 - The previous Coolify account and 2FA state were removed with the reset. The first root account has since been
   recreated and `/register` redirects to `/login`, confirming registration is disabled. On 2026-10-15, the
   Coolify profile showed 2FA **Enabled**.
-- No application or database has been deployed. The **new** `/data/coolify/source/.env` is mode `0600`. The operator
+- This runbook recorded that no application or database had been deployed at the time. The platform plan records a
+  staging application and database as deployed on the same date; the repository does not resolve that conflict.
+  The **new** `/data/coolify/source/.env` is mode `0600`. The operator
   confirms an encrypted off-host backup is complete; its destination is not recorded. The local plaintext copy has
   been removed. Never print or paste the file contents into chat.
 - The baseline snapshot predates WireGuard, so restoring it requires repeating this runbook before Coolify can be

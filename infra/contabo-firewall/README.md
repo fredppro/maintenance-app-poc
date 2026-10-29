@@ -115,7 +115,7 @@ to continue denying public SSH. This multi-instance attachment and bootstrap beh
 a live recovery VPS.
 
 No recovery VPS has been created, and no live plan/apply has been run for this scaffold. It is not yet a tested
-recovery procedure. Follow the staged [recovery runbook](../../docs/runbooks/00-on-demand-vps-recovery.md); do not
+recovery procedure. Follow the staged [recovery runbook](../../docs/operations/vps-recovery.md); do not
 apply without explicit cost authorization.
 
 ### Gated recovery runner
@@ -159,4 +159,4 @@ imported before making provider changes. This is a recovery risk. Do not run `te
 shortcut.
 
 The staged on-demand replacement design, first-boot requirements, data restore, and remaining automation work are
-documented in the [VPS recovery runbook](../../docs/runbooks/00-on-demand-vps-recovery.md).
+documented in the [VPS recovery runbook](../../docs/operations/vps-recovery.md).

@@ -1,7 +1,7 @@
 # Dedicated customer databases — revised assessment and implementation plan
 
 > **Superseded in part (2026-10-13).** The operator decided to self-host on an EU VPS with Coolify instead of Vercel +
-> Neon. The master plan is now [self-hosted-platform-plan.md](self-hosted-platform-plan.md). Still valid here: the
+> Neon. The master plan is now [self-hosted-platform-plan.md](../planning/self-hosted-platform-plan.md). Still valid here: the
 > schema decision (section 3), the connection-registry findings and experiment (4.1–4.3, 4.5), the state machine and
 > gates (5.1–5.2) and the lifecycle design (5.5). Superseded: Vercel/Neon feasibility and networking (section 6.0–6.x
 > and the pilot), the capacity table (4.4), the secret-management recommendation (5.3–5.4), Neon-specific backup/cost
@@ -376,7 +376,7 @@ per-tenant revocation by rotation. Re-evaluate when a customer or auditor requir
   no write to the shared database**.
 - Recover: check Neon status and the compute; if the data is intact, restart or resize; otherwise restore a PITR
   branch (`restore` API) or a logical dump into a new project, repoint with a new `credentialVersion`, rerun gates G1–G6,
-  and return to `ACTIVE`. Use `docs/incident-response.md`; notify the customer after 15 minutes, escalate after 4 hours
+  and return to `ACTIVE`. Use `docs/operations/incident-response.md`; notify the customer after 15 minutes, escalate after 4 hours
   **[thresholds are proposals]**.
 - Regional loss: restore the latest logical dump into a project in another region (RTO measured in hours; stated
   openly to customers).
@@ -400,7 +400,7 @@ resource, no production secret, no customer data.
 | Marketplace implications | Neon docs: in the **Vercel-managed** integration, plan, billing and compute settings are changed **only in the Vercel dashboard**, and the Neon CLI needs API-key authentication because the account is Vercel-managed. Whether that account may create *additional* projects through the Neon API is **[unverified]** | Needs a live test |
 | Production Neon region | Host `ep-…-pooler.c-6.us-east-1.aws.neon.tech`: **AWS us-east-1 (N. Virginia)** for pooled, unpooled and migration URLs | Verified from the hostname |
 | Vercel function region | Operator confirmed the dashboard setting: **Washington, D.C. (`iad1`)**. The production Neon hostname resolves to **AWS us-east-1 (N. Virginia)**, the same metro/region | **Verified by operator** |
-| Data-location conflict | `docs/gdpr-readiness.md` lists "confirm EEA regions" for Neon, Vercel, Resend and the bucket as a pre-onboarding item; the production database is in us-east-1 | **Open decision** (not a compliance statement) |
+| Data-location conflict | `docs/security-privacy/gdpr-readiness.md` lists "confirm EEA regions" for Neon, Vercel, Resend and the bucket as a pre-onboarding item; the production database is in us-east-1 | **Open decision** (not a compliance statement) |
 
 Consequences for the pilot:
 

@@ -1,6 +1,6 @@
 // Deletes operational data that has outlived its purpose. Run daily with the owner connection:
 //   pnpm ops:retention
-// Audit events are NOT touched: their retention period is a LEGAL/PRODUCT DECISION (docs/data-retention.md).
+// Audit events are NOT touched: their retention period is a LEGAL/PRODUCT DECISION (docs/security-privacy/data-retention.md).
 import "../../prisma/seed-env";
 import { pathToFileURL } from "node:url";
 import prisma from "../../src/lib/prisma";

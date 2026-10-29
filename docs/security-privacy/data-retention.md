@@ -1,5 +1,11 @@
 # Data retention and deletion
 
+The application rules below are implemented or represented in code; they do
+not prove that scheduled jobs, provider policies, or backup expirations are
+active in a deployed environment. Check
+[environment status](../reference/environment-status.md) before making an operational or
+customer-facing retention claim.
+
 | Data | Rule | Mechanism |
 | --- | --- | --- |
 | Soft-deleted equipment, tasks, workers | Permanently removed after 30 days | `pnpm ops:purge-trash` (daily) |
@@ -10,16 +16,23 @@
 | Rate-limit counters | Removed after 24 h | `pnpm ops:retention` |
 | Tenant export archives | Expire after 7 days; object and row removed | `pnpm ops:retention` |
 | Audit events | **No automatic deletion** | The runtime DB role cannot update or delete them (migration `20261010000000_privacy_hardening`) |
-| Backups | Daily dumps plus provider PITR | Bucket lifecycle rule (to be configured) |
+| Backups | Logical backup workflow has a daily schedule; provider PITR and actual backup retention are unknown | Workflow requires external configuration and may skip; bucket lifecycle and provider retention are unverified |
 
-Run all jobs with the owner connection (`MIGRATION_DATABASE_URL`). `.github/workflows/maintenance-jobs.yml` runs them daily once the `production-maintenance` environment has `MIGRATION_DATABASE_URL` and the `S3_*` secrets.
+Run all jobs with the owner connection (`MIGRATION_DATABASE_URL`).
+`.github/workflows/maintenance-jobs.yml` is scheduled daily and skips when
+`MIGRATION_DATABASE_URL` is absent; the workflow definition does not establish
+that its environment is configured or that any run succeeded. Confirm execution
+and object-storage settings in the workflow and service logs before relying on
+the jobs.
 
 ## Backups are not instantly erased
 
 Deleting a row does not remove it from existing backups or provider PITR history. A deleted record disappears from
-backups only when those backups expire. Set the backup retention (bucket lifecycle and Neon PITR window), publish it
-to customers, and ensure restored data is re-purged: after any restore, re-run the erasure/purge jobs and re-apply
-processed erasure requests (keep a log of them).
+backups only when those backups expire. Set and publish the actual backup
+retention after confirming provider and bucket policies; provider PITR and
+object lifecycle settings are not established here. After an authorized
+recovery, re-run the erasure/purge jobs and re-apply processed erasure requests
+(keep a log of them).
 
 ## Data-subject requests
 

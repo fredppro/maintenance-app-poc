@@ -755,7 +755,7 @@ def run_workflow(session, terraform, ansible_playbook, environment):
             print(
                 "\nInfrastructure recovery is complete. Application deployment, database/file restoration, "
                 "health checks, and DNS/TLS cutover remain operator steps; follow "
-                "docs/runbooks/00-on-demand-vps-recovery.md."
+                "docs/operations/vps-recovery.md."
             )
             update_session(session, "complete")
             continue

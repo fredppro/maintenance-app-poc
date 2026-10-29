@@ -36,7 +36,7 @@ CREATE TRIGGER equipment_same_tenant
 -- Row-level security. Rows are visible only when app.org_id (set per transaction by the
 -- application's tenant client) matches; an unset setting matches nothing. FORCE applies the
 -- policy to table owners too. Superusers and BYPASSRLS roles are exempt, so enforcement
--- starts once the app connects as a restricted role (see docs/tenant-isolation.md).
+-- starts once the app connects as a restricted role (see docs/architecture/tenant-isolation.md).
 DO $$
 DECLARE t text;
 BEGIN
