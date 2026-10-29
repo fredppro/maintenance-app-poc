@@ -8,6 +8,13 @@ Equipment photos are stored outside the database. Postgres keeps only a
 `StoredFile` metadata row; the bytes live in object storage and are served
 through the authenticated `/api/files/[id]` route.
 
+- **Accepted uploads:** single-frame PNG, JPEG, and WebP images only. The
+  source file is capped at 5 MiB; the multipart request allows an additional
+  64 KiB for encoding overhead. The server decodes and re-encodes each image,
+  rejects images over 16 megapixels or 8,192 pixels on either edge, applies
+  EXIF orientation, strips embedded metadata, and limits stored dimensions to
+  4,096 pixels per edge. The normalized output must also be at most 5 MiB.
+  Generic documents and animated/multi-page images are not supported.
 - **Default (development):** with no `S3_*` variables, files are written under
   `.storage/`. Nothing else to set up.
 - **MinIO (S3-compatible, local):** start it and create the bucket with
