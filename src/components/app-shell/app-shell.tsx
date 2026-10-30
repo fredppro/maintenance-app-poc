@@ -66,6 +66,7 @@ export function AppShell({
       <AppSidebar
         user={user}
         canManageMembers={canManageMembers}
+        onAccount={() => router.push("/account")}
         logo={
           organizationLogoId && selected
             ? { src: `/api/files/${organizationLogoId}`, alt: selected.organizationName }

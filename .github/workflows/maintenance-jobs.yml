@@ -1,8 +1,7 @@
 name: Maintenance jobs
 
-# Daily retention clean-up: expired sessions/tokens/invitations/exports, trash older than 30 days,
-# organizations past their deletion grace period. Needs the owner connection, so keep these secrets
-# in a protected environment. Skips itself until configured.
+# Daily retention clean-up and durable object deletion retries. Needs the owner connection, so keep
+# these secrets in a protected environment. Skips itself until configured.
 on:
   schedule:
     - cron: "43 3 * * *"
@@ -48,3 +47,6 @@ jobs:
           pnpm ops:retention
           pnpm ops:purge-trash
           pnpm ops:tenant purge-due
+      - name: Retry durable object deletions
+        if: steps.config.outputs.run == 'true'
+        run: pnpm ops:storage:cleanup

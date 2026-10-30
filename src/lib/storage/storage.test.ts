@@ -18,9 +18,20 @@ describe("LocalStorage", () => {
     dir = await mkdtemp(path.join(os.tmpdir(), "storage-"));
     const storage = new LocalStorage(dir);
     await storage.put("org/a.png", Buffer.from("abc"), "image/png");
+    await storage.put("org/nested/b.zip", Buffer.from("export"), "application/zip");
     const object = await storage.get("org/a.png");
     expect(object?.body.toString()).toBe("abc");
     expect(object?.contentType).toBe("image/png");
+    const listed = [];
+    for await (const item of storage.list()) listed.push(item);
+    expect(listed.map(({ key }) => key).sort()).toEqual([
+      "org/a.png",
+      "org/nested/b.zip",
+    ]);
+    expect(listed.find(({ key }) => key === "org/a.png")).toMatchObject({
+      size: 3,
+      lastModified: expect.any(Date),
+    });
     await storage.delete("org/a.png");
     expect(await storage.get("org/a.png")).toBeNull();
   });

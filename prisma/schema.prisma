@@ -56,6 +56,21 @@ model StoredFile {
   @@index([organizationId])
 }
 
+// Durable outbox for object deletion. It intentionally has no organization FK so
+// cleanup survives tenant deletion; RLS still scopes application access by organizationId.
+model StoredFileDeletion {
+  id             String    @id @default(cuid())
+  organizationId String
+  key            String    @unique
+  attempts       Int       @default(0)
+  nextAttemptAt  DateTime  @default(now())
+  lastAttemptAt  DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([nextAttemptAt, createdAt])
+  @@index([organizationId, nextAttemptAt])
+}
+
 // A named area inside a site, e.g. "Boiler room" or "Line 2".
 model Section {
   id             String       @id @default(cuid())

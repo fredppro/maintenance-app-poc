@@ -399,6 +399,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   Equipment: 'Equipment',
   StoredFile: 'StoredFile',
+  StoredFileDeletion: 'StoredFileDeletion',
   Section: 'Section',
   EquipmentRelocation: 'EquipmentRelocation',
   MaintenanceTask: 'MaintenanceTask',
@@ -434,7 +435,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "equipment" | "storedFile" | "section" | "equipmentRelocation" | "maintenanceTask" | "material" | "maintenanceTaskAssignment" | "worker" | "vendor" | "user" | "session" | "account" | "verification" | "rateLimit" | "organization" | "site" | "member" | "invitation" | "legacyOwnershipAssignment" | "organizationAuditEvent" | "tenantSettings" | "tenantExport"
+    modelProps: "equipment" | "storedFile" | "storedFileDeletion" | "section" | "equipmentRelocation" | "maintenanceTask" | "material" | "maintenanceTaskAssignment" | "worker" | "vendor" | "user" | "session" | "account" | "verification" | "rateLimit" | "organization" | "site" | "member" | "invitation" | "legacyOwnershipAssignment" | "organizationAuditEvent" | "tenantSettings" | "tenantExport"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -583,6 +584,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.StoredFileCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.StoredFileCountAggregateOutputType> | number
+        }
+      }
+    }
+    StoredFileDeletion: {
+      payload: Prisma.$StoredFileDeletionPayload<ExtArgs>
+      fields: Prisma.StoredFileDeletionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StoredFileDeletionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredFileDeletionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StoredFileDeletionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredFileDeletionPayload>
+        }
+        findFirst: {
+          args: Prisma.StoredFileDeletionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredFileDeletionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StoredFileDeletionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredFileDeletionPayload>
+        }
+        findMany: {
+          args: Prisma.StoredFileDeletionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredFileDeletionPayload>[]
+        }
+        create: {
+          args: Prisma.StoredFileDeletionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredFileDeletionPayload>
+        }
+        createMany: {
+          args: Prisma.StoredFileDeletionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StoredFileDeletionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredFileDeletionPayload>[]
+        }
+        delete: {
+          args: Prisma.StoredFileDeletionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredFileDeletionPayload>
+        }
+        update: {
+          args: Prisma.StoredFileDeletionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredFileDeletionPayload>
+        }
+        deleteMany: {
+          args: Prisma.StoredFileDeletionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StoredFileDeletionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StoredFileDeletionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredFileDeletionPayload>[]
+        }
+        upsert: {
+          args: Prisma.StoredFileDeletionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredFileDeletionPayload>
+        }
+        aggregate: {
+          args: Prisma.StoredFileDeletionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStoredFileDeletion>
+        }
+        groupBy: {
+          args: Prisma.StoredFileDeletionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoredFileDeletionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StoredFileDeletionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoredFileDeletionCountAggregateOutputType> | number
         }
       }
     }
@@ -2135,6 +2210,19 @@ export const StoredFileScalarFieldEnum = {
 export type StoredFileScalarFieldEnum = (typeof StoredFileScalarFieldEnum)[keyof typeof StoredFileScalarFieldEnum]
 
 
+export const StoredFileDeletionScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  key: 'key',
+  attempts: 'attempts',
+  nextAttemptAt: 'nextAttemptAt',
+  lastAttemptAt: 'lastAttemptAt',
+  createdAt: 'createdAt'
+} as const
+
+export type StoredFileDeletionScalarFieldEnum = (typeof StoredFileDeletionScalarFieldEnum)[keyof typeof StoredFileDeletionScalarFieldEnum]
+
+
 export const SectionScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -2802,6 +2890,7 @@ export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaC
 export type GlobalOmitConfig = {
   equipment?: Prisma.EquipmentOmit
   storedFile?: Prisma.StoredFileOmit
+  storedFileDeletion?: Prisma.StoredFileDeletionOmit
   section?: Prisma.SectionOmit
   equipmentRelocation?: Prisma.EquipmentRelocationOmit
   maintenanceTask?: Prisma.MaintenanceTaskOmit

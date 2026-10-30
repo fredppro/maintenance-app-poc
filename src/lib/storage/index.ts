@@ -3,7 +3,7 @@ import { LocalStorage } from "./local-storage";
 import { S3Storage } from "./s3-storage";
 import type { ObjectStorage } from "./types";
 
-export type { ObjectStorage, StoredObject } from "./types";
+export type { ObjectStorage, StoredObject, StoredObjectInfo } from "./types";
 
 let instance: ObjectStorage | undefined;
 

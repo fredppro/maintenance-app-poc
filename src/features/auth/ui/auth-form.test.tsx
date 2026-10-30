@@ -26,10 +26,15 @@ vi.mock("@/i18n/routing", () => ({
   ),
 }));
 
-function renderSignUpForm() {
+function renderSignUpForm(invitationId?: string) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <AuthForm mode="sign-up" locale="en" emailVerificationEnabled />
+      <AuthForm
+        mode="sign-up"
+        locale="en"
+        invitationId={invitationId}
+        emailVerificationEnabled
+      />
     </NextIntlClientProvider>,
   );
 }
@@ -83,6 +88,27 @@ describe("AuthForm email verification", () => {
         "If your account is still awaiting verification, a new link has been sent.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("preserves the invitation callback through signup and verification", async () => {
+    const user = userEvent.setup();
+    renderSignUpForm("invite-1");
+
+    await completeSignUp(user);
+
+    expect(mocks.signUpEmail).toHaveBeenCalledWith({
+      name: "Alex Example",
+      email: "operations@isosist.com",
+      password: "secure-password",
+      callbackURL: "/en/accept-invitation?id=invite-1",
+    });
+    await user.click(
+      screen.getByRole("button", { name: "Resend verification email" }),
+    );
+    expect(mocks.sendVerificationEmail).toHaveBeenCalledWith({
+      email: "operations@isosist.com",
+      callbackURL: "/en/accept-invitation?id=invite-1",
+    });
   });
 
   it("shows an error when the resend request fails", async () => {

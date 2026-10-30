@@ -1,10 +1,11 @@
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import type { ObjectStorage, StoredObject } from "./types";
+import type { ObjectStorage, StoredObject, StoredObjectInfo } from "./types";
 
 export type S3StorageConfig = {
   bucket: string;
@@ -62,5 +63,43 @@ export class S3Storage implements ObjectStorage {
     await this.client.send(
       new DeleteObjectCommand({ Bucket: this.config.bucket, Key: key }),
     );
+  }
+
+  async *list(): AsyncIterable<StoredObjectInfo> {
+    let continuationToken: string | undefined;
+    const seenTokens = new Set<string>();
+
+    do {
+      const page = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.config.bucket,
+          ContinuationToken: continuationToken,
+        }),
+      );
+      for (const object of page.Contents ?? []) {
+        if (!object.Key) {
+          throw new Error("S3 list response contained an object without a key");
+        }
+        yield {
+          key: object.Key,
+          size: object.Size ?? null,
+          lastModified: object.LastModified ?? null,
+        };
+      }
+      if (page.IsTruncated && !page.NextContinuationToken) {
+        throw new Error("S3 list response was truncated without a continuation token");
+      }
+      if (
+        page.IsTruncated &&
+        page.NextContinuationToken &&
+        seenTokens.has(page.NextContinuationToken)
+      ) {
+        throw new Error("S3 list response repeated a continuation token");
+      }
+      continuationToken = page.IsTruncated
+        ? page.NextContinuationToken
+        : undefined;
+      if (continuationToken) seenTokens.add(continuationToken);
+    } while (continuationToken);
   }
 }

@@ -31,7 +31,8 @@ Most scripts here are invoked through `pnpm <name>` (see `package.json`). Run
 | `pnpm db:backup` | Manual dump; optional S3 upload | | Scheduled workflow exists; configuration and successful runs unverified |
 | `pnpm db:restore-test` | Disposable local Docker database only | | Do not point at production; an isolated restore has not been verified |
 | `pnpm ops:tenant create` / `list` | | | Manual: onboard a customer, inspect customers (owner credential) |
-| `pnpm ops:tenant` (other commands), `ops:purge-trash`, `ops:retention`, `ops:privacy` | | | Scheduled (`maintenance-jobs.yml`) or manual, owner credential |
+| `pnpm ops:tenant` (other commands), `ops:purge-trash`, `ops:retention`, `ops:privacy`, `ops:storage:cleanup` | | | Scheduled (`maintenance-jobs.yml`) or manual, owner credential |
+| `pnpm ops:storage:inventory -- --older-than-hours <hours>` | Read-only object inventory | | Manual, owner DB connection; S3 mode requires separate read-only bucket-list credentials |
 | `pnpm legacy:assign-owner`, `test:legacy-ownership` | | CI | One-off, only for pre-tenancy data |
 
 `ops/garage-storage-usage.sh` is a read-only VPS utility, not a `pnpm` command.

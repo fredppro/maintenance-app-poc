@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   Equipment: 'Equipment',
   StoredFile: 'StoredFile',
+  StoredFileDeletion: 'StoredFileDeletion',
   Section: 'Section',
   EquipmentRelocation: 'EquipmentRelocation',
   MaintenanceTask: 'MaintenanceTask',
@@ -119,6 +120,19 @@ export const StoredFileScalarFieldEnum = {
 } as const
 
 export type StoredFileScalarFieldEnum = (typeof StoredFileScalarFieldEnum)[keyof typeof StoredFileScalarFieldEnum]
+
+
+export const StoredFileDeletionScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  key: 'key',
+  attempts: 'attempts',
+  nextAttemptAt: 'nextAttemptAt',
+  lastAttemptAt: 'lastAttemptAt',
+  createdAt: 'createdAt'
+} as const
+
+export type StoredFileDeletionScalarFieldEnum = (typeof StoredFileDeletionScalarFieldEnum)[keyof typeof StoredFileDeletionScalarFieldEnum]
 
 
 export const SectionScalarFieldEnum = {

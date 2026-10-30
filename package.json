@@ -40,6 +40,8 @@
     "db:backup": "sh scripts/db/backup/backup-db.sh",
     "db:restore-test": "sh scripts/db/backup/restore-test.sh",
     "ops:tenant": "tsx scripts/ops/tenant-admin.ts",
+    "ops:storage:cleanup": "tsx scripts/ops/storage-cleanup.ts",
+    "ops:storage:inventory": "tsx scripts/ops/storage-inventory.ts",
     "ops:purge-trash": "tsx scripts/ops/purge-trash.ts",
     "ops:retention": "tsx scripts/ops/retention.ts",
     "ops:privacy": "tsx scripts/ops/privacy-admin.ts",

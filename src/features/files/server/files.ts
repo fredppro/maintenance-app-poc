@@ -5,6 +5,9 @@ import type { TenantDb } from "@/lib/prisma";
 import { getStorage } from "@/lib/storage";
 
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const FILE_DELETION_LEASE_MS = 5 * 60 * 1_000;
+const FILE_DELETION_RETRY_BASE_MS = 60 * 1_000;
+const FILE_DELETION_RETRY_MAX_MS = 24 * 60 * 60 * 1_000;
 const MAX_IMAGE_PIXELS = 16_000_000;
 const MAX_IMAGE_DIMENSION = 8_192;
 const MAX_STORED_IMAGE_DIMENSION = 4_096;
@@ -22,6 +25,80 @@ export class FileValidationError extends Error {
     super(message);
     this.name = "FileValidationError";
   }
+}
+
+function deletionRetryDelay(attempts: number) {
+  return Math.min(
+    FILE_DELETION_RETRY_BASE_MS * 2 ** Math.min(attempts - 1, 20),
+    FILE_DELETION_RETRY_MAX_MS,
+  );
+}
+
+async function enqueueStoredFileDeletion(db: TenantDb, organizationId: string, key: string) {
+  return db.storedFileDeletion.upsert({
+    where: { key },
+    create: { organizationId, key },
+    update: {},
+    select: { id: true },
+  });
+}
+
+export async function processStoredFileDeletion(
+  db: TenantDb,
+  id: string,
+  now = new Date(),
+): Promise<"deleted" | "retry_scheduled" | "not_due"> {
+  const job = await db.storedFileDeletion.findFirst({
+    where: { id, nextAttemptAt: { lte: now } },
+    select: { id: true, organizationId: true, key: true, attempts: true },
+  });
+  if (!job) return "not_due";
+
+  const attempts = job.attempts + 1;
+  const leaseUntil = new Date(now.getTime() + FILE_DELETION_LEASE_MS);
+  const claimed = await db.storedFileDeletion.updateMany({
+    where: { id, nextAttemptAt: { lte: now } },
+    data: {
+      attempts: { increment: 1 },
+      lastAttemptAt: now,
+      nextAttemptAt: leaseUntil,
+    },
+  });
+  if (claimed.count !== 1) return "not_due";
+
+  try {
+    await getStorage().delete(job.key);
+  } catch (error) {
+    const nextAttemptAt = new Date(now.getTime() + deletionRetryDelay(attempts));
+    try {
+      await db.storedFileDeletion.updateMany({
+        where: { id, nextAttemptAt: leaseUntil },
+        data: { nextAttemptAt },
+      });
+    } catch (scheduleError) {
+      logEvent("error", "file.deletion_retry_schedule_failed", {
+        deletionId: id,
+        organizationId: job.organizationId,
+        error: scheduleError,
+      });
+    }
+    logEvent("error", "file.object_delete_failed", {
+      deletionId: id,
+      organizationId: job.organizationId,
+      attempts,
+      nextAttemptAt,
+      error,
+    });
+    return "retry_scheduled";
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.storedFile.deleteMany({
+      where: { organizationId: job.organizationId, key: job.key },
+    });
+    await tx.storedFileDeletion.deleteMany({ where: { id } });
+  });
+  return "deleted";
 }
 
 /** Trust the file's bytes rather than the client-declared MIME type. */
@@ -125,9 +202,36 @@ export async function saveImageFile(input: {
     });
   } catch (error) {
     try {
-      await storage.delete(key);
-    } catch (cleanupError) {
-      logEvent("error", "file.upload_cleanup_failed", { error: cleanupError });
+      const deletion = await enqueueStoredFileDeletion(db, input.organizationId, key);
+      try {
+        const result = await processStoredFileDeletion(db, deletion.id);
+        if (result === "retry_scheduled") {
+          logEvent("error", "file.upload_cleanup_queued", {
+            deletionId: deletion.id,
+            organizationId: input.organizationId,
+            result,
+          });
+        }
+      } catch (processingError) {
+        logEvent("error", "file.upload_cleanup_queued", {
+          deletionId: deletion.id,
+          organizationId: input.organizationId,
+          error: processingError,
+        });
+      }
+    } catch (queueError) {
+      try {
+        await storage.delete(key);
+        await db.storedFile.deleteMany({
+          where: { organizationId: input.organizationId, key },
+        });
+      } catch (cleanupError) {
+        logEvent("error", "file.upload_cleanup_failed", {
+          organizationId: input.organizationId,
+          queueError,
+          cleanupError,
+        });
+      }
     }
     throw error;
   }
@@ -142,14 +246,23 @@ export async function readStoredFile(db: TenantDb, id: string, organizationId: s
   return object ? { file, object } : null;
 }
 
-/** Removes the object and its metadata; storage failures are logged, never thrown. */
+/** Queues object deletion durably before removing file metadata. */
 export async function deleteStoredFile(db: TenantDb, id: string, organizationId: string) {
-  const file = await db.storedFile.findFirst({ where: { id, organizationId } });
-  if (!file) return;
-  await db.storedFile.delete({ where: { id } });
-  try {
-    await getStorage().delete(file.key);
-  } catch (error) {
-    logEvent("error", "file.object_delete_failed", { fileId: id, error });
-  }
+  const deletionId = await db.transaction(async (tx) => {
+    const file = await tx.storedFile.findFirst({
+      where: { id, organizationId },
+      select: { key: true },
+    });
+    if (!file) return null;
+
+    const deletion = await tx.storedFileDeletion.upsert({
+      where: { key: file.key },
+      create: { organizationId, key: file.key },
+      update: {},
+      select: { id: true },
+    });
+    await tx.storedFile.deleteMany({ where: { id, organizationId } });
+    return deletion.id;
+  });
+  if (deletionId) await processStoredFileDeletion(db, deletionId);
 }

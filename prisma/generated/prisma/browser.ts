@@ -28,6 +28,11 @@ export type Equipment = Prisma.EquipmentModel
  */
 export type StoredFile = Prisma.StoredFileModel
 /**
+ * Model StoredFileDeletion
+ *
+ */
+export type StoredFileDeletion = Prisma.StoredFileDeletionModel
+/**
  * Model Section
  * 
  */

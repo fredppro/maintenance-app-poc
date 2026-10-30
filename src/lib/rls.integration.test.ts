@@ -37,11 +37,21 @@ describe.skipIf(!url)("tenant isolation in PostgreSQL", () => {
           filename: "f.png", contentType: "image/png", size: 1,
         },
       });
+      await db.storedFileDeletion.create({
+        data: {
+          id: `${id}-delete`,
+          organizationId: id,
+          key: `${id}/pending.png`,
+        },
+      });
     }
   });
 
   afterAll(async () => {
     if (!db) return;
+    await db.storedFileDeletion.deleteMany({
+      where: { organizationId: { in: Object.values(ids) } },
+    });
     await db.organization.deleteMany({ where: { id: { in: Object.values(ids) } } });
     await db.$executeRawUnsafe(`REVOKE ALL ON ALL TABLES IN SCHEMA public FROM ${ROLE}`);
     await db.$executeRawUnsafe(`DROP ROLE IF EXISTS ${ROLE}`);
@@ -50,6 +60,18 @@ describe.skipIf(!url)("tenant isolation in PostgreSQL", () => {
   it("only exposes the active tenant's rows", async () => {
     const sites = await asTenant(ids.a, (tx) => tx.site.findMany());
     expect(sites.map((s) => s.id)).toEqual([`${ids.a}-site`]);
+  });
+
+  it("isolates pending file deletion jobs by tenant", async () => {
+    const jobs = await asTenant(ids.a, (tx) => tx.storedFileDeletion.findMany());
+    expect(jobs.map((job) => job.id)).toEqual([`${ids.a}-delete`]);
+    await expect(
+      asTenant(ids.a, (tx) =>
+        tx.storedFileDeletion.create({
+          data: { organizationId: ids.b, key: `${ids.b}/forbidden.png` },
+        }),
+      ),
+    ).rejects.toThrow();
   });
 
   it("returns nothing when no tenant is set", async () => {
@@ -152,5 +174,22 @@ describe.skipIf(!url)("tenant isolation in PostgreSQL", () => {
 
     expect(await db.tenantSettings.findUnique({ where: { organizationId: id } })).toBeNull();
     expect(await db.storedFile.findUnique({ where: { id: `${id}-file` } })).toBeNull();
+  });
+
+  it("preserves queued object deletion after an organization is deleted", async () => {
+    const id = `rls-d-${Date.now()}`;
+    const deletionId = `${id}-delete`;
+    await db.organization.create({ data: { id, name: "d", slug: id, createdAt: new Date() } });
+    await db.storedFileDeletion.create({
+      data: { id: deletionId, organizationId: id, key: `${id}/pending.png` },
+    });
+
+    await db.organization.delete({ where: { id } });
+
+    expect(await db.storedFileDeletion.findUnique({ where: { id: deletionId } })).toMatchObject({
+      organizationId: id,
+      key: `${id}/pending.png`,
+    });
+    await db.storedFileDeletion.delete({ where: { id: deletionId } });
   });
 });

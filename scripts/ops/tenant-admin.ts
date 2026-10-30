@@ -12,9 +12,9 @@ import {
   ownerInvitationUrl,
   provisionOrganization,
 } from "../../src/features/organization/server/provisioning";
+import { processStoredFileDeletion } from "../../src/features/files/server/files";
 import { recordAuditEvent } from "../../src/lib/audit";
-import prisma from "../../src/lib/prisma";
-import { getStorage } from "../../src/lib/storage";
+import prisma, { forTenant } from "../../src/lib/prisma";
 
 const OPERATOR = "operator";
 
@@ -38,16 +38,36 @@ export async function setStatus(organizationId: string, status: "ACTIVE" | "SUSP
   });
 }
 
-/** Deletes the organization (rows cascade) and every object stored for it. */
+/** Deletes the organization and durably queues its stored objects for deletion. */
 export async function purgeOrganization(organizationId: string) {
-  const storage = getStorage();
-  const [files, exports] = await Promise.all([
-    prisma.storedFile.findMany({ where: { organizationId }, select: { key: true } }),
-    prisma.tenantExport.findMany({ where: { organizationId, fileKey: { not: null } }, select: { fileKey: true } }),
-  ]);
-  const keys = [...files.map((f) => f.key), ...exports.flatMap((e) => (e.fileKey ? [e.fileKey] : []))];
-  await prisma.organization.delete({ where: { id: organizationId } });
-  for (const key of keys) await storage.delete(key).catch((error) => console.error("purge: storage delete failed", key, error));
+  const keys = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "organization" WHERE "id" = ${organizationId} FOR UPDATE`;
+    const [files, exports] = await Promise.all([
+      tx.storedFile.findMany({ where: { organizationId }, select: { key: true } }),
+      tx.tenantExport.findMany({ where: { organizationId, fileKey: { not: null } }, select: { fileKey: true } }),
+    ]);
+    const objectKeys = [...new Set([
+      ...files.map((file) => file.key),
+      ...exports.flatMap((item) => (item.fileKey ? [item.fileKey] : [])),
+    ])];
+
+    if (objectKeys.length > 0) {
+      await tx.storedFileDeletion.createMany({
+        data: objectKeys.map((key) => ({ organizationId, key })),
+        skipDuplicates: true,
+      });
+    }
+    await tx.organization.delete({ where: { id: organizationId } });
+    return objectKeys;
+  });
+
+  const jobs = await prisma.storedFileDeletion.findMany({
+    where: { organizationId, key: { in: keys } },
+    select: { id: true },
+  });
+  for (const job of jobs) {
+    await processStoredFileDeletion(forTenant(organizationId), job.id);
+  }
   return keys.length;
 }
 

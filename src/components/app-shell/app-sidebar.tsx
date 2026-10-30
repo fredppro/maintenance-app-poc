@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, LogOut, Wrench } from "lucide-react";
+import { ChevronsUpDown, CircleUserRound, LogOut, Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -48,6 +48,7 @@ export function AppSidebar({
   contextControl,
   contextLabel,
   logo,
+  onAccount,
   onSignOut,
 }: {
   user: AppUser;
@@ -57,6 +58,7 @@ export function AppSidebar({
   contextLabel: string;
   /** Organization logo shown in place of the default mark. */
   logo?: { src: string; alt: string };
+  onAccount: () => void;
   onSignOut: () => void;
 }) {
   const t = useTranslations("Nav");
@@ -170,6 +172,10 @@ export function AppSidebar({
                   </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onAccount}>
+                  <CircleUserRound aria-hidden="true" />
+                  {tDashboard("menu.account")}
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={onSignOut} variant="destructive">
                   <LogOut aria-hidden="true" />
                   {tDashboard("menu.logout")}

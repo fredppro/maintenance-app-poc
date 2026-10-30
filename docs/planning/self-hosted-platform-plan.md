@@ -18,7 +18,9 @@ Sections about dedicated databases are deferred design material, and the
 Vercel/Neon cutover content is historical. Neither authorizes work outside the
 current scope. Use the [security and product readiness plan](security-and-product-readiness-plan.md)
 for current application-hardening priorities and the [environment status ledger](../reference/environment-status.md)
-for evidence and live-state unknowns.
+for evidence and live-state unknowns. For storage capacity checks and the
+read-only aged-object inventory, use the [storage capacity and portability
+runbook](../operations/storage-capacity-and-portability.md).
 
 Evidence rules: facts about Coolify come from its documentation (fetched 2026-10-13) and are cited by page; facts about
 this repository come from the code at the branch point (`889df26`); everything else is a **proposal** or marked

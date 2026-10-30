@@ -10,6 +10,7 @@
  */
 export type * from './models/Equipment'
 export type * from './models/StoredFile'
+export type * from './models/StoredFileDeletion'
 export type * from './models/Section'
 export type * from './models/EquipmentRelocation'
 export type * from './models/MaintenanceTask'

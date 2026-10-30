@@ -43,12 +43,40 @@ filesystem is approaching capacity, plan to expand storage or move data before
 it becomes full; a full disk can affect Garage and other services on the VPS.
 The utility does not delete data or change the server.
 
+## Read-only orphan inventory
+
+The application storage adapter can list object keys and metadata, but listing
+is used only by the manual inventory command, not by application request paths.
+Run from a protected operator environment with a migration connection that can
+bypass row-level security and choose an age threshold explicitly. The command
+checks the connected role and refuses to produce an incomplete cross-tenant
+inventory:
+
+```sh
+pnpm ops:storage:inventory -- --older-than-hours 48
+```
+
+For S3-compatible storage, configure `S3_AUDIT_ACCESS_KEY_ID` and
+`S3_AUDIT_SECRET_ACCESS_KEY` as a separate read-only credential with permission
+to list the configured bucket. The command intentionally refuses to use the
+application's object-write credential for this operation. Local development
+uses the local storage directory and does not need S3 audit credentials.
+
+The JSON report lists only objects older than the selected threshold that have
+no matching stored-file metadata, export metadata, or deletion-outbox job. It
+also reports counts for objects with missing size or modification-time
+metadata. Use an application-specific bucket; a bucket shared with unrelated
+writers can make their objects appear as candidates. The inventory is a
+read-only point-in-time comparison; concurrent uploads/deletes can affect
+results. A candidate is not proof that an object is safe to remove. This
+command never deletes objects or queues deletion jobs. Review and verify
+candidates before any separately approved cleanup.
+
 ## Garage portability validation (proposed; provider test not run)
 
-The application uses a minimal object-storage interface (`put`, `get`, and
-`delete`). It does not provide an object-listing or bulk-copy operation, and
-this usage utility only measures the VPS; it does not prove that Garage data
-can be migrated or restored.
+The application storage interface supports object listing for inventory, but
+does not provide a bulk-copy operation. The inventory command and this usage
+utility do not prove that Garage data can be migrated or restored.
 
 The focused local `src/lib/storage/storage.test.ts` suite passed 7 tests on
 2026-10-29. Those tests cover local-file operations, storage backend selection,

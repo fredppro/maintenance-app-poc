@@ -8,7 +8,7 @@ Variable names and behavior documented from repository configuration. Do not cop
 | --- | --- | --- |
 | `DATABASE_URL` | Prisma client generation/configuration, database commands, and app runtime | PostgreSQL-compatible connection string. `.env.example` points to local development PostgreSQL. |
 | `APP_DATABASE_URL` | Optional app runtime | Explicit restricted runtime connection string. Takes precedence over `DATABASE_URL` when set. |
-| `MIGRATION_DATABASE_URL` | `prisma migrate`, `pnpm db:seed` | Optional owner connection string; falls back to `DATABASE_URL`. Required when `DATABASE_URL` is a restricted role (the local Docker default). |
+| `MIGRATION_DATABASE_URL` | `prisma migrate`, `pnpm db:seed`, complete storage inventory | Optional owner connection string; falls back to `DATABASE_URL` for existing commands. The storage inventory requires it explicitly and verifies the connected role can bypass RLS. |
 | `E2E_DATABASE_URL` | Playwright browser tests and E2E migration command | Dedicated test database connection string. `.env.example` points to a separate local database on port 5433. The database name must end in `_test` and target a different host/port/database from `DATABASE_URL`. |
 | `BETTER_AUTH_SECRET` | App runtime and auth tests | Secret used to sign Better Auth sessions; use a random secret of at least 32 characters and keep it private. |
 | `BETTER_AUTH_URL` | App runtime and auth tests | Canonical application origin, for example `http://localhost:3000` locally or the deployed HTTPS origin. |
@@ -17,6 +17,7 @@ Variable names and behavior documented from repository configuration. Do not cop
 | `S3_REGION` | Optional | Bucket region. Defaults to `us-east-1`. |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Required when `S3_BUCKET` is set | Storage credentials. For the bundled MinIO they are `minioadmin` / `minioadmin`. |
 | `S3_FORCE_PATH_STYLE` | Optional | `true` or `false`. Defaults to `true` when `S3_ENDPOINT` is set, otherwise `false`. |
+| `S3_AUDIT_ACCESS_KEY_ID`, `S3_AUDIT_SECRET_ACCESS_KEY` | Optional; required for S3 `ops:storage:inventory` | Separate read-only credentials with bucket-list permission. The inventory command does not fall back to the application's storage credentials. |
 | `STORAGE_LOCAL_DIR` | Optional | Local-disk directory used when `S3_BUCKET` is unset. Defaults to `.storage` (git-ignored). |
 | `RESEND_API_KEY` | Production verification, password recovery, and invitations | Resend API credential. Configure through a secret manager; no key is needed for local login/signup without email delivery. |
 | `AUTH_EMAIL_FROM` | Production verification, password recovery, and invitations | Verified sender in Resend, e.g. `Maintenance Scheduler <accounts@example.com>`. |
