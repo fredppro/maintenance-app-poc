@@ -293,15 +293,18 @@ export function ScheduleFields<T extends ScheduleShape>({
 }
 
 interface MaterialsShape {
-  materials?: MaterialFormValue[];
+  materials?: z.input<typeof materialSchema>[];
 }
 
 /** Responsive materials list: stacked cards on mobile, compact grid from sm. */
-export function MaterialsEditor<T extends MaterialsShape>({
+export function MaterialsEditor<
+  T extends MaterialsShape,
+  TTransformedValues = T,
+>({
   form,
   locale,
 }: {
-  form: UseFormReturn<T>;
+  form: UseFormReturn<T, unknown, TTransformedValues>;
   locale: AppLocale;
 }) {
   const t = useTranslations("Form");

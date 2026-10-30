@@ -116,7 +116,8 @@ const editFormSchema = z
     }
   });
 
-type EditFormValues = z.infer<typeof editFormSchema>;
+type EditFormInput = z.input<typeof editFormSchema>;
+type EditFormValues = z.output<typeof editFormSchema>;
 
 interface EditEntryDialogProps {
   entry: MaintenanceEntry;
@@ -189,7 +190,7 @@ export function EditEntryDialog({
   const initialStartTime = parseEntryDate(entry.startTime);
   const initialEndTime = parseEntryDate(entry.endTime);
 
-  const form = useForm<EditFormValues>({
+  const form = useForm<EditFormInput, unknown, EditFormValues>({
     resolver: zodResolver(editFormSchema),
     defaultValues: {
       status: entry.status,

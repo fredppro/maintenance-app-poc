@@ -14,7 +14,7 @@ const NO_CONTROL_CHARACTERS = /^[^\p{Cc}\p{Cf}]*$/u;
 const PHONE_CHARACTERS = /^\+?[0-9 ()\-.]+$/;
 
 // Error messages are stable codes; the form maps them to translated text.
-const optionalText = <T extends z.ZodTypeAny>(schema: T) =>
+const optionalText = (schema: z.ZodType<string, string>) =>
   z
     .string()
     .trim()

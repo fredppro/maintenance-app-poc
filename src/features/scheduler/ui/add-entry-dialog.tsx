@@ -45,7 +45,8 @@ const formSchema = z.object({
   materials: z.array(materialSchema).optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormInput = z.input<typeof formSchema>;
+type FormValues = z.output<typeof formSchema>;
 
 interface AddEntryDialogProps {
   open: boolean;
@@ -68,7 +69,7 @@ export function AddEntryDialog({
   const t = useTranslations("Form");
   const tCommon = useTranslations("Common");
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",

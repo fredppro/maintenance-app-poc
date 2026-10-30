@@ -22,13 +22,6 @@ import { z } from "zod";
 
 const workerTypes = ["INTERNAL", "EXTERNAL"] as const;
 
-type FormValues = {
-  name: string;
-  email: string;
-  phone?: string | null;
-  type: (typeof workerTypes)[number];
-};
-
 type Props = {
   initialData?: {
     id?: string;
@@ -53,14 +46,16 @@ export default function CreateUpdateWorker({
     phone: z.string().optional(),
     type: z.enum(workerTypes),
   });
+  type FormInput = z.input<typeof workerSchema>;
+  type FormValues = z.output<typeof workerSchema>;
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(workerSchema),
     defaultValues: {
       name: initialData?.name ?? "",
       email: initialData?.email ?? "",
       phone: initialData?.phone ?? "",
-      type: (initialData?.type as FormValues["type"] | undefined) ?? "INTERNAL",
+      type: initialData?.type === "EXTERNAL" ? "EXTERNAL" : "INTERNAL",
     },
   });
 
