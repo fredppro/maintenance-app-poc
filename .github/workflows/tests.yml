@@ -142,14 +142,30 @@ jobs:
         if: github.event_name == 'push'
         id: publish
         run: |
-          docker push "$IMAGE"
+          push_with_retries() {
+            local image="$1"
+            local attempt
+            for attempt in 1 2 3; do
+              echo "Pushing $image (attempt $attempt/3)"
+              if docker push "$image"; then
+                return 0
+              fi
+              if [ "$attempt" -eq 3 ]; then
+                echo "::error::Failed to push $image after $attempt attempts."
+                return 1
+              fi
+              sleep $((attempt * 10))
+            done
+          }
+
+          push_with_retries "$IMAGE"
           manifest_digest="$(docker buildx imagetools inspect "$IMAGE" | awk '$1 == "Digest:" { print $2; exit }')"
           if ! printf '%s' "$manifest_digest" | grep -Eq '^sha256:[0-9a-f]{64}$'; then
             echo "::error::Could not resolve the pushed image digest."
             exit 1
           fi
           echo "image_digest=${IMAGE%:*}@$manifest_digest" >> "$GITHUB_OUTPUT"
-          docker push "$MIGRATOR_IMAGE"
+          push_with_retries "$MIGRATOR_IMAGE"
           migrator_digest="$(docker buildx imagetools inspect "$MIGRATOR_IMAGE" | awk '$1 == "Digest:" { print $2; exit }')"
           if ! printf '%s' "$migrator_digest" | grep -Eq '^sha256:[0-9a-f]{64}$'; then
             echo "::error::Could not resolve the pushed migration image digest."
