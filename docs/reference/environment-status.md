@@ -1,10 +1,11 @@
 # Environment and operations status
 
-- **Repository review:** 2026-10-29
+- **Repository review:** 2026-10-30
 - **External systems checked for this record:** shared Coolify application
   logs, Instance Backup, staging resource, and server overview pages; GitHub
-  Actions workflow catalog and run history. All checks were read-only on
-  2026-10-29.
+  Actions workflow catalog and run history. Those inspections were read-only
+  and occurred on 2026-10-29. A manual staging deployment was initiated in
+  Coolify on 2026-10-30; see the dated evidence below.
 - **Local restore validation:** the documented Coolify control-plane dump was
   restored to a disposable, network-isolated PostgreSQL container on 2026-10-29
 - **Purpose:** authoritative in-repository ledger of what the checked-in
@@ -20,8 +21,8 @@ evidence, and result, never secret values. Keep unresolved items marked
 
 | Area | Evidence and classification | Current conclusion |
 |---|---|---|
-| Application environments | The self-hosted plan reports a synthetic staging app and database, with a successful HTTPS health check on 2026-10-15. The WireGuard/Coolify runbook, also dated 2026-10-15, says no application or database had been deployed. The operator confirmed in chat on 2026-10-29 that both staging and production are deployed. The Coolify staging resource list showed `maintenance-staging-app`, `maintenance-staging-db` (described as synthetic-data PostgreSQL 17), and `garage-staging` running on the `localhost` server; the migrator resource was exited. The app log showed Next.js ready, but no app health check was configured. | **Staging resources observed running, but application health and database connectivity are unverified.** Production deployment is operator-reported, not independently viewed. Deployed image digests and deployment method remain **unverified**. Earlier dated sources: [self-hosted platform plan](../planning/self-hosted-platform-plan.md), [WireGuard and Coolify runbook](../operations/wireguard-admin-access.md). |
-| Deployment pipeline | Repository documentation and the checked-in workflows describe CI checks, image build/scan, and GHCR publication. The reviewed repository contains no Coolify deployment workflow. | **Code/repository-verified:** CI publication is not proof of deployment. Whether Coolify currently deploys manually or through an external mechanism must be confirmed in Coolify. |
+| Application environments | The operator confirmed in chat on 2026-10-29 that staging and production are deployed. On 2026-10-30, Coolify was manually configured to deploy application image digest `sha256:c712ad154402609445cd2912aa6131084f1dd34a97e94626d408675326186cd6`; deployment record `ds95qdvfjltaa4kn0fb5speb` reported a completed rolling update, and the staging login page loaded after refresh. At the 2026-10-29 inspection, Coolify showed `maintenance-staging-app`, `maintenance-staging-db` (synthetic-data PostgreSQL 17), and `garage-staging` running on `localhost`; the app had no configured health check. | **A manual staging deployment reported success and the login page loaded.** The active runtime digest, database readiness, and current health remain **unverified**; production remains operator-reported, not independently viewed. Earlier dated sources: [self-hosted platform plan](../planning/self-hosted-platform-plan.md), [WireGuard and Coolify runbook](../operations/wireguard-admin-access.md). |
+| Deployment pipeline | The checked-in workflow runs CI checks, builds/scans images, and publishes immutable GHCR images. It now contains a `deploy-staging` job gated to `develop`, but the job is disabled until the `staging` GitHub Environment has its required secrets and the repository Actions variable `STAGING_AUTODEPLOY_ENABLED=true`. No successful automated Coolify deployment is evidenced. | **Code-verified, not yet operational:** automatic staging deployment remains disabled pending dedicated WireGuard peer/firewall setup, Coolify API token, and GitHub Environment configuration. CI publication alone is not proof of deployment. |
 | Host and control plane | Runbooks record Contabo, WireGuard, Coolify, and GHCR checks, with dates and specific verification steps. On 2026-10-29, Coolify identified the staging host as `localhost`; its overview said reachable, validated, and ready, while its status also showed `Attention required`. The Coolify UI reported a real-time-service connection warning. The server page displayed an unsaved-changes banner; no Save or Reset action was used. | **The UI gives conflicting host-status signals; the cause and impact are unverified.** Coolify did not expose a provider or region label in the inspected server overview. Dated Contabo references do not independently confirm the current provider or region. See [runbook 02](../operations/wireguard-admin-access.md) and [runbook 03](../operations/coolify-backup-and-upgrade.md). |
 | Database | Application code uses PostgreSQL/Prisma, migrations, RLS, and separate migration/runtime connection handling. The code retains a conditional Vercel/Neon compatibility path. | **Code-verified.** The current staging or production database host, region, account, and availability are **unverified**. |
 | Object storage | Code uses an S3-compatible interface. Coolify lists a running service named `garage-staging` on the staging `localhost` server. The platform plan describes single-node Garage for synthetic staging files and selects Scaleway Object Storage for planned production files. The focused storage unit suite passed 7 tests on 2026-10-29, covering local storage and backend selection, not S3 requests or provider portability. | **A staging Garage resource is present; its app integration, data location, and region are unverified.** No provider-portability test was run. Production provider remains planned, not confirmed deployed. See [the platform plan](../planning/self-hosted-platform-plan.md) and [storage usage runbook](../operations/storage-capacity-and-portability.md). |
@@ -40,11 +41,20 @@ print, request, or record secret values.
 - [x] **Deployment existence (operator-reported 2026-10-29):** Both staging and
   production are deployed. This does not establish health or verify the
   currently deployed application and database.
+- [x] **Manual staging deployment (2026-10-30):** Coolify reported a completed
+  rolling update for the configured image digest
+  `sha256:c712ad154402609445cd2912aa6131084f1dd34a97e94626d408675326186cd6`
+  (deployment record `ds95qdvfjltaa4kn0fb5speb`); the staging login page loaded
+  after refresh. The active runtime digest was not independently verified.
 - [ ] **Deployment verification:** Confirm each environment's health, database
   availability, deployed image digest, and last verification time. Distinguish
-  manual Coolify deployment from an automated pipeline. The staging app was
-  shown as running without a health check on 2026-10-29; production was not
+  manual Coolify deployment from an automated pipeline. Production was not
   independently viewed.
+- [ ] **Staging automation activation:** Provision and firewall-restrict a
+  dedicated WireGuard peer, configure the Coolify API allowlist and least-
+  privilege token, then add the GitHub `staging` Environment secrets and
+  `STAGING_AUTODEPLOY_ENABLED=true`. Verify a successful `develop` pipeline
+  deploys and reports the matching application revision.
 - [ ] **Providers and regions:** Coolify lists staging services on its
   `localhost` server and a running `garage-staging` resource, but the inspected
   pages exposed no provider or region. Confirm the actual hosting, database,

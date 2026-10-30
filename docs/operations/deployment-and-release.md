@@ -8,14 +8,60 @@ GitHub Actions runs the unit and browser suites on pull requests and pushes to
 `main` or `develop`. After both pass, it builds the production [Dockerfile](../../Dockerfile)
 and scans the image for high and critical vulnerabilities. Pull requests do not
 publish images; successful branch pushes publish an immutable commit-tagged image
-to GHCR and expose its digest for a later staging/production promotion.
+to GHCR and expose its digest.
 
-The GHCR package must be kept private. This workflow builds and publishes images;
-it does not deploy to Coolify. On 2026-10-29, the operator confirmed both
-staging and production are deployed. Coolify showed the staging app, database,
-and Garage resource running, but the app had no health check; production was
-not independently viewed. See [the environment status record](../reference/environment-status.md)
-for the evidence and remaining verification.
+The GHCR package must be kept private. The `deploy-staging` job is restricted to successful pushes to
+`develop`; it pins the Coolify application to that run's image digest and
+verifies `/api/health` reports the same commit revision. Older runs skip
+deployment if a newer commit is already at the head of `develop`.
+
+The job is disabled until the `staging` GitHub Environment secrets and the
+repository Actions variable `STAGING_AUTODEPLOY_ENABLED` are configured. Until then,
+publishing an image does not deploy it. It does not deploy production. On
+2026-10-30, a one-time manual Coolify deployment of image digest
+`sha256:c712ad154402609445cd2912aa6131084f1dd34a97e94626d408675326186cd6`
+reported a completed rolling update, and the staging login page loaded after
+refresh. The active runtime digest was not independently exposed at that time.
+See [the environment status record](../reference/environment-status.md) for
+the evidence and remaining verification.
+
+## Enable automated staging deployment
+
+Complete the external network and credential setup before enabling the job:
+
+1. Apply and verify the Ansible `staging-firewall` tag before provisioning the
+   dedicated peer. It narrows VPN SSH to the operator peer, blocks the staging
+   peer from host services, and restricts its Docker-forwarded traffic to TCP
+   `8000`. Then provision the dedicated WireGuard peer after confirming its
+   address is unused. Its client route must be limited to `10.242.0.1/32`; do
+   not reuse the operator Mac peer. UFW alone may not filter Docker-published
+   ports, so verify the `DOCKER-USER` policy as well.
+2. Enable Coolify API access and allowlist only the dedicated peer address.
+   Create a token with `write` and `deploy` permissions, without `root` or
+   `read:sensitive`. This token applies to resources in its Coolify team; the
+   token owner must remain a team administrator.
+3. In the GitHub repository's `staging` Environment, add these secrets:
+   - `STAGING_WIREGUARD_CONFIG`: the dedicated peer's client configuration.
+   - `COOLIFY_API_TOKEN`: the least-privilege token described above.
+4. Restrict the `staging` Environment to the `develop` branch. Then set the
+   repository Actions variable `STAGING_AUTODEPLOY_ENABLED` to `true`.
+
+The workflow targets the existing staging application UUID in
+`.github/workflows/tests.yml` and the private Coolify URL `http://10.242.0.1:8000`.
+It updates Coolify's digest-form image name and `sha256-<hex>` tag together.
+Do not put WireGuard private keys or API tokens in the repository. The image
+build embeds its commit SHA in the successful `/api/health` response header
+`X-Application-Revision`, allowing the workflow to distinguish the new
+container from an older container that may still serve during a rolling
+update.
+
+The workflow confirms Coolify returned a deployment UUID, then waits for a
+healthy response carrying the expected commit SHA. It does not read deployment
+logs or automatically roll back. If a deployment fails or times out, inspect
+Coolify and `/api/health`; the configured image tag may already have changed
+while the prior container is still serving. If rollback is needed, restore the
+previous `sha256-<digest>` image tag in Coolify and redeploy it.
+
 ## Production and staging operations
 
 The repository does not provision production/staging resources or configure

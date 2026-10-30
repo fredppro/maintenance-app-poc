@@ -9,15 +9,48 @@
     expected_hostname: maint-prod-01
     wireguard_interface: wg0
     wireguard_server_ip: 10.242.0.1
-    wireguard_client_ip: 10.242.0.2
     wireguard_port: 51820
+    wireguard_operator_peer_name: operator-mac
+    wireguard_staging_peer_name: github-staging
+    wireguard_operator_peer_cidr: >-
+      {{ wireguard_managed_peers | selectattr('name', 'equalto', wireguard_operator_peer_name) | map(attribute='allowed_ips') | first }}
+    wireguard_staging_peer_cidr: >-
+      {{ wireguard_managed_peers | selectattr('name', 'equalto', wireguard_staging_peer_name) | map(attribute='allowed_ips') | first }}
     swap_size_bytes: 2147483648
     fail2ban_maxretry: 5
     fail2ban_findtime: 10m
     fail2ban_bantime: 10m
 
   pre_tasks:
+    - name: Validate the managed WireGuard peer inventory
+      tags: [wireguard, staging-firewall]
+      ansible.builtin.assert:
+        that:
+          - wireguard_managed_peers is defined
+          - wireguard_managed_peers is sequence
+          - wireguard_managed_peers | length > 0
+          - (wireguard_managed_peers | map(attribute='name') | unique | list | length) == (wireguard_managed_peers | length)
+          - (wireguard_managed_peers | map(attribute='public_key') | unique | list | length) == (wireguard_managed_peers | length)
+          - (wireguard_managed_peers | map(attribute='allowed_ips') | unique | list | length) == (wireguard_managed_peers | length)
+          - (wireguard_managed_peers | selectattr('name', 'equalto', wireguard_operator_peer_name) | list | length) == 1
+          - (wireguard_managed_peers | selectattr('name', 'equalto', wireguard_staging_peer_name) | list | length) == 1
+        fail_msg: "wireguard_managed_peers must contain uniquely named peers, public keys, and addresses."
+
+    - name: Validate each managed WireGuard peer
+      tags: [wireguard, staging-firewall]
+      ansible.builtin.assert:
+        that:
+          - item.name is string
+          - item.name | length > 0
+          - item.public_key is match('^[A-Za-z0-9+/]{43}=$')
+          - item.allowed_ips is match('^10\.242\.0\.(?:[2-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-4])/32$')
+        fail_msg: "Each managed peer must have a valid public key and unique 10.242.0.2/32-10.242.0.254/32 address."
+      loop: "{{ wireguard_managed_peers }}"
+      loop_control:
+        label: "{{ item.name }}"
+
     - name: Require the expected Ubuntu release
+      tags: [wireguard, staging-firewall]
       ansible.builtin.assert:
         that:
           - ansible_distribution == "Ubuntu"
@@ -25,29 +58,34 @@
         fail_msg: "This playbook is written for the installed Ubuntu 24.04 VPS."
 
     - name: Require the connection to use the VPN address
+      tags: [wireguard, staging-firewall]
       ansible.builtin.assert:
         that:
           - ansible_host == expected_host
         fail_msg: "Run this playbook through WireGuard at 10.242.0.1, not over public SSH."
 
     - name: Verify the WireGuard interface is already up
+      tags: [wireguard, staging-firewall]
       ansible.builtin.command: wg show {{ wireguard_interface }}
       changed_when: false
       check_mode: false
 
     - name: Read the configured WireGuard interface address
+      tags: [wireguard, staging-firewall]
       ansible.builtin.command: ip -o -4 addr show dev {{ wireguard_interface }}
       register: wireguard_address
       changed_when: false
       check_mode: false
 
     - name: Read the active WireGuard listen port
+      tags: [wireguard, staging-firewall]
       ansible.builtin.command: wg show {{ wireguard_interface }} listen-port
       register: wireguard_listen_port
       changed_when: false
       check_mode: false
 
     - name: Require the expected WireGuard address and port
+      tags: [wireguard, staging-firewall]
       ansible.builtin.assert:
         that:
           - "wireguard_server_ip + '/24' in wireguard_address.stdout"
@@ -55,17 +93,20 @@
         fail_msg: "The active WireGuard address or port differs from inventory; refusing to rewrite its configuration."
 
     - name: Inspect the WireGuard server private-key file without reading its contents
+      tags: [wireguard]
       ansible.builtin.stat:
         path: /etc/wireguard/server_private.key
       register: wireguard_private_key_file
 
     - name: Require the existing server private key
+      tags: [wireguard]
       ansible.builtin.assert:
         that:
           - wireguard_private_key_file.stat.exists
         fail_msg: "The server private key is missing; refusing to rewrite WireGuard."
 
     - name: Ensure WireGuard directory permissions
+      tags: [wireguard]
       ansible.builtin.file:
         path: /etc/wireguard
         owner: root
@@ -73,6 +114,7 @@
         mode: "0700"
 
     - name: Ensure server private key permissions
+      tags: [wireguard]
       ansible.builtin.file:
         path: /etc/wireguard/server_private.key
         owner: root
@@ -80,6 +122,7 @@
         mode: "0600"
 
     - name: Derive the server public key from the on-host private key
+      tags: [wireguard]
       ansible.builtin.shell: wg pubkey < /etc/wireguard/server_private.key
       args:
         executable: /bin/bash
@@ -88,29 +131,32 @@
       check_mode: false
 
     - name: Read the running WireGuard public key
+      tags: [wireguard]
       ansible.builtin.command: wg show {{ wireguard_interface }} public-key
       register: wireguard_running_public
       changed_when: false
       check_mode: false
 
     - name: Refuse to rotate the active WireGuard identity
+      tags: [wireguard]
       ansible.builtin.assert:
         that:
           - wireguard_keyfile_public.stdout == wireguard_running_public.stdout
         fail_msg: "The on-disk server key differs from the active interface key; refusing to rewrite WireGuard."
 
-    - name: Read the configured WireGuard peer keys
+    - name: Read the active WireGuard peer keys
+      tags: [wireguard]
       ansible.builtin.command: wg show {{ wireguard_interface }} peers
-      register: wireguard_peers
+      register: active_wireguard_peer_keys
       changed_when: false
       check_mode: false
 
-    - name: Require the expected Mac peer
+    - name: Refuse active WireGuard peers not present in inventory
+      tags: [wireguard]
       ansible.builtin.assert:
         that:
-          - wireguard_peers.stdout_lines | length == 1
-          - wireguard_client_public_key in wireguard_peers.stdout_lines
-        fail_msg: "The active WireGuard peer set differs from inventory.yml; refusing to replace it."
+          - (active_wireguard_peer_keys.stdout_lines | difference(wireguard_managed_peers | map(attribute='public_key') | list) | length) == 0
+        fail_msg: "An active WireGuard peer is missing from inventory.yml; refusing to replace the configuration."
 
   tasks:
     - name: Refresh apt metadata
@@ -186,6 +232,7 @@
         state: started
 
     - name: Persist the derived WireGuard server public key
+      tags: [wireguard]
       ansible.builtin.copy:
         dest: /etc/wireguard/server_public.key
         content: "{{ wireguard_keyfile_public.stdout }}\n"
@@ -194,6 +241,7 @@
         mode: "0600"
 
     - name: Check WireGuard configuration drift without exposing the private key
+      tags: [wireguard]
       ansible.builtin.shell: |
         set -eu
         tmp="$(mktemp /etc/wireguard/wg0.conf.XXXXXX)"
@@ -201,7 +249,9 @@
         {
           printf '[Interface]\nAddress = %s/24\nListenPort = %s\nPrivateKey = ' '{{ wireguard_server_ip }}' '{{ wireguard_port }}'
           cat /etc/wireguard/server_private.key
-          printf '\n\n[Peer]\nPublicKey = %s\nAllowedIPs = %s/32\n' '{{ wireguard_client_public_key }}' '{{ wireguard_client_ip }}'
+          {% for peer in wireguard_managed_peers %}
+          printf '\n\n[Peer]\nPublicKey = %s\nAllowedIPs = %s\n' '{{ peer.public_key }}' '{{ peer.allowed_ips }}'
+          {% endfor %}
         } > "$tmp"
         chmod 600 "$tmp"
         if cmp -s "$tmp" /etc/wireguard/wg0.conf; then
@@ -218,6 +268,7 @@
       no_log: true
 
     - name: Reconcile WireGuard configuration without exposing the private key
+      tags: [wireguard]
       ansible.builtin.shell: |
         set -eu
         tmp="$(mktemp /etc/wireguard/wg0.conf.XXXXXX)"
@@ -225,7 +276,9 @@
         {
           printf '[Interface]\nAddress = %s/24\nListenPort = %s\nPrivateKey = ' '{{ wireguard_server_ip }}' '{{ wireguard_port }}'
           cat /etc/wireguard/server_private.key
-          printf '\n\n[Peer]\nPublicKey = %s\nAllowedIPs = %s/32\n' '{{ wireguard_client_public_key }}' '{{ wireguard_client_ip }}'
+          {% for peer in wireguard_managed_peers %}
+          printf '\n\n[Peer]\nPublicKey = %s\nAllowedIPs = %s\n' '{{ peer.public_key }}' '{{ peer.allowed_ips }}'
+          {% endfor %}
         } > "$tmp"
         chmod 600 "$tmp"
         if cmp -s "$tmp" /etc/wireguard/wg0.conf; then
@@ -238,17 +291,25 @@
       args:
         executable: /bin/bash
       register: wireguard_config
-      changed_when: wireguard_config.stdout | default('') == "changed"
+      changed_when: >-
+        wireguard_config.stdout | default('') == "changed"
+        or (active_wireguard_peer_keys.stdout_lines | sort) !=
+        (wireguard_managed_peers | map(attribute='public_key') | list | sort)
       when: not ansible_check_mode
       no_log: true
       notify: Sync WireGuard configuration
 
     - name: Secure WireGuard configuration permissions
+      tags: [wireguard]
       ansible.builtin.file:
         path: /etc/wireguard/wg0.conf
         owner: root
         group: root
         mode: "0600"
+
+    - name: Apply pending WireGuard configuration before verifying peers
+      tags: [wireguard]
+      ansible.builtin.meta: flush_handlers
 
     - name: Ensure UFW filters IPv6 too
       ansible.builtin.lineinfile:
@@ -267,14 +328,95 @@
         direction: outgoing
         default: allow
 
-    - name: Allow SSH only through WireGuard
+    - name: Deny host access from the staging peer
+      tags: [staging-firewall]
+      community.general.ufw:
+        rule: deny
+        direction: in
+        from_ip: "{{ wireguard_staging_peer_cidr }}"
+        insert: 1
+        comment: No host services from staging peer
+
+    - name: Allow SSH from the operator peer through WireGuard
+      tags: [staging-firewall]
+      community.general.ufw:
+        rule: allow
+        direction: in
+        interface: "{{ wireguard_interface }}"
+        from_ip: "{{ wireguard_operator_peer_cidr }}"
+        port: "22"
+        proto: tcp
+        comment: SSH from operator peer via WireGuard
+
+    - name: Remove the broad WireGuard SSH allowance
+      tags: [staging-firewall]
       community.general.ufw:
         rule: allow
         direction: in
         interface: "{{ wireguard_interface }}"
         port: "22"
         proto: tcp
-        comment: SSH via WireGuard
+        delete: true
+
+    - name: Install staging peer Docker firewall rules
+      tags: [staging-firewall]
+      ansible.builtin.copy:
+        dest: /usr/local/sbin/maintenance-staging-peer-firewall
+        owner: root
+        group: root
+        mode: "0750"
+        content: |
+          #!/bin/sh
+          set -eu
+
+          iptables -w -S DOCKER-USER >/dev/null
+          if ! iptables -w -S MAINT-STAGING-CI >/dev/null 2>&1; then
+            iptables -w -N MAINT-STAGING-CI
+          fi
+
+          if ! iptables -w -C MAINT-STAGING-CI -p tcp -m conntrack --ctorigdst {{ wireguard_server_ip }} --ctorigdstport 8000 -j ACCEPT 2>/dev/null; then
+            iptables -w -A MAINT-STAGING-CI -p tcp -m conntrack --ctorigdst {{ wireguard_server_ip }} --ctorigdstport 8000 -j ACCEPT
+          fi
+          if ! iptables -w -C MAINT-STAGING-CI -j DROP 2>/dev/null; then
+            iptables -w -A MAINT-STAGING-CI -j DROP
+          fi
+          while iptables -w -C DOCKER-USER -i {{ wireguard_interface }} -s {{ wireguard_staging_peer_cidr }} -j MAINT-STAGING-CI 2>/dev/null; do
+            iptables -w -D DOCKER-USER -i {{ wireguard_interface }} -s {{ wireguard_staging_peer_cidr }} -j MAINT-STAGING-CI
+          done
+          iptables -w -I DOCKER-USER 1 -i {{ wireguard_interface }} -s {{ wireguard_staging_peer_cidr }} -j MAINT-STAGING-CI
+      notify: Apply staging peer Docker firewall
+
+    - name: Install staging peer Docker firewall service
+      tags: [staging-firewall]
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/maintenance-staging-peer-firewall.service
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Restrict the staging WireGuard peer to the Coolify API
+          Requires=docker.service wg-quick@wg0.service
+          After=network-online.target docker.service ufw.service wg-quick@wg0.service
+          PartOf=docker.service wg-quick@wg0.service
+
+          [Service]
+          Type=oneshot
+          RemainAfterExit=yes
+          ExecStart=/usr/local/sbin/maintenance-staging-peer-firewall
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: Apply staging peer Docker firewall
+
+    - name: Enable and start staging peer Docker firewall service
+      tags: [staging-firewall]
+      ansible.builtin.systemd:
+        name: maintenance-staging-peer-firewall.service
+        enabled: true
+        state: started
+        daemon_reload: true
+      when: not ansible_check_mode
 
     - name: Allow HTTP
       community.general.ufw:
@@ -307,23 +449,26 @@
         logging: low
 
     - name: Ensure WireGuard starts at boot
+      tags: [wireguard]
       ansible.builtin.service:
         name: wg-quick@wg0
         enabled: true
         state: started
 
-    - name: Verify the live WireGuard peer after configuration
+    - name: Read live WireGuard peer keys after configuration
+      tags: [wireguard]
       ansible.builtin.command: wg show {{ wireguard_interface }} peers
-      register: live_wireguard_peers
+      register: live_wireguard_peer_keys
       changed_when: false
       check_mode: false
 
-    - name: Require the expected live peer after configuration
+    - name: Require the live peer set to match inventory after configuration
+      tags: [wireguard]
       ansible.builtin.assert:
         that:
-          - live_wireguard_peers.stdout_lines | length == 1
-          - wireguard_client_public_key in live_wireguard_peers.stdout_lines
+          - (live_wireguard_peer_keys.stdout_lines | sort) == (wireguard_managed_peers | map(attribute='public_key') | list | sort)
         fail_msg: "The live WireGuard peer set does not match inventory.yml."
+      when: not ansible_check_mode
 
     - name: Enable unattended package-list updates and security upgrades
       ansible.builtin.copy:
@@ -470,11 +615,19 @@
       changed_when: true
 
     - name: Sync WireGuard configuration
+      tags: [wireguard]
       ansible.builtin.shell: wg syncconf wg0 <(wg-quick strip wg0)
       args:
         executable: /bin/bash
       changed_when: true
       no_log: true
+
+    - name: Apply staging peer Docker firewall
+      ansible.builtin.systemd:
+        name: maintenance-staging-peer-firewall.service
+        daemon_reload: true
+        state: restarted
+      when: not ansible_check_mode
 
     - name: Restart Fail2ban
       ansible.builtin.service:

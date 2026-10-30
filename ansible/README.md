@@ -2,8 +2,10 @@
 
 This playbook converges the existing Contabo Ubuntu 24.04 VPS over its verified WireGuard address. It manages SSH
 hardening, UFW, Fail2ban, unattended security updates, UTC, the `ops` sudo group, swap, and the WireGuard service.
-It reconciles the existing `wg0` configuration while keeping the server private key on the VPS; the only peer key in
-inventory is the public key. Check mode reports whether `wg0.conf` would change without displaying its contents.
+It reconciles the existing `wg0` configuration from the validated
+`wireguard_managed_peers` inventory while keeping the server private key on the
+VPS; peer keys in inventory are public keys only. Check mode reports whether
+`wg0.conf` would change without displaying its contents.
 
 It deliberately does **not** store or change passwords, SSH private keys, WireGuard private keys, or provider-account
 credentials. The Contabo provider firewall is handled separately by the
@@ -51,6 +53,47 @@ The become password is the `ops` sudo password; enter it at the prompt, never in
 Run only while WireGuard is connected. The playbook refuses to operate against a different address or without the
 expected WireGuard peer or if the on-disk server key differs from the active interface key, adds the `wg0` SSH rule
 before removing public SSH, and verifies effective settings at the end. Keep a VPN SSH session open while applying.
+
+Before provisioning the GitHub Actions peer, restrict the existing SSH and
+Docker-published access. First review the focused firewall plan:
+
+```sh
+ansible-playbook -i inventory.yml bootstrap.yml --tags staging-firewall \
+  --private-key "$HOME/.ssh/maintenance_contabo_2026" \
+  --ask-become-pass --check --diff
+```
+
+Check mode previews file and UFW changes but cannot activate a not-yet-installed systemd unit; service activation and its handler run only during apply.
+
+Apply only after confirming the change keeps SSH available from the
+`operator-mac` peer and limits the `github-staging` peer's Docker-forwarded
+traffic to host TCP `8000`:
+
+```sh
+ansible-playbook -i inventory.yml bootstrap.yml --tags staging-firewall \
+  --private-key "$HOME/.ssh/maintenance_contabo_2026" \
+  --ask-become-pass
+```
+
+Verify the new UFW SSH rule is restricted to the operator peer, and that
+`DOCKER-USER` jumps the staging peer to `MAINT-STAGING-CI` before continuing.
+Keep the current VPN SSH session open and confirm a new SSH connection still
+works from the Mac.
+
+Then review and apply the WireGuard peer configuration separately:
+
+```sh
+ansible-playbook -i inventory.yml bootstrap.yml --tags wireguard \
+  --private-key "$HOME/.ssh/maintenance_contabo_2026" \
+  --ask-become-pass --check --diff
+ansible-playbook -i inventory.yml bootstrap.yml --tags wireguard \
+  --private-key "$HOME/.ssh/maintenance_contabo_2026" \
+  --ask-become-pass
+```
+
+The check is read-only; applying updates the peer set while preserving the
+existing server and operator-Mac keys. Do not store the GitHub peer's private
+key in GitHub until the firewall rules have been applied and verified.
 
 This playbook reconciles the current host; it does not provision a VPS, reset provider credentials, create a
 Contabo snapshot, or configure the Contabo panel firewall.

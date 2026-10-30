@@ -86,6 +86,42 @@ Status on 2026-10-15: the GHCR login is restored and `ghcr.io` appears in the ho
 An authenticated manifest request for the pinned image digest succeeded. The token's scopes and expiry have not
 been independently verified; ensure it is read-only (`read:packages`) and expiring.
 
+## Dedicated peer for GitHub Actions staging deployment
+
+This peer is a planned prerequisite for the automated staging workflow; it has
+not been provisioned or verified. Do not assume `10.242.0.3` (or any other
+address) is unused. First inventory `wg show wg0` and reserve a unique address
+from the WireGuard subnet. Generate the key pair on a trusted operator
+workstation, add only the public key to the server, and store the private-key
+client configuration only as the `STAGING_WIREGUARD_CONFIG` secret in the
+GitHub `staging` Environment.
+
+The client configuration must route only `10.242.0.1/32`; it must not install a
+default route or reuse the operator Mac peer at `10.242.0.2`. Before adding the
+secret, apply and verify the `staging-firewall` Ansible tag. It narrows SSH to
+the operator peer, denies the staging peer access to host services, and installs
+a persistent `DOCKER-USER` rule that permits that peer's forwarded TCP `8000`
+traffic while dropping its other forwarded traffic. The current broad SSH
+allow on `wg0` would otherwise include the new peer. Docker-published ports
+`8000`, `6001`, and `6002` may bypass UFW, so verify the effective policy in the
+Docker firewall path, not just `ufw status`. See the [Ansible runbook](../../ansible/README.md)
+for the check/apply sequence. Only after verifying those rules should you apply
+the separate `wireguard` tag to provision the peer.
+
+The network rule limits access to the Coolify listener on port `8000`; it cannot
+distinguish API URLs from the web UI on that same listener. Also configure
+Coolify's API IP allowlist and least-privilege token before storing the peer
+configuration in GitHub.
+
+Enable Coolify API access with an IP allowlist containing only the dedicated
+peer address. The GitHub Environment's `COOLIFY_API_TOKEN` requires the Coolify
+`write` and `deploy` permissions to pin the image digest and trigger a
+deployment; do not grant `root` or `read:sensitive`. Restrict the GitHub
+Environment to the `develop` branch and enable automatic deployment only after
+the peer, firewall, allowlist, and secrets have been verified. See the
+[deployment and release runbook](deployment-and-release.md) for activation
+steps.
+
 ## Stage 1: permit SSH only on the VPN interface
 
 Keep the existing public-key root session open as a recovery path. The server has UFW active with default-deny

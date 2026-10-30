@@ -56,10 +56,13 @@ RUN DATABASE_URL="postgresql://image-build:image-build@127.0.0.1:5432/image_buil
 
 FROM runtime-base AS runner
 
+ARG APP_BUILD_SHA=unknown
+
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
-    HOSTNAME="0.0.0.0"
+    HOSTNAME="0.0.0.0" \
+    APP_BUILD_SHA=$APP_BUILD_SHA
 
 RUN addgroup -S -g 1001 nodejs \
     && adduser -S -u 1001 -G nodejs nextjs \

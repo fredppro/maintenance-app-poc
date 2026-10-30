@@ -4,14 +4,20 @@ import { GET } from "./route";
 
 describe("GET /api/health", () => {
   it("reports readiness when PostgreSQL is reachable", async () => {
+    vi.stubEnv("APP_BUILD_SHA", "test-revision");
     const queryMock = vi.spyOn(prisma, "$queryRaw").mockResolvedValue([{ "?column?": 1 }] as never);
 
     try {
       const response = await GET();
       expect(response.status).toBe(200);
       expect(await response.json()).toEqual({ status: "ok" });
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      expect(response.headers.get("X-Application-Revision")).toBe(
+        "test-revision",
+      );
     } finally {
       queryMock.mockRestore();
+      vi.unstubAllEnvs();
     }
   });
 
@@ -24,6 +30,7 @@ describe("GET /api/health", () => {
     try {
       const response = await GET();
       expect(response.status).toBe(503);
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
       expect(await response.json()).toEqual({ status: "unavailable" });
       expect(errorMock).toHaveBeenCalledWith(
         expect.not.stringContaining("database-secret-detail"),

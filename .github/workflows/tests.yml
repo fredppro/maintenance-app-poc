@@ -99,6 +99,8 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           tags: ${{ env.IMAGE }}
+          build-args: |
+            APP_BUILD_SHA=${{ github.sha }}
           load: true
           cache-from: type=gha,scope=app
           cache-to: type=gha,mode=max,scope=app
@@ -172,3 +174,153 @@ jobs:
             exit 1
           fi
           echo "migrator_image_digest=${MIGRATOR_IMAGE%:*}@$migrator_digest" >> "$GITHUB_OUTPUT"
+
+  deploy-staging:
+    needs: [container-image]
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/develop' &&
+      vars.STAGING_AUTODEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: staging
+    concurrency:
+      group: staging-deploy
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy exact image to staging
+        shell: bash
+        env:
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          STAGING_WIREGUARD_CONFIG: ${{ secrets.STAGING_WIREGUARD_CONFIG }}
+          IMAGE_DIGEST: ${{ needs.container-image.outputs.image_digest }}
+          EXPECTED_REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$COOLIFY_API_TOKEN" || -z "$STAGING_WIREGUARD_CONFIG" ]]; then
+            echo "::error::Configure COOLIFY_API_TOKEN and STAGING_WIREGUARD_CONFIG in the staging environment."
+            exit 1
+          fi
+
+          if [[ ! "$IMAGE_DIGEST" =~ ^ghcr\.io/fredppro/maintenance-app-poc@sha256:([a-f0-9]{64})$ ]]; then
+            echo "::error::The image digest output is missing or malformed."
+            exit 1
+          fi
+          image_hash="${BASH_REMATCH[1]}"
+          coolify_image_tag="sha256-${image_hash}"
+
+          current_head="$(git ls-remote --exit-code origin refs/heads/develop | awk 'NR == 1 { print $1 }')"
+          if [[ "$current_head" != "$EXPECTED_REVISION" ]]; then
+            echo "::notice::Skipping staging deployment because $EXPECTED_REVISION is no longer the develop branch head."
+            exit 0
+          fi
+
+          coolify_api_url="http://10.242.0.1:8000"
+          coolify_app_uuid="s3ykxyqc8bfryycpesrrib2p"
+          staging_health_url="https://staging.maintenance.isosist.com/api/health"
+          wg_config_path="/etc/wireguard/staging-deploy.conf"
+          response_headers="$(mktemp)"
+          deployment_response="$(mktemp)"
+
+          cleanup() {
+            if [[ -f "$wg_config_path" ]]; then
+              if ! sudo wg-quick down "$wg_config_path" >/dev/null 2>&1; then
+                echo "::warning::Could not tear down the temporary WireGuard interface."
+              fi
+              if ! sudo rm -f "$wg_config_path"; then
+                echo "::warning::Could not remove the temporary WireGuard config."
+              fi
+            fi
+            if ! rm -f "$response_headers"; then
+              echo "::warning::Could not remove temporary health response headers."
+            fi
+            if ! rm -f "$deployment_response"; then
+              echo "::warning::Could not remove the temporary deployment response."
+            fi
+          }
+          trap cleanup EXIT
+
+          if ! command -v wg-quick >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install --yes wireguard-tools
+          fi
+
+          sudo install -d -m 700 /etc/wireguard
+          printf '%s\n' "$STAGING_WIREGUARD_CONFIG" | sudo tee "$wg_config_path" >/dev/null
+          sudo chmod 600 "$wg_config_path"
+          if sudo grep -Eiq '^[[:space:]]*(PreUp|PostUp|PreDown|PostDown|SaveConfig|Table|DNS)[[:space:]]*=' "$wg_config_path"; then
+            echo "::error::The staging WireGuard config contains unsupported directives."
+            exit 1
+          fi
+          allowed_ips="$(sudo awk -F= '/^[[:space:]]*AllowedIPs[[:space:]]*=/ { gsub(/[[:space:]]/, "", $2); print $2 }' "$wg_config_path")"
+          if [[ "$allowed_ips" != "10.242.0.1/32" ]]; then
+            echo "::error::The staging WireGuard peer must route only 10.242.0.1/32."
+            exit 1
+          fi
+          sudo wg-quick up "$wg_config_path"
+
+          application_url="$coolify_api_url/api/v1/applications/$coolify_app_uuid"
+          payload="$(jq -cn \
+            --arg image_name 'ghcr.io/fredppro/maintenance-app-poc@sha256' \
+            --arg tag "$coolify_image_tag" \
+            '{docker_registry_image_name: $image_name, docker_registry_image_tag: $tag}')"
+          if ! patch_status="$(curl --silent --show-error --max-time 30 \
+            --output /dev/null --write-out '%{http_code}' \
+            --request PATCH \
+            --header "Authorization: Bearer $COOLIFY_API_TOKEN" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data "$payload" \
+            "$application_url")"; then
+            echo "::error::Could not update the staging image in Coolify."
+            exit 1
+          fi
+          if [[ ! "$patch_status" =~ ^2[0-9][0-9]$ ]]; then
+            echo "::error::Coolify rejected the staging image update (HTTP $patch_status)."
+            exit 1
+          fi
+
+          if ! deploy_status="$(curl --silent --show-error --max-time 30 \
+            --output "$deployment_response" --write-out '%{http_code}' \
+            --request POST \
+            --header "Authorization: Bearer $COOLIFY_API_TOKEN" \
+            --header 'Accept: application/json' \
+            "$coolify_api_url/api/v1/deploy?uuid=$coolify_app_uuid")"; then
+            echo "::error::Could not trigger the Coolify staging deployment."
+            exit 1
+          fi
+          if [[ ! "$deploy_status" =~ ^2[0-9][0-9]$ ]]; then
+            echo "::error::Coolify rejected the staging deployment request (HTTP $deploy_status)."
+            exit 1
+          fi
+          if ! deployment_uuid="$(jq -er --arg uuid "$coolify_app_uuid" \
+            '.deployments[] | select(.resource_uuid == $uuid) | .deployment_uuid' \
+            "$deployment_response")"; then
+            echo "::error::Coolify did not return a deployment UUID for the staging application."
+            exit 1
+          fi
+
+          echo "Coolify queued deployment $deployment_uuid. Waiting for staging to serve revision $EXPECTED_REVISION."
+          for attempt in $(seq 1 36); do
+            if http_status="$(curl --silent --max-time 5 \
+              --dump-header "$response_headers" \
+              --output /dev/null --write-out '%{http_code}' \
+              "$staging_health_url")"; then
+              deployed_revision="$(awk 'tolower($1) == "x-application-revision:" { gsub("\r", "", $2); print $2; exit }' "$response_headers")"
+              if [[ "$http_status" == "200" && "$deployed_revision" == "$EXPECTED_REVISION" ]]; then
+                echo "Staging is healthy and serves revision $deployed_revision using $IMAGE_DIGEST."
+                exit 0
+              fi
+              echo "Health probe $attempt/36: HTTP $http_status; revision=${deployed_revision:-not reported}."
+            else
+              echo "Health probe $attempt/36: staging is not reachable yet."
+            fi
+            sleep 10
+          done
+
+          echo "::error::Staging did not become healthy on revision $EXPECTED_REVISION before the timeout."
+          exit 1

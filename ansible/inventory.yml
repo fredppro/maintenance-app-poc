@@ -5,4 +5,10 @@ all:
         maintenance-vps:
           ansible_host: 10.242.0.1
           ansible_user: ops
-          wireguard_client_public_key: "jZiFmiKoOTCaXULSreQdyOBWoICa4wrZXrsxH3TxN3c="
+          wireguard_managed_peers:
+            - name: operator-mac
+              public_key: "jZiFmiKoOTCaXULSreQdyOBWoICa4wrZXrsxH3TxN3c="
+              allowed_ips: 10.242.0.2/32
+            - name: github-staging
+              public_key: "0yZtpzrRcZj+JzXWEQqj/sJqvdyW1hHSVtpMGom6GUc="
+              allowed_ips: 10.242.0.3/32

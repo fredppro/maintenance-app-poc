@@ -16,7 +16,10 @@ export async function GET() {
         timestamp: new Date().toISOString(),
       }),
     );
-    return NextResponse.json({ status: "unavailable" }, { status: 503 });
+    return NextResponse.json(
+      { status: "unavailable" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   try {
@@ -28,9 +31,17 @@ export async function GET() {
         where: { slug: { not: LEGACY_ORGANIZATION_SLUG } },
       })) === 0
     ) {
-      return NextResponse.json({ status: "unavailable" }, { status: 503 });
+      return NextResponse.json(
+        { status: "unavailable" },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
+      );
     }
-    return NextResponse.json({ status: "ok" });
+    const response = NextResponse.json({ status: "ok" });
+      response.headers.set("Cache-Control", "no-store");
+      if (process.env.APP_BUILD_SHA) {
+        response.headers.set("X-Application-Revision", process.env.APP_BUILD_SHA);
+      }
+    return response;
   } catch {
     console.error(
       JSON.stringify({
@@ -38,6 +49,9 @@ export async function GET() {
         timestamp: new Date().toISOString(),
       }),
     );
-    return NextResponse.json({ status: "unavailable" }, { status: 503 });
+    return NextResponse.json(
+      { status: "unavailable" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
   }
 }
