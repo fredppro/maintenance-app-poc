@@ -265,7 +265,7 @@ jobs:
 
           application_url="$coolify_api_url/api/v1/applications/$coolify_app_uuid"
           payload="$(jq -cn \
-            --arg image_name 'ghcr.io/fredppro/maintenance-app-poc@sha256' \
+            --arg image_name 'ghcr.io/fredppro/maintenance-app-poc' \
             --arg tag "$coolify_image_tag" \
             '{docker_registry_image_name: $image_name, docker_registry_image_tag: $tag}')"
           if ! patch_status="$(curl --silent --show-error --max-time 30 \
