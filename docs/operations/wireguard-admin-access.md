@@ -11,8 +11,8 @@ For repeatable host configuration after this one-time WireGuard setup, see the
 ## Dated server observations (2026-10-13)
 
 These are historical operator reports, not a live status check. See
-[environment status](../reference/environment-status.md) for the recorded conflict about
-staging deployment and the facts that still require external confirmation.
+[environment status](../reference/environment-status.md) for current staging
+deployment verification and the facts that still require external confirmation.
 
 Recorded on 2026-10-13:
 
@@ -115,12 +115,14 @@ and storage in the `staging` Environment; its value is not recorded here.
 
 The `COOLIFY_API_TOKEN` uses Coolify's `write` and `deploy` permissions to pin
 the image digest and trigger a deployment; do not grant `root` or
-`read:sensitive`. The operator confirmed that the GitHub `staging` Environment
-is restricted to `develop`. Automatic deployment remains gated by the
-repository Actions variable `STAGING_AUTODEPLOY_ENABLED`; keep it unset or
-false until CI passes and the prerequisites are verified. See the
-[deployment and release runbook](deployment-and-release.md) for activation
-steps.
+`read:sensitive`. On 2026-10-31, the issued-token list showed those two
+permissions only. The operator confirmed that the GitHub `staging` Environment
+is restricted to `develop` and that the replacement token value is saved
+there. The repository Actions variable `STAGING_AUTODEPLOY_ENABLED` is enabled;
+workflow run 24 verified the automated staging deployment end to end. See the
+[deployment and release runbook](deployment-and-release.md) for setup details
+and [environment status](../reference/environment-status.md) for dated
+verification.
 
 ## Stage 1: permit SSH only on the VPN interface
 

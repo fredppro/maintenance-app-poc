@@ -22,8 +22,12 @@ publishing an image does not deploy it. It does not deploy production. On
 `sha256:c712ad154402609445cd2912aa6131084f1dd34a97e94626d408675326186cd6`
 reported a completed rolling update, and the staging login page loaded after
 refresh. The active runtime digest was not independently exposed at that time.
-See [the environment status record](../reference/environment-status.md) for
-the evidence and remaining verification.
+On 2026-10-31, workflow run 24 deployed image digest
+`sha256:b95c781cc3793026cc95fca8ebfd9a4dfdc3678cbb3bde5396cc24a35bdf1152`;
+Coolify reported success and `/api/health` returned the matching commit in
+`X-Application-Revision`. This verifies one end-to-end staging deployment, not
+production behavior. See [the environment status record](../reference/environment-status.md)
+for the evidence and remaining verification.
 
 ## Enable automated staging deployment
 
@@ -48,7 +52,9 @@ Complete the external network and credential setup before enabling the job:
 
 The workflow targets the existing staging application UUID in
 `.github/workflows/tests.yml` and the private Coolify URL `http://10.242.0.1:8000`.
-It updates Coolify's digest-form image name and `sha256-<hex>` tag together.
+It updates the repository image name and `sha256-<hex>` tag together; Coolify
+resolves that tag to the immutable digest reference. Keep `@sha256` out of the
+image-name field, or Coolify will construct an invalid doubled digest reference.
 Do not put WireGuard private keys or API tokens in the repository. The image
 build embeds its commit SHA in the successful `/api/health` response header
 `X-Application-Revision`, allowing the workflow to distinguish the new
