@@ -31,10 +31,14 @@ test("tenant A cannot view tenant B dashboard records or reports", async ({
     page.getByRole("heading", { name: "Maintenance Scheduler" }),
   ).toBeVisible();
   await expect(
-    page.getByText("E2E - Tenant A private maintenance record"),
+    page.getByText("E2E - Tenant A private maintenance record", {
+      exact: true,
+    }).first(),
   ).toBeVisible();
   await expect(
-    page.getByText("E2E - Tenant B confidential maintenance record"),
+    page.getByText("E2E - Tenant B confidential maintenance record", {
+      exact: true,
+    }),
   ).toHaveCount(0);
 
   const ownReport = await page.request.get(
@@ -65,10 +69,14 @@ test("tenant B cannot view tenant A dashboard records or reports", async ({
     page.getByRole("heading", { name: "Maintenance Scheduler" }),
   ).toBeVisible();
   await expect(
-    page.getByText("E2E - Tenant B confidential maintenance record"),
+    page.getByText("E2E - Tenant B confidential maintenance record", {
+      exact: true,
+    }).first(),
   ).toBeVisible();
   await expect(
-    page.getByText("E2E - Tenant A private maintenance record"),
+    page.getByText("E2E - Tenant A private maintenance record", {
+      exact: true,
+    }),
   ).toHaveCount(0);
 
   const ownReport = await page.request.get(
