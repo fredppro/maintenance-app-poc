@@ -45,9 +45,10 @@ The utility does not delete data or change the server.
 
 ## Read-only orphan inventory
 
-The application storage adapter can list object keys and metadata, but listing
-is used only by the manual inventory command, not by application request paths.
-Run from a protected operator environment with a migration connection that can
+The application storage adapter can list object keys and metadata. Listing is
+not used by application request paths; the manual inventory and scheduled
+export-attempt reconciliation use it from protected operator workflows. Run the
+inventory from an operator environment with a migration connection that can
 bypass row-level security and choose an age threshold explicitly. The command
 checks the connected role and refuses to produce an incomplete cross-tenant
 inventory:
@@ -61,6 +62,14 @@ For S3-compatible storage, configure `S3_AUDIT_ACCESS_KEY_ID` and
 to list the configured bucket. The command intentionally refuses to use the
 application's object-write credential for this operation. Local development
 uses the local storage directory and does not need S3 audit credentials.
+
+The scheduled `ops:retention` job requires separate
+`S3_CLEANUP_ACCESS_KEY_ID` and `S3_CLEANUP_SECRET_ACCESS_KEY` credentials for
+S3. Scope this credential to bucket listing and deleting objects under
+`exports/*`; it is not used for uploads or the read-only inventory. The job
+preserves active leases and published `fileKey` objects and only removes old,
+unreferenced lease attempts for export rows it can match to the exact tenant
+and export key prefix.
 
 The JSON report lists only objects older than the selected threshold that have
 no matching stored-file metadata, export metadata, or deletion-outbox job. It

@@ -271,6 +271,74 @@ describe.skipIf(!url)("tenant isolation in PostgreSQL", () => {
     ).rejects.toThrow();
   });
 
+  it("serializes concurrent partial task interval updates and rejects invalid intervals", async () => {
+    const taskId = `${ids.a}-task`;
+    const initial = await db.maintenanceTask.findUniqueOrThrow({
+      where: { id: taskId },
+      select: { startTime: true, endTime: true },
+    });
+    let activeTransactions = 0;
+    let releaseUpdates!: () => void;
+    const bothTransactionsReady = new Promise<void>((resolve) => {
+      releaseUpdates = resolve;
+    });
+    const updateAgainstInitialInterval = (
+      data: { startTime?: Date; endTime?: Date | null },
+    ) =>
+      db.$transaction(async (tx) => {
+        const snapshot = await tx.maintenanceTask.findUniqueOrThrow({
+          where: { id: taskId },
+          select: { startTime: true, endTime: true },
+        });
+        expect(snapshot).toEqual(initial);
+        activeTransactions += 1;
+        if (activeTransactions === 2) releaseUpdates();
+        await bothTransactionsReady;
+
+        return tx.maintenanceTask.update({
+          where: {
+            id: taskId,
+            organizationId: ids.a,
+            startTime: snapshot.startTime,
+            endTime: snapshot.endTime,
+          },
+          data,
+        });
+      });
+
+    const updates = await Promise.allSettled([
+      updateAgainstInitialInterval({
+        startTime: new Date("2026-06-30T11:00:00.000Z"),
+      }),
+      updateAgainstInitialInterval({
+        endTime: new Date("2026-06-30T10:00:00.000Z"),
+      }),
+    ]);
+    expect(updates.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(updates.filter((result) => result.status === "rejected")).toHaveLength(1);
+
+    const persisted = await db.maintenanceTask.findUniqueOrThrow({
+      where: { id: taskId },
+      select: { startTime: true, endTime: true },
+    });
+    expect(persisted.endTime === null || persisted.endTime > persisted.startTime).toBe(true);
+
+    await expect(
+      db.maintenanceTask.update({
+        where: { id: taskId },
+        data: { endTime: new Date(persisted.startTime.getTime() - 1) },
+      }),
+    ).rejects.toThrow();
+    const afterRejectedUpdate = await db.maintenanceTask.findUniqueOrThrow({
+      where: { id: taskId },
+      select: { startTime: true, endTime: true },
+    });
+    expect(
+      afterRejectedUpdate.endTime === null ||
+        afterRejectedUpdate.endTime > afterRejectedUpdate.startTime,
+    ).toBe(true);
+  });
+
   it("lets an organization use its own file as the logo", async () => {
     const settings = await asTenant(ids.a, (tx) =>
       tx.tenantSettings.upsert({

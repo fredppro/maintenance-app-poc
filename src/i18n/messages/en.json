@@ -647,10 +647,12 @@
   },
   "OrganizationData": {
     "exportTitle": "Export your data",
-    "exportDescription": "Download a ZIP with every record and uploaded file as CSV and JSON. Downloads stay available for 7 days.",
+    "exportDescription": "Download a ZIP with records and uploaded files as CSV and JSON (up to 50,000 records and 48 MiB). Downloads stay available for 7 days.",
     "exportEmpty": "No exports yet.",
     "requestExport": "Request export",
+    "retryExport": "Retry export",
     "download": "Download",
+    "exportLimitExceeded": "This export exceeds the supported limit of 50,000 records or 48 MiB. Reduce the data size or contact support.",
     "failed": "Something went wrong. Please try again.",
     "status": {
       "PENDING": "Queued",

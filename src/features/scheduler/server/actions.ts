@@ -867,6 +867,7 @@ export async function updateTask(
     select: {
       id: true,
       startTime: true,
+      endTime: true,
       status: true,
       completedAt: true,
       equipmentId: true,
@@ -876,6 +877,12 @@ export async function updateTask(
   });
   if (!currentTask) {
     throw new Error("Maintenance task not found in the active organization");
+  }
+  const effectiveStartTime = taskData.startTime ?? currentTask.startTime;
+  const effectiveEndTime =
+    taskData.endTime === undefined ? currentTask.endTime : taskData.endTime;
+  if (effectiveEndTime && effectiveEndTime <= effectiveStartTime) {
+    throw new Error("Task end time must be after start time");
   }
   const completionTime =
     completedAt ??
@@ -1054,28 +1061,54 @@ export async function updateTask(
       }
     }
 
-    return await tx.maintenanceTask.update({
-      where: { id: taskId, organizationId },
-      data: {
-        ...taskData,
-        ...(completionTime && { completedAt: completionTime }),
-        ...(hasMaintenancePointInput ||
-        targetEquipmentId !== currentTask.equipmentId
-          ? { maintenancePointId: nextMaintenancePointId }
-          : {}),
-      },
-      include: {
-        equipment: true,
-        assignments: {
-          include: {
-            worker: true,
-          },
+    const changesSchedule =
+      taskData.startTime !== undefined || taskData.endTime !== undefined;
+    try {
+      return await tx.maintenanceTask.update({
+        where: {
+          id: taskId,
+          organizationId,
+          ...(changesSchedule
+            ? {
+                startTime: currentTask.startTime,
+                endTime: currentTask.endTime,
+              }
+            : {}),
         },
-        dailyHours: true,
-        materials: true,
-        checklistItems: { orderBy: { sortOrder: "asc" } },
-      },
-    });
+        data: {
+          ...taskData,
+          ...(completionTime && { completedAt: completionTime }),
+          ...(hasMaintenancePointInput ||
+          targetEquipmentId !== currentTask.equipmentId
+            ? { maintenancePointId: nextMaintenancePointId }
+            : {}),
+        },
+        include: {
+          equipment: true,
+          assignments: {
+            include: {
+              worker: true,
+            },
+          },
+          dailyHours: true,
+          materials: true,
+          checklistItems: { orderBy: { sortOrder: "asc" } },
+        },
+      });
+    } catch (error) {
+      if (
+        changesSchedule &&
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "P2025"
+      ) {
+        throw new Error(
+          "Task schedule changed concurrently. Reload the task and try again.",
+        );
+      }
+      throw error;
+    }
   });
 
   revalidatePath("/");

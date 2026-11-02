@@ -5,7 +5,14 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import type { ObjectStorage, StoredObject, StoredObjectInfo } from "./types";
+import { Readable, type Readable as ReadableType } from "node:stream";
+import { StorageProviderError } from "./types";
+import type {
+  ObjectStorage,
+  StoredObject,
+  StoredObjectInfo,
+  StoredObjectStream,
+} from "./types";
 
 export type S3StorageConfig = {
   bucket: string;
@@ -43,6 +50,34 @@ export class S3Storage implements ObjectStorage {
     );
   }
 
+  async putStream(
+    key: string,
+    body: ReadableType,
+    contentType: string,
+    contentLength: number,
+    signal?: AbortSignal,
+  ) {
+    if (!Number.isSafeInteger(contentLength) || contentLength < 0) {
+      body.destroy();
+      throw new Error("Invalid storage stream content length");
+    }
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.config.bucket,
+          Key: key,
+          Body: body,
+          ContentLength: contentLength,
+          ContentType: contentType,
+        }),
+        { abortSignal: signal },
+      );
+    } catch (error) {
+      body.destroy();
+      throw error;
+    }
+  }
+
   async get(key: string): Promise<StoredObject | null> {
     try {
       const result = await this.client.send(
@@ -59,13 +94,55 @@ export class S3Storage implements ObjectStorage {
     }
   }
 
+  async getStream(
+    key: string,
+    signal?: AbortSignal,
+  ): Promise<StoredObjectStream | null> {
+    try {
+      const result = await this.client.send(
+        new GetObjectCommand({ Bucket: this.config.bucket, Key: key }),
+        { abortSignal: signal },
+      );
+      if (!result.Body) {
+        throw new Error("S3 returned an object without a response body");
+      }
+      if (
+        result.ContentLength !== undefined &&
+        (!Number.isSafeInteger(result.ContentLength) || result.ContentLength < 0)
+      ) {
+        throw new Error("S3 returned an invalid object content length");
+      }
+      return {
+        body: Readable.fromWeb(
+          result.Body.transformToWebStream() as unknown as import("node:stream/web").ReadableStream<Uint8Array>,
+        ),
+        contentType: result.ContentType ?? "application/octet-stream",
+        contentLength: result.ContentLength ?? null,
+      };
+    } catch (error) {
+      if (error instanceof StorageProviderError) throw error;
+      const providerError = error as {
+        name?: string;
+        $metadata?: { httpStatusCode?: number };
+      };
+      if (
+        providerError.name === "NoSuchKey" ||
+        (providerError.name === "NotFound" &&
+          providerError.$metadata?.httpStatusCode === 404)
+      ) {
+        return null;
+      }
+      throw new StorageProviderError("read", { cause: error });
+    }
+  }
+
   async delete(key: string) {
     await this.client.send(
       new DeleteObjectCommand({ Bucket: this.config.bucket, Key: key }),
     );
   }
 
-  async *list(): AsyncIterable<StoredObjectInfo> {
+  async *list(prefix?: string): AsyncIterable<StoredObjectInfo> {
     let continuationToken: string | undefined;
     const seenTokens = new Set<string>();
 
@@ -73,6 +150,7 @@ export class S3Storage implements ObjectStorage {
       const page = await this.client.send(
         new ListObjectsV2Command({
           Bucket: this.config.bucket,
+          Prefix: prefix,
           ContinuationToken: continuationToken,
         }),
       );

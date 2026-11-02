@@ -6,10 +6,10 @@
 
 ## Logging
 `src/lib/logger.ts` emits structured JSON. It scrubs email and URL strings and
-redacts values under sensitive-looking field names. For `Error` values, only
-the message is scrubbed for URLs and email addresses; arbitrary secrets in an
-error message are not removed by field-name redaction. Avoid placing secrets in
-error messages, and do not treat the logger as a substitute for review.
+redacts values under sensitive-looking field names. For `Error` values, the
+message is also scrubbed for common labelled credential values. Unlabelled
+secrets in free-form error messages cannot be reliably detected; avoid placing
+secrets in errors, and do not treat the logger as a substitute for review.
 Application code uses `logEvent` for structured events; a few fixed readiness
 and health events also use `console.error`. No live log collector, retention
 period, alert route, or access policy is established by this repository.
@@ -22,7 +22,7 @@ supports `pg_stat_statements`, an operator may enable it and review total query
 time; the current provider and extension settings are unverified.
 
 ## CI
-- `.github/workflows/security.yml`: gitleaks (full history), `pnpm audit --prod` (advisory: there is an existing backlog of high/critical advisories to triage, then drop `continue-on-error`), `prisma validate`.
+- `.github/workflows/security.yml`: gitleaks (full history), blocking `pnpm audit --prod --audit-level high`, `prisma validate`.
 - `.github/dependabot.yml`: weekly npm and Actions updates.
 
 ## Deliberately deferred

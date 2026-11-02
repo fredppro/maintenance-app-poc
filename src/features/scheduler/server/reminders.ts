@@ -6,6 +6,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 const STALE_SENDING_MS = 15 * 60 * 1000;
 const BATCH_SIZE = 100;
+const SYNC_BATCH_SIZE = 100;
 
 type ReminderDb = ReturnType<typeof forTenant>;
 
@@ -44,98 +45,160 @@ async function syncUpcomingReminders(
   const locale = settings?.locale?.toLowerCase().startsWith("pt")
     ? "pt-pt"
     : "en";
-  const tasks = await db.maintenanceTask.findMany({
-    where: {
-      organizationId,
-      deletedAt: null,
-      status: "scheduled",
-      startTime: { gt: now },
-    },
-    include: {
-      equipment: { select: { name: true } },
-      assignments: {
-        where: { worker: { deletedAt: null } },
-        include: { worker: { select: { id: true, email: true } } },
+  const taskWhere = {
+    organizationId,
+    deletedAt: null,
+    status: "scheduled",
+    startTime: { gt: now },
+  } as const;
+  let taskCursor: string | undefined;
+
+  while (true) {
+    const tasks = await db.maintenanceTask.findMany({
+      where: taskWhere,
+      orderBy: { id: "asc" },
+      take: SYNC_BATCH_SIZE,
+      ...(taskCursor ? { cursor: { id: taskCursor }, skip: 1 } : {}),
+      include: {
+        equipment: { select: { name: true } },
+        assignments: {
+          where: { worker: { deletedAt: null } },
+          include: { worker: { select: { id: true, email: true } } },
+        },
       },
-    },
-  });
-  const activePairs = new Set<string>();
+    });
+    if (tasks.length === 0) break;
+    taskCursor = tasks[tasks.length - 1].id;
 
-  for (const task of tasks) {
-    const scheduledFor = new Date(task.startTime.getTime() - DAY_MS);
-    for (const { worker } of task.assignments) {
-      const email = worker.email.trim();
-      if (!email) continue;
+    const existingReminders = await db.maintenanceTaskReminder.findMany({
+      where: { organizationId, taskId: { in: tasks.map((task) => task.id) } },
+      select: {
+        id: true,
+        taskId: true,
+        workerId: true,
+        status: true,
+        scheduledFor: true,
+        recipientEmail: true,
+      },
+    });
+    const remindersByPair = new Map(
+      existingReminders.map((reminder) => [
+        `${reminder.taskId}:${reminder.workerId}`,
+        reminder,
+      ]),
+    );
 
-      activePairs.add(`${task.id}:${worker.id}`);
-      const existing = await db.maintenanceTaskReminder.findUnique({
-        where: { taskId_workerId: { taskId: task.id, workerId: worker.id } },
-        select: {
-          id: true,
-          status: true,
-          scheduledFor: true,
-          recipientEmail: true,
-        },
-      });
+    for (const task of tasks) {
+      const scheduledFor = new Date(task.startTime.getTime() - DAY_MS);
+      for (const { worker } of task.assignments) {
+        const email = worker.email.trim();
+        if (!email) continue;
 
-      if (existing?.status === MaintenanceReminderStatus.SENT) continue;
+        const pairKey = `${task.id}:${worker.id}`;
+        const existing = remindersByPair.get(pairKey);
+        if (existing?.status === MaintenanceReminderStatus.SENT) continue;
 
-      const scheduleChanged =
-        !existing ||
-        existing.scheduledFor.getTime() !== scheduledFor.getTime() ||
-        existing.recipientEmail !== email ||
-        existing.status === MaintenanceReminderStatus.CANCELLED;
-      if (!scheduleChanged) continue;
-      if (existing?.status === MaintenanceReminderStatus.SENDING) continue;
+        const scheduleChanged =
+          !existing ||
+          existing.scheduledFor.getTime() !== scheduledFor.getTime() ||
+          existing.recipientEmail !== email ||
+          existing.status === MaintenanceReminderStatus.CANCELLED;
+        if (!scheduleChanged) continue;
+        if (existing?.status === MaintenanceReminderStatus.SENDING) continue;
 
-      await db.maintenanceTaskReminder.upsert({
-        where: { taskId_workerId: { taskId: task.id, workerId: worker.id } },
-        create: {
-          taskId: task.id,
-          workerId: worker.id,
-          organizationId,
-          recipientEmail: email,
-          locale,
-          scheduledFor,
-          nextAttemptAt: scheduledFor,
-        },
-        update: {
-          recipientEmail: email,
-          locale,
-          scheduledFor,
-          nextAttemptAt: scheduledFor,
-          status: MaintenanceReminderStatus.PENDING,
-          attempts: 0,
-          lastAttemptAt: null,
-          sentAt: null,
-          lastError: null,
-        },
-      });
+        await db.maintenanceTaskReminder.upsert({
+          where: { taskId_workerId: { taskId: task.id, workerId: worker.id } },
+          create: {
+            taskId: task.id,
+            workerId: worker.id,
+            organizationId,
+            recipientEmail: email,
+            locale,
+            scheduledFor,
+            nextAttemptAt: scheduledFor,
+          },
+          update: {
+            recipientEmail: email,
+            locale,
+            scheduledFor,
+            nextAttemptAt: scheduledFor,
+            status: MaintenanceReminderStatus.PENDING,
+            attempts: 0,
+            lastAttemptAt: null,
+            sentAt: null,
+            lastError: null,
+          },
+        });
+      }
     }
+    if (tasks.length < SYNC_BATCH_SIZE) break;
   }
 
-  const pendingReminders = await db.maintenanceTaskReminder.findMany({
-    where: {
-      organizationId,
-      status: {
-        in: [MaintenanceReminderStatus.PENDING, MaintenanceReminderStatus.FAILED],
-      },
-    },
-    select: { id: true, taskId: true, workerId: true },
-  });
+  let reminderCursor: string | undefined;
   let cancelled = 0;
-  for (const reminder of pendingReminders) {
-    if (activePairs.has(`${reminder.taskId}:${reminder.workerId}`)) continue;
-    const result = await db.maintenanceTaskReminder.updateMany({
+  while (true) {
+    const pendingReminders = await db.maintenanceTaskReminder.findMany({
       where: {
-        id: reminder.id,
+        organizationId,
         status: {
           in: [MaintenanceReminderStatus.PENDING, MaintenanceReminderStatus.FAILED],
         },
       },
-      data: { status: MaintenanceReminderStatus.CANCELLED },
+      orderBy: { id: "asc" },
+      take: SYNC_BATCH_SIZE,
+      ...(reminderCursor ? { cursor: { id: reminderCursor }, skip: 1 } : {}),
+      select: { id: true, taskId: true, workerId: true },
     });
-    cancelled += result.count;
+    if (pendingReminders.length === 0) break;
+    reminderCursor = pendingReminders[pendingReminders.length - 1].id;
+    const taskIds = [...new Set(pendingReminders.map((reminder) => reminder.taskId))];
+    const workerIds = [...new Set(pendingReminders.map((reminder) => reminder.workerId))];
+    const activeAssignments = await db.maintenanceTaskAssignment.findMany({
+      where: {
+        organizationId,
+        taskId: { in: taskIds },
+        workerId: { in: workerIds },
+        task: {
+          is: {
+            organizationId,
+            deletedAt: null,
+            status: "scheduled",
+            startTime: { gt: now },
+          },
+        },
+        worker: { is: { organizationId, deletedAt: null } },
+      },
+      select: {
+        taskId: true,
+        workerId: true,
+        worker: { select: { email: true } },
+      },
+    });
+    const activePairs = new Set(
+      activeAssignments
+        .filter((assignment) => assignment.worker.email.trim().length > 0)
+        .map((assignment) => `${assignment.taskId}:${assignment.workerId}`),
+    );
+    const staleReminderIds = pendingReminders
+      .filter(
+        (reminder) =>
+          !activePairs.has(`${reminder.taskId}:${reminder.workerId}`),
+      )
+      .map((reminder) => reminder.id);
+    if (staleReminderIds.length > 0) {
+      const result = await db.maintenanceTaskReminder.updateMany({
+        where: {
+          id: { in: staleReminderIds },
+          organizationId,
+          status: {
+            in: [MaintenanceReminderStatus.PENDING, MaintenanceReminderStatus.FAILED],
+          },
+        },
+        data: { status: MaintenanceReminderStatus.CANCELLED },
+      });
+      cancelled += result.count;
+    }
+    if (pendingReminders.length < SYNC_BATCH_SIZE) break;
   }
   return cancelled;
 }

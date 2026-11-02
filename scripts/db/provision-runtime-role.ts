@@ -45,6 +45,11 @@ async function main() {
       `GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ${r}`,
       `ALTER DEFAULT PRIVILEGES FOR ROLE ${ident(owner)} IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${r}`,
       `ALTER DEFAULT PRIVILEGES FOR ROLE ${ident(owner)} IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO ${r}`,
+      `REVOKE ALL ON TABLE "tenant_export_temp_reservation" FROM ${r}`,
+      `GRANT EXECUTE ON FUNCTION public.reserve_tenant_export_temp(TEXT, TEXT, TEXT) TO ${r}`,
+      `GRANT EXECUTE ON FUNCTION public.heartbeat_tenant_export_temp(TEXT, TEXT, TEXT) TO ${r}`,
+      `GRANT EXECUTE ON FUNCTION public.release_tenant_export_temp(TEXT, TEXT, TEXT) TO ${r}`,
+      `GRANT EXECUTE ON FUNCTION public.is_tenant_export_temp_active(TEXT, TEXT) TO ${r}`,
       `REVOKE UPDATE, DELETE ON TABLE "organization_audit_event" FROM ${r}`,
     ];
     for (const sql of statements) await prisma.$executeRawUnsafe(sql);

@@ -629,6 +629,8 @@ model TenantExport {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   requestedById  String
   status         ExportStatus @default(PENDING)
+  leaseId        String?
+  heartbeatAt    DateTime?
   fileKey        String?
   size           Int?
   error          String?
@@ -638,4 +640,17 @@ model TenantExport {
 
   @@index([organizationId, createdAt])
   @@map("tenant_export")
+}
+
+model TenantExportTempReservation {
+  id             String   @id
+  slot           Int      @unique
+  organizationId String
+  exportId       String   @unique
+  reservedBytes  BigInt
+  heartbeatAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@index([heartbeatAt])
+  @@map("tenant_export_temp_reservation")
 }

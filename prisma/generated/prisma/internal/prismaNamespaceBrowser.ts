@@ -81,7 +81,8 @@ export const ModelName = {
   LegacyOwnershipAssignment: 'LegacyOwnershipAssignment',
   OrganizationAuditEvent: 'OrganizationAuditEvent',
   TenantSettings: 'TenantSettings',
-  TenantExport: 'TenantExport'
+  TenantExport: 'TenantExport',
+  TenantExportTempReservation: 'TenantExportTempReservation'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -538,6 +539,8 @@ export const TenantExportScalarFieldEnum = {
   organizationId: 'organizationId',
   requestedById: 'requestedById',
   status: 'status',
+  leaseId: 'leaseId',
+  heartbeatAt: 'heartbeatAt',
   fileKey: 'fileKey',
   size: 'size',
   error: 'error',
@@ -547,6 +550,19 @@ export const TenantExportScalarFieldEnum = {
 } as const
 
 export type TenantExportScalarFieldEnum = (typeof TenantExportScalarFieldEnum)[keyof typeof TenantExportScalarFieldEnum]
+
+
+export const TenantExportTempReservationScalarFieldEnum = {
+  id: 'id',
+  slot: 'slot',
+  organizationId: 'organizationId',
+  exportId: 'exportId',
+  reservedBytes: 'reservedBytes',
+  heartbeatAt: 'heartbeatAt',
+  createdAt: 'createdAt'
+} as const
+
+export type TenantExportTempReservationScalarFieldEnum = (typeof TenantExportTempReservationScalarFieldEnum)[keyof typeof TenantExportTempReservationScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -34,8 +34,10 @@ export default async function OrganizationPage() {
           exports={exports.map((row) => ({
             id: row.id,
             status: row.status,
+            error: row.error,
             size: row.size,
             createdAt: row.createdAt.toISOString(),
+            heartbeatAt: row.heartbeatAt?.toISOString() ?? null,
             expiresAt: row.expiresAt?.toISOString() ?? null,
           }))}
         />

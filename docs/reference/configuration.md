@@ -13,12 +13,13 @@ Variable names and behavior documented from repository configuration. Do not cop
 | `BETTER_AUTH_SECRET` | App runtime and auth tests | Secret used to sign Better Auth sessions; use a random secret of at least 32 characters and keep it private. |
 | `BETTER_AUTH_URL` | App runtime and auth tests | Canonical application origin, for example `http://localhost:3000` locally or the deployed HTTPS origin. |
 | `CRON_SECRET` | Scheduled maintenance email reminders | A separate high-entropy secret sent as `Authorization: Bearer <secret>` to `POST /api/cron/maintenance-reminders`. |
-| `S3_BUCKET` | Optional in development; required in production | Enables S3-compatible file storage (equipment photos) when set. If unset, development stores files on local disk and production refuses to start uploads. See [File storage](../architecture/object-storage.md). |
+| `S3_BUCKET` | Optional in development; required in production | Enables S3-compatible storage for uploads and customer exports when set. Application credentials need object `GetObject`, `PutObject`, and `DeleteObject` access for the configured uploaded-file and `exports/*` prefixes; scheduled orphan reconciliation uses separate credentials. If unset, development stores files on local disk and production refuses to start uploads. See [File storage](../architecture/object-storage.md). |
 | `S3_ENDPOINT` | Optional | Custom endpoint for MinIO or another S3-compatible service (for example `http://localhost:9000`). Omit for AWS S3. |
 | `S3_REGION` | Optional | Bucket region. Defaults to `us-east-1`. |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Required when `S3_BUCKET` is set | Storage credentials. For the bundled MinIO they are `minioadmin` / `minioadmin`. |
 | `S3_FORCE_PATH_STYLE` | Optional | `true` or `false`. Defaults to `true` when `S3_ENDPOINT` is set, otherwise `false`. |
 | `S3_AUDIT_ACCESS_KEY_ID`, `S3_AUDIT_SECRET_ACCESS_KEY` | Optional; required for S3 `ops:storage:inventory` | Separate read-only credentials with bucket-list permission. The inventory command does not fall back to the application's storage credentials. |
+| `S3_CLEANUP_ACCESS_KEY_ID`, `S3_CLEANUP_SECRET_ACCESS_KEY` | Required for scheduled S3 export cleanup | Separate operator credentials with bucket-list and `DeleteObject` permission scoped to `exports/*`. The retention job does not use the application or read-only audit credentials for orphan cleanup. |
 | `STORAGE_LOCAL_DIR` | Optional | Local-disk directory used when `S3_BUCKET` is unset. Defaults to `.storage` (git-ignored). |
 | `RESEND_API_KEY` | Production verification, password recovery, invitations, and maintenance reminders | Resend API credential. Configure through a secret manager; no key is needed for local login/signup without email delivery. |
 | `AUTH_EMAIL_FROM` | Production verification, password recovery, invitations, and maintenance reminders | Verified sender in Resend, e.g. `Maintenance Scheduler <accounts@example.com>`. |

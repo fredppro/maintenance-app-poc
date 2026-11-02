@@ -647,10 +647,12 @@
   },
   "OrganizationData": {
     "exportTitle": "Exportar os seus dados",
-    "exportDescription": "Transfira um ZIP com todos os registos e ficheiros carregados em CSV e JSON. As transferências ficam disponíveis durante 7 dias.",
+    "exportDescription": "Transfira um ZIP com registos e ficheiros carregados em CSV e JSON (até 50 000 registos e 48 MiB). As transferências ficam disponíveis durante 7 dias.",
     "exportEmpty": "Ainda sem exportações.",
     "requestExport": "Pedir exportação",
+    "retryExport": "Tentar exportação novamente",
     "download": "Transferir",
+    "exportLimitExceeded": "Esta exportação excede o limite suportado de 50 000 registos ou 48 MiB. Reduza o volume de dados ou contacte o suporte.",
     "failed": "Algo correu mal. Tente novamente.",
     "status": {
       "PENDING": "Em fila",

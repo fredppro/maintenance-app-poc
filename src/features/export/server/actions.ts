@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { recordAuditEvent } from "@/lib/audit";
 import { takeRateLimit } from "@/lib/rate-limit";
 import { getTenantContext } from "@/lib/tenant-context";
+import { isExportRecoverable, STALE_EXPORT_AFTER_MS } from "../export-policy";
 import { runTenantExport } from "./run-export";
 
 export async function requestTenantExport() {
@@ -12,9 +13,40 @@ export async function requestTenantExport() {
 
   const active = await db.tenantExport.findFirst({
     where: { organizationId, status: { in: ["PENDING", "RUNNING"] } },
-    select: { id: true },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, status: true, heartbeatAt: true },
   });
-  if (active) return { id: active.id };
+  if (active) {
+    if (isExportRecoverable(active.status, active.heartbeatAt)) {
+      if (active.status === "PENDING") {
+        after(() => runTenantExport(db, organizationId, active.id));
+        return { id: active.id };
+      }
+
+      const staleBefore = new Date(Date.now() - STALE_EXPORT_AFTER_MS);
+      const heartbeatFilter = active.heartbeatAt
+        ? { lte: staleBefore }
+        : null;
+      const reclaimed = await db.tenantExport.updateMany({
+        where: {
+          id: active.id,
+          organizationId,
+          status: "RUNNING",
+          heartbeatAt: heartbeatFilter,
+        },
+        data: {
+          status: "PENDING",
+          leaseId: null,
+          heartbeatAt: null,
+          error: null,
+        },
+      });
+      if (reclaimed.count > 0) {
+        after(() => runTenantExport(db, organizationId, active.id));
+      }
+    }
+    return { id: active.id };
+  }
 
   const limit = await takeRateLimit("export", organizationId, { limit: 3, windowSeconds: 3600 });
   if (!limit.allowed) {

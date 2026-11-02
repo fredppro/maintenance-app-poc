@@ -39,6 +39,8 @@ export type TenantExportMinAggregateOutputType = {
   organizationId: string | null
   requestedById: string | null
   status: $Enums.ExportStatus | null
+  leaseId: string | null
+  heartbeatAt: Date | null
   fileKey: string | null
   size: number | null
   error: string | null
@@ -52,6 +54,8 @@ export type TenantExportMaxAggregateOutputType = {
   organizationId: string | null
   requestedById: string | null
   status: $Enums.ExportStatus | null
+  leaseId: string | null
+  heartbeatAt: Date | null
   fileKey: string | null
   size: number | null
   error: string | null
@@ -65,6 +69,8 @@ export type TenantExportCountAggregateOutputType = {
   organizationId: number
   requestedById: number
   status: number
+  leaseId: number
+  heartbeatAt: number
   fileKey: number
   size: number
   error: number
@@ -88,6 +94,8 @@ export type TenantExportMinAggregateInputType = {
   organizationId?: true
   requestedById?: true
   status?: true
+  leaseId?: true
+  heartbeatAt?: true
   fileKey?: true
   size?: true
   error?: true
@@ -101,6 +109,8 @@ export type TenantExportMaxAggregateInputType = {
   organizationId?: true
   requestedById?: true
   status?: true
+  leaseId?: true
+  heartbeatAt?: true
   fileKey?: true
   size?: true
   error?: true
@@ -114,6 +124,8 @@ export type TenantExportCountAggregateInputType = {
   organizationId?: true
   requestedById?: true
   status?: true
+  leaseId?: true
+  heartbeatAt?: true
   fileKey?: true
   size?: true
   error?: true
@@ -214,6 +226,8 @@ export type TenantExportGroupByOutputType = {
   organizationId: string
   requestedById: string
   status: $Enums.ExportStatus
+  leaseId: string | null
+  heartbeatAt: Date | null
   fileKey: string | null
   size: number | null
   error: string | null
@@ -250,6 +264,8 @@ export type TenantExportWhereInput = {
   organizationId?: Prisma.StringFilter<"TenantExport"> | string
   requestedById?: Prisma.StringFilter<"TenantExport"> | string
   status?: Prisma.EnumExportStatusFilter<"TenantExport"> | $Enums.ExportStatus
+  leaseId?: Prisma.StringNullableFilter<"TenantExport"> | string | null
+  heartbeatAt?: Prisma.DateTimeNullableFilter<"TenantExport"> | Date | string | null
   fileKey?: Prisma.StringNullableFilter<"TenantExport"> | string | null
   size?: Prisma.IntNullableFilter<"TenantExport"> | number | null
   error?: Prisma.StringNullableFilter<"TenantExport"> | string | null
@@ -264,6 +280,8 @@ export type TenantExportOrderByWithRelationInput = {
   organizationId?: Prisma.SortOrder
   requestedById?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  leaseId?: Prisma.SortOrderInput | Prisma.SortOrder
+  heartbeatAt?: Prisma.SortOrderInput | Prisma.SortOrder
   fileKey?: Prisma.SortOrderInput | Prisma.SortOrder
   size?: Prisma.SortOrderInput | Prisma.SortOrder
   error?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -281,6 +299,8 @@ export type TenantExportWhereUniqueInput = Prisma.AtLeast<{
   organizationId?: Prisma.StringFilter<"TenantExport"> | string
   requestedById?: Prisma.StringFilter<"TenantExport"> | string
   status?: Prisma.EnumExportStatusFilter<"TenantExport"> | $Enums.ExportStatus
+  leaseId?: Prisma.StringNullableFilter<"TenantExport"> | string | null
+  heartbeatAt?: Prisma.DateTimeNullableFilter<"TenantExport"> | Date | string | null
   fileKey?: Prisma.StringNullableFilter<"TenantExport"> | string | null
   size?: Prisma.IntNullableFilter<"TenantExport"> | number | null
   error?: Prisma.StringNullableFilter<"TenantExport"> | string | null
@@ -295,6 +315,8 @@ export type TenantExportOrderByWithAggregationInput = {
   organizationId?: Prisma.SortOrder
   requestedById?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  leaseId?: Prisma.SortOrderInput | Prisma.SortOrder
+  heartbeatAt?: Prisma.SortOrderInput | Prisma.SortOrder
   fileKey?: Prisma.SortOrderInput | Prisma.SortOrder
   size?: Prisma.SortOrderInput | Prisma.SortOrder
   error?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -316,6 +338,8 @@ export type TenantExportScalarWhereWithAggregatesInput = {
   organizationId?: Prisma.StringWithAggregatesFilter<"TenantExport"> | string
   requestedById?: Prisma.StringWithAggregatesFilter<"TenantExport"> | string
   status?: Prisma.EnumExportStatusWithAggregatesFilter<"TenantExport"> | $Enums.ExportStatus
+  leaseId?: Prisma.StringNullableWithAggregatesFilter<"TenantExport"> | string | null
+  heartbeatAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TenantExport"> | Date | string | null
   fileKey?: Prisma.StringNullableWithAggregatesFilter<"TenantExport"> | string | null
   size?: Prisma.IntNullableWithAggregatesFilter<"TenantExport"> | number | null
   error?: Prisma.StringNullableWithAggregatesFilter<"TenantExport"> | string | null
@@ -328,6 +352,8 @@ export type TenantExportCreateInput = {
   id?: string
   requestedById: string
   status?: $Enums.ExportStatus
+  leaseId?: string | null
+  heartbeatAt?: Date | string | null
   fileKey?: string | null
   size?: number | null
   error?: string | null
@@ -342,6 +368,8 @@ export type TenantExportUncheckedCreateInput = {
   organizationId: string
   requestedById: string
   status?: $Enums.ExportStatus
+  leaseId?: string | null
+  heartbeatAt?: Date | string | null
   fileKey?: string | null
   size?: number | null
   error?: string | null
@@ -354,6 +382,8 @@ export type TenantExportUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requestedById?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumExportStatusFieldUpdateOperationsInput | $Enums.ExportStatus
+  leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  heartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -368,6 +398,8 @@ export type TenantExportUncheckedUpdateInput = {
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   requestedById?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumExportStatusFieldUpdateOperationsInput | $Enums.ExportStatus
+  leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  heartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -381,6 +413,8 @@ export type TenantExportCreateManyInput = {
   organizationId: string
   requestedById: string
   status?: $Enums.ExportStatus
+  leaseId?: string | null
+  heartbeatAt?: Date | string | null
   fileKey?: string | null
   size?: number | null
   error?: string | null
@@ -393,6 +427,8 @@ export type TenantExportUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requestedById?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumExportStatusFieldUpdateOperationsInput | $Enums.ExportStatus
+  leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  heartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -406,6 +442,8 @@ export type TenantExportUncheckedUpdateManyInput = {
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   requestedById?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumExportStatusFieldUpdateOperationsInput | $Enums.ExportStatus
+  leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  heartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -429,6 +467,8 @@ export type TenantExportCountOrderByAggregateInput = {
   organizationId?: Prisma.SortOrder
   requestedById?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  leaseId?: Prisma.SortOrder
+  heartbeatAt?: Prisma.SortOrder
   fileKey?: Prisma.SortOrder
   size?: Prisma.SortOrder
   error?: Prisma.SortOrder
@@ -446,6 +486,8 @@ export type TenantExportMaxOrderByAggregateInput = {
   organizationId?: Prisma.SortOrder
   requestedById?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  leaseId?: Prisma.SortOrder
+  heartbeatAt?: Prisma.SortOrder
   fileKey?: Prisma.SortOrder
   size?: Prisma.SortOrder
   error?: Prisma.SortOrder
@@ -459,6 +501,8 @@ export type TenantExportMinOrderByAggregateInput = {
   organizationId?: Prisma.SortOrder
   requestedById?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  leaseId?: Prisma.SortOrder
+  heartbeatAt?: Prisma.SortOrder
   fileKey?: Prisma.SortOrder
   size?: Prisma.SortOrder
   error?: Prisma.SortOrder
@@ -529,6 +573,8 @@ export type TenantExportCreateWithoutOrganizationInput = {
   id?: string
   requestedById: string
   status?: $Enums.ExportStatus
+  leaseId?: string | null
+  heartbeatAt?: Date | string | null
   fileKey?: string | null
   size?: number | null
   error?: string | null
@@ -541,6 +587,8 @@ export type TenantExportUncheckedCreateWithoutOrganizationInput = {
   id?: string
   requestedById: string
   status?: $Enums.ExportStatus
+  leaseId?: string | null
+  heartbeatAt?: Date | string | null
   fileKey?: string | null
   size?: number | null
   error?: string | null
@@ -583,6 +631,8 @@ export type TenantExportScalarWhereInput = {
   organizationId?: Prisma.StringFilter<"TenantExport"> | string
   requestedById?: Prisma.StringFilter<"TenantExport"> | string
   status?: Prisma.EnumExportStatusFilter<"TenantExport"> | $Enums.ExportStatus
+  leaseId?: Prisma.StringNullableFilter<"TenantExport"> | string | null
+  heartbeatAt?: Prisma.DateTimeNullableFilter<"TenantExport"> | Date | string | null
   fileKey?: Prisma.StringNullableFilter<"TenantExport"> | string | null
   size?: Prisma.IntNullableFilter<"TenantExport"> | number | null
   error?: Prisma.StringNullableFilter<"TenantExport"> | string | null
@@ -595,6 +645,8 @@ export type TenantExportCreateManyOrganizationInput = {
   id?: string
   requestedById: string
   status?: $Enums.ExportStatus
+  leaseId?: string | null
+  heartbeatAt?: Date | string | null
   fileKey?: string | null
   size?: number | null
   error?: string | null
@@ -607,6 +659,8 @@ export type TenantExportUpdateWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requestedById?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumExportStatusFieldUpdateOperationsInput | $Enums.ExportStatus
+  leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  heartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -619,6 +673,8 @@ export type TenantExportUncheckedUpdateWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requestedById?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumExportStatusFieldUpdateOperationsInput | $Enums.ExportStatus
+  leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  heartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -631,6 +687,8 @@ export type TenantExportUncheckedUpdateManyWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requestedById?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumExportStatusFieldUpdateOperationsInput | $Enums.ExportStatus
+  leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  heartbeatAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   fileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -646,6 +704,8 @@ export type TenantExportSelect<ExtArgs extends runtime.Types.Extensions.Internal
   organizationId?: boolean
   requestedById?: boolean
   status?: boolean
+  leaseId?: boolean
+  heartbeatAt?: boolean
   fileKey?: boolean
   size?: boolean
   error?: boolean
@@ -660,6 +720,8 @@ export type TenantExportSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   organizationId?: boolean
   requestedById?: boolean
   status?: boolean
+  leaseId?: boolean
+  heartbeatAt?: boolean
   fileKey?: boolean
   size?: boolean
   error?: boolean
@@ -674,6 +736,8 @@ export type TenantExportSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   organizationId?: boolean
   requestedById?: boolean
   status?: boolean
+  leaseId?: boolean
+  heartbeatAt?: boolean
   fileKey?: boolean
   size?: boolean
   error?: boolean
@@ -688,6 +752,8 @@ export type TenantExportSelectScalar = {
   organizationId?: boolean
   requestedById?: boolean
   status?: boolean
+  leaseId?: boolean
+  heartbeatAt?: boolean
   fileKey?: boolean
   size?: boolean
   error?: boolean
@@ -696,7 +762,7 @@ export type TenantExportSelectScalar = {
   expiresAt?: boolean
 }
 
-export type TenantExportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationId" | "requestedById" | "status" | "fileKey" | "size" | "error" | "createdAt" | "completedAt" | "expiresAt", ExtArgs["result"]["tenantExport"]>
+export type TenantExportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationId" | "requestedById" | "status" | "leaseId" | "heartbeatAt" | "fileKey" | "size" | "error" | "createdAt" | "completedAt" | "expiresAt", ExtArgs["result"]["tenantExport"]>
 export type TenantExportInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }
@@ -717,6 +783,8 @@ export type $TenantExportPayload<ExtArgs extends runtime.Types.Extensions.Intern
     organizationId: string
     requestedById: string
     status: $Enums.ExportStatus
+    leaseId: string | null
+    heartbeatAt: Date | null
     fileKey: string | null
     size: number | null
     error: string | null
@@ -1151,6 +1219,8 @@ export interface TenantExportFieldRefs {
   readonly organizationId: Prisma.FieldRef<"TenantExport", 'String'>
   readonly requestedById: Prisma.FieldRef<"TenantExport", 'String'>
   readonly status: Prisma.FieldRef<"TenantExport", 'ExportStatus'>
+  readonly leaseId: Prisma.FieldRef<"TenantExport", 'String'>
+  readonly heartbeatAt: Prisma.FieldRef<"TenantExport", 'DateTime'>
   readonly fileKey: Prisma.FieldRef<"TenantExport", 'String'>
   readonly size: Prisma.FieldRef<"TenantExport", 'Int'>
   readonly error: Prisma.FieldRef<"TenantExport", 'String'>

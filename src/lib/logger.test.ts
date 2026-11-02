@@ -24,4 +24,17 @@ describe("logEvent", () => {
     logEvent("error", "mail", { error: new Error("rejected jane.doe@example.com"), to: "jane.doe@example.com" });
     expect(spy.mock.calls[0][0]).not.toContain("jane.doe");
   });
+
+  it("redacts labelled credentials embedded in error messages", () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    logEvent("error", "request.failed", {
+      error: new Error("request rejected: token=abc123 Authorization: Bearer secret-value"),
+    });
+
+    const serialized = spy.mock.calls[0][0] as string;
+    expect(serialized).not.toContain("abc123");
+    expect(serialized).not.toContain("secret-value");
+    expect(serialized).toContain("token=[redacted]");
+    expect(serialized).toContain("Authorization=[redacted]");
+  });
 });

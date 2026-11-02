@@ -1,11 +1,46 @@
+import { PassThrough, Readable, Transform } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import { NextResponse } from "next/server";
 import { recordAuditEvent } from "@/lib/audit";
 import { getStorage } from "@/lib/storage";
 import { getTenantContext } from "@/lib/tenant-context";
+import { MAX_EXPORT_ARCHIVE_BYTES } from "@/features/export/export-policy";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+function verifyArchiveStream(
+  source: Readable,
+  expectedBytes: number | null,
+) {
+  const output = new PassThrough({ highWaterMark: 64 * 1024 });
+  let bytesRead = 0;
+  const verifySize = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      bytesRead += chunk.byteLength;
+      if (
+        bytesRead > MAX_EXPORT_ARCHIVE_BYTES ||
+        (expectedBytes !== null && bytesRead > expectedBytes)
+      ) {
+        callback(new Error("Stored export exceeds its expected archive size"));
+        return;
+      }
+      callback(null, chunk);
+    },
+    flush(callback) {
+      if (expectedBytes !== null && bytesRead !== expectedBytes) {
+        callback(new Error("Stored export size does not match its metadata"));
+        return;
+      }
+      callback();
+    },
+  });
+  void pipeline(source, verifySize, output).catch((error: unknown) => {
+    output.destroy(error instanceof Error ? error : new Error("Export download failed"));
+  });
+  return output;
+}
+
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   let tenant;
   try {
     tenant = await getTenantContext("manageOrganization");
@@ -22,9 +57,29 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       expiresAt: { gt: new Date() },
     },
   });
-  const object = record?.fileKey ? await getStorage().get(record.fileKey) : null;
+  const object = record?.fileKey
+    ? await getStorage().getStream(record.fileKey, request.signal)
+    : null;
   if (!record || !object) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+  if (
+    record.size !== null &&
+    object.contentLength !== null &&
+    record.size !== object.contentLength
+  ) {
+    object.body.destroy();
+    return NextResponse.json({ error: "storage_integrity_error" }, { status: 502 });
+  }
+  const contentLength = object.contentLength ?? record.size;
+  if (
+    contentLength !== null &&
+    (!Number.isSafeInteger(contentLength) ||
+      contentLength < 0 ||
+      contentLength > MAX_EXPORT_ARCHIVE_BYTES)
+  ) {
+    object.body.destroy();
+    return NextResponse.json({ error: "storage_integrity_error" }, { status: 502 });
   }
 
   await recordAuditEvent({
@@ -34,12 +89,17 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     subjectType: "export",
     subjectId: record.id,
   });
-  return new NextResponse(new Uint8Array(object.body), {
-    headers: {
-      "Content-Type": "application/zip",
-      "Content-Length": String(object.body.length),
-      "Content-Disposition": `attachment; filename="export-${record.id}.zip"`,
-      "Cache-Control": "private, no-store",
-    },
+  const headers = new Headers({
+    "Content-Type": "application/zip",
+    "Content-Disposition": `attachment; filename="export-${record.id}.zip"`,
+    "Cache-Control": "private, no-store",
+  });
+  if (contentLength !== null) headers.set("Content-Length", String(contentLength));
+
+  const responseBody = Readable.toWeb(
+    verifyArchiveStream(object.body, contentLength),
+  ) as unknown as globalThis.ReadableStream<Uint8Array>;
+  return new NextResponse(responseBody, {
+      headers,
   });
 }

@@ -596,6 +596,7 @@ describe("scheduler server actions", () => {
           select: {
             id: true,
             startTime: true,
+            endTime: true,
             equipmentId: true,
             maintenancePointId: true,
             assignments: { select: { workerId: true } },
@@ -609,6 +610,144 @@ describe("scheduler server actions", () => {
         taskLookup.mockRestore();
         updateMock.mockRestore();
         transactionMock.mockRestore();
+      }
+    });
+
+    it("rejects partial updates that make the persisted task interval invalid", async () => {
+      const startTime = new Date("2026-06-01T10:00:00.000Z");
+      const endTime = new Date("2026-06-01T12:00:00.000Z");
+      const taskLookup = vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-123",
+        startTime,
+        endTime,
+        equipmentId: "eq-1",
+        maintenancePointId: null,
+        status: "scheduled",
+        completedAt: null,
+        assignments: [],
+      } as never);
+      const transaction = vi.spyOn(prisma, "$transaction");
+      const update = vi.spyOn(prisma.maintenanceTask, "update");
+
+      try {
+        await expect(
+          updateTask("task-123", { endTime: new Date("2026-06-01T09:00:00.000Z") }),
+        ).rejects.toThrow("Task end time must be after start time");
+        await expect(
+          updateTask("task-123", { startTime: new Date("2026-06-01T13:00:00.000Z") }),
+        ).rejects.toThrow("Task end time must be after start time");
+        expect(transaction).not.toHaveBeenCalled();
+        expect(update).not.toHaveBeenCalled();
+      } finally {
+        taskLookup.mockRestore();
+        transaction.mockRestore();
+        update.mockRestore();
+      }
+    });
+
+    it("uses the previously read interval as a compare-and-swap for valid schedule edits", async () => {
+      const startTime = new Date("2026-06-01T10:00:00.000Z");
+      const endTime = new Date("2026-06-01T12:00:00.000Z");
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-123",
+        startTime,
+        endTime,
+        equipmentId: "eq-1",
+        maintenancePointId: null,
+        status: "scheduled",
+        completedAt: null,
+        assignments: [],
+      } as never);
+      const update = vi.fn().mockResolvedValue({ id: "task-123" });
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) =>
+          callback({ maintenanceTask: { update } }),
+        );
+
+      try {
+        await updateTask("task-123", {
+          startTime: new Date("2026-06-01T11:00:00.000Z"),
+        });
+
+        expect(update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: {
+              id: "task-123",
+              organizationId: "org-1",
+              startTime,
+              endTime,
+            },
+            data: { startTime: new Date("2026-06-01T11:00:00.000Z") },
+          }),
+        );
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+
+    it("rejects a stale concurrent partial update and leaves the persisted interval valid", async () => {
+      const originalStart = new Date("2026-06-01T10:00:00.000Z");
+      const originalEnd = new Date("2026-06-01T14:00:00.000Z");
+      const nextStart = new Date("2026-06-01T13:00:00.000Z");
+      const nextEnd = new Date("2026-06-01T12:00:00.000Z");
+      let persisted = { startTime: originalStart, endTime: originalEnd };
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-123",
+        ...persisted,
+        equipmentId: "eq-1",
+        maintenancePointId: null,
+        status: "scheduled",
+        completedAt: null,
+        assignments: [],
+      } as never);
+      const update = vi.fn(async ({ where, data }: any) => {
+        if (
+          where.startTime.getTime() !== persisted.startTime.getTime() ||
+          where.endTime.getTime() !== persisted.endTime.getTime()
+        ) {
+          throw Object.assign(new Error("stale interval"), { code: "P2025" });
+        }
+        const effectiveStart = data.startTime ?? persisted.startTime;
+        const effectiveEnd =
+          data.endTime === undefined ? persisted.endTime : data.endTime;
+        if (effectiveEnd !== null && effectiveEnd <= effectiveStart) {
+          throw new Error("database interval constraint");
+        }
+        persisted = { startTime: effectiveStart, endTime: effectiveEnd };
+        return { id: "task-123" };
+      });
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) =>
+          callback({ maintenanceTask: { update } }),
+        );
+
+      try {
+        const results = await Promise.allSettled([
+          updateTask("task-123", { startTime: nextStart }),
+          updateTask("task-123", { endTime: nextEnd }),
+        ]);
+
+        expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+        expect(results.filter((result) => result.status === "rejected")).toHaveLength(1);
+        const rejected = results.find(
+          (result): result is PromiseRejectedResult => result.status === "rejected",
+        );
+        expect(rejected?.reason).toBeInstanceOf(Error);
+        if (!(rejected?.reason instanceof Error)) {
+          throw new Error("Expected the stale schedule update to be rejected");
+        }
+        expect(rejected.reason.message).toContain(
+          "Task schedule changed concurrently. Reload the task and try again.",
+        );
+        expect(
+          persisted.startTime.getTime() === nextStart.getTime() ||
+            persisted.endTime.getTime() === nextEnd.getTime(),
+        ).toBe(true);
+        expect(persisted.endTime === null || persisted.endTime > persisted.startTime).toBe(true);
+      } finally {
+        transaction.mockRestore();
       }
     });
 

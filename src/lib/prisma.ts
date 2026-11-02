@@ -1,7 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { toClientSafe } from "./serializer";
 import { resolveRuntimeDatabaseUrl } from "./database-url";
-import { PrismaClient } from "../../prisma/generated/prisma/client";
+import { Prisma, PrismaClient } from "../../prisma/generated/prisma/client";
 
 export const prismaClientSingleton = () => {
   const connectionString = resolveRuntimeDatabaseUrl();
@@ -101,11 +101,20 @@ export const createTenantClient = (base: BaseClient, organizationId: string) => 
 
   return base.$extends({
     client: {
-      transaction<T>(fn: (tx: Parameters<Parameters<BaseClient["$transaction"]>[0]>[0]) => Promise<T>) {
+      transaction<T>(
+        fn: (
+          tx: Parameters<Parameters<BaseClient["$transaction"]>[0]>[0],
+        ) => Promise<T>,
+        options?: {
+          maxWait?: number;
+          timeout?: number;
+          isolationLevel?: Prisma.TransactionIsolationLevel;
+        },
+      ) {
         return base.$transaction(async (tx) => {
           await tx.$executeRaw`SELECT set_config(${TENANT_SETTING}, ${organizationId}, true)`;
           return fn(tx);
-        });
+        }, options);
       },
     },
     query: {

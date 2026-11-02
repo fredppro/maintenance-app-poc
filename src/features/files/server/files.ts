@@ -3,8 +3,10 @@ import sharp from "sharp";
 import { logEvent } from "@/lib/logger";
 import type { TenantDb } from "@/lib/prisma";
 import { getStorage } from "@/lib/storage";
+import { MAX_FILE_BYTES } from "../file-policy";
 
-export const MAX_FILE_BYTES = 5 * 1024 * 1024;
+export { MAX_FILE_BYTES } from "../file-policy";
+
 const FILE_DELETION_LEASE_MS = 5 * 60 * 1_000;
 const FILE_DELETION_RETRY_BASE_MS = 60 * 1_000;
 const FILE_DELETION_RETRY_MAX_MS = 24 * 60 * 60 * 1_000;

@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { requestTenantExport } from "@/features/export/server/actions";
+import { isExportRecoverable } from "@/features/export/export-policy";
 import {
   cancelOrganizationDeletion,
   requestOrganizationDeletion,
@@ -30,7 +31,9 @@ import {
 export type ExportRow = {
   id: string;
   status: "PENDING" | "RUNNING" | "READY" | "FAILED";
+  error: string | null;
   createdAt: string;
+  heartbeatAt: string | null;
   expiresAt: string | null;
   size: number | null;
 };
@@ -56,13 +59,18 @@ export function OrganizationExportCard({ exports }: { exports: ExportRow[] }) {
   const format = useFormatter();
   const router = useRouter();
   const { pending, run } = useAction();
-  const inProgress = exports.some((row) => row.status === "PENDING" || row.status === "RUNNING");
+  const activeExport = exports.find((row) => row.status === "PENDING" || row.status === "RUNNING");
+  const canRetry = activeExport
+    ? isExportRecoverable(activeExport.status, activeExport.heartbeatAt)
+    : false;
+  const inProgress = Boolean(activeExport) && !canRetry;
+  const activeExportId = activeExport?.id;
 
   useEffect(() => {
-    if (!inProgress) return;
+    if (!activeExportId) return;
     const timer = setInterval(() => router.refresh(), 3000);
     return () => clearInterval(timer);
-  }, [inProgress, router]);
+  }, [activeExportId, router]);
 
   return (
     <Card>
@@ -82,6 +90,11 @@ export function OrganizationExportCard({ exports }: { exports: ExportRow[] }) {
                 {format.dateTime(new Date(row.createdAt), { dateStyle: "medium", timeStyle: "short" })}
               </span>
             </div>
+            {row.error === "EXPORT_SIZE_LIMIT" && (
+              <p className="basis-full text-sm text-destructive">
+                {t("exportLimitExceeded")}
+              </p>
+            )}
             {row.status === "READY" && (
               <Button asChild variant="outline" size="sm">
                 <a href={`/api/exports/${row.id}`}>
@@ -96,7 +109,7 @@ export function OrganizationExportCard({ exports }: { exports: ExportRow[] }) {
       <CardFooter>
         <Button disabled={pending || inProgress} onClick={() => run(requestTenantExport)}>
           {(pending || inProgress) && <Spinner data-icon="inline-start" />}
-          {t("requestExport")}
+          {t(canRetry ? "retryExport" : "requestExport")}
         </Button>
       </CardFooter>
     </Card>
