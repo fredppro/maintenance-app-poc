@@ -57,8 +57,16 @@ export const ModelName = {
   Section: 'Section',
   EquipmentRelocation: 'EquipmentRelocation',
   MaintenanceTask: 'MaintenanceTask',
+  EquipmentMaintenancePoint: 'EquipmentMaintenancePoint',
+  EquipmentPointChecklistItem: 'EquipmentPointChecklistItem',
+  MaintenanceTaskChecklistItem: 'MaintenanceTaskChecklistItem',
+  EquipmentOperatingHourReading: 'EquipmentOperatingHourReading',
   Material: 'Material',
+  InventoryItem: 'InventoryItem',
+  InventoryMovement: 'InventoryMovement',
+  MaintenanceTaskReminder: 'MaintenanceTaskReminder',
   MaintenanceTaskAssignment: 'MaintenanceTaskAssignment',
+  MaintenanceTaskDailyHours: 'MaintenanceTaskDailyHours',
   Worker: 'Worker',
   Vendor: 'Vendor',
   User: 'User',
@@ -169,8 +177,10 @@ export const MaintenanceTaskScalarFieldEnum = {
   startTime: 'startTime',
   endTime: 'endTime',
   equipmentId: 'equipmentId',
+  maintenancePointId: 'maintenancePointId',
   organizationId: 'organizationId',
   status: 'status',
+  completedAt: 'completedAt',
   deletedAt: 'deletedAt',
   deletedById: 'deletedById',
   createdAt: 'createdAt',
@@ -178,6 +188,64 @@ export const MaintenanceTaskScalarFieldEnum = {
 } as const
 
 export type MaintenanceTaskScalarFieldEnum = (typeof MaintenanceTaskScalarFieldEnum)[keyof typeof MaintenanceTaskScalarFieldEnum]
+
+
+export const EquipmentMaintenancePointScalarFieldEnum = {
+  id: 'id',
+  equipmentId: 'equipmentId',
+  organizationId: 'organizationId',
+  name: 'name',
+  description: 'description',
+  sortOrder: 'sortOrder',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+} as const
+
+export type EquipmentMaintenancePointScalarFieldEnum = (typeof EquipmentMaintenancePointScalarFieldEnum)[keyof typeof EquipmentMaintenancePointScalarFieldEnum]
+
+
+export const EquipmentPointChecklistItemScalarFieldEnum = {
+  id: 'id',
+  pointId: 'pointId',
+  equipmentId: 'equipmentId',
+  organizationId: 'organizationId',
+  title: 'title',
+  sortOrder: 'sortOrder',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+} as const
+
+export type EquipmentPointChecklistItemScalarFieldEnum = (typeof EquipmentPointChecklistItemScalarFieldEnum)[keyof typeof EquipmentPointChecklistItemScalarFieldEnum]
+
+
+export const MaintenanceTaskChecklistItemScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  organizationId: 'organizationId',
+  sourceItemId: 'sourceItemId',
+  title: 'title',
+  sortOrder: 'sortOrder',
+  isComplete: 'isComplete',
+  completedAt: 'completedAt',
+  completedById: 'completedById',
+  createdAt: 'createdAt'
+} as const
+
+export type MaintenanceTaskChecklistItemScalarFieldEnum = (typeof MaintenanceTaskChecklistItemScalarFieldEnum)[keyof typeof MaintenanceTaskChecklistItemScalarFieldEnum]
+
+
+export const EquipmentOperatingHourReadingScalarFieldEnum = {
+  id: 'id',
+  equipmentId: 'equipmentId',
+  organizationId: 'organizationId',
+  reading: 'reading',
+  measuredAt: 'measuredAt',
+  note: 'note',
+  recordedById: 'recordedById',
+  createdAt: 'createdAt'
+} as const
+
+export type EquipmentOperatingHourReadingScalarFieldEnum = (typeof EquipmentOperatingHourReadingScalarFieldEnum)[keyof typeof EquipmentOperatingHourReadingScalarFieldEnum]
 
 
 export const MaterialScalarFieldEnum = {
@@ -194,6 +262,59 @@ export const MaterialScalarFieldEnum = {
 export type MaterialScalarFieldEnum = (typeof MaterialScalarFieldEnum)[keyof typeof MaterialScalarFieldEnum]
 
 
+export const InventoryItemScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  reference: 'reference',
+  unit: 'unit',
+  onHand: 'onHand',
+  reorderPoint: 'reorderPoint',
+  vendorId: 'vendorId',
+  siteId: 'siteId',
+  organizationId: 'organizationId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InventoryItemScalarFieldEnum = (typeof InventoryItemScalarFieldEnum)[keyof typeof InventoryItemScalarFieldEnum]
+
+
+export const InventoryMovementScalarFieldEnum = {
+  id: 'id',
+  inventoryItemId: 'inventoryItemId',
+  organizationId: 'organizationId',
+  taskId: 'taskId',
+  type: 'type',
+  quantity: 'quantity',
+  note: 'note',
+  recordedById: 'recordedById',
+  createdAt: 'createdAt'
+} as const
+
+export type InventoryMovementScalarFieldEnum = (typeof InventoryMovementScalarFieldEnum)[keyof typeof InventoryMovementScalarFieldEnum]
+
+
+export const MaintenanceTaskReminderScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  workerId: 'workerId',
+  organizationId: 'organizationId',
+  recipientEmail: 'recipientEmail',
+  locale: 'locale',
+  scheduledFor: 'scheduledFor',
+  nextAttemptAt: 'nextAttemptAt',
+  status: 'status',
+  attempts: 'attempts',
+  lastAttemptAt: 'lastAttemptAt',
+  sentAt: 'sentAt',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MaintenanceTaskReminderScalarFieldEnum = (typeof MaintenanceTaskReminderScalarFieldEnum)[keyof typeof MaintenanceTaskReminderScalarFieldEnum]
+
+
 export const MaintenanceTaskAssignmentScalarFieldEnum = {
   id: 'id',
   taskId: 'taskId',
@@ -204,6 +325,19 @@ export const MaintenanceTaskAssignmentScalarFieldEnum = {
 } as const
 
 export type MaintenanceTaskAssignmentScalarFieldEnum = (typeof MaintenanceTaskAssignmentScalarFieldEnum)[keyof typeof MaintenanceTaskAssignmentScalarFieldEnum]
+
+
+export const MaintenanceTaskDailyHoursScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  workerId: 'workerId',
+  organizationId: 'organizationId',
+  workDate: 'workDate',
+  hours: 'hours',
+  createdAt: 'createdAt'
+} as const
+
+export type MaintenanceTaskDailyHoursScalarFieldEnum = (typeof MaintenanceTaskDailyHoursScalarFieldEnum)[keyof typeof MaintenanceTaskDailyHoursScalarFieldEnum]
 
 
 export const WorkerScalarFieldEnum = {

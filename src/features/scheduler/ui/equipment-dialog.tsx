@@ -18,6 +18,7 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ import {
 import { Plus } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Spinner } from "@/components/ui/spinner";
+import { ChecklistTemplateEditor } from "./checklist-template-editor";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -36,7 +38,9 @@ import {
   addEquipment as dbAddEquipment,
   createSection as dbCreateSection,
   getEquipmentRelocations,
+  getMaintenancePoints,
   relocateEquipment as dbRelocateEquipment,
+  saveMaintenancePoint,
   updateEquipment as dbUpdateEquipment,
 } from "../server/actions";
 import { useSchedulerStore } from "../store/scheduler-provider";
@@ -50,6 +54,7 @@ import {
 const NO_SECTION = "__none__";
 
 type Relocation = Awaited<ReturnType<typeof getEquipmentRelocations>>[number];
+type MaintenancePoint = Awaited<ReturnType<typeof getMaintenancePoints>>[number];
 
 /** Create/edit equipment: photo, details and location (site, section, history). */
 export function EquipmentDialog({
@@ -68,6 +73,7 @@ export function EquipmentDialog({
   const format = useFormatter();
   const sites = useSchedulerStore((s) => s.sites);
   const sections = useSchedulerStore((s) => s.sections);
+  const timeZone = useSchedulerStore((s) => s.timeZone);
   const addEquipment = useSchedulerStore((s) => s.addEquipment);
   const updateEquipment = useSchedulerStore((s) => s.updateEquipment);
   const removeEquipment = useSchedulerStore((s) => s.removeEquipment);
@@ -86,6 +92,12 @@ export function EquipmentDialog({
   const [addingSection, setAddingSection] = useState(false);
   const [creatingSection, setCreatingSection] = useState(false);
   const [history, setHistory] = useState<Relocation[]>([]);
+  const [maintenancePoints, setMaintenancePoints] = useState<MaintenancePoint[]>([]);
+  const [pointId, setPointId] = useState<string | null>(null);
+  const [pointName, setPointName] = useState("");
+  const [pointDescription, setPointDescription] = useState("");
+  const [pointChecklist, setPointChecklist] = useState<string[]>([]);
+  const [pointDraftDirty, setPointDraftDirty] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -100,12 +112,29 @@ export function EquipmentDialog({
     setNewSection("");
     setCreatingSection(false);
     setHistory([]);
+    setMaintenancePoints([]);
+    setPointId(null);
+    setPointName("");
+    setPointDescription("");
+    setPointChecklist([]);
+    setPointDraftDirty(false);
     if (equipment) {
       getEquipmentRelocations(equipment.id)
         .then(setHistory)
         .catch(() => undefined);
+      getMaintenancePoints(equipment.id)
+        .then(setMaintenancePoints)
+        .catch(() => toast.error(t("failedLoadMaintenanceHistory")));
     }
-  }, [open, equipment, currentSiteId]);
+  }, [open, equipment, currentSiteId, t]);
+
+  function editMaintenancePoint(point: MaintenancePoint) {
+    setPointId(point.id);
+    setPointName(point.name);
+    setPointDescription(point.description ?? "");
+    setPointChecklist(point.checklistItems.map((item) => item.title));
+    setPointDraftDirty(false);
+  }
 
   const siteSections = useMemo(
     () => sections.filter((s) => s.siteId === siteId),
@@ -141,6 +170,20 @@ export function EquipmentDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || saving) return;
+    const hasPointDraft =
+      !!pointId ||
+      !!pointName.trim() ||
+      !!pointDescription.trim() ||
+      pointChecklist.some((item) => item.trim());
+    if (
+      equipment &&
+      pointDraftDirty &&
+      hasPointDraft &&
+      !pointName.trim()
+    ) {
+      toast.error(t("maintenancePointNameRequired"));
+      return;
+    }
     setSaving(true);
     try {
       let imageFileId = image.fileId;
@@ -160,6 +203,30 @@ export function EquipmentDialog({
       if (equipment) {
         const updated = await dbUpdateEquipment(equipment.id, details);
         updateEquipment(updated);
+        if (pointDraftDirty && hasPointDraft) {
+          try {
+            const savedPoint = await saveMaintenancePoint(equipment.id, {
+              id: pointId,
+              name: pointName.trim(),
+              description: pointDescription,
+              checklistItems: pointChecklist
+                .map((item) => item.trim())
+                .filter(Boolean),
+            });
+            setPointId(savedPoint.id);
+            setPointDraftDirty(false);
+            try {
+              setMaintenancePoints(await getMaintenancePoints(equipment.id));
+            } catch {
+              toast.error(t("failedLoadMaintenanceHistory"));
+            }
+          } catch {
+            toast.error(t("failedSaveMaintenancePoint"));
+            return;
+          }
+        } else if (pointDraftDirty) {
+          setPointDraftDirty(false);
+        }
         if (locationChanged) {
           const moved = await dbRelocateEquipment(equipment.id, {
             siteId,
@@ -363,12 +430,105 @@ export function EquipmentDialog({
                         {format.dateTime(entry.movedAt, {
                           dateStyle: "short",
                           timeStyle: "short",
+                          timeZone,
                         })}
                       </time>
                     </li>
                   ))}
                 </ol>
               </FieldSet>
+            )}
+            {equipment && (
+              <>
+                <FieldSet>
+                  <FieldLegend variant="label">
+                    {t("maintenancePoints")}
+                  </FieldLegend>
+                  {maintenancePoints.length > 0 ? (
+                    <ul className="space-y-2">
+                      {maintenancePoints.map((point) => (
+                        <li
+                          key={point.id}
+                          className="flex items-start justify-between gap-3 rounded-md border p-3"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-medium">{point.name}</p>
+                            {point.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {point.description}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              {t("pointChecklistCount", {
+                                count: point.checklistItems.length,
+                              })}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => editMaintenancePoint(point)}
+                          >
+                            {t("editMaintenancePoint")}
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {t("noMaintenancePoints")}
+                    </p>
+                  )}
+                  <Field>
+                    <FieldLabel htmlFor="maintenance-point-name">
+                      {t("maintenancePointName")}
+                    </FieldLabel>
+                    <Input
+                      id="maintenance-point-name"
+                      value={pointName}
+                      onChange={(event) => {
+                        setPointName(event.target.value);
+                        setPointDraftDirty(true);
+                      }}
+                      maxLength={120}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="maintenance-point-description">
+                      {t("maintenancePointDescription")}
+                    </FieldLabel>
+                    <Textarea
+                      id="maintenance-point-description"
+                      value={pointDescription}
+                      onChange={(event) => {
+                        setPointDescription(event.target.value);
+                        setPointDraftDirty(true);
+                      }}
+                      maxLength={1000}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>{t("pointChecklist")}</FieldLabel>
+                    <ChecklistTemplateEditor
+                      value={pointChecklist}
+                      onChange={(value) => {
+                        setPointChecklist(value);
+                        setPointDraftDirty(true);
+                      }}
+                      canAdd={Boolean(pointName.trim())}
+                    />
+                    {!pointName.trim() && (
+                      <FieldDescription>
+                        {t("checklistRequiresPointName")}
+                      </FieldDescription>
+                    )}
+                  </Field>
+                  <FieldDescription>
+                    {t("maintenancePointSaveWithEquipment")}
+                  </FieldDescription>
+                </FieldSet>
+              </>
             )}
           </FieldGroup>
           <SheetFooter className="px-0 pb-0">

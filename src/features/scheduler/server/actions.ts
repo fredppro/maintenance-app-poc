@@ -3,7 +3,11 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import type { TenantDb } from "@/lib/prisma";
-import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
+import {
+  InventoryMovementType,
+  MaterialUnit,
+  TaskType,
+} from "../../../../prisma/generated/prisma/enums";
 import { deleteStoredFile } from "@/features/files/server/files";
 import { recordAuditEvent } from "@/lib/audit";
 import {
@@ -16,12 +20,36 @@ import {
   equipmentIdSchema,
   equipmentSchema,
   equipmentUpdateSchema,
+  inventoryItemSchema,
+  inventoryMovementSchema,
   relocationSchema,
   sectionNameSchema,
   siteNameSchema,
   createTaskSchema,
+  maintenancePointSchema,
+  operatingHourReadingSchema,
   updateTaskSchema,
 } from "./schemas";
+
+const DAY_MS = 86_400_000;
+
+function getUtcDayOffset(nextDate: Date, previousDate: Date) {
+  const nextUtcDay = Date.UTC(
+    nextDate.getUTCFullYear(),
+    nextDate.getUTCMonth(),
+    nextDate.getUTCDate(),
+  );
+  const previousUtcDay = Date.UTC(
+    previousDate.getUTCFullYear(),
+    previousDate.getUTCMonth(),
+    previousDate.getUTCDate(),
+  );
+  return Math.round((nextUtcDay - previousUtcDay) / DAY_MS);
+}
+
+function shiftDateOnly(date: Date, dayOffset: number) {
+  return new Date(date.getTime() + dayOffset * DAY_MS);
+}
 
 // Equipment Actions
 export async function getEquipment() {
@@ -30,6 +58,311 @@ export async function getEquipment() {
     where: { organizationId, siteId },
     orderBy: { name: "asc" },
   });
+}
+
+export async function getMaintenancePoints(equipmentId: string) {
+  const { db, organizationId, siteId } = await getTenantContext("viewMaintenance");
+  const id = equipmentIdSchema.parse(equipmentId);
+  const equipment = await db.equipment.findFirst({
+    where: { id, organizationId, siteId },
+    select: { id: true },
+  });
+  if (!equipment) throw new Error("Equipment not found in the active site");
+  return db.equipmentMaintenancePoint.findMany({
+    where: { equipmentId: id, organizationId, isActive: true },
+    include: {
+      checklistItems: {
+        where: { organizationId, isActive: true },
+        orderBy: { sortOrder: "asc" },
+      },
+    },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+  });
+}
+
+export async function saveMaintenancePoint(
+  equipmentId: string,
+  data: {
+    id?: string | null;
+    name: string;
+    description?: string | null;
+    checklistItems: string[];
+  },
+) {
+  const { db, organizationId, siteId } = await getTenantContext("manageMaintenance");
+  const id = equipmentIdSchema.parse(equipmentId);
+  const input = maintenancePointSchema.parse(data);
+  const equipment = await db.equipment.findFirst({
+    where: { id, organizationId, siteId },
+    select: { id: true },
+  });
+  if (!equipment) throw new Error("Equipment not found in the active site");
+
+  const point = await db.transaction(async (tx) => {
+    const existing = input.id
+      ? await tx.equipmentMaintenancePoint.findFirst({
+          where: {
+            id: input.id,
+            equipmentId: id,
+            organizationId,
+            isActive: true,
+          },
+          select: { id: true },
+        })
+      : null;
+    if (input.id && !existing) {
+      throw new Error("Maintenance point not found in the active organization");
+    }
+
+    const saved = existing
+      ? await tx.equipmentMaintenancePoint.update({
+          where: { id: existing.id, organizationId },
+          data: { name: input.name, description: input.description ?? null },
+        })
+      : await tx.equipmentMaintenancePoint.create({
+          data: {
+            equipmentId: id,
+            organizationId,
+            name: input.name,
+            description: input.description ?? null,
+          },
+        });
+
+    await tx.equipmentPointChecklistItem.updateMany({
+      where: { pointId: saved.id, organizationId, isActive: true },
+      data: { isActive: false },
+    });
+    if (input.checklistItems.length > 0) {
+      await tx.equipmentPointChecklistItem.createMany({
+        data: input.checklistItems.map((title, sortOrder) => ({
+          pointId: saved.id,
+          equipmentId: id,
+          organizationId,
+          title,
+          sortOrder,
+        })),
+      });
+    }
+    return saved;
+  });
+  revalidatePath("/");
+  return point;
+}
+
+export async function getOperatingHourReadings(equipmentId: string) {
+  const { db, organizationId, siteId } = await getTenantContext("viewMaintenance");
+  const id = equipmentIdSchema.parse(equipmentId);
+  const equipment = await db.equipment.findFirst({
+    where: { id, organizationId, siteId },
+    select: { id: true },
+  });
+  if (!equipment) throw new Error("Equipment not found in the active site");
+  return db.equipmentOperatingHourReading.findMany({
+    where: { equipmentId: id, organizationId },
+    orderBy: [{ measuredAt: "desc" }, { createdAt: "desc" }],
+    take: 50,
+  });
+}
+
+export async function recordOperatingHours(
+  equipmentId: string,
+  data: { reading: number; measuredAt?: Date; note?: string | null },
+) {
+  const { db, organizationId, siteId, userId } =
+    await getTenantContext("manageMaintenance");
+  const id = equipmentIdSchema.parse(equipmentId);
+  const input = operatingHourReadingSchema.parse({
+    ...data,
+    measuredAt: data.measuredAt ?? new Date(),
+  });
+  const equipment = await db.equipment.findFirst({
+    where: { id, organizationId, siteId },
+    select: { id: true },
+  });
+  if (!equipment) throw new Error("Equipment not found in the active site");
+
+  const reading = await db.transaction(async (tx) => {
+    const latest = await tx.equipmentOperatingHourReading.findFirst({
+      where: { equipmentId: id, organizationId },
+      orderBy: [{ measuredAt: "desc" }, { createdAt: "desc" }],
+      select: { measuredAt: true, reading: true },
+    });
+    if (
+      latest &&
+      (input.measuredAt < latest.measuredAt ||
+        input.reading < Number(latest.reading))
+    ) {
+      throw new Error("Operating-hour readings must be chronological and non-decreasing");
+    }
+    return tx.equipmentOperatingHourReading.create({
+      data: {
+        equipmentId: id,
+        organizationId,
+        reading: input.reading.toFixed(2),
+        measuredAt: input.measuredAt,
+        note: input.note ?? null,
+        recordedById: userId,
+      },
+    });
+  });
+  revalidatePath("/");
+  return reading;
+}
+
+export async function getInventoryItems() {
+  const { db, organizationId, siteId } = await getTenantContext("viewMaintenance");
+  return db.inventoryItem.findMany({
+    where: { organizationId, siteId },
+    include: { vendor: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function getMaintenanceSuppliers() {
+  const { db, organizationId } = await getTenantContext("viewMaintenance");
+  return db.vendor.findMany({
+    where: { organizationId },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, email: true },
+  });
+}
+
+export async function createInventoryItem(data: {
+  name: string;
+  reference?: string | null;
+  unit: MaterialUnit;
+  openingStock: number;
+  reorderPoint: number;
+  vendorId?: string | null;
+}) {
+  const { db, organizationId, siteId, userId } =
+    await getTenantContext("manageMaintenance");
+  const input = inventoryItemSchema.parse(data);
+  if (input.vendorId) {
+    const supplier = await db.vendor.findFirst({
+      where: { id: input.vendorId, organizationId },
+      select: { id: true },
+    });
+    if (!supplier) throw new Error("Supplier not found in the active organization");
+  }
+
+  const item = await db.transaction(async (tx) => {
+    const created = await tx.inventoryItem.create({
+      data: {
+        organizationId,
+        siteId,
+        name: input.name,
+        reference: input.reference ?? null,
+        unit: input.unit,
+        onHand: "0.00",
+        reorderPoint: input.reorderPoint.toFixed(2),
+        vendorId: input.vendorId ?? null,
+      },
+    });
+    if (input.openingStock > 0) {
+      const quantity = input.openingStock.toFixed(2);
+      await tx.inventoryItem.update({
+        where: { id: created.id, organizationId },
+        data: { onHand: quantity },
+      });
+      await tx.inventoryMovement.create({
+        data: {
+          inventoryItemId: created.id,
+          organizationId,
+          type: InventoryMovementType.RECEIPT,
+          quantity,
+          note: "Opening stock",
+          recordedById: userId,
+        },
+      });
+    }
+    return tx.inventoryItem.findUnique({
+      where: { id: created.id, organizationId },
+      include: { vendor: true },
+    });
+  });
+  revalidatePath("/");
+  return item;
+}
+
+export async function receiveInventory(
+  inventoryItemId: string,
+  data: { quantity: number; note?: string | null },
+) {
+  const { db, organizationId, siteId, userId } =
+    await getTenantContext("manageMaintenance");
+  const itemId = equipmentIdSchema.parse(inventoryItemId);
+  const input = inventoryMovementSchema.parse(data);
+  const movement = await db.transaction(async (tx) => {
+    const { count } = await tx.inventoryItem.updateMany({
+      where: { id: itemId, organizationId, siteId },
+      data: { onHand: { increment: input.quantity.toFixed(2) } },
+    });
+    if (count !== 1) throw new Error("Inventory item not found in the active site");
+    return tx.inventoryMovement.create({
+      data: {
+        inventoryItemId: itemId,
+        organizationId,
+        type: InventoryMovementType.RECEIPT,
+        quantity: input.quantity.toFixed(2),
+        note: input.note ?? null,
+        recordedById: userId,
+      },
+    });
+  });
+  revalidatePath("/");
+  return movement;
+}
+
+export async function consumeInventory(
+  inventoryItemId: string,
+  taskId: string,
+  data: { quantity: number; note?: string | null },
+) {
+  const { db, organizationId, siteId, userId } =
+    await getTenantContext("manageMaintenance");
+  const itemId = equipmentIdSchema.parse(inventoryItemId);
+  const validatedTaskId = equipmentIdSchema.parse(taskId);
+  const input = inventoryMovementSchema.parse(data);
+  const movement = await db.transaction(async (tx) => {
+    const task = await tx.maintenanceTask.findFirst({
+      where: {
+        id: validatedTaskId,
+        organizationId,
+        deletedAt: null,
+        equipment: { is: { siteId } },
+      },
+      select: { id: true },
+    });
+    if (!task) throw new Error("Task not found in the active site");
+
+    const quantity = input.quantity.toFixed(2);
+    const { count } = await tx.inventoryItem.updateMany({
+      where: {
+        id: itemId,
+        organizationId,
+        siteId,
+        onHand: { gte: quantity },
+      },
+      data: { onHand: { decrement: quantity } },
+    });
+    if (count !== 1) {
+      throw new Error("Inventory item not found or insufficient stock");
+    }
+    return tx.inventoryMovement.create({
+      data: {
+        inventoryItemId: itemId,
+        organizationId,
+        taskId: validatedTaskId,
+        type: InventoryMovementType.CONSUMPTION,
+        quantity,
+        note: input.note ?? null,
+        recordedById: userId,
+      },
+    });
+  });
+  revalidatePath("/");
+  return movement;
 }
 
 async function assertOwnFile(
@@ -94,7 +427,7 @@ export async function updateEquipment(
   id: string,
   data: { name?: string; category?: string | null; imageFileId?: string | null },
 ) {
-  const { db, organizationId, siteId } = await getTenantContext("manageMaintenance");
+  const { db, organizationId, siteId, userId } = await getTenantContext("manageMaintenance");
   const equipmentId = equipmentIdSchema.parse(id);
   const input = equipmentUpdateSchema.parse(data);
   await assertOwnFile(db, input.imageFileId, organizationId);
@@ -344,7 +677,21 @@ export async function getTasks() {
           worker: true,
         },
       },
+      dailyHours: true,
       materials: true,
+      checklistItems: { orderBy: { sortOrder: "asc" } },
+      reminders: {
+        select: {
+          id: true,
+          workerId: true,
+          status: true,
+          scheduledFor: true,
+          sentAt: true,
+          attempts: true,
+          worker: { select: { name: true } },
+        },
+        orderBy: { scheduledFor: "asc" },
+      },
     },
     orderBy: { startTime: "asc" },
   });
@@ -355,10 +702,12 @@ export async function createTask(data: {
   description?: string;
   type?: TaskType;
   startTime: Date;
-  endTime: Date;
+  endTime?: Date | null;
   equipmentId: string;
   status?: string;
+  maintenancePointId?: string | null;
   workerIds: string[];
+  dailyHours?: { workerId: string; workDate: string; hours: number }[];
   materials?: {
     name: string;
     reference?: string;
@@ -369,7 +718,7 @@ export async function createTask(data: {
 }) {
   const { db, organizationId, siteId } = await getTenantContext("manageMaintenance");
   const input = createTaskSchema.parse(data);
-  const { workerIds, materials, ...taskData } = input;
+  const { workerIds, dailyHours, materials, ...taskData } = input;
   const equipment = await db.equipment.findFirst({
     where: {
       id: taskData.equipmentId,
@@ -382,18 +731,64 @@ export async function createTask(data: {
   if (!equipment) {
     throw new Error("Equipment not found in the active organization site");
   }
+  const maintenancePoint = taskData.maintenancePointId
+    ? await db.equipmentMaintenancePoint.findFirst({
+        where: {
+          id: taskData.maintenancePointId,
+          equipmentId: taskData.equipmentId,
+          organizationId,
+          isActive: true,
+        },
+        include: {
+          checklistItems: {
+            where: { organizationId, isActive: true },
+            orderBy: { sortOrder: "asc" },
+          },
+        },
+      })
+    : null;
+  if (taskData.maintenancePointId && !maintenancePoint) {
+    throw new Error("Maintenance point not found for the selected equipment");
+  }
 
-  await assertWorkersBelongToOrganization(db, workerIds, organizationId);
+  await assertWorkersBelongToOrganization(
+    db,
+    [...workerIds, ...(dailyHours?.map((entry) => entry.workerId) ?? [])],
+    organizationId,
+  );
 
   const task = await db.maintenanceTask.create({
     data: {
       ...taskData,
+      endTime: taskData.endTime ?? null,
       organizationId,
+      ...(maintenancePoint && {
+        checklistItems: {
+          createMany: {
+            data: maintenancePoint.checklistItems.map((item) => ({
+              sourceItemId: item.id,
+              title: item.title,
+              sortOrder: item.sortOrder,
+            })),
+          },
+        },
+      }),
       assignments: {
         create: workerIds.map((workerId) => ({
           workerId,
         })),
       },
+      ...(dailyHours && {
+        dailyHours: {
+          createMany: {
+            data: dailyHours.map((entry) => ({
+              workerId: entry.workerId,
+              workDate: new Date(`${entry.workDate}T00:00:00.000Z`),
+              hours: entry.hours.toFixed(2),
+            })),
+          },
+        },
+      }),
       materials: {
         create: materials?.map((m) => ({
           name: m.name,
@@ -411,7 +806,9 @@ export async function createTask(data: {
           worker: true,
         },
       },
+      dailyHours: true,
       materials: true,
+      checklistItems: { orderBy: { sortOrder: "asc" } },
     },
   });
   revalidatePath("/");
@@ -425,11 +822,18 @@ export async function updateTask(
     description: string;
     type: TaskType;
     startTime: Date;
-    endTime: Date;
+    endTime: Date | null;
     equipmentId: string;
     status: string;
+    completedAt: Date | null;
+    maintenancePointId?: string | null;
     workerIds: string[];
-    workerLogs: { workerId: string; startTime: Date; endTime: Date }[];
+    dailyHours: { workerId: string; workDate: string; hours: number }[];
+    workerLogs: {
+      workerId: string;
+      startTime?: Date | null;
+      endTime?: Date | null;
+    }[];
     materials: {
       name: string;
       reference?: string;
@@ -437,12 +841,22 @@ export async function updateTask(
       unit?: MaterialUnit;
       price?: number;
     }[];
+    checklistItems: { id: string; isComplete: boolean }[];
   }>,
 ) {
-  const { db, organizationId, siteId } = await getTenantContext("manageMaintenance");
+  const { db, organizationId, siteId, userId } = await getTenantContext("manageMaintenance");
   const taskId = equipmentIdSchema.parse(id);
   const input = updateTaskSchema.parse(data);
-  const { workerIds, workerLogs, materials, ...taskData } = input;
+  const {
+    workerIds,
+    dailyHours,
+    workerLogs,
+    materials,
+    checklistItems,
+    completedAt,
+    maintenancePointId,
+    ...taskData
+  } = input;
 
   const currentTask = await db.maintenanceTask.findFirst({
     where: {
@@ -450,11 +864,25 @@ export async function updateTask(
       organizationId,
       equipment: { is: { siteId } },
     },
-    select: { id: true },
+    select: {
+      id: true,
+      startTime: true,
+      status: true,
+      completedAt: true,
+      equipmentId: true,
+      maintenancePointId: true,
+      assignments: { select: { workerId: true } },
+    },
   });
   if (!currentTask) {
     throw new Error("Maintenance task not found in the active organization");
   }
+  const completionTime =
+    completedAt ??
+    currentTask.completedAt ??
+    (taskData.status === "completed" && currentTask.status !== "completed"
+      ? new Date()
+      : null);
 
   if (taskData.equipmentId) {
     const equipment = await db.equipment.findFirst({
@@ -465,13 +893,60 @@ export async function updateTask(
       throw new Error("Equipment not found in the active organization site");
     }
   }
+  const targetEquipmentId = taskData.equipmentId ?? currentTask.equipmentId;
+  const currentMaintenancePointId = currentTask.maintenancePointId ?? null;
+  const hasMaintenancePointInput = Object.hasOwn(input, "maintenancePointId");
+  const nextMaintenancePointId = hasMaintenancePointInput
+    ? maintenancePointId ?? null
+    : targetEquipmentId === currentTask.equipmentId
+      ? currentMaintenancePointId
+      : null;
+  const maintenancePoint =
+    nextMaintenancePointId === null
+      ? null
+      : await db.equipmentMaintenancePoint.findFirst({
+          where: {
+            id: nextMaintenancePointId,
+            equipmentId: targetEquipmentId,
+            organizationId,
+            isActive: true,
+          },
+          include: {
+            checklistItems: {
+              where: { organizationId, isActive: true },
+              orderBy: { sortOrder: "asc" },
+            },
+          },
+        });
+  if (nextMaintenancePointId && !maintenancePoint) {
+    throw new Error("Maintenance point not found for the selected equipment");
+  }
+  const maintenancePointChanged =
+    nextMaintenancePointId !== currentMaintenancePointId;
 
-  const assignedWorkerIds = workerLogs?.map((log) => log.workerId) ?? workerIds;
+  const assignedWorkerIds = [
+    ...(workerLogs?.map((log) => log.workerId) ?? workerIds ?? []),
+    ...(dailyHours?.map((entry) => entry.workerId) ?? []),
+  ];
   if (assignedWorkerIds) {
     await assertWorkersBelongToOrganization(db, assignedWorkerIds, organizationId);
   }
+  const allowedDailyHourWorkers = new Set([
+    ...(currentTask.assignments ?? []).map((assignment) => assignment.workerId),
+    ...(workerIds ?? []),
+  ]);
+  if (
+    dailyHours?.some((entry) => !allowedDailyHourWorkers.has(entry.workerId))
+  ) {
+    throw new Error("Daily hours must belong to a worker assigned to the task");
+  }
 
   const task = await db.transaction(async (tx) => {
+    const dailyHoursDayOffset =
+      taskData.startTime && currentTask.startTime
+        ? getUtcDayOffset(taskData.startTime, currentTask.startTime)
+        : 0;
+
     // If workerLogs are explicitly passed, overwrite the assignment entries with times
     if (workerLogs) {
       await tx.maintenanceTaskAssignment.deleteMany({
@@ -484,8 +959,8 @@ export async function updateTask(
             taskId,
             workerId: log.workerId,
             organizationId,
-            startTime: log.startTime,
-            endTime: log.endTime,
+            startTime: log.startTime ?? null,
+            endTime: log.endTime ?? null,
           })),
         });
       }
@@ -503,6 +978,57 @@ export async function updateTask(
             organizationId,
           })),
         });
+      }
+    }
+
+    if (dailyHours) {
+      await tx.maintenanceTaskDailyHours.deleteMany({
+        where: { taskId, organizationId },
+      });
+      if (dailyHours.length > 0) {
+        await tx.maintenanceTaskDailyHours.createMany({
+          data: dailyHours.map((entry) => ({
+            taskId,
+            workerId: entry.workerId,
+            organizationId,
+            workDate: shiftDateOnly(
+              new Date(`${entry.workDate}T00:00:00.000Z`),
+              dailyHoursDayOffset,
+            ),
+            hours: entry.hours.toFixed(2),
+          })),
+        });
+      }
+    }
+
+    if (maintenancePointChanged) {
+      await tx.maintenanceTaskChecklistItem.deleteMany({
+        where: { taskId, organizationId },
+      });
+      if (maintenancePoint?.checklistItems.length) {
+        await tx.maintenanceTaskChecklistItem.createMany({
+          data: maintenancePoint.checklistItems.map((item) => ({
+            taskId,
+            organizationId,
+            sourceItemId: item.id,
+            title: item.title,
+            sortOrder: item.sortOrder,
+          })),
+        });
+      }
+    } else if (checklistItems) {
+      for (const item of checklistItems) {
+        const { count } = await tx.maintenanceTaskChecklistItem.updateMany({
+          where: { id: item.id, taskId, organizationId },
+          data: {
+            isComplete: item.isComplete,
+            completedAt: item.isComplete ? new Date() : null,
+            completedById: item.isComplete ? userId : null,
+          },
+        });
+        if (count !== 1) {
+          throw new Error("Checklist item not found on the active task");
+        }
       }
     }
 
@@ -530,7 +1056,14 @@ export async function updateTask(
 
     return await tx.maintenanceTask.update({
       where: { id: taskId, organizationId },
-      data: taskData,
+      data: {
+        ...taskData,
+        ...(completionTime && { completedAt: completionTime }),
+        ...(hasMaintenancePointInput ||
+        targetEquipmentId !== currentTask.equipmentId
+          ? { maintenancePointId: nextMaintenancePointId }
+          : {}),
+      },
       include: {
         equipment: true,
         assignments: {
@@ -538,7 +1071,9 @@ export async function updateTask(
             worker: true,
           },
         },
+        dailyHours: true,
         materials: true,
+        checklistItems: { orderBy: { sortOrder: "asc" } },
       },
     });
   });
@@ -597,19 +1132,13 @@ export async function restoreTask(id: string) {
 export async function moveTask(
   taskId: string,
   newStartTime: Date,
-  newEndTime: Date,
   newEquipmentId?: string,
 ) {
   const { db, organizationId, siteId } = await getTenantContext("manageMaintenance");
   const validatedTaskId = equipmentIdSchema.parse(taskId);
   const startTime = new Date(newStartTime);
-  const endTime = new Date(newEndTime);
-  if (
-    Number.isNaN(startTime.getTime()) ||
-    Number.isNaN(endTime.getTime()) ||
-    endTime <= startTime
-  ) {
-    throw new Error("Task end time must be after start time");
+  if (Number.isNaN(startTime.getTime())) {
+    throw new Error("Task start time is invalid");
   }
 
   if (newEquipmentId !== undefined) {
@@ -622,27 +1151,76 @@ export async function moveTask(
     }
   }
 
-  const task = await db.maintenanceTask.update({
-    where: {
-      id: validatedTaskId,
-      organizationId,
-      equipment: { is: { siteId } },
-    },
-    data: {
-      startTime,
-      endTime,
-      ...(newEquipmentId !== undefined && {
-        equipmentId: equipmentIdSchema.parse(newEquipmentId),
-      }),
-    },
-    include: {
-      equipment: true,
-      assignments: {
-        include: {
-          worker: true,
-        },
+  const task = await db.transaction(async (tx) => {
+    const current = await tx.maintenanceTask.findFirst({
+      where: {
+        id: validatedTaskId,
+        organizationId,
+        equipment: { is: { siteId } },
       },
-    },
+      select: { startTime: true, endTime: true },
+    });
+    if (!current) {
+      throw new Error("Maintenance task not found in the active organization");
+    }
+
+    const offsetMs = startTime.getTime() - current.startTime.getTime();
+    const endTime = current.endTime
+      ? new Date(current.endTime.getTime() + offsetMs)
+      : null;
+    const dayOffset = getUtcDayOffset(startTime, current.startTime);
+    if (dayOffset !== 0) {
+      const dailyHours = await tx.maintenanceTaskDailyHours.findMany({
+        where: { taskId: validatedTaskId, organizationId },
+        select: {
+          workerId: true,
+          workDate: true,
+          hours: true,
+          createdAt: true,
+        },
+      });
+      if (dailyHours.length > 0) {
+        await tx.maintenanceTaskDailyHours.deleteMany({
+          where: { taskId: validatedTaskId, organizationId },
+        });
+        await tx.maintenanceTaskDailyHours.createMany({
+          data: dailyHours.map((allocation) => ({
+            taskId: validatedTaskId,
+            organizationId,
+            workerId: allocation.workerId,
+            workDate: shiftDateOnly(allocation.workDate, dayOffset),
+            hours: allocation.hours,
+            createdAt: allocation.createdAt,
+          })),
+        });
+      }
+    }
+
+    return tx.maintenanceTask.update({
+      where: {
+        id: validatedTaskId,
+        organizationId,
+        equipment: { is: { siteId } },
+      },
+      data: {
+        startTime,
+        endTime,
+        ...(newEquipmentId !== undefined && {
+          equipmentId: equipmentIdSchema.parse(newEquipmentId),
+        }),
+      },
+      include: {
+        equipment: true,
+        assignments: {
+          include: {
+            worker: true,
+          },
+        },
+        dailyHours: true,
+        materials: true,
+        checklistItems: { orderBy: { sortOrder: "asc" } },
+      },
+    });
   });
   revalidatePath("/");
   return task;

@@ -8,6 +8,7 @@ import {
   getTasks,
 } from "@/features/scheduler/server/actions";
 import { SchedulerStoreProvider } from "@/features/scheduler/store/scheduler-provider";
+import { DEFAULT_ORGANIZATION_TIMEZONE } from "@/features/organization/shared/organization-settings";
 import { getWorkers } from "@/features/worker/server/actions";
 import prisma from "@/lib/prisma";
 import {
@@ -51,7 +52,7 @@ export default async function AppLayout({
     }),
     prisma.tenantSettings.findUnique({
       where: { organizationId: tenant.organizationId },
-      select: { logoFileId: true },
+      select: { logoFileId: true, timezone: true },
     }),
   ]);
 
@@ -63,6 +64,7 @@ export default async function AppLayout({
         sections,
         entries: tasks,
         workers,
+        timeZone: branding?.timezone ?? DEFAULT_ORGANIZATION_TIMEZONE,
         sites: tenantContexts
           .filter((c) => c.organizationId === tenant.organizationId)
           .map((c) => ({

@@ -199,6 +199,8 @@ export type OrganizationWhereInput = {
   tasks?: Prisma.MaintenanceTaskListRelationFilter
   workers?: Prisma.WorkerListRelationFilter
   vendors?: Prisma.VendorListRelationFilter
+  inventoryItems?: Prisma.InventoryItemListRelationFilter
+  inventoryMovements?: Prisma.InventoryMovementListRelationFilter
   auditEvents?: Prisma.OrganizationAuditEventListRelationFilter
   settings?: Prisma.XOR<Prisma.TenantSettingsNullableScalarRelationFilter, Prisma.TenantSettingsWhereInput> | null
   exports?: Prisma.TenantExportListRelationFilter
@@ -220,6 +222,8 @@ export type OrganizationOrderByWithRelationInput = {
   tasks?: Prisma.MaintenanceTaskOrderByRelationAggregateInput
   workers?: Prisma.WorkerOrderByRelationAggregateInput
   vendors?: Prisma.VendorOrderByRelationAggregateInput
+  inventoryItems?: Prisma.InventoryItemOrderByRelationAggregateInput
+  inventoryMovements?: Prisma.InventoryMovementOrderByRelationAggregateInput
   auditEvents?: Prisma.OrganizationAuditEventOrderByRelationAggregateInput
   settings?: Prisma.TenantSettingsOrderByWithRelationInput
   exports?: Prisma.TenantExportOrderByRelationAggregateInput
@@ -244,6 +248,8 @@ export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
   tasks?: Prisma.MaintenanceTaskListRelationFilter
   workers?: Prisma.WorkerListRelationFilter
   vendors?: Prisma.VendorListRelationFilter
+  inventoryItems?: Prisma.InventoryItemListRelationFilter
+  inventoryMovements?: Prisma.InventoryMovementListRelationFilter
   auditEvents?: Prisma.OrganizationAuditEventListRelationFilter
   settings?: Prisma.XOR<Prisma.TenantSettingsNullableScalarRelationFilter, Prisma.TenantSettingsWhereInput> | null
   exports?: Prisma.TenantExportListRelationFilter
@@ -289,6 +295,8 @@ export type OrganizationCreateInput = {
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
@@ -310,6 +318,8 @@ export type OrganizationUncheckedCreateInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
@@ -331,6 +341,8 @@ export type OrganizationUpdateInput = {
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
@@ -352,6 +364,8 @@ export type OrganizationUncheckedUpdateInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -470,6 +484,34 @@ export type OrganizationUpdateOneRequiredWithoutTasksNestedInput = {
   upsert?: Prisma.OrganizationUpsertWithoutTasksInput
   connect?: Prisma.OrganizationWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationUpdateToOneWithWhereWithoutTasksInput, Prisma.OrganizationUpdateWithoutTasksInput>, Prisma.OrganizationUncheckedUpdateWithoutTasksInput>
+}
+
+export type OrganizationCreateNestedOneWithoutInventoryItemsInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutInventoryItemsInput, Prisma.OrganizationUncheckedCreateWithoutInventoryItemsInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutInventoryItemsInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+}
+
+export type OrganizationUpdateOneRequiredWithoutInventoryItemsNestedInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutInventoryItemsInput, Prisma.OrganizationUncheckedCreateWithoutInventoryItemsInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutInventoryItemsInput
+  upsert?: Prisma.OrganizationUpsertWithoutInventoryItemsInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationUpdateToOneWithWhereWithoutInventoryItemsInput, Prisma.OrganizationUpdateWithoutInventoryItemsInput>, Prisma.OrganizationUncheckedUpdateWithoutInventoryItemsInput>
+}
+
+export type OrganizationCreateNestedOneWithoutInventoryMovementsInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutInventoryMovementsInput, Prisma.OrganizationUncheckedCreateWithoutInventoryMovementsInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutInventoryMovementsInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+}
+
+export type OrganizationUpdateOneRequiredWithoutInventoryMovementsNestedInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutInventoryMovementsInput, Prisma.OrganizationUncheckedCreateWithoutInventoryMovementsInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutInventoryMovementsInput
+  upsert?: Prisma.OrganizationUpsertWithoutInventoryMovementsInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationUpdateToOneWithWhereWithoutInventoryMovementsInput, Prisma.OrganizationUpdateWithoutInventoryMovementsInput>, Prisma.OrganizationUncheckedUpdateWithoutInventoryMovementsInput>
 }
 
 export type OrganizationCreateNestedOneWithoutWorkersInput = {
@@ -599,6 +641,8 @@ export type OrganizationCreateWithoutEquipmentInput = {
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
@@ -619,6 +663,8 @@ export type OrganizationUncheckedCreateWithoutEquipmentInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
@@ -655,6 +701,8 @@ export type OrganizationUpdateWithoutEquipmentInput = {
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
@@ -675,6 +723,8 @@ export type OrganizationUncheckedUpdateWithoutEquipmentInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -695,6 +745,8 @@ export type OrganizationCreateWithoutFilesInput = {
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
@@ -715,6 +767,8 @@ export type OrganizationUncheckedCreateWithoutFilesInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
@@ -751,6 +805,8 @@ export type OrganizationUpdateWithoutFilesInput = {
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
@@ -771,6 +827,8 @@ export type OrganizationUncheckedUpdateWithoutFilesInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -791,6 +849,8 @@ export type OrganizationCreateWithoutSectionsInput = {
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
@@ -811,6 +871,8 @@ export type OrganizationUncheckedCreateWithoutSectionsInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
@@ -847,6 +909,8 @@ export type OrganizationUpdateWithoutSectionsInput = {
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
@@ -867,6 +931,8 @@ export type OrganizationUncheckedUpdateWithoutSectionsInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -887,6 +953,8 @@ export type OrganizationCreateWithoutTasksInput = {
   equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
@@ -907,6 +975,8 @@ export type OrganizationUncheckedCreateWithoutTasksInput = {
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
@@ -943,6 +1013,8 @@ export type OrganizationUpdateWithoutTasksInput = {
   equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
@@ -963,6 +1035,216 @@ export type OrganizationUncheckedUpdateWithoutTasksInput = {
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
+  auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
+  settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+  exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationCreateWithoutInventoryItemsInput = {
+  id: string
+  name: string
+  slug: string
+  logo?: string | null
+  createdAt: Date | string
+  metadata?: string | null
+  members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
+  sites?: Prisma.SiteCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileCreateNestedManyWithoutOrganizationInput
+  equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
+  tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
+  workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
+  vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
+  auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
+  settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
+  exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationUncheckedCreateWithoutInventoryItemsInput = {
+  id: string
+  name: string
+  slug: string
+  logo?: string | null
+  createdAt: Date | string
+  metadata?: string | null
+  members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
+  sites?: Prisma.SiteUncheckedCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileUncheckedCreateNestedManyWithoutOrganizationInput
+  equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
+  tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
+  workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
+  vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
+  auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
+  settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+  exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationCreateOrConnectWithoutInventoryItemsInput = {
+  where: Prisma.OrganizationWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutInventoryItemsInput, Prisma.OrganizationUncheckedCreateWithoutInventoryItemsInput>
+}
+
+export type OrganizationUpsertWithoutInventoryItemsInput = {
+  update: Prisma.XOR<Prisma.OrganizationUpdateWithoutInventoryItemsInput, Prisma.OrganizationUncheckedUpdateWithoutInventoryItemsInput>
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutInventoryItemsInput, Prisma.OrganizationUncheckedCreateWithoutInventoryItemsInput>
+  where?: Prisma.OrganizationWhereInput
+}
+
+export type OrganizationUpdateToOneWithWhereWithoutInventoryItemsInput = {
+  where?: Prisma.OrganizationWhereInput
+  data: Prisma.XOR<Prisma.OrganizationUpdateWithoutInventoryItemsInput, Prisma.OrganizationUncheckedUpdateWithoutInventoryItemsInput>
+}
+
+export type OrganizationUpdateWithoutInventoryItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
+  sites?: Prisma.SiteUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUpdateManyWithoutOrganizationNestedInput
+  equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
+  tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
+  workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
+  vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
+  auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
+  settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
+  exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationUncheckedUpdateWithoutInventoryItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
+  sites?: Prisma.SiteUncheckedUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput
+  equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+  tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
+  workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
+  vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
+  auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
+  settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+  exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationCreateWithoutInventoryMovementsInput = {
+  id: string
+  name: string
+  slug: string
+  logo?: string | null
+  createdAt: Date | string
+  metadata?: string | null
+  members?: Prisma.MemberCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutOrganizationInput
+  sites?: Prisma.SiteCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileCreateNestedManyWithoutOrganizationInput
+  equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
+  tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
+  workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
+  vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
+  settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
+  exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationUncheckedCreateWithoutInventoryMovementsInput = {
+  id: string
+  name: string
+  slug: string
+  logo?: string | null
+  createdAt: Date | string
+  metadata?: string | null
+  members?: Prisma.MemberUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutOrganizationInput
+  sites?: Prisma.SiteUncheckedCreateNestedManyWithoutOrganizationInput
+  sections?: Prisma.SectionUncheckedCreateNestedManyWithoutOrganizationInput
+  files?: Prisma.StoredFileUncheckedCreateNestedManyWithoutOrganizationInput
+  equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
+  tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
+  workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
+  vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
+  settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+  exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationCreateOrConnectWithoutInventoryMovementsInput = {
+  where: Prisma.OrganizationWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutInventoryMovementsInput, Prisma.OrganizationUncheckedCreateWithoutInventoryMovementsInput>
+}
+
+export type OrganizationUpsertWithoutInventoryMovementsInput = {
+  update: Prisma.XOR<Prisma.OrganizationUpdateWithoutInventoryMovementsInput, Prisma.OrganizationUncheckedUpdateWithoutInventoryMovementsInput>
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutInventoryMovementsInput, Prisma.OrganizationUncheckedCreateWithoutInventoryMovementsInput>
+  where?: Prisma.OrganizationWhereInput
+}
+
+export type OrganizationUpdateToOneWithWhereWithoutInventoryMovementsInput = {
+  where?: Prisma.OrganizationWhereInput
+  data: Prisma.XOR<Prisma.OrganizationUpdateWithoutInventoryMovementsInput, Prisma.OrganizationUncheckedUpdateWithoutInventoryMovementsInput>
+}
+
+export type OrganizationUpdateWithoutInventoryMovementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  members?: Prisma.MemberUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutOrganizationNestedInput
+  sites?: Prisma.SiteUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUpdateManyWithoutOrganizationNestedInput
+  equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
+  tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
+  workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
+  vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
+  settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
+  exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationUncheckedUpdateWithoutInventoryMovementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  logo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  members?: Prisma.MemberUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutOrganizationNestedInput
+  sites?: Prisma.SiteUncheckedUpdateManyWithoutOrganizationNestedInput
+  sections?: Prisma.SectionUncheckedUpdateManyWithoutOrganizationNestedInput
+  files?: Prisma.StoredFileUncheckedUpdateManyWithoutOrganizationNestedInput
+  equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+  tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
+  workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
+  vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -983,6 +1265,8 @@ export type OrganizationCreateWithoutWorkersInput = {
   equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
@@ -1003,6 +1287,8 @@ export type OrganizationUncheckedCreateWithoutWorkersInput = {
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1039,6 +1325,8 @@ export type OrganizationUpdateWithoutWorkersInput = {
   equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
@@ -1059,6 +1347,8 @@ export type OrganizationUncheckedUpdateWithoutWorkersInput = {
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1079,6 +1369,8 @@ export type OrganizationCreateWithoutVendorsInput = {
   equipment?: Prisma.EquipmentCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
@@ -1099,6 +1391,8 @@ export type OrganizationUncheckedCreateWithoutVendorsInput = {
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutOrganizationInput
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1135,6 +1429,8 @@ export type OrganizationUpdateWithoutVendorsInput = {
   equipment?: Prisma.EquipmentUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
@@ -1155,6 +1451,8 @@ export type OrganizationUncheckedUpdateWithoutVendorsInput = {
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1175,6 +1473,8 @@ export type OrganizationCreateWithoutSitesInput = {
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
@@ -1195,6 +1495,8 @@ export type OrganizationUncheckedCreateWithoutSitesInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1231,6 +1533,8 @@ export type OrganizationUpdateWithoutSitesInput = {
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
@@ -1251,6 +1555,8 @@ export type OrganizationUncheckedUpdateWithoutSitesInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1271,6 +1577,8 @@ export type OrganizationCreateWithoutMembersInput = {
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
@@ -1291,6 +1599,8 @@ export type OrganizationUncheckedCreateWithoutMembersInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1327,6 +1637,8 @@ export type OrganizationUpdateWithoutMembersInput = {
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
@@ -1347,6 +1659,8 @@ export type OrganizationUncheckedUpdateWithoutMembersInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1367,6 +1681,8 @@ export type OrganizationCreateWithoutInvitationsInput = {
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
@@ -1387,6 +1703,8 @@ export type OrganizationUncheckedCreateWithoutInvitationsInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1423,6 +1741,8 @@ export type OrganizationUpdateWithoutInvitationsInput = {
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
@@ -1443,6 +1763,8 @@ export type OrganizationUncheckedUpdateWithoutInvitationsInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1464,6 +1786,8 @@ export type OrganizationCreateWithoutAuditEventsInput = {
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
 }
@@ -1484,6 +1808,8 @@ export type OrganizationUncheckedCreateWithoutAuditEventsInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
   exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
 }
@@ -1520,6 +1846,8 @@ export type OrganizationUpdateWithoutAuditEventsInput = {
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
 }
@@ -1540,6 +1868,8 @@ export type OrganizationUncheckedUpdateWithoutAuditEventsInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
 }
@@ -1560,6 +1890,8 @@ export type OrganizationCreateWithoutSettingsInput = {
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
   exports?: Prisma.TenantExportCreateNestedManyWithoutOrganizationInput
 }
@@ -1580,6 +1912,8 @@ export type OrganizationUncheckedCreateWithoutSettingsInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
   exports?: Prisma.TenantExportUncheckedCreateNestedManyWithoutOrganizationInput
 }
@@ -1616,6 +1950,8 @@ export type OrganizationUpdateWithoutSettingsInput = {
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUpdateManyWithoutOrganizationNestedInput
 }
@@ -1636,6 +1972,8 @@ export type OrganizationUncheckedUpdateWithoutSettingsInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
   exports?: Prisma.TenantExportUncheckedUpdateManyWithoutOrganizationNestedInput
 }
@@ -1656,6 +1994,8 @@ export type OrganizationCreateWithoutExportsInput = {
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsCreateNestedOneWithoutOrganizationInput
 }
@@ -1676,6 +2016,8 @@ export type OrganizationUncheckedCreateWithoutExportsInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutOrganizationInput
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutOrganizationInput
   vendors?: Prisma.VendorUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutOrganizationInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutOrganizationInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedCreateNestedManyWithoutOrganizationInput
   settings?: Prisma.TenantSettingsUncheckedCreateNestedOneWithoutOrganizationInput
 }
@@ -1712,6 +2054,8 @@ export type OrganizationUpdateWithoutExportsInput = {
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUpdateOneWithoutOrganizationNestedInput
 }
@@ -1732,6 +2076,8 @@ export type OrganizationUncheckedUpdateWithoutExportsInput = {
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutOrganizationNestedInput
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutOrganizationNestedInput
   vendors?: Prisma.VendorUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutOrganizationNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutOrganizationNestedInput
   auditEvents?: Prisma.OrganizationAuditEventUncheckedUpdateManyWithoutOrganizationNestedInput
   settings?: Prisma.TenantSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
 }
@@ -1751,6 +2097,8 @@ export type OrganizationCountOutputType = {
   tasks: number
   workers: number
   vendors: number
+  inventoryItems: number
+  inventoryMovements: number
   auditEvents: number
   exports: number
 }
@@ -1765,6 +2113,8 @@ export type OrganizationCountOutputTypeSelect<ExtArgs extends runtime.Types.Exte
   tasks?: boolean | OrganizationCountOutputTypeCountTasksArgs
   workers?: boolean | OrganizationCountOutputTypeCountWorkersArgs
   vendors?: boolean | OrganizationCountOutputTypeCountVendorsArgs
+  inventoryItems?: boolean | OrganizationCountOutputTypeCountInventoryItemsArgs
+  inventoryMovements?: boolean | OrganizationCountOutputTypeCountInventoryMovementsArgs
   auditEvents?: boolean | OrganizationCountOutputTypeCountAuditEventsArgs
   exports?: boolean | OrganizationCountOutputTypeCountExportsArgs
 }
@@ -1845,6 +2195,20 @@ export type OrganizationCountOutputTypeCountVendorsArgs<ExtArgs extends runtime.
 /**
  * OrganizationCountOutputType without action
  */
+export type OrganizationCountOutputTypeCountInventoryItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InventoryItemWhereInput
+}
+
+/**
+ * OrganizationCountOutputType without action
+ */
+export type OrganizationCountOutputTypeCountInventoryMovementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InventoryMovementWhereInput
+}
+
+/**
+ * OrganizationCountOutputType without action
+ */
 export type OrganizationCountOutputTypeCountAuditEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.OrganizationAuditEventWhereInput
 }
@@ -1873,6 +2237,8 @@ export type OrganizationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   tasks?: boolean | Prisma.Organization$tasksArgs<ExtArgs>
   workers?: boolean | Prisma.Organization$workersArgs<ExtArgs>
   vendors?: boolean | Prisma.Organization$vendorsArgs<ExtArgs>
+  inventoryItems?: boolean | Prisma.Organization$inventoryItemsArgs<ExtArgs>
+  inventoryMovements?: boolean | Prisma.Organization$inventoryMovementsArgs<ExtArgs>
   auditEvents?: boolean | Prisma.Organization$auditEventsArgs<ExtArgs>
   settings?: boolean | Prisma.Organization$settingsArgs<ExtArgs>
   exports?: boolean | Prisma.Organization$exportsArgs<ExtArgs>
@@ -1917,6 +2283,8 @@ export type OrganizationInclude<ExtArgs extends runtime.Types.Extensions.Interna
   tasks?: boolean | Prisma.Organization$tasksArgs<ExtArgs>
   workers?: boolean | Prisma.Organization$workersArgs<ExtArgs>
   vendors?: boolean | Prisma.Organization$vendorsArgs<ExtArgs>
+  inventoryItems?: boolean | Prisma.Organization$inventoryItemsArgs<ExtArgs>
+  inventoryMovements?: boolean | Prisma.Organization$inventoryMovementsArgs<ExtArgs>
   auditEvents?: boolean | Prisma.Organization$auditEventsArgs<ExtArgs>
   settings?: boolean | Prisma.Organization$settingsArgs<ExtArgs>
   exports?: boolean | Prisma.Organization$exportsArgs<ExtArgs>
@@ -1937,6 +2305,8 @@ export type $OrganizationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     tasks: Prisma.$MaintenanceTaskPayload<ExtArgs>[]
     workers: Prisma.$WorkerPayload<ExtArgs>[]
     vendors: Prisma.$VendorPayload<ExtArgs>[]
+    inventoryItems: Prisma.$InventoryItemPayload<ExtArgs>[]
+    inventoryMovements: Prisma.$InventoryMovementPayload<ExtArgs>[]
     auditEvents: Prisma.$OrganizationAuditEventPayload<ExtArgs>[]
     settings: Prisma.$TenantSettingsPayload<ExtArgs> | null
     exports: Prisma.$TenantExportPayload<ExtArgs>[]
@@ -2351,6 +2721,8 @@ export interface Prisma__OrganizationClient<T, Null = never, ExtArgs extends run
   tasks<T extends Prisma.Organization$tasksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$tasksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   workers<T extends Prisma.Organization$workersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$workersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   vendors<T extends Prisma.Organization$vendorsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$vendorsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  inventoryItems<T extends Prisma.Organization$inventoryItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$inventoryItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InventoryItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  inventoryMovements<T extends Prisma.Organization$inventoryMovementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$inventoryMovementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InventoryMovementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auditEvents<T extends Prisma.Organization$auditEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$auditEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrganizationAuditEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   settings<T extends Prisma.Organization$settingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$settingsArgs<ExtArgs>>): Prisma.Prisma__TenantSettingsClient<runtime.Types.Result.GetResult<Prisma.$TenantSettingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   exports<T extends Prisma.Organization$exportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$exportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantExportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2995,6 +3367,54 @@ export type Organization$vendorsArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.VendorScalarFieldEnum | Prisma.VendorScalarFieldEnum[]
+}
+
+/**
+ * Organization.inventoryItems
+ */
+export type Organization$inventoryItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InventoryItem
+   */
+  select?: Prisma.InventoryItemSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the InventoryItem
+   */
+  omit?: Prisma.InventoryItemOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InventoryItemInclude<ExtArgs> | null
+  where?: Prisma.InventoryItemWhereInput
+  orderBy?: Prisma.InventoryItemOrderByWithRelationInput | Prisma.InventoryItemOrderByWithRelationInput[]
+  cursor?: Prisma.InventoryItemWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InventoryItemScalarFieldEnum | Prisma.InventoryItemScalarFieldEnum[]
+}
+
+/**
+ * Organization.inventoryMovements
+ */
+export type Organization$inventoryMovementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InventoryMovement
+   */
+  select?: Prisma.InventoryMovementSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the InventoryMovement
+   */
+  omit?: Prisma.InventoryMovementOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InventoryMovementInclude<ExtArgs> | null
+  where?: Prisma.InventoryMovementWhereInput
+  orderBy?: Prisma.InventoryMovementOrderByWithRelationInput | Prisma.InventoryMovementOrderByWithRelationInput[]
+  cursor?: Prisma.InventoryMovementWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InventoryMovementScalarFieldEnum | Prisma.InventoryMovementScalarFieldEnum[]
 }
 
 /**

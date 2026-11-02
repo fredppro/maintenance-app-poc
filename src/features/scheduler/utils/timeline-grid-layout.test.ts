@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { toZonedCalendarDate } from "@/lib/time-zone";
 import type { MaintenanceEntry } from "../types";
 import {
   getEntrySpan,
@@ -7,11 +8,30 @@ import {
   getTimelineBoundaryClass,
   getTimelineCellMinWidth,
   getViewRange,
+  isSameSlot,
   layoutEquipmentRow,
 } from "./timeline-grid-layout";
+import { getTaskDisplayEnd } from "./schedule";
 
 const entry = (id: string, start: Date, end: Date) =>
   ({ id, equipmentId: "e1", startTime: start, endTime: end }) as MaintenanceEntry;
+
+describe("task display end", () => {
+  it("uses the historical end time when present", () => {
+    const end = getTaskDisplayEnd(
+      new Date("2026-10-12T08:00:00.000Z"),
+      new Date("2026-10-12T10:00:00.000Z"),
+    );
+
+    expect(end.toISOString()).toBe("2026-10-12T10:00:00.000Z");
+  });
+
+  it("uses a one-hour visual block when a task has no end time", () => {
+    const end = getTaskDisplayEnd("2026-10-12T08:00:00.000Z");
+
+    expect(end.toISOString()).toBe("2026-10-12T09:00:00.000Z");
+  });
+});
 
 describe("timeline grid layout", () => {
   it("keeps slot widths compact but readable by view mode", () => {
@@ -90,6 +110,28 @@ describe("timeline slots and placement", () => {
     expect(getTimeSlots("week", day)[0].getDay()).toBe(1);
     expect(getTimeSlots("month", day)).toHaveLength(31);
     expect(getTimeSlots("year", day)).toHaveLength(12);
+  });
+
+  it("builds day slots in the organization timezone across daylight-saving changes", () => {
+    const springDay = new Date("2026-03-29T12:00:00.000Z");
+    const springSlots = getTimeSlots("day", springDay, "Europe/Lisbon");
+    expect(springSlots).toHaveLength(23);
+    expect(toZonedCalendarDate(springSlots[1], "Europe/Lisbon").getHours()).toBe(
+      2,
+    );
+
+    const fallDay = new Date("2026-10-25T12:00:00.000Z");
+    const fallSlots = getTimeSlots("day", fallDay, "Europe/Lisbon");
+    expect(fallSlots).toHaveLength(25);
+    expect(toZonedCalendarDate(fallSlots[1], "Europe/Lisbon").getHours()).toBe(
+      1,
+    );
+    expect(toZonedCalendarDate(fallSlots[2], "Europe/Lisbon").getHours()).toBe(
+      1,
+    );
+    expect(
+      isSameSlot(fallSlots[1], fallSlots[2], "day", "Europe/Lisbon"),
+    ).toBe(false);
   });
 
   it("ends the view range at the end of the last slot", () => {

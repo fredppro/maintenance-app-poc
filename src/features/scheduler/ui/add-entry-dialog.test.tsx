@@ -11,8 +11,9 @@ import { toast } from "sonner";
 import type { Equipment, MaintenanceEntry, Worker } from "../types";
 import { AddEntryDialog } from "./add-entry-dialog";
 
-const { createTaskMock, pushMock } = vi.hoisted(() => ({
+const { createTaskMock, getMaintenancePointsMock, pushMock } = vi.hoisted(() => ({
   createTaskMock: vi.fn(),
+  getMaintenancePointsMock: vi.fn().mockResolvedValue([]),
   pushMock: vi.fn(),
 }));
 
@@ -22,6 +23,7 @@ vi.mock("@/i18n/routing", () => ({
 
 vi.mock("../server/actions", () => ({
   createTask: createTaskMock,
+  getMaintenancePoints: getMaintenancePointsMock,
 }));
 
 vi.mock("sonner", () => ({
@@ -57,30 +59,35 @@ function EntryCount() {
   return <output aria-label="Scheduled entries">{count}</output>;
 }
 
-function renderDialog(entries: MaintenanceEntry[] = []) {
+function renderDialog(entries: MaintenanceEntry[] = [], open = true) {
   const onOpenChange = vi.fn();
 
-  render(
+  const renderTree = (isOpen: boolean) => (
     <NextIntlClientProvider locale="en" messages={messages}>
       <SchedulerStoreProvider
         initialState={{ equipment: [equipment], workers: [worker], entries }}
       >
         <EntryCount />
         <AddEntryDialog
-          open
+          open={isOpen}
           onOpenChange={onOpenChange}
           selectedCell={{ date: selectedDate, equipmentId: equipment.id }}
         />
       </SchedulerStoreProvider>
-    </NextIntlClientProvider>,
+    </NextIntlClientProvider>
   );
+  const view = render(renderTree(open));
 
-  return { onOpenChange };
+  return {
+    onOpenChange,
+    rerenderOpen: (isOpen: boolean) => view.rerender(renderTree(isOpen)),
+  };
 }
 
 describe("AddEntryDialog", () => {
   beforeEach(() => {
     createTaskMock.mockReset();
+    getMaintenancePointsMock.mockReset().mockResolvedValue([]);
     vi.mocked(toast.error).mockClear();
     vi.mocked(toast.success).mockClear();
   });
@@ -120,7 +127,9 @@ describe("AddEntryDialog", () => {
       startTime: selectedDate,
       endTime: new Date("2026-06-01T09:00:00.000Z"),
       equipmentId: equipment.id,
+      maintenancePointId: null,
       status: "scheduled",
+      completedAt: null,
       createdAt: selectedDate,
       updatedAt: selectedDate,
     };
@@ -136,6 +145,29 @@ describe("AddEntryDialog", () => {
     expect(createTaskMock).not.toHaveBeenCalled();
   });
 
+  it("reloads maintenance points whenever the dialog is reopened", async () => {
+    const user = userEvent.setup();
+    getMaintenancePointsMock
+      .mockReset()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: "point-new", name: "Newly added point" }]);
+    const { rerenderOpen } = renderDialog([], false);
+
+    expect(getMaintenancePointsMock).not.toHaveBeenCalled();
+    rerenderOpen(true);
+    await waitFor(() => expect(getMaintenancePointsMock).toHaveBeenCalledTimes(1));
+
+    rerenderOpen(false);
+    rerenderOpen(true);
+    await waitFor(() => expect(getMaintenancePointsMock).toHaveBeenCalledTimes(2));
+
+    screen.getByRole("combobox", { name: "Maintenance point" }).focus();
+    await user.keyboard("{Enter}");
+    expect(
+      await screen.findByRole("option", { name: "Newly added point" }),
+    ).toBeInTheDocument();
+  });
+
   it("creates the valid task, updates the scheduler store, and closes the dialog", async () => {
     const user = userEvent.setup();
     const createdTask: MaintenanceEntry = {
@@ -146,7 +178,9 @@ describe("AddEntryDialog", () => {
       startTime: selectedDate,
       endTime: new Date("2026-06-01T09:00:00.000Z"),
       equipmentId: equipment.id,
+      maintenancePointId: null,
       status: "scheduled",
+      completedAt: null,
       assignments: [
         {
           id: "assignment-1",
@@ -164,6 +198,16 @@ describe("AddEntryDialog", () => {
     createTaskMock.mockResolvedValue(createdTask);
     const { onOpenChange } = renderDialog();
 
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Planned end date and time are known",
+      }),
+    ).not.toBeChecked();
+    expect(screen.queryByLabelText("End Date & Time")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "Duration" }),
+    ).not.toBeInTheDocument();
+
     await user.type(
       screen.getByRole("textbox", { name: "Title" }),
       "Replace worn belt",
@@ -180,6 +224,7 @@ describe("AddEntryDialog", () => {
         expect.objectContaining({
           title: "Replace worn belt",
           equipmentId: equipment.id,
+          endTime: null,
           workerIds: [worker.id],
           status: "scheduled",
         }),
@@ -187,6 +232,66 @@ describe("AddEntryDialog", () => {
     });
     expect(screen.getByLabelText("Scheduled entries")).toHaveTextContent("1");
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("shows the shared end date/time picker only when its checkbox is enabled", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Planned end date and time are known",
+      }),
+    );
+
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Planned end date and time are known",
+      }),
+    ).toBeChecked();
+    expect(screen.getByLabelText("Planned End Date & Time")).toBeInTheDocument();
+  });
+
+  it("restores duration presets and applies the selected duration from task start", async () => {
+    const user = userEvent.setup();
+    createTaskMock.mockResolvedValue({
+      id: "created-task",
+      startTime: selectedDate,
+      endTime: new Date(selectedDate.getTime() + 2 * 60 * 60 * 1000),
+      status: "scheduled",
+    });
+    renderDialog();
+
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Planned end date and time are known",
+      }),
+    );
+
+    expect(screen.getByRole("group", { name: "Duration" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "30 min" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "8 h" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "1 d" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "2 h" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Title" }),
+      "Replace worn belt",
+    );
+    await user.click(
+      screen.getByRole("combobox", { name: "Select workers..." }),
+    );
+    await user.click(screen.getByText("Taylor Worker (taylor@example.test)"));
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "Schedule" }));
+
+    await waitFor(() => {
+      expect(createTaskMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          startTime: selectedDate,
+          endTime: new Date(selectedDate.getTime() + 2 * 60 * 60 * 1000),
+        }),
+      );
+    });
   });
 
   it("keeps the dialog open and the store unchanged when task creation fails", async () => {

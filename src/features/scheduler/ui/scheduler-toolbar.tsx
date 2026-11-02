@@ -12,6 +12,7 @@ import { getValidLocale, LOCALE_MAP } from "src/i18n/locale";
 import { useSchedulerStore } from "../store/scheduler-provider";
 import { ViewMode } from "../types";
 import { format } from "date-fns";
+import { toZonedCalendarDate } from "@/lib/time-zone";
 import {
   Calendar,
   ChevronLeft,
@@ -32,26 +33,28 @@ export function SchedulerToolbar() {
 
   const viewMode = useSchedulerStore((state) => state.viewMode);
   const currentDate = useSchedulerStore((state) => state.currentDate);
+  const timeZone = useSchedulerStore((state) => state.timeZone);
   const setViewMode = useSchedulerStore((state) => state.setViewMode);
   const setCurrentDate = useSchedulerStore((state) => state.setCurrentDate);
   const navigateForward = useSchedulerStore((state) => state.navigateForward);
   const navigateBackward = useSchedulerStore((state) => state.navigateBackward);
 
   const formatDateRange = () => {
+    const zonedDate = toZonedCalendarDate(currentDate, timeZone);
     switch (viewMode) {
       case "day":
-        return format(currentDate, "EEEE, MMMM d, yyyy", {
+        return format(zonedDate, "EEEE, MMMM d, yyyy", {
           locale: dateFnsLocale,
         });
       case "week":
-        const formattedDateToken = format(currentDate, "MMMM d, yyyy", {
+        const formattedDateToken = format(zonedDate, "MMMM d, yyyy", {
           locale: dateFnsLocale,
         });
         return t("weekRange", { date: formattedDateToken });
       case "month":
-        return format(currentDate, "MMMM yyyy", { locale: dateFnsLocale });
+        return format(zonedDate, "MMMM yyyy", { locale: dateFnsLocale });
       case "year":
-        return format(currentDate, "yyyy", { locale: dateFnsLocale });
+        return format(zonedDate, "yyyy", { locale: dateFnsLocale });
     }
   };
 

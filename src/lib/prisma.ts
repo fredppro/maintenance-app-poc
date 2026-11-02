@@ -58,6 +58,36 @@ export const hideTrashed = <A>(model: string, operation: string, args: A): A => 
   return { ...input, where: { ...input.where, deletedAt: null } } as A;
 };
 
+type TenantTransaction = Parameters<Parameters<BaseClient["$transaction"]>[0]>[0];
+
+export async function runTenantOperation(
+  tx: TenantTransaction,
+  organizationId: string,
+  model: string,
+  operation: string,
+  args: unknown,
+) {
+  await tx.$executeRaw`SELECT set_config(${TENANT_SETTING}, ${organizationId}, true)`;
+
+  const delegateName = model.charAt(0).toLowerCase() + model.slice(1);
+  const delegate = Reflect.get(tx, delegateName);
+  if (
+    !delegate ||
+    (typeof delegate !== "object" && typeof delegate !== "function")
+  ) {
+    throw new Error(`Unknown Prisma model delegate: ${model}`);
+  }
+
+  const modelOperation = Reflect.get(delegate, operation);
+  if (typeof modelOperation !== "function") {
+    throw new Error(`Unknown Prisma operation ${operation} for model ${model}`);
+  }
+
+  return Reflect.apply(modelOperation, delegate, [
+    hideTrashed(model, operation, args),
+  ]);
+}
+
 /**
  * Returns a client whose every query runs in a transaction that first sets
  * `app.org_id`, the value the row-level-security policies compare against.
@@ -68,8 +98,6 @@ export const createTenantClient = (base: BaseClient, organizationId: string) => 
   if (!organizationId) {
     throw new Error("A tenant client requires an organizationId");
   }
-  const setTenant = () =>
-    base.$executeRaw`SELECT set_config(${TENANT_SETTING}, ${organizationId}, true)`;
 
   return base.$extends({
     client: {
@@ -82,12 +110,14 @@ export const createTenantClient = (base: BaseClient, organizationId: string) => 
     },
     query: {
       $allModels: {
-        async $allOperations({ model, operation, args, query }) {
-          const [, result] = await base.$transaction([
-            setTenant(),
-            query(hideTrashed(model, operation, args)),
-          ]);
-          return result;
+        async $allOperations({ model, operation, args }) {
+          if (!model) {
+            throw new Error("A tenant-scoped model operation requires a model name");
+          }
+
+          return base.$transaction((tx) =>
+            runTenantOperation(tx, organizationId, model, operation, args),
+          );
         },
       },
     },

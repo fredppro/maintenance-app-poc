@@ -32,8 +32,10 @@ export type MaintenanceTaskMinAggregateOutputType = {
   startTime: Date | null
   endTime: Date | null
   equipmentId: string | null
+  maintenancePointId: string | null
   organizationId: string | null
   status: string | null
+  completedAt: Date | null
   deletedAt: Date | null
   deletedById: string | null
   createdAt: Date | null
@@ -48,8 +50,10 @@ export type MaintenanceTaskMaxAggregateOutputType = {
   startTime: Date | null
   endTime: Date | null
   equipmentId: string | null
+  maintenancePointId: string | null
   organizationId: string | null
   status: string | null
+  completedAt: Date | null
   deletedAt: Date | null
   deletedById: string | null
   createdAt: Date | null
@@ -64,8 +68,10 @@ export type MaintenanceTaskCountAggregateOutputType = {
   startTime: number
   endTime: number
   equipmentId: number
+  maintenancePointId: number
   organizationId: number
   status: number
+  completedAt: number
   deletedAt: number
   deletedById: number
   createdAt: number
@@ -82,8 +88,10 @@ export type MaintenanceTaskMinAggregateInputType = {
   startTime?: true
   endTime?: true
   equipmentId?: true
+  maintenancePointId?: true
   organizationId?: true
   status?: true
+  completedAt?: true
   deletedAt?: true
   deletedById?: true
   createdAt?: true
@@ -98,8 +106,10 @@ export type MaintenanceTaskMaxAggregateInputType = {
   startTime?: true
   endTime?: true
   equipmentId?: true
+  maintenancePointId?: true
   organizationId?: true
   status?: true
+  completedAt?: true
   deletedAt?: true
   deletedById?: true
   createdAt?: true
@@ -114,8 +124,10 @@ export type MaintenanceTaskCountAggregateInputType = {
   startTime?: true
   endTime?: true
   equipmentId?: true
+  maintenancePointId?: true
   organizationId?: true
   status?: true
+  completedAt?: true
   deletedAt?: true
   deletedById?: true
   createdAt?: true
@@ -201,10 +213,12 @@ export type MaintenanceTaskGroupByOutputType = {
   description: string | null
   type: $Enums.TaskType
   startTime: Date
-  endTime: Date
+  endTime: Date | null
   equipmentId: string
+  maintenancePointId: string | null
   organizationId: string
   status: string
+  completedAt: Date | null
   deletedAt: Date | null
   deletedById: string | null
   createdAt: Date
@@ -238,17 +252,24 @@ export type MaintenanceTaskWhereInput = {
   description?: Prisma.StringNullableFilter<"MaintenanceTask"> | string | null
   type?: Prisma.EnumTaskTypeFilter<"MaintenanceTask"> | $Enums.TaskType
   startTime?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
-  endTime?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
+  endTime?: Prisma.DateTimeNullableFilter<"MaintenanceTask"> | Date | string | null
   equipmentId?: Prisma.StringFilter<"MaintenanceTask"> | string
+  maintenancePointId?: Prisma.StringNullableFilter<"MaintenanceTask"> | string | null
   organizationId?: Prisma.StringFilter<"MaintenanceTask"> | string
   status?: Prisma.StringFilter<"MaintenanceTask"> | string
+  completedAt?: Prisma.DateTimeNullableFilter<"MaintenanceTask"> | Date | string | null
   deletedAt?: Prisma.DateTimeNullableFilter<"MaintenanceTask"> | Date | string | null
   deletedById?: Prisma.StringNullableFilter<"MaintenanceTask"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   equipment?: Prisma.XOR<Prisma.EquipmentScalarRelationFilter, Prisma.EquipmentWhereInput>
+  maintenancePoint?: Prisma.XOR<Prisma.EquipmentMaintenancePointNullableScalarRelationFilter, Prisma.EquipmentMaintenancePointWhereInput> | null
   assignments?: Prisma.MaintenanceTaskAssignmentListRelationFilter
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursListRelationFilter
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemListRelationFilter
+  inventoryMovements?: Prisma.InventoryMovementListRelationFilter
+  reminders?: Prisma.MaintenanceTaskReminderListRelationFilter
   materials?: Prisma.MaterialListRelationFilter
 }
 
@@ -258,17 +279,24 @@ export type MaintenanceTaskOrderByWithRelationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
-  endTime?: Prisma.SortOrder
+  endTime?: Prisma.SortOrderInput | Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
+  maintenancePointId?: Prisma.SortOrderInput | Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   deletedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   organization?: Prisma.OrganizationOrderByWithRelationInput
   equipment?: Prisma.EquipmentOrderByWithRelationInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointOrderByWithRelationInput
   assignments?: Prisma.MaintenanceTaskAssignmentOrderByRelationAggregateInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursOrderByRelationAggregateInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemOrderByRelationAggregateInput
+  inventoryMovements?: Prisma.InventoryMovementOrderByRelationAggregateInput
+  reminders?: Prisma.MaintenanceTaskReminderOrderByRelationAggregateInput
   materials?: Prisma.MaterialOrderByRelationAggregateInput
 }
 
@@ -282,17 +310,24 @@ export type MaintenanceTaskWhereUniqueInput = Prisma.AtLeast<{
   description?: Prisma.StringNullableFilter<"MaintenanceTask"> | string | null
   type?: Prisma.EnumTaskTypeFilter<"MaintenanceTask"> | $Enums.TaskType
   startTime?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
-  endTime?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
+  endTime?: Prisma.DateTimeNullableFilter<"MaintenanceTask"> | Date | string | null
   equipmentId?: Prisma.StringFilter<"MaintenanceTask"> | string
+  maintenancePointId?: Prisma.StringNullableFilter<"MaintenanceTask"> | string | null
   organizationId?: Prisma.StringFilter<"MaintenanceTask"> | string
   status?: Prisma.StringFilter<"MaintenanceTask"> | string
+  completedAt?: Prisma.DateTimeNullableFilter<"MaintenanceTask"> | Date | string | null
   deletedAt?: Prisma.DateTimeNullableFilter<"MaintenanceTask"> | Date | string | null
   deletedById?: Prisma.StringNullableFilter<"MaintenanceTask"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   equipment?: Prisma.XOR<Prisma.EquipmentScalarRelationFilter, Prisma.EquipmentWhereInput>
+  maintenancePoint?: Prisma.XOR<Prisma.EquipmentMaintenancePointNullableScalarRelationFilter, Prisma.EquipmentMaintenancePointWhereInput> | null
   assignments?: Prisma.MaintenanceTaskAssignmentListRelationFilter
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursListRelationFilter
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemListRelationFilter
+  inventoryMovements?: Prisma.InventoryMovementListRelationFilter
+  reminders?: Prisma.MaintenanceTaskReminderListRelationFilter
   materials?: Prisma.MaterialListRelationFilter
 }, "id" | "id_organizationId">
 
@@ -302,10 +337,12 @@ export type MaintenanceTaskOrderByWithAggregationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
-  endTime?: Prisma.SortOrder
+  endTime?: Prisma.SortOrderInput | Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
+  maintenancePointId?: Prisma.SortOrderInput | Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   deletedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -324,10 +361,12 @@ export type MaintenanceTaskScalarWhereWithAggregatesInput = {
   description?: Prisma.StringNullableWithAggregatesFilter<"MaintenanceTask"> | string | null
   type?: Prisma.EnumTaskTypeWithAggregatesFilter<"MaintenanceTask"> | $Enums.TaskType
   startTime?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTask"> | Date | string
-  endTime?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTask"> | Date | string
+  endTime?: Prisma.DateTimeNullableWithAggregatesFilter<"MaintenanceTask"> | Date | string | null
   equipmentId?: Prisma.StringWithAggregatesFilter<"MaintenanceTask"> | string
+  maintenancePointId?: Prisma.StringNullableWithAggregatesFilter<"MaintenanceTask"> | string | null
   organizationId?: Prisma.StringWithAggregatesFilter<"MaintenanceTask"> | string
   status?: Prisma.StringWithAggregatesFilter<"MaintenanceTask"> | string
+  completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"MaintenanceTask"> | Date | string | null
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"MaintenanceTask"> | Date | string | null
   deletedById?: Prisma.StringNullableWithAggregatesFilter<"MaintenanceTask"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTask"> | Date | string
@@ -340,15 +379,21 @@ export type MaintenanceTaskCreateInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
   equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointCreateNestedOneWithoutTasksInput
   assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutTaskInput
   materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
 }
 
@@ -358,15 +403,21 @@ export type MaintenanceTaskUncheckedCreateInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
   equipmentId: string
+  maintenancePointId?: string | null
   organizationId: string
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutTaskInput
   materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutTaskInput
 }
 
@@ -376,15 +427,21 @@ export type MaintenanceTaskUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
   equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointUpdateOneWithoutTasksNestedInput
   assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutTaskNestedInput
   materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
 }
 
@@ -394,15 +451,21 @@ export type MaintenanceTaskUncheckedUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  maintenancePointId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskNestedInput
   materials?: Prisma.MaterialUncheckedUpdateManyWithoutTaskNestedInput
 }
 
@@ -412,10 +475,12 @@ export type MaintenanceTaskCreateManyInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
   equipmentId: string
+  maintenancePointId?: string | null
   organizationId: string
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
@@ -428,8 +493,9 @@ export type MaintenanceTaskUpdateManyMutationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -442,10 +508,12 @@ export type MaintenanceTaskUncheckedUpdateManyInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  maintenancePointId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -475,8 +543,10 @@ export type MaintenanceTaskCountOrderByAggregateInput = {
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
+  maintenancePointId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  completedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
   deletedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -491,8 +561,10 @@ export type MaintenanceTaskMaxOrderByAggregateInput = {
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
+  maintenancePointId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  completedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
   deletedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -507,8 +579,10 @@ export type MaintenanceTaskMinOrderByAggregateInput = {
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
+  maintenancePointId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  completedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
   deletedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -518,6 +592,11 @@ export type MaintenanceTaskMinOrderByAggregateInput = {
 export type MaintenanceTaskScalarRelationFilter = {
   is?: Prisma.MaintenanceTaskWhereInput
   isNot?: Prisma.MaintenanceTaskWhereInput
+}
+
+export type MaintenanceTaskNullableScalarRelationFilter = {
+  is?: Prisma.MaintenanceTaskWhereInput | null
+  isNot?: Prisma.MaintenanceTaskWhereInput | null
 }
 
 export type MaintenanceTaskCreateNestedManyWithoutEquipmentInput = {
@@ -566,6 +645,62 @@ export type EnumTaskTypeFieldUpdateOperationsInput = {
   set?: $Enums.TaskType
 }
 
+export type MaintenanceTaskCreateNestedManyWithoutMaintenancePointInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutMaintenancePointInput, Prisma.MaintenanceTaskUncheckedCreateWithoutMaintenancePointInput> | Prisma.MaintenanceTaskCreateWithoutMaintenancePointInput[] | Prisma.MaintenanceTaskUncheckedCreateWithoutMaintenancePointInput[]
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutMaintenancePointInput | Prisma.MaintenanceTaskCreateOrConnectWithoutMaintenancePointInput[]
+  createMany?: Prisma.MaintenanceTaskCreateManyMaintenancePointInputEnvelope
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+}
+
+export type MaintenanceTaskUncheckedCreateNestedManyWithoutMaintenancePointInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutMaintenancePointInput, Prisma.MaintenanceTaskUncheckedCreateWithoutMaintenancePointInput> | Prisma.MaintenanceTaskCreateWithoutMaintenancePointInput[] | Prisma.MaintenanceTaskUncheckedCreateWithoutMaintenancePointInput[]
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutMaintenancePointInput | Prisma.MaintenanceTaskCreateOrConnectWithoutMaintenancePointInput[]
+  createMany?: Prisma.MaintenanceTaskCreateManyMaintenancePointInputEnvelope
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+}
+
+export type MaintenanceTaskUpdateManyWithoutMaintenancePointNestedInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutMaintenancePointInput, Prisma.MaintenanceTaskUncheckedCreateWithoutMaintenancePointInput> | Prisma.MaintenanceTaskCreateWithoutMaintenancePointInput[] | Prisma.MaintenanceTaskUncheckedCreateWithoutMaintenancePointInput[]
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutMaintenancePointInput | Prisma.MaintenanceTaskCreateOrConnectWithoutMaintenancePointInput[]
+  upsert?: Prisma.MaintenanceTaskUpsertWithWhereUniqueWithoutMaintenancePointInput | Prisma.MaintenanceTaskUpsertWithWhereUniqueWithoutMaintenancePointInput[]
+  createMany?: Prisma.MaintenanceTaskCreateManyMaintenancePointInputEnvelope
+  set?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  disconnect?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  delete?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  update?: Prisma.MaintenanceTaskUpdateWithWhereUniqueWithoutMaintenancePointInput | Prisma.MaintenanceTaskUpdateWithWhereUniqueWithoutMaintenancePointInput[]
+  updateMany?: Prisma.MaintenanceTaskUpdateManyWithWhereWithoutMaintenancePointInput | Prisma.MaintenanceTaskUpdateManyWithWhereWithoutMaintenancePointInput[]
+  deleteMany?: Prisma.MaintenanceTaskScalarWhereInput | Prisma.MaintenanceTaskScalarWhereInput[]
+}
+
+export type MaintenanceTaskUncheckedUpdateManyWithoutMaintenancePointNestedInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutMaintenancePointInput, Prisma.MaintenanceTaskUncheckedCreateWithoutMaintenancePointInput> | Prisma.MaintenanceTaskCreateWithoutMaintenancePointInput[] | Prisma.MaintenanceTaskUncheckedCreateWithoutMaintenancePointInput[]
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutMaintenancePointInput | Prisma.MaintenanceTaskCreateOrConnectWithoutMaintenancePointInput[]
+  upsert?: Prisma.MaintenanceTaskUpsertWithWhereUniqueWithoutMaintenancePointInput | Prisma.MaintenanceTaskUpsertWithWhereUniqueWithoutMaintenancePointInput[]
+  createMany?: Prisma.MaintenanceTaskCreateManyMaintenancePointInputEnvelope
+  set?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  disconnect?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  delete?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput | Prisma.MaintenanceTaskWhereUniqueInput[]
+  update?: Prisma.MaintenanceTaskUpdateWithWhereUniqueWithoutMaintenancePointInput | Prisma.MaintenanceTaskUpdateWithWhereUniqueWithoutMaintenancePointInput[]
+  updateMany?: Prisma.MaintenanceTaskUpdateManyWithWhereWithoutMaintenancePointInput | Prisma.MaintenanceTaskUpdateManyWithWhereWithoutMaintenancePointInput[]
+  deleteMany?: Prisma.MaintenanceTaskScalarWhereInput | Prisma.MaintenanceTaskScalarWhereInput[]
+}
+
+export type MaintenanceTaskCreateNestedOneWithoutChecklistItemsInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutChecklistItemsInput, Prisma.MaintenanceTaskUncheckedCreateWithoutChecklistItemsInput>
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutChecklistItemsInput
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput
+}
+
+export type MaintenanceTaskUpdateOneRequiredWithoutChecklistItemsNestedInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutChecklistItemsInput, Prisma.MaintenanceTaskUncheckedCreateWithoutChecklistItemsInput>
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutChecklistItemsInput
+  upsert?: Prisma.MaintenanceTaskUpsertWithoutChecklistItemsInput
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MaintenanceTaskUpdateToOneWithWhereWithoutChecklistItemsInput, Prisma.MaintenanceTaskUpdateWithoutChecklistItemsInput>, Prisma.MaintenanceTaskUncheckedUpdateWithoutChecklistItemsInput>
+}
+
 export type MaintenanceTaskCreateNestedOneWithoutMaterialsInput = {
   create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutMaterialsInput, Prisma.MaintenanceTaskUncheckedCreateWithoutMaterialsInput>
   connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutMaterialsInput
@@ -580,6 +715,36 @@ export type MaintenanceTaskUpdateOneRequiredWithoutMaterialsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.MaintenanceTaskUpdateToOneWithWhereWithoutMaterialsInput, Prisma.MaintenanceTaskUpdateWithoutMaterialsInput>, Prisma.MaintenanceTaskUncheckedUpdateWithoutMaterialsInput>
 }
 
+export type MaintenanceTaskCreateNestedOneWithoutInventoryMovementsInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutInventoryMovementsInput, Prisma.MaintenanceTaskUncheckedCreateWithoutInventoryMovementsInput>
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutInventoryMovementsInput
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput
+}
+
+export type MaintenanceTaskUpdateOneWithoutInventoryMovementsNestedInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutInventoryMovementsInput, Prisma.MaintenanceTaskUncheckedCreateWithoutInventoryMovementsInput>
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutInventoryMovementsInput
+  upsert?: Prisma.MaintenanceTaskUpsertWithoutInventoryMovementsInput
+  disconnect?: Prisma.MaintenanceTaskWhereInput | boolean
+  delete?: Prisma.MaintenanceTaskWhereInput | boolean
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MaintenanceTaskUpdateToOneWithWhereWithoutInventoryMovementsInput, Prisma.MaintenanceTaskUpdateWithoutInventoryMovementsInput>, Prisma.MaintenanceTaskUncheckedUpdateWithoutInventoryMovementsInput>
+}
+
+export type MaintenanceTaskCreateNestedOneWithoutRemindersInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutRemindersInput, Prisma.MaintenanceTaskUncheckedCreateWithoutRemindersInput>
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutRemindersInput
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput
+}
+
+export type MaintenanceTaskUpdateOneRequiredWithoutRemindersNestedInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutRemindersInput, Prisma.MaintenanceTaskUncheckedCreateWithoutRemindersInput>
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutRemindersInput
+  upsert?: Prisma.MaintenanceTaskUpsertWithoutRemindersInput
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MaintenanceTaskUpdateToOneWithWhereWithoutRemindersInput, Prisma.MaintenanceTaskUpdateWithoutRemindersInput>, Prisma.MaintenanceTaskUncheckedUpdateWithoutRemindersInput>
+}
+
 export type MaintenanceTaskCreateNestedOneWithoutAssignmentsInput = {
   create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutAssignmentsInput, Prisma.MaintenanceTaskUncheckedCreateWithoutAssignmentsInput>
   connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutAssignmentsInput
@@ -592,6 +757,20 @@ export type MaintenanceTaskUpdateOneRequiredWithoutAssignmentsNestedInput = {
   upsert?: Prisma.MaintenanceTaskUpsertWithoutAssignmentsInput
   connect?: Prisma.MaintenanceTaskWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.MaintenanceTaskUpdateToOneWithWhereWithoutAssignmentsInput, Prisma.MaintenanceTaskUpdateWithoutAssignmentsInput>, Prisma.MaintenanceTaskUncheckedUpdateWithoutAssignmentsInput>
+}
+
+export type MaintenanceTaskCreateNestedOneWithoutDailyHoursInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutDailyHoursInput, Prisma.MaintenanceTaskUncheckedCreateWithoutDailyHoursInput>
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutDailyHoursInput
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput
+}
+
+export type MaintenanceTaskUpdateOneRequiredWithoutDailyHoursNestedInput = {
+  create?: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutDailyHoursInput, Prisma.MaintenanceTaskUncheckedCreateWithoutDailyHoursInput>
+  connectOrCreate?: Prisma.MaintenanceTaskCreateOrConnectWithoutDailyHoursInput
+  upsert?: Prisma.MaintenanceTaskUpsertWithoutDailyHoursInput
+  connect?: Prisma.MaintenanceTaskWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MaintenanceTaskUpdateToOneWithWhereWithoutDailyHoursInput, Prisma.MaintenanceTaskUpdateWithoutDailyHoursInput>, Prisma.MaintenanceTaskUncheckedUpdateWithoutDailyHoursInput>
 }
 
 export type MaintenanceTaskCreateNestedManyWithoutOrganizationInput = {
@@ -642,14 +821,20 @@ export type MaintenanceTaskCreateWithoutEquipmentInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointCreateNestedOneWithoutTasksInput
   assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutTaskInput
   materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
 }
 
@@ -659,13 +844,19 @@ export type MaintenanceTaskUncheckedCreateWithoutEquipmentInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
+  maintenancePointId?: string | null
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutTaskInput
   materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutTaskInput
 }
 
@@ -704,14 +895,196 @@ export type MaintenanceTaskScalarWhereInput = {
   description?: Prisma.StringNullableFilter<"MaintenanceTask"> | string | null
   type?: Prisma.EnumTaskTypeFilter<"MaintenanceTask"> | $Enums.TaskType
   startTime?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
-  endTime?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
+  endTime?: Prisma.DateTimeNullableFilter<"MaintenanceTask"> | Date | string | null
   equipmentId?: Prisma.StringFilter<"MaintenanceTask"> | string
+  maintenancePointId?: Prisma.StringNullableFilter<"MaintenanceTask"> | string | null
   organizationId?: Prisma.StringFilter<"MaintenanceTask"> | string
   status?: Prisma.StringFilter<"MaintenanceTask"> | string
+  completedAt?: Prisma.DateTimeNullableFilter<"MaintenanceTask"> | Date | string | null
   deletedAt?: Prisma.DateTimeNullableFilter<"MaintenanceTask"> | Date | string | null
   deletedById?: Prisma.StringNullableFilter<"MaintenanceTask"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaintenanceTask"> | Date | string
+}
+
+export type MaintenanceTaskCreateWithoutMaintenancePointInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime?: Date | string | null
+  status?: string
+  completedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
+  equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
+  assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutTaskInput
+  materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
+}
+
+export type MaintenanceTaskUncheckedCreateWithoutMaintenancePointInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime?: Date | string | null
+  equipmentId: string
+  organizationId: string
+  status?: string
+  completedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutTaskInput
+  materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutTaskInput
+}
+
+export type MaintenanceTaskCreateOrConnectWithoutMaintenancePointInput = {
+  where: Prisma.MaintenanceTaskWhereUniqueInput
+  create: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutMaintenancePointInput, Prisma.MaintenanceTaskUncheckedCreateWithoutMaintenancePointInput>
+}
+
+export type MaintenanceTaskCreateManyMaintenancePointInputEnvelope = {
+  data: Prisma.MaintenanceTaskCreateManyMaintenancePointInput | Prisma.MaintenanceTaskCreateManyMaintenancePointInput[]
+  skipDuplicates?: boolean
+}
+
+export type MaintenanceTaskUpsertWithWhereUniqueWithoutMaintenancePointInput = {
+  where: Prisma.MaintenanceTaskWhereUniqueInput
+  update: Prisma.XOR<Prisma.MaintenanceTaskUpdateWithoutMaintenancePointInput, Prisma.MaintenanceTaskUncheckedUpdateWithoutMaintenancePointInput>
+  create: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutMaintenancePointInput, Prisma.MaintenanceTaskUncheckedCreateWithoutMaintenancePointInput>
+}
+
+export type MaintenanceTaskUpdateWithWhereUniqueWithoutMaintenancePointInput = {
+  where: Prisma.MaintenanceTaskWhereUniqueInput
+  data: Prisma.XOR<Prisma.MaintenanceTaskUpdateWithoutMaintenancePointInput, Prisma.MaintenanceTaskUncheckedUpdateWithoutMaintenancePointInput>
+}
+
+export type MaintenanceTaskUpdateManyWithWhereWithoutMaintenancePointInput = {
+  where: Prisma.MaintenanceTaskScalarWhereInput
+  data: Prisma.XOR<Prisma.MaintenanceTaskUpdateManyMutationInput, Prisma.MaintenanceTaskUncheckedUpdateManyWithoutMaintenancePointInput>
+}
+
+export type MaintenanceTaskCreateWithoutChecklistItemsInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime?: Date | string | null
+  status?: string
+  completedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
+  equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointCreateNestedOneWithoutTasksInput
+  assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutTaskInput
+  materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
+}
+
+export type MaintenanceTaskUncheckedCreateWithoutChecklistItemsInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime?: Date | string | null
+  equipmentId: string
+  maintenancePointId?: string | null
+  organizationId: string
+  status?: string
+  completedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutTaskInput
+  materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutTaskInput
+}
+
+export type MaintenanceTaskCreateOrConnectWithoutChecklistItemsInput = {
+  where: Prisma.MaintenanceTaskWhereUniqueInput
+  create: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutChecklistItemsInput, Prisma.MaintenanceTaskUncheckedCreateWithoutChecklistItemsInput>
+}
+
+export type MaintenanceTaskUpsertWithoutChecklistItemsInput = {
+  update: Prisma.XOR<Prisma.MaintenanceTaskUpdateWithoutChecklistItemsInput, Prisma.MaintenanceTaskUncheckedUpdateWithoutChecklistItemsInput>
+  create: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutChecklistItemsInput, Prisma.MaintenanceTaskUncheckedCreateWithoutChecklistItemsInput>
+  where?: Prisma.MaintenanceTaskWhereInput
+}
+
+export type MaintenanceTaskUpdateToOneWithWhereWithoutChecklistItemsInput = {
+  where?: Prisma.MaintenanceTaskWhereInput
+  data: Prisma.XOR<Prisma.MaintenanceTaskUpdateWithoutChecklistItemsInput, Prisma.MaintenanceTaskUncheckedUpdateWithoutChecklistItemsInput>
+}
+
+export type MaintenanceTaskUpdateWithoutChecklistItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
+  equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointUpdateOneWithoutTasksNestedInput
+  assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutTaskNestedInput
+  materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
+}
+
+export type MaintenanceTaskUncheckedUpdateWithoutChecklistItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  maintenancePointId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskNestedInput
+  materials?: Prisma.MaterialUncheckedUpdateManyWithoutTaskNestedInput
 }
 
 export type MaintenanceTaskCreateWithoutMaterialsInput = {
@@ -720,15 +1093,21 @@ export type MaintenanceTaskCreateWithoutMaterialsInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
   equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointCreateNestedOneWithoutTasksInput
   assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutTaskInput
 }
 
 export type MaintenanceTaskUncheckedCreateWithoutMaterialsInput = {
@@ -737,15 +1116,21 @@ export type MaintenanceTaskUncheckedCreateWithoutMaterialsInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
   equipmentId: string
+  maintenancePointId?: string | null
   organizationId: string
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutTaskInput
 }
 
 export type MaintenanceTaskCreateOrConnectWithoutMaterialsInput = {
@@ -770,15 +1155,21 @@ export type MaintenanceTaskUpdateWithoutMaterialsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
   equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointUpdateOneWithoutTasksNestedInput
   assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutTaskNestedInput
 }
 
 export type MaintenanceTaskUncheckedUpdateWithoutMaterialsInput = {
@@ -787,15 +1178,237 @@ export type MaintenanceTaskUncheckedUpdateWithoutMaterialsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  maintenancePointId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskNestedInput
+}
+
+export type MaintenanceTaskCreateWithoutInventoryMovementsInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime?: Date | string | null
+  status?: string
+  completedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
+  equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointCreateNestedOneWithoutTasksInput
+  assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutTaskInput
+  materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
+}
+
+export type MaintenanceTaskUncheckedCreateWithoutInventoryMovementsInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime?: Date | string | null
+  equipmentId: string
+  maintenancePointId?: string | null
+  organizationId: string
+  status?: string
+  completedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutTaskInput
+  materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutTaskInput
+}
+
+export type MaintenanceTaskCreateOrConnectWithoutInventoryMovementsInput = {
+  where: Prisma.MaintenanceTaskWhereUniqueInput
+  create: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutInventoryMovementsInput, Prisma.MaintenanceTaskUncheckedCreateWithoutInventoryMovementsInput>
+}
+
+export type MaintenanceTaskUpsertWithoutInventoryMovementsInput = {
+  update: Prisma.XOR<Prisma.MaintenanceTaskUpdateWithoutInventoryMovementsInput, Prisma.MaintenanceTaskUncheckedUpdateWithoutInventoryMovementsInput>
+  create: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutInventoryMovementsInput, Prisma.MaintenanceTaskUncheckedCreateWithoutInventoryMovementsInput>
+  where?: Prisma.MaintenanceTaskWhereInput
+}
+
+export type MaintenanceTaskUpdateToOneWithWhereWithoutInventoryMovementsInput = {
+  where?: Prisma.MaintenanceTaskWhereInput
+  data: Prisma.XOR<Prisma.MaintenanceTaskUpdateWithoutInventoryMovementsInput, Prisma.MaintenanceTaskUncheckedUpdateWithoutInventoryMovementsInput>
+}
+
+export type MaintenanceTaskUpdateWithoutInventoryMovementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
+  equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointUpdateOneWithoutTasksNestedInput
+  assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutTaskNestedInput
+  materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
+}
+
+export type MaintenanceTaskUncheckedUpdateWithoutInventoryMovementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  maintenancePointId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskNestedInput
+  materials?: Prisma.MaterialUncheckedUpdateManyWithoutTaskNestedInput
+}
+
+export type MaintenanceTaskCreateWithoutRemindersInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime?: Date | string | null
+  status?: string
+  completedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
+  equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointCreateNestedOneWithoutTasksInput
+  assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutTaskInput
+  materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
+}
+
+export type MaintenanceTaskUncheckedCreateWithoutRemindersInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime?: Date | string | null
+  equipmentId: string
+  maintenancePointId?: string | null
+  organizationId: string
+  status?: string
+  completedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutTaskInput
+  materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutTaskInput
+}
+
+export type MaintenanceTaskCreateOrConnectWithoutRemindersInput = {
+  where: Prisma.MaintenanceTaskWhereUniqueInput
+  create: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutRemindersInput, Prisma.MaintenanceTaskUncheckedCreateWithoutRemindersInput>
+}
+
+export type MaintenanceTaskUpsertWithoutRemindersInput = {
+  update: Prisma.XOR<Prisma.MaintenanceTaskUpdateWithoutRemindersInput, Prisma.MaintenanceTaskUncheckedUpdateWithoutRemindersInput>
+  create: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutRemindersInput, Prisma.MaintenanceTaskUncheckedCreateWithoutRemindersInput>
+  where?: Prisma.MaintenanceTaskWhereInput
+}
+
+export type MaintenanceTaskUpdateToOneWithWhereWithoutRemindersInput = {
+  where?: Prisma.MaintenanceTaskWhereInput
+  data: Prisma.XOR<Prisma.MaintenanceTaskUpdateWithoutRemindersInput, Prisma.MaintenanceTaskUncheckedUpdateWithoutRemindersInput>
+}
+
+export type MaintenanceTaskUpdateWithoutRemindersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
+  equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointUpdateOneWithoutTasksNestedInput
+  assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutTaskNestedInput
+  materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
+}
+
+export type MaintenanceTaskUncheckedUpdateWithoutRemindersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  maintenancePointId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutTaskNestedInput
+  materials?: Prisma.MaterialUncheckedUpdateManyWithoutTaskNestedInput
 }
 
 export type MaintenanceTaskCreateWithoutAssignmentsInput = {
@@ -804,14 +1417,20 @@ export type MaintenanceTaskCreateWithoutAssignmentsInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
   equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointCreateNestedOneWithoutTasksInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutTaskInput
   materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
 }
 
@@ -821,14 +1440,20 @@ export type MaintenanceTaskUncheckedCreateWithoutAssignmentsInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
   equipmentId: string
+  maintenancePointId?: string | null
   organizationId: string
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutTaskInput
   materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutTaskInput
 }
 
@@ -854,14 +1479,20 @@ export type MaintenanceTaskUpdateWithoutAssignmentsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
   equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointUpdateOneWithoutTasksNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutTaskNestedInput
   materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
 }
 
@@ -871,14 +1502,128 @@ export type MaintenanceTaskUncheckedUpdateWithoutAssignmentsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  maintenancePointId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskNestedInput
+  materials?: Prisma.MaterialUncheckedUpdateManyWithoutTaskNestedInput
+}
+
+export type MaintenanceTaskCreateWithoutDailyHoursInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime?: Date | string | null
+  status?: string
+  completedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutTasksInput
+  equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointCreateNestedOneWithoutTasksInput
+  assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutTaskInput
+  materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
+}
+
+export type MaintenanceTaskUncheckedCreateWithoutDailyHoursInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime?: Date | string | null
+  equipmentId: string
+  maintenancePointId?: string | null
+  organizationId: string
+  status?: string
+  completedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutTaskInput
+  materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutTaskInput
+}
+
+export type MaintenanceTaskCreateOrConnectWithoutDailyHoursInput = {
+  where: Prisma.MaintenanceTaskWhereUniqueInput
+  create: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutDailyHoursInput, Prisma.MaintenanceTaskUncheckedCreateWithoutDailyHoursInput>
+}
+
+export type MaintenanceTaskUpsertWithoutDailyHoursInput = {
+  update: Prisma.XOR<Prisma.MaintenanceTaskUpdateWithoutDailyHoursInput, Prisma.MaintenanceTaskUncheckedUpdateWithoutDailyHoursInput>
+  create: Prisma.XOR<Prisma.MaintenanceTaskCreateWithoutDailyHoursInput, Prisma.MaintenanceTaskUncheckedCreateWithoutDailyHoursInput>
+  where?: Prisma.MaintenanceTaskWhereInput
+}
+
+export type MaintenanceTaskUpdateToOneWithWhereWithoutDailyHoursInput = {
+  where?: Prisma.MaintenanceTaskWhereInput
+  data: Prisma.XOR<Prisma.MaintenanceTaskUpdateWithoutDailyHoursInput, Prisma.MaintenanceTaskUncheckedUpdateWithoutDailyHoursInput>
+}
+
+export type MaintenanceTaskUpdateWithoutDailyHoursInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
+  equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointUpdateOneWithoutTasksNestedInput
+  assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutTaskNestedInput
+  materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
+}
+
+export type MaintenanceTaskUncheckedUpdateWithoutDailyHoursInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  maintenancePointId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskNestedInput
   materials?: Prisma.MaterialUncheckedUpdateManyWithoutTaskNestedInput
 }
 
@@ -888,14 +1633,20 @@ export type MaintenanceTaskCreateWithoutOrganizationInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   equipment: Prisma.EquipmentCreateNestedOneWithoutTasksInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointCreateNestedOneWithoutTasksInput
   assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutTaskInput
   materials?: Prisma.MaterialCreateNestedManyWithoutTaskInput
 }
 
@@ -905,14 +1656,20 @@ export type MaintenanceTaskUncheckedCreateWithoutOrganizationInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
   equipmentId: string
+  maintenancePointId?: string | null
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutTaskInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutTaskInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedCreateNestedManyWithoutTaskInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedCreateNestedManyWithoutTaskInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutTaskInput
   materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutTaskInput
 }
 
@@ -948,8 +1705,10 @@ export type MaintenanceTaskCreateManyEquipmentInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
+  maintenancePointId?: string | null
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
@@ -962,14 +1721,20 @@ export type MaintenanceTaskUpdateWithoutEquipmentInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointUpdateOneWithoutTasksNestedInput
   assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutTaskNestedInput
   materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
 }
 
@@ -979,13 +1744,19 @@ export type MaintenanceTaskUncheckedUpdateWithoutEquipmentInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenancePointId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskNestedInput
   materials?: Prisma.MaterialUncheckedUpdateManyWithoutTaskNestedInput
 }
 
@@ -995,8 +1766,90 @@ export type MaintenanceTaskUncheckedUpdateManyWithoutEquipmentInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  maintenancePointId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type MaintenanceTaskCreateManyMaintenancePointInput = {
+  id?: string
+  title: string
+  description?: string | null
+  type?: $Enums.TaskType
+  startTime: Date | string
+  endTime?: Date | string | null
+  equipmentId: string
+  organizationId: string
+  status?: string
+  completedAt?: Date | string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type MaintenanceTaskUpdateWithoutMaintenancePointInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTasksNestedInput
+  equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
+  assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutTaskNestedInput
+  materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
+}
+
+export type MaintenanceTaskUncheckedUpdateWithoutMaintenancePointInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskNestedInput
+  materials?: Prisma.MaterialUncheckedUpdateManyWithoutTaskNestedInput
+}
+
+export type MaintenanceTaskUncheckedUpdateManyWithoutMaintenancePointInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
+  startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1009,9 +1862,11 @@ export type MaintenanceTaskCreateManyOrganizationInput = {
   description?: string | null
   type?: $Enums.TaskType
   startTime: Date | string
-  endTime: Date | string
+  endTime?: Date | string | null
   equipmentId: string
+  maintenancePointId?: string | null
   status?: string
+  completedAt?: Date | string | null
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
@@ -1024,14 +1879,20 @@ export type MaintenanceTaskUpdateWithoutOrganizationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUpdateOneRequiredWithoutTasksNestedInput
+  maintenancePoint?: Prisma.EquipmentMaintenancePointUpdateOneWithoutTasksNestedInput
   assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutTaskNestedInput
   materials?: Prisma.MaterialUpdateManyWithoutTaskNestedInput
 }
 
@@ -1041,14 +1902,20 @@ export type MaintenanceTaskUncheckedUpdateWithoutOrganizationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  maintenancePointId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutTaskNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutTaskNestedInput
+  checklistItems?: Prisma.MaintenanceTaskChecklistItemUncheckedUpdateManyWithoutTaskNestedInput
+  inventoryMovements?: Prisma.InventoryMovementUncheckedUpdateManyWithoutTaskNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskNestedInput
   materials?: Prisma.MaterialUncheckedUpdateManyWithoutTaskNestedInput
 }
 
@@ -1058,9 +1925,11 @@ export type MaintenanceTaskUncheckedUpdateManyWithoutOrganizationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumTaskTypeFieldUpdateOperationsInput | $Enums.TaskType
   startTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   equipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  maintenancePointId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1074,11 +1943,19 @@ export type MaintenanceTaskUncheckedUpdateManyWithoutOrganizationInput = {
 
 export type MaintenanceTaskCountOutputType = {
   assignments: number
+  dailyHours: number
+  checklistItems: number
+  inventoryMovements: number
+  reminders: number
   materials: number
 }
 
 export type MaintenanceTaskCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   assignments?: boolean | MaintenanceTaskCountOutputTypeCountAssignmentsArgs
+  dailyHours?: boolean | MaintenanceTaskCountOutputTypeCountDailyHoursArgs
+  checklistItems?: boolean | MaintenanceTaskCountOutputTypeCountChecklistItemsArgs
+  inventoryMovements?: boolean | MaintenanceTaskCountOutputTypeCountInventoryMovementsArgs
+  reminders?: boolean | MaintenanceTaskCountOutputTypeCountRemindersArgs
   materials?: boolean | MaintenanceTaskCountOutputTypeCountMaterialsArgs
 }
 
@@ -1102,6 +1979,34 @@ export type MaintenanceTaskCountOutputTypeCountAssignmentsArgs<ExtArgs extends r
 /**
  * MaintenanceTaskCountOutputType without action
  */
+export type MaintenanceTaskCountOutputTypeCountDailyHoursArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.MaintenanceTaskDailyHoursWhereInput
+}
+
+/**
+ * MaintenanceTaskCountOutputType without action
+ */
+export type MaintenanceTaskCountOutputTypeCountChecklistItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.MaintenanceTaskChecklistItemWhereInput
+}
+
+/**
+ * MaintenanceTaskCountOutputType without action
+ */
+export type MaintenanceTaskCountOutputTypeCountInventoryMovementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InventoryMovementWhereInput
+}
+
+/**
+ * MaintenanceTaskCountOutputType without action
+ */
+export type MaintenanceTaskCountOutputTypeCountRemindersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.MaintenanceTaskReminderWhereInput
+}
+
+/**
+ * MaintenanceTaskCountOutputType without action
+ */
 export type MaintenanceTaskCountOutputTypeCountMaterialsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.MaterialWhereInput
 }
@@ -1115,15 +2020,22 @@ export type MaintenanceTaskSelect<ExtArgs extends runtime.Types.Extensions.Inter
   startTime?: boolean
   endTime?: boolean
   equipmentId?: boolean
+  maintenancePointId?: boolean
   organizationId?: boolean
   status?: boolean
+  completedAt?: boolean
   deletedAt?: boolean
   deletedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
+  maintenancePoint?: boolean | Prisma.MaintenanceTask$maintenancePointArgs<ExtArgs>
   assignments?: boolean | Prisma.MaintenanceTask$assignmentsArgs<ExtArgs>
+  dailyHours?: boolean | Prisma.MaintenanceTask$dailyHoursArgs<ExtArgs>
+  checklistItems?: boolean | Prisma.MaintenanceTask$checklistItemsArgs<ExtArgs>
+  inventoryMovements?: boolean | Prisma.MaintenanceTask$inventoryMovementsArgs<ExtArgs>
+  reminders?: boolean | Prisma.MaintenanceTask$remindersArgs<ExtArgs>
   materials?: boolean | Prisma.MaintenanceTask$materialsArgs<ExtArgs>
   _count?: boolean | Prisma.MaintenanceTaskCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["maintenanceTask"]>
@@ -1136,14 +2048,17 @@ export type MaintenanceTaskSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   startTime?: boolean
   endTime?: boolean
   equipmentId?: boolean
+  maintenancePointId?: boolean
   organizationId?: boolean
   status?: boolean
+  completedAt?: boolean
   deletedAt?: boolean
   deletedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
+  maintenancePoint?: boolean | Prisma.MaintenanceTask$maintenancePointArgs<ExtArgs>
 }, ExtArgs["result"]["maintenanceTask"]>
 
 export type MaintenanceTaskSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1154,14 +2069,17 @@ export type MaintenanceTaskSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   startTime?: boolean
   endTime?: boolean
   equipmentId?: boolean
+  maintenancePointId?: boolean
   organizationId?: boolean
   status?: boolean
+  completedAt?: boolean
   deletedAt?: boolean
   deletedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
+  maintenancePoint?: boolean | Prisma.MaintenanceTask$maintenancePointArgs<ExtArgs>
 }, ExtArgs["result"]["maintenanceTask"]>
 
 export type MaintenanceTaskSelectScalar = {
@@ -1172,29 +2090,38 @@ export type MaintenanceTaskSelectScalar = {
   startTime?: boolean
   endTime?: boolean
   equipmentId?: boolean
+  maintenancePointId?: boolean
   organizationId?: boolean
   status?: boolean
+  completedAt?: boolean
   deletedAt?: boolean
   deletedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type MaintenanceTaskOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "type" | "startTime" | "endTime" | "equipmentId" | "organizationId" | "status" | "deletedAt" | "deletedById" | "createdAt" | "updatedAt", ExtArgs["result"]["maintenanceTask"]>
+export type MaintenanceTaskOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "type" | "startTime" | "endTime" | "equipmentId" | "maintenancePointId" | "organizationId" | "status" | "completedAt" | "deletedAt" | "deletedById" | "createdAt" | "updatedAt", ExtArgs["result"]["maintenanceTask"]>
 export type MaintenanceTaskInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
+  maintenancePoint?: boolean | Prisma.MaintenanceTask$maintenancePointArgs<ExtArgs>
   assignments?: boolean | Prisma.MaintenanceTask$assignmentsArgs<ExtArgs>
+  dailyHours?: boolean | Prisma.MaintenanceTask$dailyHoursArgs<ExtArgs>
+  checklistItems?: boolean | Prisma.MaintenanceTask$checklistItemsArgs<ExtArgs>
+  inventoryMovements?: boolean | Prisma.MaintenanceTask$inventoryMovementsArgs<ExtArgs>
+  reminders?: boolean | Prisma.MaintenanceTask$remindersArgs<ExtArgs>
   materials?: boolean | Prisma.MaintenanceTask$materialsArgs<ExtArgs>
   _count?: boolean | Prisma.MaintenanceTaskCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type MaintenanceTaskIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
+  maintenancePoint?: boolean | Prisma.MaintenanceTask$maintenancePointArgs<ExtArgs>
 }
 export type MaintenanceTaskIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
+  maintenancePoint?: boolean | Prisma.MaintenanceTask$maintenancePointArgs<ExtArgs>
 }
 
 export type $MaintenanceTaskPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1202,7 +2129,12 @@ export type $MaintenanceTaskPayload<ExtArgs extends runtime.Types.Extensions.Int
   objects: {
     organization: Prisma.$OrganizationPayload<ExtArgs>
     equipment: Prisma.$EquipmentPayload<ExtArgs>
+    maintenancePoint: Prisma.$EquipmentMaintenancePointPayload<ExtArgs> | null
     assignments: Prisma.$MaintenanceTaskAssignmentPayload<ExtArgs>[]
+    dailyHours: Prisma.$MaintenanceTaskDailyHoursPayload<ExtArgs>[]
+    checklistItems: Prisma.$MaintenanceTaskChecklistItemPayload<ExtArgs>[]
+    inventoryMovements: Prisma.$InventoryMovementPayload<ExtArgs>[]
+    reminders: Prisma.$MaintenanceTaskReminderPayload<ExtArgs>[]
     materials: Prisma.$MaterialPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1211,10 +2143,12 @@ export type $MaintenanceTaskPayload<ExtArgs extends runtime.Types.Extensions.Int
     description: string | null
     type: $Enums.TaskType
     startTime: Date
-    endTime: Date
+    endTime: Date | null
     equipmentId: string
+    maintenancePointId: string | null
     organizationId: string
     status: string
+    completedAt: Date | null
     deletedAt: Date | null
     deletedById: string | null
     createdAt: Date
@@ -1615,7 +2549,12 @@ export interface Prisma__MaintenanceTaskClient<T, Null = never, ExtArgs extends 
   readonly [Symbol.toStringTag]: "PrismaPromise"
   organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   equipment<T extends Prisma.EquipmentDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EquipmentDefaultArgs<ExtArgs>>): Prisma.Prisma__EquipmentClient<runtime.Types.Result.GetResult<Prisma.$EquipmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  maintenancePoint<T extends Prisma.MaintenanceTask$maintenancePointArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MaintenanceTask$maintenancePointArgs<ExtArgs>>): Prisma.Prisma__EquipmentMaintenancePointClient<runtime.Types.Result.GetResult<Prisma.$EquipmentMaintenancePointPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   assignments<T extends Prisma.MaintenanceTask$assignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MaintenanceTask$assignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  dailyHours<T extends Prisma.MaintenanceTask$dailyHoursArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MaintenanceTask$dailyHoursArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskDailyHoursPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  checklistItems<T extends Prisma.MaintenanceTask$checklistItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MaintenanceTask$checklistItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskChecklistItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  inventoryMovements<T extends Prisma.MaintenanceTask$inventoryMovementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MaintenanceTask$inventoryMovementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InventoryMovementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reminders<T extends Prisma.MaintenanceTask$remindersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MaintenanceTask$remindersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskReminderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   materials<T extends Prisma.MaintenanceTask$materialsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MaintenanceTask$materialsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1653,8 +2592,10 @@ export interface MaintenanceTaskFieldRefs {
   readonly startTime: Prisma.FieldRef<"MaintenanceTask", 'DateTime'>
   readonly endTime: Prisma.FieldRef<"MaintenanceTask", 'DateTime'>
   readonly equipmentId: Prisma.FieldRef<"MaintenanceTask", 'String'>
+  readonly maintenancePointId: Prisma.FieldRef<"MaintenanceTask", 'String'>
   readonly organizationId: Prisma.FieldRef<"MaintenanceTask", 'String'>
   readonly status: Prisma.FieldRef<"MaintenanceTask", 'String'>
+  readonly completedAt: Prisma.FieldRef<"MaintenanceTask", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"MaintenanceTask", 'DateTime'>
   readonly deletedById: Prisma.FieldRef<"MaintenanceTask", 'String'>
   readonly createdAt: Prisma.FieldRef<"MaintenanceTask", 'DateTime'>
@@ -2060,6 +3001,25 @@ export type MaintenanceTaskDeleteManyArgs<ExtArgs extends runtime.Types.Extensio
 }
 
 /**
+ * MaintenanceTask.maintenancePoint
+ */
+export type MaintenanceTask$maintenancePointArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EquipmentMaintenancePoint
+   */
+  select?: Prisma.EquipmentMaintenancePointSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the EquipmentMaintenancePoint
+   */
+  omit?: Prisma.EquipmentMaintenancePointOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EquipmentMaintenancePointInclude<ExtArgs> | null
+  where?: Prisma.EquipmentMaintenancePointWhereInput
+}
+
+/**
  * MaintenanceTask.assignments
  */
 export type MaintenanceTask$assignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2081,6 +3041,102 @@ export type MaintenanceTask$assignmentsArgs<ExtArgs extends runtime.Types.Extens
   take?: number
   skip?: number
   distinct?: Prisma.MaintenanceTaskAssignmentScalarFieldEnum | Prisma.MaintenanceTaskAssignmentScalarFieldEnum[]
+}
+
+/**
+ * MaintenanceTask.dailyHours
+ */
+export type MaintenanceTask$dailyHoursArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MaintenanceTaskDailyHours
+   */
+  select?: Prisma.MaintenanceTaskDailyHoursSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MaintenanceTaskDailyHours
+   */
+  omit?: Prisma.MaintenanceTaskDailyHoursOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MaintenanceTaskDailyHoursInclude<ExtArgs> | null
+  where?: Prisma.MaintenanceTaskDailyHoursWhereInput
+  orderBy?: Prisma.MaintenanceTaskDailyHoursOrderByWithRelationInput | Prisma.MaintenanceTaskDailyHoursOrderByWithRelationInput[]
+  cursor?: Prisma.MaintenanceTaskDailyHoursWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.MaintenanceTaskDailyHoursScalarFieldEnum | Prisma.MaintenanceTaskDailyHoursScalarFieldEnum[]
+}
+
+/**
+ * MaintenanceTask.checklistItems
+ */
+export type MaintenanceTask$checklistItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MaintenanceTaskChecklistItem
+   */
+  select?: Prisma.MaintenanceTaskChecklistItemSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MaintenanceTaskChecklistItem
+   */
+  omit?: Prisma.MaintenanceTaskChecklistItemOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MaintenanceTaskChecklistItemInclude<ExtArgs> | null
+  where?: Prisma.MaintenanceTaskChecklistItemWhereInput
+  orderBy?: Prisma.MaintenanceTaskChecklistItemOrderByWithRelationInput | Prisma.MaintenanceTaskChecklistItemOrderByWithRelationInput[]
+  cursor?: Prisma.MaintenanceTaskChecklistItemWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.MaintenanceTaskChecklistItemScalarFieldEnum | Prisma.MaintenanceTaskChecklistItemScalarFieldEnum[]
+}
+
+/**
+ * MaintenanceTask.inventoryMovements
+ */
+export type MaintenanceTask$inventoryMovementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InventoryMovement
+   */
+  select?: Prisma.InventoryMovementSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the InventoryMovement
+   */
+  omit?: Prisma.InventoryMovementOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InventoryMovementInclude<ExtArgs> | null
+  where?: Prisma.InventoryMovementWhereInput
+  orderBy?: Prisma.InventoryMovementOrderByWithRelationInput | Prisma.InventoryMovementOrderByWithRelationInput[]
+  cursor?: Prisma.InventoryMovementWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InventoryMovementScalarFieldEnum | Prisma.InventoryMovementScalarFieldEnum[]
+}
+
+/**
+ * MaintenanceTask.reminders
+ */
+export type MaintenanceTask$remindersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MaintenanceTaskReminder
+   */
+  select?: Prisma.MaintenanceTaskReminderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MaintenanceTaskReminder
+   */
+  omit?: Prisma.MaintenanceTaskReminderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MaintenanceTaskReminderInclude<ExtArgs> | null
+  where?: Prisma.MaintenanceTaskReminderWhereInput
+  orderBy?: Prisma.MaintenanceTaskReminderOrderByWithRelationInput | Prisma.MaintenanceTaskReminderOrderByWithRelationInput[]
+  cursor?: Prisma.MaintenanceTaskReminderWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.MaintenanceTaskReminderScalarFieldEnum | Prisma.MaintenanceTaskReminderScalarFieldEnum[]
 }
 
 /**

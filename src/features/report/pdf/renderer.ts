@@ -1,4 +1,9 @@
 import { MaintenanceEntry } from "@/features/scheduler/types";
+import {
+  aggregateWorkerDailyHours,
+  formatWorkerDurationInHours,
+  formatWorkerWorkDuration,
+} from "@/features/scheduler/utils/worker-hours";
 import enMessages from "@/i18n/messages/en.json";
 
 type ReportTranslations = typeof enMessages.PDF;
@@ -133,6 +138,17 @@ function renderMaintenanceReport(
     return y + 24;
   };
 
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleString(dateLocale, {
+      timeZone,
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   // 2. Section 1: Equipment Details
   currentY = drawSectionHeader(t.sections.equipmentDetails, currentY);
 
@@ -206,7 +222,21 @@ function renderMaintenanceReport(
     .text(statusText, 300, currentY + 41, { width: 75, align: "center" });
   doc.restore();
 
-  currentY += 62;
+  if (entry.completedAt) {
+    doc
+      .fillColor("#64748b")
+      .font("Helvetica-Bold")
+      .fontSize(7.5)
+      .text(t.equipment.completedAt, 300, currentY + 55);
+    doc
+      .fillColor("#0f172a")
+      .font("Helvetica")
+      .fontSize(8.5)
+      .text(formatDate(entry.completedAt), 300, currentY + 65, {
+        width: 240,
+      });
+  }
+  currentY += entry.completedAt ? 82 : 62;
 
   // 3. Section 2: Labor & Duration
   currentY = drawSectionHeader(t.sections.labor, currentY);
@@ -235,38 +265,28 @@ function renderMaintenanceReport(
 
   currentY += 14;
 
-  const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleString(dateLocale, {
-      timeZone,
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatDuration = (start: Date | string, end: Date | string) => {
-    const diffMs = new Date(end).getTime() - new Date(start).getTime();
-    const diffHrs = diffMs / (1000 * 60 * 60);
-    const hours = Math.floor(diffHrs);
-    const minutes = Math.round((diffHrs - hours) * 60);
-
-    if (hours > 0) {
-      return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+  const formatWorkTime = (date: Date | string | null | undefined) => {
+    if (!date || !Number.isFinite(new Date(date).getTime())) {
+      return t.labor.notRecorded;
     }
-    return `${minutes}m`;
+    return formatDate(date);
   };
 
+  const dailyHourTotals = aggregateWorkerDailyHours(entry.dailyHours ?? []);
   if (entry.assignments && entry.assignments.length > 0) {
     entry.assignments.forEach((assignment, index) => {
       if (index % 2 === 1) {
         doc.fillColor("#f8fafc").rect(36, currentY, 523, 16).fill();
       }
 
-      // Check if assignment contains specific work logs; fall back to overall timeline if null
-      const logStart = assignment.startTime ? new Date(assignment.startTime) : new Date(entry.startTime);
-      const logEnd = assignment.endTime ? new Date(assignment.endTime) : new Date(entry.endTime);
+      const dailyHours = dailyHourTotals.get(assignment.workerId);
+      const duration =
+        dailyHours === undefined
+          ? formatWorkerWorkDuration(
+              assignment.startTime,
+              assignment.endTime,
+            )
+          : formatWorkerDurationInHours(dailyHours);
 
       doc
         .fillColor("#0f172a")
@@ -276,11 +296,11 @@ function renderMaintenanceReport(
           width: 190,
           lineBreak: false,
         })
-        .text(formatDate(logStart), 240, currentY + 4)
-        .text(formatDate(logEnd), 360, currentY + 4)
+        .text(formatWorkTime(assignment.startTime), 240, currentY + 4)
+        .text(formatWorkTime(assignment.endTime), 360, currentY + 4)
         .font("Helvetica-Bold")
         .text(
-          formatDuration(logStart, logEnd),
+          duration ?? t.labor.notRecorded,
           470,
           currentY + 4,
           { align: "right", width: 80 },

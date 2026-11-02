@@ -1,12 +1,9 @@
 "use client";
 
-import { updateTask } from "../server/actions";
 import { MaintenanceEntry } from "../types";
-import { useSchedulerStore } from "../store/scheduler-provider";
 import { cn } from "@/lib/utils";
-import { addMinutes } from "date-fns";
 import { GripVertical, Wrench } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { EditEntryDialog } from "./edit-entry-dialog";
 import { TaskType } from "../../../../prisma/generated/prisma/enums";
 
@@ -15,7 +12,6 @@ interface MaintenanceEntryBlockProps {
   style?: React.CSSProperties;
   onDragStart: () => void;
   isDragging?: boolean;
-  timeSlotsCount: number;
 }
 
 export function MaintenanceEntryBlock({
@@ -23,26 +19,16 @@ export function MaintenanceEntryBlock({
   style,
   onDragStart,
   isDragging,
-  timeSlotsCount,
 }: MaintenanceEntryBlockProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const viewMode = useSchedulerStore((state) => state.viewMode);
-  const updateEntry = useSchedulerStore((state) => state.updateEntry);
-  const replaceEntry = useSchedulerStore((state) => state.replaceEntry);
-
   const assignedWorkers = entry.assignments?.map((a) => a.worker) || [];
-
-  // Resize state
-  const [isResizing, setIsResizing] = useState<"start" | "end" | null>(null);
-  const [resizeOffset, setResizeOffset] = useState(0);
-  const entryRef = useRef<HTMLDivElement>(null);
 
   const getTypeStyles = () => {
     switch (entry.type) {
       case TaskType.PREVENTIVE:
         return "bg-info/10 border-info/20 text-info";
-      case TaskType.INSPECTION:
+      case TaskType.PREDICTIVE:
         return "bg-warning/10 border-warning/20 text-warning";
       case TaskType.CORRECTIVE:
         return "bg-destructive/10 border-destructive/20 text-destructive";
@@ -52,107 +38,13 @@ export function MaintenanceEntryBlock({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
-    if (isResizing) {
-      e.preventDefault();
-      return;
-    }
     e.dataTransfer.effectAllowed = "move";
     onDragStart();
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    if (isResizing) return;
-
     e.stopPropagation();
     setDetailsOpen(true);
-  };
-
-  // --- Resizing Logic ---
-
-  const handleResizeStart = (type: "start" | "end", e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setIsResizing(type);
-    setResizeOffset(0);
-
-    const startX = e.clientX;
-    const containerWidth =
-      entryRef.current?.parentElement?.getBoundingClientRect().width || 1000;
-    const pixelsPerSlot = containerWidth / timeSlotsCount;
-
-    const onMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - startX;
-      setResizeOffset(deltaX);
-    };
-
-    const onMouseUp = async (upEvent: MouseEvent) => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-
-      const finalDeltaX = upEvent.clientX - startX;
-      // Keep isResizing state briefly to prevent handleClick from opening dialog
-      setTimeout(() => setIsResizing(null), 100);
-      setResizeOffset(0);
-
-      if (Math.abs(finalDeltaX) < 5) return;
-
-      // Calculate time change based on viewMode
-      let pixelsPerMinute = 0;
-      if (viewMode === "day") pixelsPerMinute = pixelsPerSlot / 60;
-      else if (viewMode === "week") pixelsPerMinute = pixelsPerSlot / (24 * 60);
-      else if (viewMode === "month")
-        pixelsPerMinute = pixelsPerSlot / (24 * 60);
-      else if (viewMode === "year")
-        pixelsPerMinute = pixelsPerSlot / (30 * 24 * 60);
-
-      const minutesChange = finalDeltaX / pixelsPerMinute;
-
-      // Snapping
-      let snappedMinutes = minutesChange;
-      if (viewMode === "day") {
-        snappedMinutes = Math.round(minutesChange / 15) * 15;
-      } else {
-        snappedMinutes = Math.round(minutesChange / (24 * 60)) * (24 * 60);
-      }
-
-      if (snappedMinutes === 0) return;
-
-      const newStartTime = new Date(entry.startTime);
-      const newEndTime = new Date(entry.endTime);
-
-      if (type === "start") {
-        const potentialStart = addMinutes(newStartTime, snappedMinutes);
-        if (potentialStart < newEndTime) {
-          updateEntry(entry.id, { startTime: potentialStart });
-          try {
-            const updatedTask = await updateTask(entry.id, {
-              startTime: potentialStart,
-            });
-            replaceEntry(entry.id, updatedTask);
-          } catch (error) {
-            updateEntry(entry.id, { startTime: entry.startTime });
-            console.error("Failed to resize task:", error);
-          }
-        }
-      } else {
-        const potentialEnd = addMinutes(newEndTime, snappedMinutes);
-        if (potentialEnd > newStartTime) {
-          updateEntry(entry.id, { endTime: potentialEnd });
-          try {
-            const updatedTask = await updateTask(entry.id, {
-              endTime: potentialEnd,
-            });
-            replaceEntry(entry.id, updatedTask);
-          } catch (error) {
-            updateEntry(entry.id, { endTime: entry.endTime });
-            console.error("Failed to resize task:", error);
-          }
-        }
-      }
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
   };
 
   const getInitials = (name: string) => {
@@ -163,45 +55,21 @@ export function MaintenanceEntryBlock({
       .toUpperCase();
   };
 
-  const visualStyle = {
-    ...style,
-    ...(isResizing === "start"
-      ? {
-          left: `calc(${style?.left || "0px"} + ${resizeOffset}px)`,
-          width: `calc(${style?.width || "0px"} - ${resizeOffset}px)`,
-        }
-      : {}),
-    ...(isResizing === "end"
-      ? {
-          width: `calc(${style?.width || "0px"} + ${resizeOffset}px)`,
-        }
-      : {}),
-  };
-
   return (
     <>
       <div
-        ref={entryRef}
-        draggable={!isResizing}
+        draggable
         onDragStart={handleDragStart}
         onClick={handleClick}
-        style={visualStyle}
+        style={style}
         className={cn(
           "rounded-md border px-2 py-1 cursor-grab active:cursor-grabbing group select-none",
           "flex items-center gap-1 overflow-hidden transition-[background-color,border-color,ring]",
           "hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:ring-offset-background",
           getTypeStyles(),
           isDragging && "opacity-50 scale-95",
-          isResizing &&
-            "cursor-col-resize ring-2 ring-primary border-primary/50 z-50",
         )}
       >
-        {/* Left Resize Handle */}
-        <div
-          className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/30 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-          onMouseDown={(e) => handleResizeStart("start", e)}
-        />
-
         <GripVertical className="w-3 h-3 flex-shrink-0 opacity-50" />
         <Wrench className="w-3 h-3 flex-shrink-0" />
         <span className="text-xs font-medium truncate flex-1">
@@ -226,11 +94,6 @@ export function MaintenanceEntryBlock({
           )}
         </div>
 
-        {/* Right Resize Handle */}
-        <div
-          className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/30 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-          onMouseDown={(e) => handleResizeStart("end", e)}
-        />
       </div>
 
       <EditEntryDialog

@@ -121,7 +121,7 @@ describe("createMaintenanceReportPDFStream", () => {
       id: "task-long-desc",
       title: "Complex Annual Overhaul",
       description: longDescription,
-      type: "INSPECTION",
+      type: "PREDICTIVE",
       startTime: new Date("2026-08-01T08:00:00.000Z"),
       endTime: new Date("2026-08-03T17:00:00.000Z"),
       equipmentId: "eq-1",

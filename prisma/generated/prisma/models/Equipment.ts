@@ -228,6 +228,8 @@ export type EquipmentWhereInput = {
   section?: Prisma.XOR<Prisma.SectionNullableScalarRelationFilter, Prisma.SectionWhereInput> | null
   tasks?: Prisma.MaintenanceTaskListRelationFilter
   relocations?: Prisma.EquipmentRelocationListRelationFilter
+  maintenancePoints?: Prisma.EquipmentMaintenancePointListRelationFilter
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingListRelationFilter
 }
 
 export type EquipmentOrderByWithRelationInput = {
@@ -247,6 +249,8 @@ export type EquipmentOrderByWithRelationInput = {
   section?: Prisma.SectionOrderByWithRelationInput
   tasks?: Prisma.MaintenanceTaskOrderByRelationAggregateInput
   relocations?: Prisma.EquipmentRelocationOrderByRelationAggregateInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointOrderByRelationAggregateInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingOrderByRelationAggregateInput
 }
 
 export type EquipmentWhereUniqueInput = Prisma.AtLeast<{
@@ -271,6 +275,8 @@ export type EquipmentWhereUniqueInput = Prisma.AtLeast<{
   section?: Prisma.XOR<Prisma.SectionNullableScalarRelationFilter, Prisma.SectionWhereInput> | null
   tasks?: Prisma.MaintenanceTaskListRelationFilter
   relocations?: Prisma.EquipmentRelocationListRelationFilter
+  maintenancePoints?: Prisma.EquipmentMaintenancePointListRelationFilter
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingListRelationFilter
 }, "id" | "id_organizationId" | "organizationId_name">
 
 export type EquipmentOrderByWithAggregationInput = {
@@ -318,6 +324,8 @@ export type EquipmentCreateInput = {
   section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateInput = {
@@ -333,6 +341,8 @@ export type EquipmentUncheckedCreateInput = {
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUpdateInput = {
@@ -348,6 +358,8 @@ export type EquipmentUpdateInput = {
   section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateInput = {
@@ -363,6 +375,8 @@ export type EquipmentUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateManyInput = {
@@ -592,6 +606,34 @@ export type EquipmentUpdateOneRequiredWithoutTasksNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EquipmentUpdateToOneWithWhereWithoutTasksInput, Prisma.EquipmentUpdateWithoutTasksInput>, Prisma.EquipmentUncheckedUpdateWithoutTasksInput>
 }
 
+export type EquipmentCreateNestedOneWithoutMaintenancePointsInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutMaintenancePointsInput, Prisma.EquipmentUncheckedCreateWithoutMaintenancePointsInput>
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutMaintenancePointsInput
+  connect?: Prisma.EquipmentWhereUniqueInput
+}
+
+export type EquipmentUpdateOneRequiredWithoutMaintenancePointsNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutMaintenancePointsInput, Prisma.EquipmentUncheckedCreateWithoutMaintenancePointsInput>
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutMaintenancePointsInput
+  upsert?: Prisma.EquipmentUpsertWithoutMaintenancePointsInput
+  connect?: Prisma.EquipmentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EquipmentUpdateToOneWithWhereWithoutMaintenancePointsInput, Prisma.EquipmentUpdateWithoutMaintenancePointsInput>, Prisma.EquipmentUncheckedUpdateWithoutMaintenancePointsInput>
+}
+
+export type EquipmentCreateNestedOneWithoutOperatingHourReadingsInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutOperatingHourReadingsInput, Prisma.EquipmentUncheckedCreateWithoutOperatingHourReadingsInput>
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutOperatingHourReadingsInput
+  connect?: Prisma.EquipmentWhereUniqueInput
+}
+
+export type EquipmentUpdateOneRequiredWithoutOperatingHourReadingsNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutOperatingHourReadingsInput, Prisma.EquipmentUncheckedCreateWithoutOperatingHourReadingsInput>
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutOperatingHourReadingsInput
+  upsert?: Prisma.EquipmentUpsertWithoutOperatingHourReadingsInput
+  connect?: Prisma.EquipmentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EquipmentUpdateToOneWithWhereWithoutOperatingHourReadingsInput, Prisma.EquipmentUpdateWithoutOperatingHourReadingsInput>, Prisma.EquipmentUncheckedUpdateWithoutOperatingHourReadingsInput>
+}
+
 export type EquipmentCreateNestedManyWithoutOrganizationInput = {
   create?: Prisma.XOR<Prisma.EquipmentCreateWithoutOrganizationInput, Prisma.EquipmentUncheckedCreateWithoutOrganizationInput> | Prisma.EquipmentCreateWithoutOrganizationInput[] | Prisma.EquipmentUncheckedCreateWithoutOrganizationInput[]
   connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutOrganizationInput | Prisma.EquipmentCreateOrConnectWithoutOrganizationInput[]
@@ -688,6 +730,8 @@ export type EquipmentCreateWithoutImageFileInput = {
   section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutImageFileInput = {
@@ -702,6 +746,8 @@ export type EquipmentUncheckedCreateWithoutImageFileInput = {
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutImageFileInput = {
@@ -758,6 +804,8 @@ export type EquipmentCreateWithoutSectionInput = {
   imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutSectionInput = {
@@ -772,6 +820,8 @@ export type EquipmentUncheckedCreateWithoutSectionInput = {
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutSectionInput = {
@@ -812,6 +862,8 @@ export type EquipmentCreateWithoutRelocationsInput = {
   imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
   section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutRelocationsInput = {
@@ -826,6 +878,8 @@ export type EquipmentUncheckedCreateWithoutRelocationsInput = {
   deletedById?: string | null
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutRelocationsInput = {
@@ -856,6 +910,8 @@ export type EquipmentUpdateWithoutRelocationsInput = {
   imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
   section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutRelocationsInput = {
@@ -870,6 +926,8 @@ export type EquipmentUncheckedUpdateWithoutRelocationsInput = {
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateWithoutTasksInput = {
@@ -884,6 +942,8 @@ export type EquipmentCreateWithoutTasksInput = {
   imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
   section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutTasksInput = {
@@ -898,6 +958,8 @@ export type EquipmentUncheckedCreateWithoutTasksInput = {
   deletedById?: string | null
   createdAt?: Date | string
   relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutTasksInput = {
@@ -928,6 +990,8 @@ export type EquipmentUpdateWithoutTasksInput = {
   imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
   section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutTasksInput = {
@@ -942,6 +1006,168 @@ export type EquipmentUncheckedUpdateWithoutTasksInput = {
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentCreateWithoutMaintenancePointsInput = {
+  id?: string
+  name: string
+  category?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
+  site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
+  imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
+  section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
+  tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentUncheckedCreateWithoutMaintenancePointsInput = {
+  id?: string
+  name: string
+  category?: string | null
+  imageFileId?: string | null
+  sectionId?: string | null
+  organizationId: string
+  siteId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentCreateOrConnectWithoutMaintenancePointsInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutMaintenancePointsInput, Prisma.EquipmentUncheckedCreateWithoutMaintenancePointsInput>
+}
+
+export type EquipmentUpsertWithoutMaintenancePointsInput = {
+  update: Prisma.XOR<Prisma.EquipmentUpdateWithoutMaintenancePointsInput, Prisma.EquipmentUncheckedUpdateWithoutMaintenancePointsInput>
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutMaintenancePointsInput, Prisma.EquipmentUncheckedCreateWithoutMaintenancePointsInput>
+  where?: Prisma.EquipmentWhereInput
+}
+
+export type EquipmentUpdateToOneWithWhereWithoutMaintenancePointsInput = {
+  where?: Prisma.EquipmentWhereInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateWithoutMaintenancePointsInput, Prisma.EquipmentUncheckedUpdateWithoutMaintenancePointsInput>
+}
+
+export type EquipmentUpdateWithoutMaintenancePointsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
+  site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
+  imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
+  section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
+  tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateWithoutMaintenancePointsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentCreateWithoutOperatingHourReadingsInput = {
+  id?: string
+  name: string
+  category?: string | null
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutEquipmentInput
+  site: Prisma.SiteCreateNestedOneWithoutEquipmentInput
+  imageFile?: Prisma.StoredFileCreateNestedOneWithoutEquipmentInput
+  section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
+  tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentUncheckedCreateWithoutOperatingHourReadingsInput = {
+  id?: string
+  name: string
+  category?: string | null
+  imageFileId?: string | null
+  sectionId?: string | null
+  organizationId: string
+  siteId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
+  relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentCreateOrConnectWithoutOperatingHourReadingsInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutOperatingHourReadingsInput, Prisma.EquipmentUncheckedCreateWithoutOperatingHourReadingsInput>
+}
+
+export type EquipmentUpsertWithoutOperatingHourReadingsInput = {
+  update: Prisma.XOR<Prisma.EquipmentUpdateWithoutOperatingHourReadingsInput, Prisma.EquipmentUncheckedUpdateWithoutOperatingHourReadingsInput>
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutOperatingHourReadingsInput, Prisma.EquipmentUncheckedCreateWithoutOperatingHourReadingsInput>
+  where?: Prisma.EquipmentWhereInput
+}
+
+export type EquipmentUpdateToOneWithWhereWithoutOperatingHourReadingsInput = {
+  where?: Prisma.EquipmentWhereInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateWithoutOperatingHourReadingsInput, Prisma.EquipmentUncheckedUpdateWithoutOperatingHourReadingsInput>
+}
+
+export type EquipmentUpdateWithoutOperatingHourReadingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutEquipmentNestedInput
+  site?: Prisma.SiteUpdateOneRequiredWithoutEquipmentNestedInput
+  imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
+  section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
+  tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateWithoutOperatingHourReadingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  siteId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
+  relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateWithoutOrganizationInput = {
@@ -956,6 +1182,8 @@ export type EquipmentCreateWithoutOrganizationInput = {
   section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutOrganizationInput = {
@@ -970,6 +1198,8 @@ export type EquipmentUncheckedCreateWithoutOrganizationInput = {
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutOrganizationInput = {
@@ -1010,6 +1240,8 @@ export type EquipmentCreateWithoutSiteInput = {
   section?: Prisma.SectionCreateNestedOneWithoutEquipmentInput
   tasks?: Prisma.MaintenanceTaskCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutSiteInput = {
@@ -1023,6 +1255,8 @@ export type EquipmentUncheckedCreateWithoutSiteInput = {
   createdAt?: Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedCreateNestedManyWithoutEquipmentInput
   relocations?: Prisma.EquipmentRelocationUncheckedCreateNestedManyWithoutEquipmentInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedCreateNestedManyWithoutEquipmentInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutSiteInput = {
@@ -1075,6 +1309,8 @@ export type EquipmentUpdateWithoutImageFileInput = {
   section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutImageFileInput = {
@@ -1089,6 +1325,8 @@ export type EquipmentUncheckedUpdateWithoutImageFileInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateManyWithoutImageFileInput = {
@@ -1127,6 +1365,8 @@ export type EquipmentUpdateWithoutSectionInput = {
   imageFile?: Prisma.StoredFileUpdateOneWithoutEquipmentNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutSectionInput = {
@@ -1141,6 +1381,8 @@ export type EquipmentUncheckedUpdateWithoutSectionInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateManyWithoutSectionInput = {
@@ -1179,6 +1421,8 @@ export type EquipmentUpdateWithoutOrganizationInput = {
   section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutOrganizationInput = {
@@ -1193,6 +1437,8 @@ export type EquipmentUncheckedUpdateWithoutOrganizationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateManyWithoutOrganizationInput = {
@@ -1230,6 +1476,8 @@ export type EquipmentUpdateWithoutSiteInput = {
   section?: Prisma.SectionUpdateOneWithoutEquipmentNestedInput
   tasks?: Prisma.MaintenanceTaskUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutSiteInput = {
@@ -1243,6 +1491,8 @@ export type EquipmentUncheckedUpdateWithoutSiteInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tasks?: Prisma.MaintenanceTaskUncheckedUpdateManyWithoutEquipmentNestedInput
   relocations?: Prisma.EquipmentRelocationUncheckedUpdateManyWithoutEquipmentNestedInput
+  maintenancePoints?: Prisma.EquipmentMaintenancePointUncheckedUpdateManyWithoutEquipmentNestedInput
+  operatingHourReadings?: Prisma.EquipmentOperatingHourReadingUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateManyWithoutSiteInput = {
@@ -1264,11 +1514,15 @@ export type EquipmentUncheckedUpdateManyWithoutSiteInput = {
 export type EquipmentCountOutputType = {
   tasks: number
   relocations: number
+  maintenancePoints: number
+  operatingHourReadings: number
 }
 
 export type EquipmentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tasks?: boolean | EquipmentCountOutputTypeCountTasksArgs
   relocations?: boolean | EquipmentCountOutputTypeCountRelocationsArgs
+  maintenancePoints?: boolean | EquipmentCountOutputTypeCountMaintenancePointsArgs
+  operatingHourReadings?: boolean | EquipmentCountOutputTypeCountOperatingHourReadingsArgs
 }
 
 /**
@@ -1295,6 +1549,20 @@ export type EquipmentCountOutputTypeCountRelocationsArgs<ExtArgs extends runtime
   where?: Prisma.EquipmentRelocationWhereInput
 }
 
+/**
+ * EquipmentCountOutputType without action
+ */
+export type EquipmentCountOutputTypeCountMaintenancePointsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EquipmentMaintenancePointWhereInput
+}
+
+/**
+ * EquipmentCountOutputType without action
+ */
+export type EquipmentCountOutputTypeCountOperatingHourReadingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EquipmentOperatingHourReadingWhereInput
+}
+
 
 export type EquipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1313,6 +1581,8 @@ export type EquipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   section?: boolean | Prisma.Equipment$sectionArgs<ExtArgs>
   tasks?: boolean | Prisma.Equipment$tasksArgs<ExtArgs>
   relocations?: boolean | Prisma.Equipment$relocationsArgs<ExtArgs>
+  maintenancePoints?: boolean | Prisma.Equipment$maintenancePointsArgs<ExtArgs>
+  operatingHourReadings?: boolean | Prisma.Equipment$operatingHourReadingsArgs<ExtArgs>
   _count?: boolean | Prisma.EquipmentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["equipment"]>
 
@@ -1371,6 +1641,8 @@ export type EquipmentInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   section?: boolean | Prisma.Equipment$sectionArgs<ExtArgs>
   tasks?: boolean | Prisma.Equipment$tasksArgs<ExtArgs>
   relocations?: boolean | Prisma.Equipment$relocationsArgs<ExtArgs>
+  maintenancePoints?: boolean | Prisma.Equipment$maintenancePointsArgs<ExtArgs>
+  operatingHourReadings?: boolean | Prisma.Equipment$operatingHourReadingsArgs<ExtArgs>
   _count?: boolean | Prisma.EquipmentCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EquipmentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1395,6 +1667,8 @@ export type $EquipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     section: Prisma.$SectionPayload<ExtArgs> | null
     tasks: Prisma.$MaintenanceTaskPayload<ExtArgs>[]
     relocations: Prisma.$EquipmentRelocationPayload<ExtArgs>[]
+    maintenancePoints: Prisma.$EquipmentMaintenancePointPayload<ExtArgs>[]
+    operatingHourReadings: Prisma.$EquipmentOperatingHourReadingPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1807,6 +2081,8 @@ export interface Prisma__EquipmentClient<T, Null = never, ExtArgs extends runtim
   section<T extends Prisma.Equipment$sectionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$sectionArgs<ExtArgs>>): Prisma.Prisma__SectionClient<runtime.Types.Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   tasks<T extends Prisma.Equipment$tasksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$tasksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   relocations<T extends Prisma.Equipment$relocationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$relocationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EquipmentRelocationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  maintenancePoints<T extends Prisma.Equipment$maintenancePointsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$maintenancePointsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EquipmentMaintenancePointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  operatingHourReadings<T extends Prisma.Equipment$operatingHourReadingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$operatingHourReadingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EquipmentOperatingHourReadingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2330,6 +2606,54 @@ export type Equipment$relocationsArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.EquipmentRelocationScalarFieldEnum | Prisma.EquipmentRelocationScalarFieldEnum[]
+}
+
+/**
+ * Equipment.maintenancePoints
+ */
+export type Equipment$maintenancePointsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EquipmentMaintenancePoint
+   */
+  select?: Prisma.EquipmentMaintenancePointSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the EquipmentMaintenancePoint
+   */
+  omit?: Prisma.EquipmentMaintenancePointOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EquipmentMaintenancePointInclude<ExtArgs> | null
+  where?: Prisma.EquipmentMaintenancePointWhereInput
+  orderBy?: Prisma.EquipmentMaintenancePointOrderByWithRelationInput | Prisma.EquipmentMaintenancePointOrderByWithRelationInput[]
+  cursor?: Prisma.EquipmentMaintenancePointWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EquipmentMaintenancePointScalarFieldEnum | Prisma.EquipmentMaintenancePointScalarFieldEnum[]
+}
+
+/**
+ * Equipment.operatingHourReadings
+ */
+export type Equipment$operatingHourReadingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EquipmentOperatingHourReading
+   */
+  select?: Prisma.EquipmentOperatingHourReadingSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the EquipmentOperatingHourReading
+   */
+  omit?: Prisma.EquipmentOperatingHourReadingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EquipmentOperatingHourReadingInclude<ExtArgs> | null
+  where?: Prisma.EquipmentOperatingHourReadingWhereInput
+  orderBy?: Prisma.EquipmentOperatingHourReadingOrderByWithRelationInput | Prisma.EquipmentOperatingHourReadingOrderByWithRelationInput[]
+  cursor?: Prisma.EquipmentOperatingHourReadingWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EquipmentOperatingHourReadingScalarFieldEnum | Prisma.EquipmentOperatingHourReadingScalarFieldEnum[]
 }
 
 /**

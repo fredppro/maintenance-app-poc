@@ -19,6 +19,8 @@ import {
   updateTask,
   deleteTask,
   moveTask,
+  recordOperatingHours,
+  consumeInventory,
 } from "./actions";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
 import { cookies } from "next/headers";
@@ -36,6 +38,7 @@ vi.mock("@/lib/tenant-context", async () => {
   const db = Object.create(prisma, {
     transaction: { value: (fn: never) => prisma.$transaction(fn) },
   });
+
   const context = {
     db,
     userId: "user-1",
@@ -590,7 +593,15 @@ describe("scheduler server actions", () => {
             organizationId: "org-1",
             equipment: { is: { siteId: "site-1" } },
           },
-          select: { id: true },
+          select: {
+            id: true,
+            startTime: true,
+            equipmentId: true,
+            maintenancePointId: true,
+            assignments: { select: { workerId: true } },
+            status: true,
+            completedAt: true,
+          },
         });
         expect(updateMock).not.toHaveBeenCalled();
         expect(transactionMock).not.toHaveBeenCalled();
@@ -616,8 +627,22 @@ describe("scheduler server actions", () => {
             },
             include: {
               equipment: true,
+              dailyHours: true,
               materials: true,
+              checklistItems: { orderBy: { sortOrder: "asc" } },
               assignments: { include: { worker: true } },
+              reminders: {
+                select: {
+                  id: true,
+                  workerId: true,
+                  status: true,
+                  scheduledFor: true,
+                  sentAt: true,
+                  attempts: true,
+                  worker: { select: { name: true } },
+                },
+                orderBy: { scheduledFor: "asc" },
+              },
             },
             orderBy: { startTime: "asc" },
           }),
@@ -686,7 +711,325 @@ describe("scheduler server actions", () => {
       }
     });
 
-    it("updateTask updates assignments when workerLogs are provided in transaction", async () => {
+    it("creates a task checklist snapshot from the selected maintenance point", async () => {
+      vi.spyOn(prisma.equipmentMaintenancePoint, "findFirst").mockResolvedValue({
+        id: "point-1",
+        equipmentId: "eq-1",
+        organizationId: "org-1",
+        checklistItems: [
+          { id: "template-1", title: "Inspect belt", sortOrder: 0 },
+          { id: "template-2", title: "Check lubrication", sortOrder: 1 },
+        ],
+      } as never);
+      const createTaskRecord = vi
+        .spyOn(prisma.maintenanceTask, "create")
+        .mockResolvedValue({ id: "task-new" } as never);
+
+      try {
+        await createTask({
+          title: "Inspect drive",
+          startTime: new Date("2026-06-01T08:00:00.000Z"),
+          equipmentId: "eq-1",
+          maintenancePointId: "point-1",
+          workerIds: [],
+        });
+
+        expect(createTaskRecord).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              maintenancePointId: "point-1",
+              endTime: null,
+              checklistItems: {
+                createMany: {
+                  data: [
+                    {
+                      sourceItemId: "template-1",
+                      title: "Inspect belt",
+                      sortOrder: 0,
+                    },
+                    {
+                      sourceItemId: "template-2",
+                      title: "Check lubrication",
+                      sortOrder: 1,
+                    },
+                  ],
+                },
+              },
+            }),
+          }),
+        );
+      } finally {
+        createTaskRecord.mockRestore();
+      }
+    });
+
+    it("records checklist completion on the tenant-scoped task item", async () => {
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-123",
+        startTime: new Date("2026-06-30T08:00:00.000Z"),
+        equipmentId: "eq-1",
+        maintenancePointId: null,
+        assignments: [],
+      } as never);
+      const updateChecklistItem = vi.fn().mockResolvedValue({ count: 1 });
+      const fakeTx = {
+        maintenanceTaskChecklistItem: { updateMany: updateChecklistItem },
+        maintenanceTask: {
+          update: vi.fn().mockResolvedValue({ id: "task-123" }),
+        },
+      };
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) => callback(fakeTx));
+
+      try {
+        await updateTask("task-123", {
+          checklistItems: [{ id: "check-1", isComplete: true }],
+        });
+        expect(updateChecklistItem).toHaveBeenCalledWith({
+          where: {
+            id: "check-1",
+            taskId: "task-123",
+            organizationId: "org-1",
+          },
+          data: {
+            isComplete: true,
+            completedAt: expect.any(Date),
+            completedById: "user-1",
+          },
+        });
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+
+    it("records operating-hour readings without allowing backdated or decreasing values", async () => {
+      const previousMeasuredAt = new Date("2026-06-30T08:00:00.000Z");
+      const measuredAt = new Date("2026-07-01T08:00:00.000Z");
+      const createReading = vi.fn().mockResolvedValue({ id: "reading-2" });
+      const fakeTx = {
+        equipmentOperatingHourReading: {
+          findFirst: vi.fn().mockResolvedValue({
+            measuredAt: previousMeasuredAt,
+            reading: "100.00",
+          }),
+          create: createReading,
+        },
+      };
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) => callback(fakeTx));
+
+      try {
+        await expect(
+          recordOperatingHours("eq-1", { reading: 99, measuredAt }),
+        ).rejects.toThrow("Operating-hour readings must be chronological");
+        await expect(
+          recordOperatingHours("eq-1", { reading: 101, measuredAt }),
+        ).resolves.toEqual({ id: "reading-2" });
+        expect(createReading).toHaveBeenCalledWith({
+          data: {
+            equipmentId: "eq-1",
+            organizationId: "org-1",
+            reading: "101.00",
+            measuredAt,
+            note: null,
+            recordedById: "user-1",
+          },
+        });
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+
+    it("decrements stock and writes actual task consumption atomically", async () => {
+      const decrementStock = vi.fn().mockResolvedValue({ count: 1 });
+      const createMovement = vi.fn().mockResolvedValue({ id: "movement-1" });
+      const fakeTx = {
+        maintenanceTask: {
+          findFirst: vi.fn().mockResolvedValue({ id: "task-123" }),
+        },
+        inventoryItem: { updateMany: decrementStock },
+        inventoryMovement: { create: createMovement },
+      };
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) => callback(fakeTx));
+
+      try {
+        await expect(
+          consumeInventory("stock-1", "task-123", {
+            quantity: 2.5,
+            note: "Replaced worn belt",
+          }),
+        ).resolves.toEqual({ id: "movement-1" });
+        expect(decrementStock).toHaveBeenCalledWith({
+          where: {
+            id: "stock-1",
+            organizationId: "org-1",
+            siteId: "site-1",
+            onHand: { gte: "2.50" },
+          },
+          data: { onHand: { decrement: "2.50" } },
+        });
+        expect(createMovement).toHaveBeenCalledWith({
+          data: {
+            inventoryItemId: "stock-1",
+            organizationId: "org-1",
+            taskId: "task-123",
+            type: "CONSUMPTION",
+            quantity: "2.50",
+            note: "Replaced worn belt",
+            recordedById: "user-1",
+          },
+        });
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+
+    it("rejects consumption that would make stock negative", async () => {
+      const createMovement = vi.fn();
+      const fakeTx = {
+        maintenanceTask: {
+          findFirst: vi.fn().mockResolvedValue({ id: "task-123" }),
+        },
+        inventoryItem: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        inventoryMovement: { create: createMovement },
+      };
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) => callback(fakeTx));
+
+      try {
+        await expect(
+          consumeInventory("stock-1", "task-123", { quantity: 4 }),
+        ).rejects.toThrow("Inventory item not found or insufficient stock");
+        expect(createMovement).not.toHaveBeenCalled();
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+
+    it("initializes the completion timestamp when a task first becomes completed", async () => {
+      const completedAt = new Date("2026-12-20T17:15:00.000Z");
+      vi.useFakeTimers();
+      vi.setSystemTime(completedAt);
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-123",
+        startTime: new Date("2026-12-20T08:00:00.000Z"),
+        equipmentId: "eq-1",
+        maintenancePointId: null,
+        status: "scheduled",
+        completedAt: null,
+        assignments: [],
+      } as never);
+      const updateTaskRecord = vi.fn(async (args: any) => ({
+        id: "task-123",
+        ...args.data,
+      }));
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) =>
+          callback({ maintenanceTask: { update: updateTaskRecord } }),
+        );
+
+      try {
+        await updateTask("task-123", { status: "completed" });
+
+        expect(updateTaskRecord).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: {
+              status: "completed",
+              completedAt,
+            },
+          }),
+        );
+      } finally {
+        transaction.mockRestore();
+        vi.useRealTimers();
+      }
+    });
+
+    it("preserves an existing completion timestamp when reopening and editing a task", async () => {
+      const completedAt = new Date("2026-12-19T17:15:00.000Z");
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-123",
+        startTime: new Date("2026-12-19T08:00:00.000Z"),
+        equipmentId: "eq-1",
+        maintenancePointId: null,
+        status: "completed",
+        completedAt,
+        assignments: [],
+      } as never);
+      const updateTaskRecord = vi.fn(async (args: any) => ({
+        id: "task-123",
+        ...args.data,
+      }));
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) =>
+          callback({ maintenanceTask: { update: updateTaskRecord } }),
+        );
+
+      try {
+        await updateTask("task-123", {
+          status: "scheduled",
+          title: "Reopened inspection",
+        });
+
+        expect(updateTaskRecord).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: {
+              status: "scheduled",
+              title: "Reopened inspection",
+              completedAt,
+            },
+          }),
+        );
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+
+    it("does not replace a historical completion timestamp when completing the task again", async () => {
+      const completedAt = new Date("2026-12-19T17:15:00.000Z");
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-123",
+        startTime: new Date("2026-12-19T08:00:00.000Z"),
+        equipmentId: "eq-1",
+        maintenancePointId: null,
+        status: "scheduled",
+        completedAt,
+        assignments: [],
+      } as never);
+      const updateTaskRecord = vi.fn(async (args: any) => ({
+        id: "task-123",
+        ...args.data,
+      }));
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) =>
+          callback({ maintenanceTask: { update: updateTaskRecord } }),
+        );
+
+      try {
+        await updateTask("task-123", { status: "completed" });
+
+        expect(updateTaskRecord).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: {
+              status: "completed",
+              completedAt,
+            },
+          }),
+        );
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+
+    it("updates assignments when workerLogs are provided in transaction", async () => {
       vi.mocked(prisma.worker.count).mockResolvedValue(1);
       const logStart = new Date("2026-06-01T08:30:00.000Z");
       const logEnd = new Date("2026-06-01T09:30:00.000Z");
@@ -740,6 +1083,51 @@ describe("scheduler server actions", () => {
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
         txMock.mockRestore();
+      }
+    });
+
+    it("persists an actual worker start without inventing an end time", async () => {
+      vi.mocked(prisma.worker.count).mockResolvedValue(1);
+      const logStart = new Date("2026-06-01T08:30:00.000Z");
+      const createdAssignments: any[] = [];
+      const fakeTx = {
+        maintenanceTaskAssignment: {
+          deleteMany: async () => ({ count: 0 }),
+          createMany: async (args: any) => {
+            createdAssignments.push(...args.data);
+            return { count: args.data.length };
+          },
+        },
+        material: {
+          deleteMany: async () => ({ count: 0 }),
+          createMany: async () => ({ count: 0 }),
+        },
+        maintenanceTask: {
+          update: async (args: any) => ({ id: args.where.id }),
+        },
+      };
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) => callback(fakeTx));
+
+      try {
+        await updateTask("task-123", {
+          workerLogs: [
+            { workerId: "worker-1", startTime: logStart, endTime: null },
+          ],
+        });
+
+        expect(createdAssignments).toEqual([
+          {
+            taskId: "task-123",
+            workerId: "worker-1",
+            organizationId: "org-1",
+            startTime: logStart,
+            endTime: null,
+          },
+        ]);
+      } finally {
+        transaction.mockRestore();
       }
     });
 
@@ -803,6 +1191,57 @@ describe("scheduler server actions", () => {
       }
     });
 
+    it("shifts daily worker hours when an edited task moves to another date", async () => {
+      const previousStart = new Date("2026-06-30T10:00:00.000Z");
+      const nextStart = new Date("2026-07-01T10:00:00.000Z");
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-123",
+        startTime: previousStart,
+        assignments: [{ workerId: "worker-1" }],
+      } as never);
+      vi.spyOn(prisma.worker, "count").mockResolvedValue(1);
+      const createDailyHours = vi.fn();
+      const fakeTx = {
+        maintenanceTaskDailyHours: {
+          deleteMany: vi.fn(),
+          createMany: createDailyHours,
+        },
+        maintenanceTask: {
+          update: vi.fn().mockResolvedValue({ id: "task-123" }),
+        },
+      };
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) => callback(fakeTx));
+
+      try {
+        await updateTask("task-123", {
+          startTime: nextStart,
+          dailyHours: [
+            {
+              workerId: "worker-1",
+              workDate: "2026-06-30",
+              hours: 4,
+            },
+          ],
+        });
+
+        expect(createDailyHours).toHaveBeenCalledWith({
+          data: [
+            {
+              taskId: "task-123",
+              organizationId: "org-1",
+              workerId: "worker-1",
+              workDate: new Date("2026-07-01T00:00:00.000Z"),
+              hours: "4.00",
+            },
+          ],
+        });
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+
     it("clears assignments and materials when explicit empty arrays are provided", async () => {
       const deletedAssignment = vi.fn().mockResolvedValue({ count: 2 });
       const createdAssignments = vi.fn();
@@ -859,44 +1298,100 @@ describe("scheduler server actions", () => {
       expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
     });
 
-    it("moveTask updates start/end time and equipmentId", async () => {
+    it("moves the task schedule without shifting actual worker work logs", async () => {
       const newStart = new Date("2026-07-01T10:00:00.000Z");
       const newEnd = new Date("2026-07-01T12:00:00.000Z");
-
-      const updateMock = vi.spyOn(prisma.maintenanceTask, "update").mockResolvedValue(
-        { id: "task-123", startTime: newStart, endTime: newEnd, equipmentId: "eq-new" } as any,
-      );
+      const oldStart = new Date("2026-06-30T10:00:00.000Z");
+      const oldEnd = new Date("2026-06-30T12:00:00.000Z");
+      const fakeTx = {
+        maintenanceTask: {
+          findFirst: vi.fn().mockResolvedValue({
+            startTime: oldStart,
+            endTime: oldEnd,
+          }),
+          update: vi.fn().mockResolvedValue({
+            id: "task-123",
+            startTime: newStart,
+            endTime: newEnd,
+            equipmentId: "eq-new",
+          }),
+        },
+        maintenanceTaskAssignment: {
+          findMany: vi.fn().mockResolvedValue([
+            { id: "assignment-1", startTime: oldStart, endTime: oldEnd },
+          ]),
+          update: vi.fn(),
+        },
+        maintenanceTaskDailyHours: {
+          findMany: vi.fn().mockResolvedValue([
+            {
+              workerId: "worker-1",
+              workDate: new Date("2026-06-30T00:00:00.000Z"),
+              hours: "4.00",
+              createdAt: new Date("2026-06-30T08:00:00.000Z"),
+            },
+          ]),
+          deleteMany: vi.fn(),
+          createMany: vi.fn(),
+        },
+      };
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) => callback(fakeTx));
 
       try {
-        const result = await moveTask("task-123", newStart, newEnd, "eq-new");
+        const result = await moveTask("task-123", newStart, "eq-new");
         expect(result.id).toBe("task-123");
-        expect(updateMock).toHaveBeenCalledWith(
+        expect(fakeTx.maintenanceTask.update).toHaveBeenCalledWith(
           expect.objectContaining({
             where: {
               id: "task-123",
               organizationId: "org-1",
               equipment: { is: { siteId: "site-1" } },
             },
-            data: { startTime: newStart, endTime: newEnd, equipmentId: "eq-new" },
-            include: { equipment: true, assignments: { include: { worker: true } } },
+            data: {
+              startTime: newStart,
+              endTime: newEnd,
+              equipmentId: "eq-new",
+            },
+            include: {
+              equipment: true,
+              assignments: { include: { worker: true } },
+              dailyHours: true,
+              materials: true,
+              checklistItems: { orderBy: { sortOrder: "asc" } },
+            },
           }),
         );
+        expect(fakeTx.maintenanceTaskAssignment.findMany).not.toHaveBeenCalled();
+        expect(fakeTx.maintenanceTaskAssignment.update).not.toHaveBeenCalled();
+        expect(fakeTx.maintenanceTaskDailyHours.deleteMany).toHaveBeenCalledWith({
+          where: { taskId: "task-123", organizationId: "org-1" },
+        });
+        expect(fakeTx.maintenanceTaskDailyHours.createMany).toHaveBeenCalledWith({
+          data: [
+            {
+              taskId: "task-123",
+              organizationId: "org-1",
+              workerId: "worker-1",
+              workDate: new Date("2026-07-01T00:00:00.000Z"),
+              hours: "4.00",
+              createdAt: new Date("2026-06-30T08:00:00.000Z"),
+            },
+          ],
+        });
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
-        updateMock.mockRestore();
+        transaction.mockRestore();
       }
     });
 
-    it("rejects invalid move intervals before updating the database", async () => {
+    it("rejects an invalid move date before updating the database", async () => {
       const updateMock = vi.spyOn(prisma.maintenanceTask, "update");
 
       await expect(
-        moveTask(
-          "task-123",
-          new Date("2026-07-01T12:00:00.000Z"),
-          new Date("2026-07-01T10:00:00.000Z"),
-        ),
-      ).rejects.toThrow("Task end time must be after start time");
+        moveTask("task-123", new Date("invalid")),
+      ).rejects.toThrow("Task start time is invalid");
 
       expect(updateMock).not.toHaveBeenCalled();
       expect(vi.mocked(revalidatePath)).not.toHaveBeenCalled();

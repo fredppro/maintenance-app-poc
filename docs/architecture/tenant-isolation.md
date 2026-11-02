@@ -8,9 +8,17 @@ All customers share one PostgreSQL schema. Isolation has two independent layers:
 
 ## How RLS works
 
-- The 10 tenant tables (`Site`, `Section`, `Equipment`, `EquipmentRelocation`, `StoredFile`,
-  `MaintenanceTask`, `MaintenanceTaskAssignment`, `Material`, `Worker`, `Vendor`) have RLS enabled and
-  forced, with a `tenant_isolation` policy: `"organizationId" = current_setting('app.org_id', true)`.
+- The 18 core maintenance tables (`Site`, `Section`, `Equipment`, `EquipmentRelocation`, `StoredFile`,
+  `MaintenanceTask`, `MaintenanceTaskAssignment`, `MaintenanceTaskDailyHours`,
+  `MaintenanceTaskChecklistItem`, `MaintenanceTaskReminder`, `Material`, `EquipmentMaintenancePoint`,
+  `EquipmentPointChecklistItem`, `EquipmentOperatingHourReading`, `InventoryItem`,
+  `InventoryMovement`, `Worker`, `Vendor`) have RLS enabled and forced, with tenant policies:
+  `"organizationId" = current_setting('app.org_id', true)`.
+- `EquipmentOperatingHourReading` intentionally has tenant-scoped `SELECT` and `INSERT` policies only;
+  readings are append-only for the application role.
+- `InventoryMovement` is also append-only for the application role; stock balances are changed only
+  by inventory actions that write a matching movement in the same transaction.
+- `StoredFileDeletion` and tenant exports are also RLS-protected by their own migrations.
 - `getTenantContext()` returns a `db` client from `forTenant(organizationId)` (`src/lib/prisma.ts`).
   Every query on it runs in a transaction that first executes `set_config('app.org_id', …, true)`.
   Use `db.transaction(fn)` for multi-statement work.

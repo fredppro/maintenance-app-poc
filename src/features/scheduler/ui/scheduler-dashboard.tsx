@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { TaskType } from "../../../../prisma/generated/prisma/enums";
 import { Separator } from "@/components/ui/separator";
 import type { OnboardingProgress } from "@/features/organization/shared/onboarding";
@@ -9,6 +9,10 @@ import { useSchedulerStore } from "../store/scheduler-provider";
 import { GettingStarted } from "./getting-started";
 import { SchedulerToolbar } from "./scheduler-toolbar";
 import { TimelineGrid } from "./timeline-grid";
+import {
+  countOverdueScheduledMaintenance,
+  getNextScheduledMaintenance,
+} from "../utils/insights";
 
 /**
  * Schedule page body: optional getting-started checklist, summary strip, toolbar, timeline and legend.
@@ -21,20 +25,59 @@ export function SchedulerDashboard({
 }) {
   const entries = useSchedulerStore((state) => state.entries);
   const equipment = useSchedulerStore((state) => state.equipment);
+  const timeZone = useSchedulerStore((state) => state.timeZone);
   const t = useTranslations("Dashboard");
+  const format = useFormatter();
+  const nextMaintenance = getNextScheduledMaintenance(entries, Date.now());
+  const overdueCount = countOverdueScheduledMaintenance(entries, Date.now());
 
   const stats = {
     scheduled: entries.filter((e) => e.status === "scheduled").length,
     inProgress: entries.filter((e) => e.status === "in-progress").length,
     preventive: entries.filter((e) => e.type === TaskType.PREVENTIVE).length,
     corrective: entries.filter((e) => e.type === TaskType.CORRECTIVE).length,
-    inspection: entries.filter((e) => e.type === TaskType.INSPECTION).length,
+    inspection: entries.filter((e) => e.type === TaskType.PREDICTIVE).length,
   };
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-3 sm:p-4">
       <h1 className="sr-only">{t("title")}</h1>
       {onboarding && <GettingStarted progress={onboarding} />}
+      <section
+        role="status"
+        aria-label={t("nextMaintenance.title")}
+        className="flex shrink-0 flex-wrap items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3"
+      >
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("nextMaintenance.title")}
+          </p>
+          {nextMaintenance ? (
+            <>
+              <p className="truncate font-medium">{nextMaintenance.title}</p>
+              <p className="text-sm text-muted-foreground">
+                {equipment.find((item) => item.id === nextMaintenance.equipmentId)
+                  ?.name ?? ""}
+                {" · "}
+                {format.dateTime(new Date(nextMaintenance.startTime), {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                  timeZone,
+                })}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {t("nextMaintenance.none")}
+            </p>
+          )}
+        </div>
+        {overdueCount > 0 && (
+          <p className="text-sm font-medium text-destructive">
+            {t("nextMaintenance.overdue", { count: overdueCount })}
+          </p>
+        )}
+      </section>
       <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2 text-sm">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Stat

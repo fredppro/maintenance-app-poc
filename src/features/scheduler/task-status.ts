@@ -1,5 +1,10 @@
 /** The statuses a maintenance task can have. Anything else is rejected by the server. */
-export const TASK_STATUSES = ["scheduled", "in-progress", "completed"] as const;
+export const TASK_STATUSES = [
+  "scheduled",
+  "in-progress",
+  "completed",
+  "cancelled",
+] as const;
 
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 

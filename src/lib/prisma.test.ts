@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-import prisma, { createTenantClient, hideTrashed, prismaClientSingleton } from "./prisma";
+import prisma, {
+  createTenantClient,
+  hideTrashed,
+  prismaClientSingleton,
+  runTenantOperation,
+} from "./prisma";
 
 describe("prisma client singleton", () => {
   const originalDatabaseUrl = process.env.DATABASE_URL;
@@ -22,6 +27,44 @@ describe("prisma client singleton", () => {
 describe("tenant client", () => {
   it("refuses an empty organization id", () => {
     expect(() => createTenantClient(prisma, "")).toThrow(/organizationId/);
+  });
+
+  it("sets tenant scope before running the model query in the transaction", async () => {
+    const calls: string[] = [];
+    let finishScope!: () => void;
+    const scopeIsSet = new Promise<void>((resolve) => {
+      finishScope = resolve;
+    });
+    const tx = {
+      $executeRaw: async () => {
+        calls.push("scope-start");
+        await scopeIsSet;
+        calls.push("scope-finished");
+      },
+      maintenanceTask: {
+        findMany: async (args: unknown) => {
+          calls.push("model-query");
+          expect(args).toEqual({
+            where: { title: "Check pump", deletedAt: null },
+          });
+          return ["task"];
+        },
+      },
+    };
+
+    const pending = runTenantOperation(
+      tx as never,
+      "org-1",
+      "MaintenanceTask",
+      "findMany",
+      { where: { title: "Check pump" } },
+    );
+
+    await Promise.resolve();
+    expect(calls).toEqual(["scope-start"]);
+    finishScope();
+    await expect(pending).resolves.toEqual(["task"]);
+    expect(calls).toEqual(["scope-start", "scope-finished", "model-query"]);
   });
 });
 

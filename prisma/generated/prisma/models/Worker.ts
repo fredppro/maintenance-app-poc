@@ -225,6 +225,8 @@ export type WorkerWhereInput = {
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   vendor?: Prisma.XOR<Prisma.VendorNullableScalarRelationFilter, Prisma.VendorWhereInput> | null
   assignments?: Prisma.MaintenanceTaskAssignmentListRelationFilter
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursListRelationFilter
+  reminders?: Prisma.MaintenanceTaskReminderListRelationFilter
 }
 
 export type WorkerOrderByWithRelationInput = {
@@ -241,6 +243,8 @@ export type WorkerOrderByWithRelationInput = {
   organization?: Prisma.OrganizationOrderByWithRelationInput
   vendor?: Prisma.VendorOrderByWithRelationInput
   assignments?: Prisma.MaintenanceTaskAssignmentOrderByRelationAggregateInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursOrderByRelationAggregateInput
+  reminders?: Prisma.MaintenanceTaskReminderOrderByRelationAggregateInput
 }
 
 export type WorkerWhereUniqueInput = Prisma.AtLeast<{
@@ -262,6 +266,8 @@ export type WorkerWhereUniqueInput = Prisma.AtLeast<{
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   vendor?: Prisma.XOR<Prisma.VendorNullableScalarRelationFilter, Prisma.VendorWhereInput> | null
   assignments?: Prisma.MaintenanceTaskAssignmentListRelationFilter
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursListRelationFilter
+  reminders?: Prisma.MaintenanceTaskReminderListRelationFilter
 }, "id" | "id_organizationId" | "organizationId_email">
 
 export type WorkerOrderByWithAggregationInput = {
@@ -308,6 +314,8 @@ export type WorkerCreateInput = {
   organization: Prisma.OrganizationCreateNestedOneWithoutWorkersInput
   vendor?: Prisma.VendorCreateNestedOneWithoutWorkersInput
   assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutWorkerInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutWorkerInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutWorkerInput
 }
 
 export type WorkerUncheckedCreateInput = {
@@ -322,6 +330,8 @@ export type WorkerUncheckedCreateInput = {
   deletedById?: string | null
   createdAt?: Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutWorkerInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutWorkerInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutWorkerInput
 }
 
 export type WorkerUpdateInput = {
@@ -336,6 +346,8 @@ export type WorkerUpdateInput = {
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutWorkersNestedInput
   vendor?: Prisma.VendorUpdateOneWithoutWorkersNestedInput
   assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutWorkerNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutWorkerNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutWorkerNestedInput
 }
 
 export type WorkerUncheckedUpdateInput = {
@@ -350,6 +362,8 @@ export type WorkerUncheckedUpdateInput = {
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutWorkerNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutWorkerNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutWorkerNestedInput
 }
 
 export type WorkerCreateManyInput = {
@@ -453,6 +467,20 @@ export type WorkerOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type WorkerCreateNestedOneWithoutRemindersInput = {
+  create?: Prisma.XOR<Prisma.WorkerCreateWithoutRemindersInput, Prisma.WorkerUncheckedCreateWithoutRemindersInput>
+  connectOrCreate?: Prisma.WorkerCreateOrConnectWithoutRemindersInput
+  connect?: Prisma.WorkerWhereUniqueInput
+}
+
+export type WorkerUpdateOneRequiredWithoutRemindersNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkerCreateWithoutRemindersInput, Prisma.WorkerUncheckedCreateWithoutRemindersInput>
+  connectOrCreate?: Prisma.WorkerCreateOrConnectWithoutRemindersInput
+  upsert?: Prisma.WorkerUpsertWithoutRemindersInput
+  connect?: Prisma.WorkerWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkerUpdateToOneWithWhereWithoutRemindersInput, Prisma.WorkerUpdateWithoutRemindersInput>, Prisma.WorkerUncheckedUpdateWithoutRemindersInput>
+}
+
 export type WorkerCreateNestedOneWithoutAssignmentsInput = {
   create?: Prisma.XOR<Prisma.WorkerCreateWithoutAssignmentsInput, Prisma.WorkerUncheckedCreateWithoutAssignmentsInput>
   connectOrCreate?: Prisma.WorkerCreateOrConnectWithoutAssignmentsInput
@@ -465,6 +493,20 @@ export type WorkerUpdateOneRequiredWithoutAssignmentsNestedInput = {
   upsert?: Prisma.WorkerUpsertWithoutAssignmentsInput
   connect?: Prisma.WorkerWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkerUpdateToOneWithWhereWithoutAssignmentsInput, Prisma.WorkerUpdateWithoutAssignmentsInput>, Prisma.WorkerUncheckedUpdateWithoutAssignmentsInput>
+}
+
+export type WorkerCreateNestedOneWithoutDailyHoursInput = {
+  create?: Prisma.XOR<Prisma.WorkerCreateWithoutDailyHoursInput, Prisma.WorkerUncheckedCreateWithoutDailyHoursInput>
+  connectOrCreate?: Prisma.WorkerCreateOrConnectWithoutDailyHoursInput
+  connect?: Prisma.WorkerWhereUniqueInput
+}
+
+export type WorkerUpdateOneRequiredWithoutDailyHoursNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkerCreateWithoutDailyHoursInput, Prisma.WorkerUncheckedCreateWithoutDailyHoursInput>
+  connectOrCreate?: Prisma.WorkerCreateOrConnectWithoutDailyHoursInput
+  upsert?: Prisma.WorkerUpsertWithoutDailyHoursInput
+  connect?: Prisma.WorkerWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkerUpdateToOneWithWhereWithoutDailyHoursInput, Prisma.WorkerUpdateWithoutDailyHoursInput>, Prisma.WorkerUncheckedUpdateWithoutDailyHoursInput>
 }
 
 export type EnumWorkerTypeFieldUpdateOperationsInput = {
@@ -555,6 +597,82 @@ export type WorkerUncheckedUpdateManyWithoutOrganizationNestedInput = {
   deleteMany?: Prisma.WorkerScalarWhereInput | Prisma.WorkerScalarWhereInput[]
 }
 
+export type WorkerCreateWithoutRemindersInput = {
+  id?: string
+  name: string
+  email: string
+  phone?: string | null
+  type?: $Enums.WorkerType
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutWorkersInput
+  vendor?: Prisma.VendorCreateNestedOneWithoutWorkersInput
+  assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutWorkerInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutWorkerInput
+}
+
+export type WorkerUncheckedCreateWithoutRemindersInput = {
+  id?: string
+  name: string
+  email: string
+  phone?: string | null
+  type?: $Enums.WorkerType
+  vendorId?: string | null
+  organizationId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutWorkerInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutWorkerInput
+}
+
+export type WorkerCreateOrConnectWithoutRemindersInput = {
+  where: Prisma.WorkerWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkerCreateWithoutRemindersInput, Prisma.WorkerUncheckedCreateWithoutRemindersInput>
+}
+
+export type WorkerUpsertWithoutRemindersInput = {
+  update: Prisma.XOR<Prisma.WorkerUpdateWithoutRemindersInput, Prisma.WorkerUncheckedUpdateWithoutRemindersInput>
+  create: Prisma.XOR<Prisma.WorkerCreateWithoutRemindersInput, Prisma.WorkerUncheckedCreateWithoutRemindersInput>
+  where?: Prisma.WorkerWhereInput
+}
+
+export type WorkerUpdateToOneWithWhereWithoutRemindersInput = {
+  where?: Prisma.WorkerWhereInput
+  data: Prisma.XOR<Prisma.WorkerUpdateWithoutRemindersInput, Prisma.WorkerUncheckedUpdateWithoutRemindersInput>
+}
+
+export type WorkerUpdateWithoutRemindersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutWorkersNestedInput
+  vendor?: Prisma.VendorUpdateOneWithoutWorkersNestedInput
+  assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutWorkerNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutWorkerNestedInput
+}
+
+export type WorkerUncheckedUpdateWithoutRemindersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
+  vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutWorkerNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutWorkerNestedInput
+}
+
 export type WorkerCreateWithoutAssignmentsInput = {
   id?: string
   name: string
@@ -566,6 +684,8 @@ export type WorkerCreateWithoutAssignmentsInput = {
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutWorkersInput
   vendor?: Prisma.VendorCreateNestedOneWithoutWorkersInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutWorkerInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutWorkerInput
 }
 
 export type WorkerUncheckedCreateWithoutAssignmentsInput = {
@@ -579,6 +699,8 @@ export type WorkerUncheckedCreateWithoutAssignmentsInput = {
   deletedAt?: Date | string | null
   deletedById?: string | null
   createdAt?: Date | string
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutWorkerInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutWorkerInput
 }
 
 export type WorkerCreateOrConnectWithoutAssignmentsInput = {
@@ -608,6 +730,8 @@ export type WorkerUpdateWithoutAssignmentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutWorkersNestedInput
   vendor?: Prisma.VendorUpdateOneWithoutWorkersNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutWorkerNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutWorkerNestedInput
 }
 
 export type WorkerUncheckedUpdateWithoutAssignmentsInput = {
@@ -621,6 +745,84 @@ export type WorkerUncheckedUpdateWithoutAssignmentsInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutWorkerNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutWorkerNestedInput
+}
+
+export type WorkerCreateWithoutDailyHoursInput = {
+  id?: string
+  name: string
+  email: string
+  phone?: string | null
+  type?: $Enums.WorkerType
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutWorkersInput
+  vendor?: Prisma.VendorCreateNestedOneWithoutWorkersInput
+  assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutWorkerInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutWorkerInput
+}
+
+export type WorkerUncheckedCreateWithoutDailyHoursInput = {
+  id?: string
+  name: string
+  email: string
+  phone?: string | null
+  type?: $Enums.WorkerType
+  vendorId?: string | null
+  organizationId: string
+  deletedAt?: Date | string | null
+  deletedById?: string | null
+  createdAt?: Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutWorkerInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutWorkerInput
+}
+
+export type WorkerCreateOrConnectWithoutDailyHoursInput = {
+  where: Prisma.WorkerWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkerCreateWithoutDailyHoursInput, Prisma.WorkerUncheckedCreateWithoutDailyHoursInput>
+}
+
+export type WorkerUpsertWithoutDailyHoursInput = {
+  update: Prisma.XOR<Prisma.WorkerUpdateWithoutDailyHoursInput, Prisma.WorkerUncheckedUpdateWithoutDailyHoursInput>
+  create: Prisma.XOR<Prisma.WorkerCreateWithoutDailyHoursInput, Prisma.WorkerUncheckedCreateWithoutDailyHoursInput>
+  where?: Prisma.WorkerWhereInput
+}
+
+export type WorkerUpdateToOneWithWhereWithoutDailyHoursInput = {
+  where?: Prisma.WorkerWhereInput
+  data: Prisma.XOR<Prisma.WorkerUpdateWithoutDailyHoursInput, Prisma.WorkerUncheckedUpdateWithoutDailyHoursInput>
+}
+
+export type WorkerUpdateWithoutDailyHoursInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutWorkersNestedInput
+  vendor?: Prisma.VendorUpdateOneWithoutWorkersNestedInput
+  assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutWorkerNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutWorkerNestedInput
+}
+
+export type WorkerUncheckedUpdateWithoutDailyHoursInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumWorkerTypeFieldUpdateOperationsInput | $Enums.WorkerType
+  vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutWorkerNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutWorkerNestedInput
 }
 
 export type WorkerCreateWithoutVendorInput = {
@@ -634,6 +836,8 @@ export type WorkerCreateWithoutVendorInput = {
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutWorkersInput
   assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutWorkerInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutWorkerInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutWorkerInput
 }
 
 export type WorkerUncheckedCreateWithoutVendorInput = {
@@ -646,6 +850,8 @@ export type WorkerUncheckedCreateWithoutVendorInput = {
   deletedById?: string | null
   createdAt?: Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutWorkerInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutWorkerInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutWorkerInput
 }
 
 export type WorkerCreateOrConnectWithoutVendorInput = {
@@ -701,6 +907,8 @@ export type WorkerCreateWithoutOrganizationInput = {
   createdAt?: Date | string
   vendor?: Prisma.VendorCreateNestedOneWithoutWorkersInput
   assignments?: Prisma.MaintenanceTaskAssignmentCreateNestedManyWithoutWorkerInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursCreateNestedManyWithoutWorkerInput
+  reminders?: Prisma.MaintenanceTaskReminderCreateNestedManyWithoutWorkerInput
 }
 
 export type WorkerUncheckedCreateWithoutOrganizationInput = {
@@ -714,6 +922,8 @@ export type WorkerUncheckedCreateWithoutOrganizationInput = {
   deletedById?: string | null
   createdAt?: Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedCreateNestedManyWithoutWorkerInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedCreateNestedManyWithoutWorkerInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedCreateNestedManyWithoutWorkerInput
 }
 
 export type WorkerCreateOrConnectWithoutOrganizationInput = {
@@ -764,6 +974,8 @@ export type WorkerUpdateWithoutVendorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutWorkersNestedInput
   assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutWorkerNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutWorkerNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutWorkerNestedInput
 }
 
 export type WorkerUncheckedUpdateWithoutVendorInput = {
@@ -776,6 +988,8 @@ export type WorkerUncheckedUpdateWithoutVendorInput = {
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutWorkerNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutWorkerNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutWorkerNestedInput
 }
 
 export type WorkerUncheckedUpdateManyWithoutVendorInput = {
@@ -812,6 +1026,8 @@ export type WorkerUpdateWithoutOrganizationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   vendor?: Prisma.VendorUpdateOneWithoutWorkersNestedInput
   assignments?: Prisma.MaintenanceTaskAssignmentUpdateManyWithoutWorkerNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUpdateManyWithoutWorkerNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUpdateManyWithoutWorkerNestedInput
 }
 
 export type WorkerUncheckedUpdateWithoutOrganizationInput = {
@@ -825,6 +1041,8 @@ export type WorkerUncheckedUpdateWithoutOrganizationInput = {
   deletedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.MaintenanceTaskAssignmentUncheckedUpdateManyWithoutWorkerNestedInput
+  dailyHours?: Prisma.MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutWorkerNestedInput
+  reminders?: Prisma.MaintenanceTaskReminderUncheckedUpdateManyWithoutWorkerNestedInput
 }
 
 export type WorkerUncheckedUpdateManyWithoutOrganizationInput = {
@@ -846,10 +1064,14 @@ export type WorkerUncheckedUpdateManyWithoutOrganizationInput = {
 
 export type WorkerCountOutputType = {
   assignments: number
+  dailyHours: number
+  reminders: number
 }
 
 export type WorkerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   assignments?: boolean | WorkerCountOutputTypeCountAssignmentsArgs
+  dailyHours?: boolean | WorkerCountOutputTypeCountDailyHoursArgs
+  reminders?: boolean | WorkerCountOutputTypeCountRemindersArgs
 }
 
 /**
@@ -869,6 +1091,20 @@ export type WorkerCountOutputTypeCountAssignmentsArgs<ExtArgs extends runtime.Ty
   where?: Prisma.MaintenanceTaskAssignmentWhereInput
 }
 
+/**
+ * WorkerCountOutputType without action
+ */
+export type WorkerCountOutputTypeCountDailyHoursArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.MaintenanceTaskDailyHoursWhereInput
+}
+
+/**
+ * WorkerCountOutputType without action
+ */
+export type WorkerCountOutputTypeCountRemindersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.MaintenanceTaskReminderWhereInput
+}
+
 
 export type WorkerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -884,6 +1120,8 @@ export type WorkerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   vendor?: boolean | Prisma.Worker$vendorArgs<ExtArgs>
   assignments?: boolean | Prisma.Worker$assignmentsArgs<ExtArgs>
+  dailyHours?: boolean | Prisma.Worker$dailyHoursArgs<ExtArgs>
+  reminders?: boolean | Prisma.Worker$remindersArgs<ExtArgs>
   _count?: boolean | Prisma.WorkerCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["worker"]>
 
@@ -935,6 +1173,8 @@ export type WorkerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   vendor?: boolean | Prisma.Worker$vendorArgs<ExtArgs>
   assignments?: boolean | Prisma.Worker$assignmentsArgs<ExtArgs>
+  dailyHours?: boolean | Prisma.Worker$dailyHoursArgs<ExtArgs>
+  reminders?: boolean | Prisma.Worker$remindersArgs<ExtArgs>
   _count?: boolean | Prisma.WorkerCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -952,6 +1192,8 @@ export type $WorkerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     organization: Prisma.$OrganizationPayload<ExtArgs>
     vendor: Prisma.$VendorPayload<ExtArgs> | null
     assignments: Prisma.$MaintenanceTaskAssignmentPayload<ExtArgs>[]
+    dailyHours: Prisma.$MaintenanceTaskDailyHoursPayload<ExtArgs>[]
+    reminders: Prisma.$MaintenanceTaskReminderPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1361,6 +1603,8 @@ export interface Prisma__WorkerClient<T, Null = never, ExtArgs extends runtime.T
   organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   vendor<T extends Prisma.Worker$vendorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Worker$vendorArgs<ExtArgs>>): Prisma.Prisma__VendorClient<runtime.Types.Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   assignments<T extends Prisma.Worker$assignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Worker$assignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  dailyHours<T extends Prisma.Worker$dailyHoursArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Worker$dailyHoursArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskDailyHoursPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reminders<T extends Prisma.Worker$remindersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Worker$remindersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskReminderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1841,6 +2085,54 @@ export type Worker$assignmentsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.MaintenanceTaskAssignmentScalarFieldEnum | Prisma.MaintenanceTaskAssignmentScalarFieldEnum[]
+}
+
+/**
+ * Worker.dailyHours
+ */
+export type Worker$dailyHoursArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MaintenanceTaskDailyHours
+   */
+  select?: Prisma.MaintenanceTaskDailyHoursSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MaintenanceTaskDailyHours
+   */
+  omit?: Prisma.MaintenanceTaskDailyHoursOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MaintenanceTaskDailyHoursInclude<ExtArgs> | null
+  where?: Prisma.MaintenanceTaskDailyHoursWhereInput
+  orderBy?: Prisma.MaintenanceTaskDailyHoursOrderByWithRelationInput | Prisma.MaintenanceTaskDailyHoursOrderByWithRelationInput[]
+  cursor?: Prisma.MaintenanceTaskDailyHoursWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.MaintenanceTaskDailyHoursScalarFieldEnum | Prisma.MaintenanceTaskDailyHoursScalarFieldEnum[]
+}
+
+/**
+ * Worker.reminders
+ */
+export type Worker$remindersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MaintenanceTaskReminder
+   */
+  select?: Prisma.MaintenanceTaskReminderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the MaintenanceTaskReminder
+   */
+  omit?: Prisma.MaintenanceTaskReminderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MaintenanceTaskReminderInclude<ExtArgs> | null
+  where?: Prisma.MaintenanceTaskReminderWhereInput
+  orderBy?: Prisma.MaintenanceTaskReminderOrderByWithRelationInput | Prisma.MaintenanceTaskReminderOrderByWithRelationInput[]
+  cursor?: Prisma.MaintenanceTaskReminderWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.MaintenanceTaskReminderScalarFieldEnum | Prisma.MaintenanceTaskReminderScalarFieldEnum[]
 }
 
 /**

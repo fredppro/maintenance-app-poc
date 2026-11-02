@@ -1,4 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  fromZonedDateTimeParts,
+  toZonedCalendarDate,
+} from "@/lib/time-zone";
 import { createSchedulerStore } from "./scheduler-store";
 import { Equipment, MaintenanceEntry, Worker } from "../types";
 
@@ -30,11 +34,13 @@ describe("scheduler store", () => {
     id: "task-1",
     title: "Motor Inspection",
     description: "Check temperature and lubrication",
-    type: "INSPECTION",
+    type: "PREDICTIVE",
     startTime: new Date("2026-06-01T10:00:00.000Z"),
     endTime: new Date("2026-06-01T12:00:00.000Z"),
     equipmentId: "eq-1",
+    maintenancePointId: null,
     status: "scheduled",
+    completedAt: null,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
   };
@@ -224,6 +230,35 @@ describe("scheduler store", () => {
       expect(store.getState().currentDate.getFullYear()).toBe(2026);
     });
 
+    it("preserves organization-local time while navigating across daylight saving", () => {
+      const timeZone = "Europe/Lisbon";
+      const initialDate = fromZonedDateTimeParts(
+        {
+          year: 2026,
+          month: 3,
+          day: 28,
+          hour: 12,
+          minute: 0,
+          second: 0,
+        },
+        timeZone,
+      );
+      const store = createSchedulerStore({
+        currentDate: initialDate,
+        timeZone,
+        viewMode: "day",
+      });
+
+      store.getState().navigateForward();
+
+      expect(store.getState().currentDate.toISOString()).toBe(
+        "2026-03-29T11:00:00.000Z",
+      );
+      expect(
+        toZonedCalendarDate(store.getState().currentDate, timeZone).getHours(),
+      ).toBe(12);
+    });
+
     it("sets current date directly", () => {
       const store = createSchedulerStore();
       const newDate = new Date("2027-01-01T00:00:00.000Z");
@@ -244,7 +279,7 @@ describe("scheduler store", () => {
       const moved = store.getState().entries.find((e) => e.id === "task-1");
       expect(moved).toBeTruthy();
       expect(moved?.startTime.toISOString()).toBe("2026-06-02T14:00:00.000Z");
-      expect(moved?.endTime.toISOString()).toBe("2026-06-02T16:00:00.000Z");
+      expect(moved?.endTime?.toISOString()).toBe("2026-06-02T16:00:00.000Z");
       expect(moved?.equipmentId).toBe("eq-2");
     });
 
@@ -260,7 +295,7 @@ describe("scheduler store", () => {
       expect(moved).toBeTruthy();
       expect(moved?.equipmentId).toBe("eq-1");
       expect(moved?.startTime.toISOString()).toBe("2026-06-03T08:00:00.000Z");
-      expect(moved?.endTime.toISOString()).toBe("2026-06-03T10:00:00.000Z");
+      expect(moved?.endTime?.toISOString()).toBe("2026-06-03T10:00:00.000Z");
     });
 
     it("does nothing if entry is not found", () => {

@@ -9,13 +9,33 @@
 * 🟢 You can import this file directly.
 */
 
+export const InventoryMovementType = {
+  RECEIPT: 'RECEIPT',
+  CONSUMPTION: 'CONSUMPTION',
+  ADJUSTMENT: 'ADJUSTMENT'
+} as const
+
+export type InventoryMovementType = (typeof InventoryMovementType)[keyof typeof InventoryMovementType]
+
+
 export const TaskType = {
+  PREDICTIVE: 'PREDICTIVE',
   PREVENTIVE: 'PREVENTIVE',
-  INSPECTION: 'INSPECTION',
   CORRECTIVE: 'CORRECTIVE'
 } as const
 
 export type TaskType = (typeof TaskType)[keyof typeof TaskType]
+
+
+export const MaintenanceReminderStatus = {
+  PENDING: 'PENDING',
+  SENDING: 'SENDING',
+  SENT: 'SENT',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type MaintenanceReminderStatus = (typeof MaintenanceReminderStatus)[keyof typeof MaintenanceReminderStatus]
 
 
 export const WorkerType = {

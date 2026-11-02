@@ -3,12 +3,13 @@ import prisma from "@/lib/prisma";
 import { getMaintenanceTask } from "./get-task";
 
 describe("getMaintenanceTask", () => {
-  it("queries maintenance task with equipment, assignments (and workers), and materials included", async () => {
+  it("queries the task with equipment, worker assignments, daily hours, and materials", async () => {
     const mockTask = {
       id: "task-123",
       title: "Test Task",
       equipment: { id: "eq-1", name: "Turbine" },
       assignments: [{ id: "as-1", worker: { id: "w-1", name: "John Doe" } }],
+      dailyHours: [{ workerId: "w-1", workDate: new Date("2026-06-01"), hours: "8.00" }],
       materials: [{ id: "mat-1", name: "Filter", quantity: 2 }],
     };
 
@@ -29,6 +30,7 @@ describe("getMaintenanceTask", () => {
             equipment: true,
             materials: true,
             assignments: { include: { worker: true } },
+            dailyHours: true,
           },
         }),
       );

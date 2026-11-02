@@ -18,7 +18,7 @@ import { createTask } from "../server/actions";
 import { useSchedulerStore } from "../store/scheduler-provider";
 import { useRouter } from "@/i18n/routing";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { addHours, areIntervalsOverlapping } from "date-fns";
+import { areIntervalsOverlapping } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -26,9 +26,15 @@ import { toast } from "sonner";
 import * as z from "zod";
 import { TaskType } from "../../../../prisma/generated/prisma/enums";
 import {
+  getDefaultMaintenanceStartTime,
+  getTaskDisplayEnd,
+} from "../utils/schedule";
+import {
   EntrySheet,
   FieldError,
   FormSection,
+  DailyHoursEditor,
+  MaintenancePointField,
   MaterialsEditor,
   materialSchema,
   ScheduleFields,
@@ -39,10 +45,35 @@ const formSchema = z.object({
   description: z.string().optional(),
   type: z.nativeEnum(TaskType),
   equipmentId: z.string().min(1, "Equipment is required"),
+  maintenancePointId: z.string().nullable().optional(),
   startTime: z.date(),
-  endTime: z.date(),
+  endTimeKnown: z.boolean(),
+  endTime: z.date().nullable(),
   workerIds: z.array(z.string()).min(1, "Select at least one worker"),
+  dailyHours: z
+    .array(
+      z.object({
+        workerId: z.string().min(1),
+        workDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        hours: z.number().min(0.25).max(24).multipleOf(0.25),
+      }),
+    )
+    .optional(),
   materials: z.array(materialSchema).optional(),
+}).superRefine((data, ctx) => {
+  if (data.endTimeKnown && !data.endTime) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["endTime"],
+      message: "End time is required when the end time is known",
+    });
+  } else if (data.endTime && data.endTime <= data.startTime) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["endTime"],
+      message: "Task end time must be after start time",
+    });
+  }
 });
 
 type FormInput = z.input<typeof formSchema>;
@@ -62,6 +93,7 @@ export function AddEntryDialog({
   const addEntry = useSchedulerStore((state) => state.addEntry);
   const equipment = useSchedulerStore((state) => state.equipment);
   const workers = useSchedulerStore((state) => state.workers);
+  const timeZone = useSchedulerStore((state) => state.timeZone);
   const router = useRouter();
   const entries = useSchedulerStore((state) => state.entries);
 
@@ -76,26 +108,33 @@ export function AddEntryDialog({
       description: "",
       type: TaskType.PREVENTIVE,
       equipmentId: "",
-      startTime: new Date(),
-      endTime: addHours(new Date(), 1),
+      maintenancePointId: null,
+      startTime: getDefaultMaintenanceStartTime(timeZone),
+      endTimeKnown: false,
+      endTime: null,
       workerIds: [],
+      dailyHours: [],
       materials: [],
     },
   });
 
   const watchEquipmentId = useWatch({ control: form.control, name: "equipmentId" });
+  const watchMaintenancePointId = useWatch({
+    control: form.control,
+    name: "maintenancePointId",
+  });
   const watchStartTime = useWatch({ control: form.control, name: "startTime" });
   const watchEndTime = useWatch({ control: form.control, name: "endTime" });
+  const watchEndTimeKnown = useWatch({
+    control: form.control,
+    name: "endTimeKnown",
+  });
   const watchType = useWatch({ control: form.control, name: "type" });
   const watchWorkerIds = useWatch({ control: form.control, name: "workerIds" });
+  const watchDailyHours = useWatch({ control: form.control, name: "dailyHours" });
 
   const hasConflict = useMemo(() => {
-    if (
-      !watchEquipmentId ||
-      !watchStartTime ||
-      !watchEndTime ||
-      watchEndTime <= watchStartTime
-    ) {
+    if (!watchEquipmentId || !watchStartTime) {
       return false;
     }
 
@@ -103,35 +142,41 @@ export function AddEntryDialog({
       if (entry.equipmentId !== watchEquipmentId) return false;
 
       return areIntervalsOverlapping(
-        { start: watchStartTime, end: watchEndTime },
-        { start: new Date(entry.startTime), end: new Date(entry.endTime) },
+        {
+          start: watchStartTime,
+          end: getTaskDisplayEnd(
+            watchStartTime,
+            watchEndTimeKnown ? watchEndTime : null,
+          ),
+        },
+        {
+          start: new Date(entry.startTime),
+          end: getTaskDisplayEnd(entry.startTime, entry.endTime),
+        },
       );
     });
-  }, [entries, watchEquipmentId, watchStartTime, watchEndTime]);
+  }, [entries, watchEquipmentId, watchStartTime, watchEndTime, watchEndTimeKnown]);
 
   useEffect(() => {
     if (selectedCell && open) {
       form.setValue("equipmentId", selectedCell.equipmentId);
+      form.setValue("maintenancePointId", null);
       const start = new Date(selectedCell.date);
       form.setValue("startTime", start);
-      form.setValue("endTime", addHours(start, 1));
     }
   }, [selectedCell, open, form]);
 
   const onSubmit = async (values: FormValues) => {
-    if (values.endTime <= values.startTime) {
-      toast.error(t("errors.endAfterStart"));
-      return;
-    }
-
     if (hasConflict) {
       toast.error(t("errors.conflict"));
       return;
     }
 
     try {
+      const { endTimeKnown, ...taskValues } = values;
       const newTask = await createTask({
-        ...values,
+        ...taskValues,
+        endTime: endTimeKnown ? taskValues.endTime : null,
         status: "scheduled",
       });
       addEntry(newTask);
@@ -196,9 +241,10 @@ export function AddEntryDialog({
               <FieldLabel htmlFor="task-equipment">{t("equipment")}</FieldLabel>
               <Select
                 value={watchEquipmentId}
-                onValueChange={(v) =>
+                onValueChange={(v) => {
                   form.setValue("equipmentId", v, { shouldValidate: true })
-                }
+                  form.setValue("maintenancePointId", null)
+                }}
               >
                 <SelectTrigger
                   id="task-equipment"
@@ -231,7 +277,7 @@ export function AddEntryDialog({
                   <SelectItem value={TaskType.PREVENTIVE}>
                     {t("preventive")}
                   </SelectItem>
-                  <SelectItem value={TaskType.INSPECTION}>
+                  <SelectItem value={TaskType.PREDICTIVE}>
                     {t("inspection")}
                   </SelectItem>
                   <SelectItem value={TaskType.CORRECTIVE}>
@@ -241,13 +287,26 @@ export function AddEntryDialog({
               </Select>
             </Field>
           </div>
+          <MaintenancePointField
+            key={`${watchEquipmentId}-${open}`}
+            equipmentId={watchEquipmentId}
+            open={open}
+            value={watchMaintenancePointId}
+            onChange={(value) =>
+              form.setValue("maintenancePointId", value, {
+                shouldValidate: true,
+              })
+            }
+          />
         </FormSection>
 
         <FormSection title={t("sectionSchedule")}>
           <ScheduleFields
             form={form}
             locale={locale}
+            timeZone={timeZone}
             hasConflict={hasConflict}
+            endError={form.formState.errors.endTime?.message}
           />
         </FormSection>
 
@@ -288,6 +347,18 @@ export function AddEntryDialog({
             />
           </Field>
         </FormSection>
+
+        <DailyHoursEditor
+          value={watchDailyHours ?? []}
+          workers={workers}
+          assignedWorkerIds={watchWorkerIds}
+          startTime={watchStartTime ?? new Date()}
+          locale={locale}
+          timeZone={timeZone}
+          onChange={(dailyHours) =>
+            form.setValue("dailyHours", dailyHours, { shouldValidate: true })
+          }
+        />
 
         <MaterialsEditor form={form} locale={locale} />
       </FieldGroup>

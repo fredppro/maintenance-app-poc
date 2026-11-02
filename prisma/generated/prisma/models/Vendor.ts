@@ -192,6 +192,7 @@ export type VendorWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Vendor"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   workers?: Prisma.WorkerListRelationFilter
+  inventoryItems?: Prisma.InventoryItemListRelationFilter
 }
 
 export type VendorOrderByWithRelationInput = {
@@ -203,6 +204,7 @@ export type VendorOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   organization?: Prisma.OrganizationOrderByWithRelationInput
   workers?: Prisma.WorkerOrderByRelationAggregateInput
+  inventoryItems?: Prisma.InventoryItemOrderByRelationAggregateInput
 }
 
 export type VendorWhereUniqueInput = Prisma.AtLeast<{
@@ -219,6 +221,7 @@ export type VendorWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Vendor"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   workers?: Prisma.WorkerListRelationFilter
+  inventoryItems?: Prisma.InventoryItemListRelationFilter
 }, "id" | "id_organizationId" | "organizationId_name">
 
 export type VendorOrderByWithAggregationInput = {
@@ -253,6 +256,7 @@ export type VendorCreateInput = {
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutVendorsInput
   workers?: Prisma.WorkerCreateNestedManyWithoutVendorInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutVendorInput
 }
 
 export type VendorUncheckedCreateInput = {
@@ -263,6 +267,7 @@ export type VendorUncheckedCreateInput = {
   organizationId: string
   createdAt?: Date | string
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutVendorInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutVendorInput
 }
 
 export type VendorUpdateInput = {
@@ -273,6 +278,7 @@ export type VendorUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutVendorsNestedInput
   workers?: Prisma.WorkerUpdateManyWithoutVendorNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutVendorNestedInput
 }
 
 export type VendorUncheckedUpdateInput = {
@@ -283,6 +289,7 @@ export type VendorUncheckedUpdateInput = {
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutVendorNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutVendorNestedInput
 }
 
 export type VendorCreateManyInput = {
@@ -363,6 +370,22 @@ export type VendorOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type VendorCreateNestedOneWithoutInventoryItemsInput = {
+  create?: Prisma.XOR<Prisma.VendorCreateWithoutInventoryItemsInput, Prisma.VendorUncheckedCreateWithoutInventoryItemsInput>
+  connectOrCreate?: Prisma.VendorCreateOrConnectWithoutInventoryItemsInput
+  connect?: Prisma.VendorWhereUniqueInput
+}
+
+export type VendorUpdateOneWithoutInventoryItemsNestedInput = {
+  create?: Prisma.XOR<Prisma.VendorCreateWithoutInventoryItemsInput, Prisma.VendorUncheckedCreateWithoutInventoryItemsInput>
+  connectOrCreate?: Prisma.VendorCreateOrConnectWithoutInventoryItemsInput
+  upsert?: Prisma.VendorUpsertWithoutInventoryItemsInput
+  disconnect?: Prisma.VendorWhereInput | boolean
+  delete?: Prisma.VendorWhereInput | boolean
+  connect?: Prisma.VendorWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.VendorUpdateToOneWithWhereWithoutInventoryItemsInput, Prisma.VendorUpdateWithoutInventoryItemsInput>, Prisma.VendorUncheckedUpdateWithoutInventoryItemsInput>
+}
+
 export type VendorCreateNestedOneWithoutWorkersInput = {
   create?: Prisma.XOR<Prisma.VendorCreateWithoutWorkersInput, Prisma.VendorUncheckedCreateWithoutWorkersInput>
   connectOrCreate?: Prisma.VendorCreateOrConnectWithoutWorkersInput
@@ -421,6 +444,62 @@ export type VendorUncheckedUpdateManyWithoutOrganizationNestedInput = {
   deleteMany?: Prisma.VendorScalarWhereInput | Prisma.VendorScalarWhereInput[]
 }
 
+export type VendorCreateWithoutInventoryItemsInput = {
+  id?: string
+  name: string
+  contact?: string | null
+  email?: string | null
+  createdAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutVendorsInput
+  workers?: Prisma.WorkerCreateNestedManyWithoutVendorInput
+}
+
+export type VendorUncheckedCreateWithoutInventoryItemsInput = {
+  id?: string
+  name: string
+  contact?: string | null
+  email?: string | null
+  organizationId: string
+  createdAt?: Date | string
+  workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutVendorInput
+}
+
+export type VendorCreateOrConnectWithoutInventoryItemsInput = {
+  where: Prisma.VendorWhereUniqueInput
+  create: Prisma.XOR<Prisma.VendorCreateWithoutInventoryItemsInput, Prisma.VendorUncheckedCreateWithoutInventoryItemsInput>
+}
+
+export type VendorUpsertWithoutInventoryItemsInput = {
+  update: Prisma.XOR<Prisma.VendorUpdateWithoutInventoryItemsInput, Prisma.VendorUncheckedUpdateWithoutInventoryItemsInput>
+  create: Prisma.XOR<Prisma.VendorCreateWithoutInventoryItemsInput, Prisma.VendorUncheckedCreateWithoutInventoryItemsInput>
+  where?: Prisma.VendorWhereInput
+}
+
+export type VendorUpdateToOneWithWhereWithoutInventoryItemsInput = {
+  where?: Prisma.VendorWhereInput
+  data: Prisma.XOR<Prisma.VendorUpdateWithoutInventoryItemsInput, Prisma.VendorUncheckedUpdateWithoutInventoryItemsInput>
+}
+
+export type VendorUpdateWithoutInventoryItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  contact?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutVendorsNestedInput
+  workers?: Prisma.WorkerUpdateManyWithoutVendorNestedInput
+}
+
+export type VendorUncheckedUpdateWithoutInventoryItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  contact?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workers?: Prisma.WorkerUncheckedUpdateManyWithoutVendorNestedInput
+}
+
 export type VendorCreateWithoutWorkersInput = {
   id?: string
   name: string
@@ -428,6 +507,7 @@ export type VendorCreateWithoutWorkersInput = {
   email?: string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutVendorsInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutVendorInput
 }
 
 export type VendorUncheckedCreateWithoutWorkersInput = {
@@ -437,6 +517,7 @@ export type VendorUncheckedCreateWithoutWorkersInput = {
   email?: string | null
   organizationId: string
   createdAt?: Date | string
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutVendorInput
 }
 
 export type VendorCreateOrConnectWithoutWorkersInput = {
@@ -462,6 +543,7 @@ export type VendorUpdateWithoutWorkersInput = {
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutVendorsNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutVendorNestedInput
 }
 
 export type VendorUncheckedUpdateWithoutWorkersInput = {
@@ -471,6 +553,7 @@ export type VendorUncheckedUpdateWithoutWorkersInput = {
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutVendorNestedInput
 }
 
 export type VendorCreateWithoutOrganizationInput = {
@@ -480,6 +563,7 @@ export type VendorCreateWithoutOrganizationInput = {
   email?: string | null
   createdAt?: Date | string
   workers?: Prisma.WorkerCreateNestedManyWithoutVendorInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutVendorInput
 }
 
 export type VendorUncheckedCreateWithoutOrganizationInput = {
@@ -489,6 +573,7 @@ export type VendorUncheckedCreateWithoutOrganizationInput = {
   email?: string | null
   createdAt?: Date | string
   workers?: Prisma.WorkerUncheckedCreateNestedManyWithoutVendorInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutVendorInput
 }
 
 export type VendorCreateOrConnectWithoutOrganizationInput = {
@@ -544,6 +629,7 @@ export type VendorUpdateWithoutOrganizationInput = {
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workers?: Prisma.WorkerUpdateManyWithoutVendorNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutVendorNestedInput
 }
 
 export type VendorUncheckedUpdateWithoutOrganizationInput = {
@@ -553,6 +639,7 @@ export type VendorUncheckedUpdateWithoutOrganizationInput = {
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workers?: Prisma.WorkerUncheckedUpdateManyWithoutVendorNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutVendorNestedInput
 }
 
 export type VendorUncheckedUpdateManyWithoutOrganizationInput = {
@@ -570,10 +657,12 @@ export type VendorUncheckedUpdateManyWithoutOrganizationInput = {
 
 export type VendorCountOutputType = {
   workers: number
+  inventoryItems: number
 }
 
 export type VendorCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   workers?: boolean | VendorCountOutputTypeCountWorkersArgs
+  inventoryItems?: boolean | VendorCountOutputTypeCountInventoryItemsArgs
 }
 
 /**
@@ -593,6 +682,13 @@ export type VendorCountOutputTypeCountWorkersArgs<ExtArgs extends runtime.Types.
   where?: Prisma.WorkerWhereInput
 }
 
+/**
+ * VendorCountOutputType without action
+ */
+export type VendorCountOutputTypeCountInventoryItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InventoryItemWhereInput
+}
+
 
 export type VendorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -603,6 +699,7 @@ export type VendorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   createdAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   workers?: boolean | Prisma.Vendor$workersArgs<ExtArgs>
+  inventoryItems?: boolean | Prisma.Vendor$inventoryItemsArgs<ExtArgs>
   _count?: boolean | Prisma.VendorCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["vendor"]>
 
@@ -639,6 +736,7 @@ export type VendorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 export type VendorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   workers?: boolean | Prisma.Vendor$workersArgs<ExtArgs>
+  inventoryItems?: boolean | Prisma.Vendor$inventoryItemsArgs<ExtArgs>
   _count?: boolean | Prisma.VendorCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type VendorIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -653,6 +751,7 @@ export type $VendorPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   objects: {
     organization: Prisma.$OrganizationPayload<ExtArgs>
     workers: Prisma.$WorkerPayload<ExtArgs>[]
+    inventoryItems: Prisma.$InventoryItemPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1057,6 +1156,7 @@ export interface Prisma__VendorClient<T, Null = never, ExtArgs extends runtime.T
   readonly [Symbol.toStringTag]: "PrismaPromise"
   organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   workers<T extends Prisma.Vendor$workersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Vendor$workersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  inventoryItems<T extends Prisma.Vendor$inventoryItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Vendor$inventoryItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InventoryItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1514,6 +1614,30 @@ export type Vendor$workersArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.WorkerScalarFieldEnum | Prisma.WorkerScalarFieldEnum[]
+}
+
+/**
+ * Vendor.inventoryItems
+ */
+export type Vendor$inventoryItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InventoryItem
+   */
+  select?: Prisma.InventoryItemSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the InventoryItem
+   */
+  omit?: Prisma.InventoryItemOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InventoryItemInclude<ExtArgs> | null
+  where?: Prisma.InventoryItemWhereInput
+  orderBy?: Prisma.InventoryItemOrderByWithRelationInput | Prisma.InventoryItemOrderByWithRelationInput[]
+  cursor?: Prisma.InventoryItemWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InventoryItemScalarFieldEnum | Prisma.InventoryItemScalarFieldEnum[]
 }
 
 /**

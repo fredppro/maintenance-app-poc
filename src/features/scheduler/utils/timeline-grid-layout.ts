@@ -1,21 +1,50 @@
 import {
-  addHours,
-  differenceInDays,
-  eachDayOfInterval,
-  eachHourOfInterval,
-  eachMonthOfInterval,
-  endOfDay,
-  endOfMonth,
-  endOfWeek,
-  isSameDay,
-  isSameHour,
-  isSameMonth,
-  startOfDay,
-  startOfMonth,
-  startOfWeek,
-  startOfYear,
+  differenceInCalendarDays,
 } from "date-fns";
+import {
+  fromZonedDateTimeParts,
+  toZonedCalendarDate,
+} from "@/lib/time-zone";
 import type { MaintenanceEntry, ViewMode } from "../types";
+import { getTaskDisplayEnd } from "./schedule";
+
+const getDefaultTimeZone = () =>
+  Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+
+function calendarParts(date: Date, timeZone: string) {
+  const zonedDate = toZonedCalendarDate(date, timeZone);
+  return {
+    year: zonedDate.getFullYear(),
+    month: zonedDate.getMonth() + 1,
+    day: zonedDate.getDate(),
+  };
+}
+
+function calendarDateAtMidnight(
+  year: number,
+  month: number,
+  day: number,
+  timeZone: string,
+) {
+  return fromZonedDateTimeParts(
+    { year, month, day, hour: 0, minute: 0, second: 0 },
+    timeZone,
+  );
+}
+
+function addCalendarDays(
+  year: number,
+  month: number,
+  day: number,
+  amount: number,
+) {
+  const date = new Date(Date.UTC(year, month - 1, day + amount));
+  return {
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth() + 1,
+    day: date.getUTCDate(),
+  };
+}
 
 const cellWidths: Record<ViewMode, string> = {
   day: "min-w-16",
@@ -32,52 +61,88 @@ export function getTimelineBoundaryClass(
   timeSlots: Date[],
   viewMode: ViewMode,
   index: number,
+  timeZone = getDefaultTimeZone(),
 ): string {
   const date = timeSlots[index];
   const nextSlot = timeSlots[index + 1];
   if (!date || !nextSlot) return "border-r-0";
+  const zonedDate = toZonedCalendarDate(date, timeZone);
+  const zonedNextSlot = toZonedCalendarDate(nextSlot, timeZone);
 
-  if (viewMode === "year" && nextSlot.getMonth() % 3 === 0) {
+  if (viewMode === "year" && zonedNextSlot.getMonth() % 3 === 0) {
     return "border-r-2 border-r-border-strong";
   }
 
   if (viewMode === "month") {
-    if (nextSlot.getMonth() !== date.getMonth()) {
+    if (zonedNextSlot.getMonth() !== zonedDate.getMonth()) {
       return "border-r-2 border-r-border-strong";
     }
-    if (nextSlot.getDay() === 1) {
+    if (zonedNextSlot.getDay() === 1) {
       return "border-r-2 border-r-border-strong";
     }
   }
 
-  if (viewMode === "day" && date.getDate() !== nextSlot.getDate()) {
+  if (
+    viewMode === "day" &&
+    zonedDate.getDate() !== zonedNextSlot.getDate()
+  ) {
     return "border-r border-r-border";
   }
 
   return "border-r-border-subtle";
 }
 
-export function getTimeSlots(viewMode: ViewMode, currentDate: Date): Date[] {
+export function getTimeSlots(
+  viewMode: ViewMode,
+  currentDate: Date,
+  timeZone = getDefaultTimeZone(),
+): Date[] {
+  const { year, month, day } = calendarParts(currentDate, timeZone);
   switch (viewMode) {
     case "day": {
-      const dayStart = startOfDay(currentDate);
-      return eachHourOfInterval({ start: dayStart, end: addHours(dayStart, 23) });
+      const start = calendarDateAtMidnight(year, month, day, timeZone);
+      const nextDay = addCalendarDays(year, month, day, 1);
+      const end = calendarDateAtMidnight(
+        nextDay.year,
+        nextDay.month,
+        nextDay.day,
+        timeZone,
+      );
+      const slots: Date[] = [];
+      for (let time = start.getTime(); time < end.getTime(); time += 3_600_000) {
+        slots.push(new Date(time));
+      }
+      return slots;
     }
-    case "week":
-      return eachDayOfInterval({
-        start: startOfWeek(currentDate, { weekStartsOn: 1 }),
-        end: endOfWeek(currentDate, { weekStartsOn: 1 }),
+    case "week": {
+      const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+      const daysSinceMonday = (weekday + 6) % 7;
+      const monday = addCalendarDays(year, month, day, -daysSinceMonday);
+      return Array.from({ length: 7 }, (_, index) => {
+        const slot = addCalendarDays(
+          monday.year,
+          monday.month,
+          monday.day,
+          index,
+        );
+        return calendarDateAtMidnight(
+          slot.year,
+          slot.month,
+          slot.day,
+          timeZone,
+        );
       });
-    case "month":
-      return eachDayOfInterval({
-        start: startOfMonth(currentDate),
-        end: endOfMonth(currentDate),
-      });
+    }
+    case "month": {
+      const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+      return Array.from({ length: daysInMonth }, (_, index) =>
+        calendarDateAtMidnight(year, month, index + 1, timeZone),
+      );
+    }
     case "year":
-      return eachMonthOfInterval({
-        start: startOfYear(currentDate),
-        end: new Date(currentDate.getFullYear(), 11, 31),
-      });
+      return Array.from({ length: 12 }, (_, index) =>
+        calendarDateAtMidnight(year, index + 1, 1, timeZone),
+      );
   }
 }
 
@@ -86,24 +151,59 @@ export interface ViewRange {
   end: Date;
 }
 
-export function getViewRange(timeSlots: Date[], viewMode: ViewMode): ViewRange | null {
+export function getViewRange(
+  timeSlots: Date[],
+  viewMode: ViewMode,
+  timeZone = getDefaultTimeZone(),
+): ViewRange | null {
   if (timeSlots.length === 0) return null;
-  const last = timeSlots[timeSlots.length - 1];
+  const last = calendarParts(timeSlots[timeSlots.length - 1], timeZone);
+  const next = viewMode === "year"
+    ? last.month === 12
+      ? { year: last.year + 1, month: 1, day: 1 }
+      : { year: last.year, month: last.month + 1, day: 1 }
+    : addCalendarDays(last.year, last.month, last.day, 1);
   return {
     start: timeSlots[0],
-    end: viewMode === "year" ? endOfMonth(last) : endOfDay(last),
+    end: new Date(
+      calendarDateAtMidnight(
+        next.year,
+        next.month,
+        next.day,
+        timeZone,
+      ).getTime() - 1,
+    ),
   };
 }
 
-export function isSameSlot(date: Date, slot: Date, viewMode: ViewMode): boolean {
+export function isSameSlot(
+  date: Date,
+  slot: Date,
+  viewMode: ViewMode,
+  timeZone = getDefaultTimeZone(),
+): boolean {
   switch (viewMode) {
     case "day":
-      return isSameHour(date, slot);
+      return date.getTime() >= slot.getTime() &&
+        date.getTime() < slot.getTime() + 3_600_000;
     case "week":
-    case "month":
-      return isSameDay(date, slot);
-    case "year":
-      return isSameMonth(date, slot);
+    case "month": {
+      const zonedDate = toZonedCalendarDate(date, timeZone);
+      const zonedSlot = toZonedCalendarDate(slot, timeZone);
+      return (
+        zonedDate.getFullYear() === zonedSlot.getFullYear() &&
+        zonedDate.getMonth() === zonedSlot.getMonth() &&
+        zonedDate.getDate() === zonedSlot.getDate()
+      );
+    }
+    case "year": {
+      const zonedDate = toZonedCalendarDate(date, timeZone);
+      const zonedSlot = toZonedCalendarDate(slot, timeZone);
+      return (
+        zonedDate.getFullYear() === zonedSlot.getFullYear() &&
+        zonedDate.getMonth() === zonedSlot.getMonth()
+      );
+    }
   }
 }
 
@@ -112,11 +212,12 @@ export function getEntryStartSlotIndex(
   entry: Pick<MaintenanceEntry, "startTime">,
   timeSlots: Date[],
   viewMode: ViewMode,
+  timeZone = getDefaultTimeZone(),
 ): number {
   const start = new Date(entry.startTime);
   let lastIndex = -1;
   for (const [i, slot] of timeSlots.entries()) {
-    if (isSameSlot(start, slot, viewMode) || start > slot) lastIndex = i;
+    if (isSameSlot(start, slot, viewMode, timeZone) || start > slot) lastIndex = i;
     else break;
   }
   if (lastIndex === -1 && start < timeSlots[0]) return 0;
@@ -128,9 +229,10 @@ export function getEntrySpan(
   entry: Pick<MaintenanceEntry, "startTime" | "endTime">,
   viewRange: ViewRange | null,
   viewMode: ViewMode,
+  timeZone = getDefaultTimeZone(),
 ): number {
   const entryStart = new Date(entry.startTime);
-  const entryEnd = new Date(entry.endTime);
+  const entryEnd = getTaskDisplayEnd(entry.startTime, entry.endTime);
   const start = viewRange && entryStart < viewRange.start ? viewRange.start : entryStart;
   const end = viewRange && entryEnd > viewRange.end ? viewRange.end : entryEnd;
 
@@ -138,10 +240,22 @@ export function getEntrySpan(
     case "day":
       return Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 3_600_000));
     case "week":
-    case "month":
-      return Math.max(1, differenceInDays(end, start) + 1);
-    case "year":
-      return Math.max(1, end.getMonth() - start.getMonth() + 1);
+    case "month": {
+      const zonedStart = toZonedCalendarDate(start, timeZone);
+      const zonedEnd = toZonedCalendarDate(end, timeZone);
+      return Math.max(1, differenceInCalendarDays(zonedEnd, zonedStart) + 1);
+    }
+    case "year": {
+      const zonedStart = toZonedCalendarDate(start, timeZone);
+      const zonedEnd = toZonedCalendarDate(end, timeZone);
+      return Math.max(
+        1,
+        (zonedEnd.getFullYear() - zonedStart.getFullYear()) * 12 +
+          zonedEnd.getMonth() -
+          zonedStart.getMonth() +
+          1,
+      );
+    }
   }
 }
 
@@ -168,11 +282,17 @@ export function layoutEquipmentRow(
   timeSlots: Date[],
   viewRange: ViewRange | null,
   viewMode: ViewMode,
+  timeZone = getDefaultTimeZone(),
 ): EquipmentRowLayout {
   const placed = entries
     .map((entry) => {
-      const startIdx = getEntryStartSlotIndex(entry, timeSlots, viewMode);
-      const span = getEntrySpan(entry, viewRange, viewMode);
+      const startIdx = getEntryStartSlotIndex(
+        entry,
+        timeSlots,
+        viewMode,
+        timeZone,
+      );
+      const span = getEntrySpan(entry, viewRange, viewMode, timeZone);
       const effectiveSpan = Math.min(span, timeSlots.length - startIdx);
       return { entry, startIdx, effectiveSpan, endIdx: startIdx + effectiveSpan };
     })

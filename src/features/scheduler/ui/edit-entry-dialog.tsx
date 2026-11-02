@@ -23,21 +23,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { notifyTaskUpdated } from "@/features/scheduler/events";
 import { getValidLocale } from "src/i18n/locale";
 import { deleteTask, updateTask } from "../server/actions";
 import { MaintenanceEntry, UpdateEntryPayload } from "../types";
 import { TASK_STATUSES } from "../task-status";
+import {
+  getTaskDisplayEnd,
+} from "../utils/schedule";
 import { useSchedulerStore } from "../store/scheduler-provider";
 import { useRouter } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
@@ -46,24 +40,21 @@ import { areIntervalsOverlapping } from "date-fns";
 import { Download, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
 import {
+  DailyHoursEditor,
+  ChecklistEditor,
   EntrySheet,
   FieldError,
   FormSection,
+  MaintenancePointField,
   MaterialsEditor,
   materialSchema,
   ScheduleFields,
 } from "./entry-form-parts";
-
-const workerLogSchema = z.object({
-  workerId: z.string(),
-  startTime: z.date(),
-  endTime: z.date(),
-});
 
 const editFormSchema = z
   .object({
@@ -71,49 +62,47 @@ const editFormSchema = z
     title: z.string().min(1, "Title is required"),
     description: z.string().optional(),
     equipmentId: z.string().min(1, "Equipment is required"),
+    maintenancePointId: z.string().nullable(),
     type: z.nativeEnum(TaskType),
     startTime: z.date(),
-    endTime: z.date(),
+    endTimeKnown: z.boolean(),
+    endTime: z.date().nullable(),
+    completedAt: z.date().nullable(),
     workerIds: z.array(z.string()),
-    workerLogs: z.array(workerLogSchema).optional(),
+    dailyHours: z
+      .array(
+        z.object({
+          workerId: z.string().min(1),
+          workDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          hours: z.number().min(0.25).max(24).multipleOf(0.25),
+        }),
+      )
+      .optional(),
+    checklistItems: z.array(
+      z.object({
+        id: z.string().min(1),
+        title: z.string(),
+        sortOrder: z.number(),
+        isComplete: z.boolean(),
+      }),
+    ),
     materials: z.array(materialSchema).optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.endTime <= data.startTime) {
+    if (data.endTimeKnown && !data.endTime) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "End time must be after start time",
+        message: "End time is required when the end time is known",
+        path: ["endTime"],
+      });
+    } else if (data.endTime && data.endTime <= data.startTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Task end time must be after start time",
         path: ["endTime"],
       });
     }
 
-    if (data.status === "completed" && data.workerLogs) {
-      data.workerLogs.forEach((log, index) => {
-        if (log.endTime <= log.startTime) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Worker end time must be after start time",
-            path: ["workerLogs", index, "endTime"],
-          });
-        }
-
-        if (log.startTime < data.startTime) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Cannot log time before the overall task starts",
-            path: ["workerLogs", index, "startTime"],
-          });
-        }
-
-        if (log.endTime > data.endTime) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Cannot log time after the overall task ends",
-            path: ["workerLogs", index, "endTime"],
-          });
-        }
-      });
-    }
   });
 
 type EditFormInput = z.input<typeof editFormSchema>;
@@ -132,6 +121,7 @@ export function EditEntryDialog({
 }: EditEntryDialogProps) {
   const equipment = useSchedulerStore((state) => state.equipment);
   const workers = useSchedulerStore((state) => state.workers);
+  const timeZone = useSchedulerStore((state) => state.timeZone);
   const router = useRouter();
   const entries = useSchedulerStore((state) => state.entries);
   const selectedEntry = useSchedulerStore((state) => state.selectedEntry);
@@ -188,7 +178,7 @@ export function EditEntryDialog({
     typeof dateVal === "string" ? new Date(dateVal) : dateVal;
 
   const initialStartTime = parseEntryDate(entry.startTime);
-  const initialEndTime = parseEntryDate(entry.endTime);
+  const initialEndTime = entry.endTime ? parseEntryDate(entry.endTime) : null;
 
   const form = useForm<EditFormInput, unknown, EditFormValues>({
     resolver: zodResolver(editFormSchema),
@@ -197,15 +187,27 @@ export function EditEntryDialog({
       title: entry.title,
       description: entry.description ?? "",
       equipmentId: entry.equipmentId,
+      maintenancePointId: entry.maintenancePointId,
       type: entry.type,
       startTime: initialStartTime,
+      endTimeKnown: initialEndTime !== null,
       endTime: initialEndTime,
+      completedAt: entry.completedAt
+        ? parseEntryDate(entry.completedAt)
+        : null,
       workerIds: entry.assignments?.map((a) => a.workerId) || [],
-      workerLogs:
-        entry.assignments?.map((a) => ({
-          workerId: a.workerId,
-          startTime: a.startTime ? new Date(a.startTime) : initialStartTime,
-          endTime: a.endTime ? new Date(a.endTime) : initialEndTime,
+      dailyHours:
+        entry.dailyHours?.map((allocation) => ({
+          workerId: allocation.workerId,
+          workDate: new Date(allocation.workDate).toISOString().slice(0, 10),
+          hours: Number(allocation.hours),
+        })) || [],
+      checklistItems:
+        entry.checklistItems?.map(({ id, title, sortOrder, isComplete }) => ({
+          id,
+          title,
+          sortOrder,
+          isComplete,
         })) || [],
       materials:
         entry.materials?.map((m) => ({
@@ -221,82 +223,90 @@ export function EditEntryDialog({
     },
   });
 
-  const { fields: workerLogFields, replace: replaceWorkerLogs } = useFieldArray(
-    {
-      control: form.control,
-      name: "workerLogs",
-    },
-  );
-
   const watchStatus = useWatch({ control: form.control, name: "status" });
   const watchStartTime = useWatch({ control: form.control, name: "startTime" });
   const watchEndTime = useWatch({ control: form.control, name: "endTime" });
+  const watchEndTimeKnown = useWatch({
+    control: form.control,
+    name: "endTimeKnown",
+  });
+  const watchCompletedAt = useWatch({
+    control: form.control,
+    name: "completedAt",
+  });
   const watchWorkerIds = useWatch({ control: form.control, name: "workerIds" });
+  const watchDailyHours = useWatch({ control: form.control, name: "dailyHours" });
   const watchEquipmentId = useWatch({ control: form.control, name: "equipmentId" });
+  const watchMaintenancePointId = useWatch({
+    control: form.control,
+    name: "maintenancePointId",
+  });
+  const watchChecklistItems = useWatch({
+    control: form.control,
+    name: "checklistItems",
+  });
   const watchType = useWatch({ control: form.control, name: "type" });
 
-  // Decoupled log sync: stops constantly running and wiping element states on every single date/time update
-  useEffect(() => {
-    const currentWorkerIds = watchWorkerIds || [];
-    const currentLogs = form.getValues("workerLogs") || [];
-
-    // Evaluate structural changes. If workers match completely, skip replaceWorkerLogs entirely
-    const needsSync =
-      currentWorkerIds.length !== currentLogs.length ||
-      currentWorkerIds.some((id, idx) => currentLogs[idx]?.workerId !== id);
-
-    if (!needsSync) return;
-
-    // Map remaining workers, or empty array if they are completely removed
-    const newLogs = currentWorkerIds.map((id) => {
-      const existingLog = currentLogs.find((log) => log.workerId === id);
-      return (
-        existingLog || {
-          workerId: id,
-          startTime: form.getValues("startTime") || initialStartTime,
-          endTime: form.getValues("endTime") || initialEndTime,
-        }
-      );
-    });
-
-    replaceWorkerLogs(newLogs);
-  }, [watchWorkerIds, replaceWorkerLogs, initialStartTime, initialEndTime, form]);
-
   const hasConflict = useMemo(() => {
-    if (!watchStartTime || !watchEndTime || watchEndTime <= watchStartTime) {
-      return false;
-    }
+    if (!watchStartTime) return false;
 
     return entries.some((e) => {
       if (e.id === entry.id) return false;
       if (e.equipmentId !== watchEquipmentId) return false;
 
       return areIntervalsOverlapping(
-        { start: watchStartTime, end: watchEndTime },
-        { start: new Date(e.startTime), end: new Date(e.endTime) },
+        {
+          start: watchStartTime,
+          end: getTaskDisplayEnd(
+            watchStartTime,
+            watchEndTimeKnown ? watchEndTime : null,
+          ),
+        },
+        {
+          start: new Date(e.startTime),
+          end: getTaskDisplayEnd(e.startTime, e.endTime),
+        },
       );
     });
-  }, [entries, entry.id, watchEquipmentId, watchStartTime, watchEndTime]);
+  }, [
+    entries,
+    entry.id,
+    watchEquipmentId,
+    watchStartTime,
+    watchEndTime,
+    watchEndTimeKnown,
+  ]);
 
   useEffect(() => {
     if (open && !form.formState.isSubmitting) {
       const currentStartTime = parseEntryDate(entry.startTime);
-      const currentEndTime = parseEntryDate(entry.endTime);
 
       form.reset({
         status: entry.status,
         title: entry.title,
         description: entry.description ?? "",
         equipmentId: entry.equipmentId,
+        maintenancePointId: entry.maintenancePointId,
         type: entry.type,
         startTime: currentStartTime,
-        endTime: currentEndTime,
+        endTimeKnown: entry.endTime != null,
+        endTime: entry.endTime ? parseEntryDate(entry.endTime) : null,
+        completedAt: entry.completedAt
+          ? parseEntryDate(entry.completedAt)
+          : null,
         workerIds: entry.assignments?.map((a) => a.workerId) || [],
-        workerLogs:
-          entry.assignments?.map((a) => ({
-            workerId: a.workerId,
-            startTime: a.startTime ? new Date(a.startTime) : currentStartTime,
-            endTime: a.endTime ? new Date(a.endTime) : currentEndTime,
+        dailyHours:
+          entry.dailyHours?.map((allocation) => ({
+            workerId: allocation.workerId,
+            workDate: new Date(allocation.workDate).toISOString().slice(0, 10),
+            hours: Number(allocation.hours),
+          })) || [],
+        checklistItems:
+          entry.checklistItems?.map(({ id, title, sortOrder, isComplete }) => ({
+            id,
+            title,
+            sortOrder,
+            isComplete,
           })) || [],
         materials:
           entry.materials?.map((m) => ({
@@ -371,26 +381,50 @@ export function EditEntryDialog({
 
     const previousEntries = entries;
     const previousSelectedEntry = selectedEntry;
+    const workerLogs = values.workerIds.map((workerId) => {
+      const assignment = entry.assignments?.find(
+        (current) => current.workerId === workerId,
+      );
+      return {
+        workerId,
+        startTime: assignment?.startTime
+          ? parseEntryDate(assignment.startTime)
+          : null,
+        endTime: assignment?.endTime
+          ? parseEntryDate(assignment.endTime)
+          : null,
+      };
+    });
 
     const optimisticUpdates: UpdateEntryPayload = {
       status: values.status,
       title: values.title,
       description: values.description,
       equipmentId: values.equipmentId,
+      maintenancePointId: values.maintenancePointId,
       type: values.type,
       startTime: values.startTime,
-      endTime: values.endTime,
+      endTime: values.endTimeKnown ? values.endTime : null,
+      completedAt: values.completedAt,
       workerIds: values.workerIds,
-      workerLogs: values.workerLogs,
+      dailyHours: values.dailyHours,
+      workerLogs,
     };
 
     updateEntry(entry.id, optimisticUpdates);
 
     try {
-      const { workerLogs, materials, ...rest } = values;
+      const {
+        endTimeKnown,
+        dailyHours,
+        materials,
+        ...rest
+      } = values;
       const updatedTask = await updateTask(entry.id, {
         ...rest,
-        ...(workerLogs !== undefined && { workerLogs }),
+        endTime: endTimeKnown ? values.endTime : null,
+        workerLogs,
+        ...(dailyHours !== undefined && { dailyHours }),
         ...(materials !== undefined && {
           materials: materials.map((material) => ({
             name: material.name,
@@ -508,9 +542,22 @@ export function EditEntryDialog({
                         statusOptions[index - 1] !== watchStatus &&
                         "relative before:absolute before:inset-y-1.5 before:-left-px before:w-px before:bg-border",
                     )}
-                    onClick={() =>
-                      form.setValue("status", status, { shouldDirty: true })
-                    }
+                    onClick={() => {
+                      const previousStatus = form.getValues("status");
+                      form.setValue("status", status, {
+                        shouldDirty: true,
+                      });
+                      if (
+                        status === "completed" &&
+                        previousStatus !== "completed" &&
+                        !form.getValues("completedAt")
+                      ) {
+                        form.setValue("completedAt", new Date(), {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                      }
+                    }}
                   >
                     {t(`statusTypes.${status}`)}
                   </Button>
@@ -536,9 +583,12 @@ export function EditEntryDialog({
                 </FieldLabel>
                 <Select
                   value={watchEquipmentId}
-                  onValueChange={(v) =>
-                    form.setValue("equipmentId", v, { shouldDirty: true })
-                  }
+                  onValueChange={(v) => {
+                    form.setValue("equipmentId", v, { shouldDirty: true });
+                    form.setValue("maintenancePointId", null, {
+                      shouldDirty: true,
+                    })
+                  }}
                 >
                   <SelectTrigger id="task-equipment" className="w-full">
                     <SelectValue placeholder={t("selectEquipment")} />
@@ -567,7 +617,7 @@ export function EditEntryDialog({
                     <SelectItem value={TaskType.PREVENTIVE}>
                       {t("preventive")}
                     </SelectItem>
-                    <SelectItem value={TaskType.INSPECTION}>
+                    <SelectItem value={TaskType.PREDICTIVE}>
                       {t("inspection")}
                     </SelectItem>
                     <SelectItem value={TaskType.CORRECTIVE}>
@@ -577,17 +627,60 @@ export function EditEntryDialog({
                 </Select>
               </Field>
             </div>
+            <MaintenancePointField
+              key={`${watchEquipmentId}-${open}`}
+              equipmentId={watchEquipmentId}
+              open={open}
+              value={watchMaintenancePointId}
+              onChange={(value) =>
+                form.setValue("maintenancePointId", value, {
+                  shouldDirty: true,
+                })
+              }
+            />
           </FormSection>
 
           <FormSection title={t("sectionSchedule")}>
             <ScheduleFields
               form={form}
               locale={locale}
+              timeZone={timeZone}
               hasConflict={hasConflict}
-              startError={form.formState.errors.startTime?.message}
               endError={form.formState.errors.endTime?.message}
+              startError={form.formState.errors.startTime?.message}
             />
           </FormSection>
+
+          {(watchStatus === "completed" || watchCompletedAt) && (
+            <FormSection title={t("completion")}>
+              <Field>
+                <FieldLabel htmlFor="task-completed-at">
+                  {t("completionDateTime")}
+                </FieldLabel>
+                <Controller
+                  control={form.control}
+                  name="completedAt"
+                  render={({ field }) => (
+                    <DateTimePicker
+                      date={field.value ?? undefined}
+                      setDate={(date) => field.onChange(date ?? null)}
+                      locale={locale}
+                      timeZone={timeZone}
+                      id="task-completed-at"
+                      ariaLabel={t("completionDateTime")}
+                      placeholder={t("pickDate")}
+                    />
+                  )}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("completionDateTimeHint")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t("timesUseOrganizationTimezone", { timeZone })}
+                </p>
+              </Field>
+            </FormSection>
+          )}
 
           <FormSection title={t("sectionTeam")}>
             <Field>
@@ -630,104 +723,60 @@ export function EditEntryDialog({
             </Field>
           </FormSection>
 
-          {watchStatus === "completed" && workerLogFields.length > 0 && (
-            <div className="pt-2 space-y-2 animate-in fade-in duration-200">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                {t("loggedTimeWorkers")}
-              </Label>
-              <div className="border rounded-md overflow-hidden bg-background">
-                <Table>
-                  <TableHeader className="bg-muted/50">
-                    <TableRow>
-                      <TableHead className="w-[30%] text-xs font-semibold">
-                        {t("workerName")}
-                      </TableHead>
-                      <TableHead className="w-[35%] text-xs font-semibold">
-                        {t("startDateTime")}
-                      </TableHead>
-                      <TableHead className="w-[35%] text-xs font-semibold">
-                        {t("endDateTime")}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {workerLogFields.map((field, index) => {
-                      const currentWorker = workers.find(
-                        (w) => w.id === field.workerId,
-                      );
-                      const startError =
-                        form.formState.errors.workerLogs?.[index]?.startTime;
-                      const endError =
-                        form.formState.errors.workerLogs?.[index]?.endTime;
+          <DailyHoursEditor
+            value={watchDailyHours ?? []}
+            workers={workers}
+            assignedWorkerIds={watchWorkerIds ?? []}
+            startTime={watchStartTime ?? initialStartTime}
+            locale={locale}
+            timeZone={timeZone}
+            onChange={(dailyHours) =>
+              form.setValue("dailyHours", dailyHours, { shouldValidate: true })
+            }
+          />
 
-                      const disabledDays =
-                        watchStartTime && watchEndTime
-                          ? {
-                              before: new Date(watchStartTime),
-                              after: new Date(watchEndTime),
-                            }
-                          : undefined;
+          <ChecklistEditor
+            value={watchChecklistItems ?? []}
+            onChange={(items) =>
+              form.setValue("checklistItems", items, { shouldDirty: true })
+            }
+          />
 
-                      return (
-                        <TableRow key={field.id}>
-                          <TableCell className="p-3 text-xs font-medium">
-                            {currentWorker
-                              ? currentWorker.name
-                              : "Unknown Worker"}
-                          </TableCell>
-                          <TableCell className="p-2 vertical-top">
-                            <Controller
-                              control={form.control}
-                              name={`workerLogs.${index}.startTime` as const}
-                              render={({ field: subField }) => (
-                                <DateTimePicker
-                                  date={subField.value}
-                                  setDate={subField.onChange}
-                                  locale={locale}
-                                  placeholder={t("pickDate")}
-                                  hasError={!!startError}
-                                  disabled={disabledDays}
-                                  minDate={watchStartTime}
-                                  maxDate={watchEndTime}
-                                />
-                              )}
-                            />
-                            {startError && (
-                              <p className="text-[10px] text-destructive font-medium mt-1 leading-tight">
-                                {startError.message}
-                              </p>
-                            )}
-                          </TableCell>
-                          <TableCell className="p-2 vertical-top">
-                            <Controller
-                              control={form.control}
-                              name={`workerLogs.${index}.endTime` as const}
-                              render={({ field: subField }) => (
-                                <DateTimePicker
-                                  date={subField.value}
-                                  setDate={subField.onChange}
-                                  locale={locale}
-                                  placeholder={t("pickDate")}
-                                  hasError={!!endError}
-                                  disabled={disabledDays}
-                                  minDate={watchStartTime}
-                                  maxDate={watchEndTime}
-                                />
-                              )}
-                            />
-                            {endError && (
-                              <p className="text-[10px] text-destructive font-medium mt-1 leading-tight">
-                                {endError.message}
-                              </p>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+          {(entry.reminders?.length ?? 0) > 0 && (
+            <FormSection title={t("reminders.title")}>
+              <div className="space-y-2">
+                {entry.reminders?.map((reminder) => {
+                  const statusLabel = {
+                    PENDING: t("reminders.statusPending"),
+                    SENDING: t("reminders.statusSending"),
+                    SENT: t("reminders.statusSent"),
+                    FAILED: t("reminders.statusFailed"),
+                    CANCELLED: t("reminders.statusCancelled"),
+                  }[reminder.status];
+                  const scheduledDate = new Intl.DateTimeFormat(locale, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                    timeZone,
+                  }).format(new Date(reminder.scheduledFor));
+                  return (
+                    <div
+                      key={reminder.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3 text-sm"
+                    >
+                      <div>
+                        <p className="font-medium">{reminder.worker.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t("reminders.scheduledFor", { date: scheduledDate })}
+                        </p>
+                      </div>
+                      <Badge variant={reminder.status === "FAILED" ? "destructive" : "outline"}>
+                        {statusLabel}
+                      </Badge>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            </FormSection>
           )}
 
           <MaterialsEditor form={form} locale={locale} />

@@ -3,6 +3,7 @@ type TransactionalEmail = {
   subject: string;
   text: string;
   url: string;
+  idempotencyKey?: string;
 };
 
 function escapeHtml(value: string) {
@@ -23,6 +24,7 @@ export async function sendTransactionalEmail({
   subject,
   text,
   url,
+  idempotencyKey,
 }: TransactionalEmail) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.AUTH_EMAIL_FROM;
@@ -38,6 +40,7 @@ export async function sendTransactionalEmail({
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
+      ...(idempotencyKey && { "Idempotency-Key": idempotencyKey }),
     },
     body: JSON.stringify({
       from,

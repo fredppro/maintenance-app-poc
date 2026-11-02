@@ -1,0 +1,1 @@
+DROP INDEX "MaintenanceTaskDailyHours_taskId_workerId_workDate_key";

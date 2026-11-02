@@ -44,6 +44,110 @@ describe.skipIf(!url)("tenant isolation in PostgreSQL", () => {
           key: `${id}/pending.png`,
         },
       });
+      const equipmentId = `${id}-equipment`;
+      const pointId = `${id}-point`;
+      const taskId = `${id}-task`;
+      const workerId = `${id}-worker`;
+      await db.equipment.create({
+        data: {
+          id: equipmentId,
+          name: `Equipment ${key}`,
+          organizationId: id,
+          siteId: `${id}-site`,
+        },
+      });
+      await db.equipmentMaintenancePoint.create({
+        data: {
+          id: pointId,
+          equipmentId,
+          organizationId: id,
+          name: "Drive belt",
+        },
+      });
+      await db.equipmentPointChecklistItem.create({
+        data: {
+          id: `${id}-template`,
+          pointId,
+          equipmentId,
+          organizationId: id,
+          title: "Inspect belt",
+        },
+      });
+      await db.worker.create({
+        data: {
+          id: workerId,
+          organizationId: id,
+          name: "Worker",
+          email: `${id}@example.test`,
+        },
+      });
+      await db.maintenanceTask.create({
+        data: {
+          id: taskId,
+          title: "Inspect drive",
+          startTime: new Date("2026-06-30T08:00:00.000Z"),
+          equipmentId,
+          maintenancePointId: pointId,
+          organizationId: id,
+        },
+      });
+      await db.maintenanceTaskReminder.create({
+        data: {
+          id: `${id}-reminder`,
+          taskId,
+          workerId,
+          organizationId: id,
+          recipientEmail: `${id}@example.test`,
+          scheduledFor: new Date("2026-06-29T08:00:00.000Z"),
+          nextAttemptAt: new Date("2026-06-29T08:00:00.000Z"),
+        },
+      });
+      await db.maintenanceTaskDailyHours.create({
+        data: {
+          id: `${id}-daily-hours`,
+          taskId,
+          workerId,
+          organizationId: id,
+          workDate: new Date("2026-06-30T00:00:00.000Z"),
+          hours: "2.00",
+        },
+      });
+      await db.maintenanceTaskChecklistItem.create({
+        data: {
+          id: `${id}-checklist`,
+          taskId,
+          organizationId: id,
+          title: "Inspect belt",
+        },
+      });
+      await db.equipmentOperatingHourReading.create({
+        data: {
+          id: `${id}-hours-reading`,
+          equipmentId,
+          organizationId: id,
+          reading: "100.00",
+        },
+      });
+      await db.inventoryItem.create({
+        data: {
+          id: `${id}-inventory-item`,
+          name: "Hydraulic oil",
+          siteId: `${id}-site`,
+          organizationId: id,
+          onHand: "10.00",
+          reorderPoint: "2.00",
+        },
+      });
+      await db.inventoryMovement.create({
+        data: {
+          id: `${id}-inventory-movement`,
+          inventoryItemId: `${id}-inventory-item`,
+          organizationId: id,
+          taskId,
+          type: "CONSUMPTION",
+          quantity: "1.00",
+        },
+      });
     }
   });
 
@@ -60,6 +164,51 @@ describe.skipIf(!url)("tenant isolation in PostgreSQL", () => {
   it("only exposes the active tenant's rows", async () => {
     const sites = await asTenant(ids.a, (tx) => tx.site.findMany());
     expect(sites.map((s) => s.id)).toEqual([`${ids.a}-site`]);
+  });
+
+  it("isolates maintenance points, checklists, daily hours and operating-hour readings", async () => {
+    const result = await asTenant(ids.a, async (tx) => ({
+      points: await tx.equipmentMaintenancePoint.findMany(),
+      templates: await tx.equipmentPointChecklistItem.findMany(),
+      checklist: await tx.maintenanceTaskChecklistItem.findMany(),
+      dailyHours: await tx.maintenanceTaskDailyHours.findMany(),
+      readings: await tx.equipmentOperatingHourReading.findMany(),
+      inventory: await tx.inventoryItem.findMany(),
+      movements: await tx.inventoryMovement.findMany(),
+      reminders: await tx.maintenanceTaskReminder.findMany(),
+    }));
+    expect(result.points.map((row) => row.id)).toEqual([`${ids.a}-point`]);
+    expect(result.templates.map((row) => row.id)).toEqual([`${ids.a}-template`]);
+    expect(result.checklist.map((row) => row.id)).toEqual([`${ids.a}-checklist`]);
+    expect(result.dailyHours.map((row) => row.id)).toEqual([`${ids.a}-daily-hours`]);
+    expect(result.readings.map((row) => row.id)).toEqual([`${ids.a}-hours-reading`]);
+    expect(result.inventory.map((row) => row.id)).toEqual([`${ids.a}-inventory-item`]);
+    expect(result.movements.map((row) => row.id)).toEqual([`${ids.a}-inventory-movement`]);
+    expect(result.reminders.map((row) => row.id)).toEqual([`${ids.a}-reminder`]);
+
+    const readingMutation = await asTenant(ids.a, async (tx) => ({
+      updated: await tx.equipmentOperatingHourReading.updateMany({
+        where: { id: `${ids.a}-hours-reading` },
+        data: { reading: "999.00" },
+      }),
+      deleted: await tx.equipmentOperatingHourReading.deleteMany({
+        where: { id: `${ids.a}-hours-reading` },
+      }),
+    }));
+    expect(readingMutation.updated.count).toBe(0);
+    expect(readingMutation.deleted.count).toBe(0);
+
+    const movementMutation = await asTenant(ids.a, async (tx) => ({
+      updated: await tx.inventoryMovement.updateMany({
+        where: { id: `${ids.a}-inventory-movement` },
+        data: { quantity: "999.00" },
+      }),
+      deleted: await tx.inventoryMovement.deleteMany({
+        where: { id: `${ids.a}-inventory-movement` },
+      }),
+    }));
+    expect(movementMutation.updated.count).toBe(0);
+    expect(movementMutation.deleted.count).toBe(0);
   });
 
   it("isolates pending file deletion jobs by tenant", async () => {

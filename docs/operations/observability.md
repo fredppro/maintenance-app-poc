@@ -30,6 +30,6 @@ time; the current provider and extension settings are unverified.
 |---|---|
 | Prometheus / Grafana / Loki | No collector configuration is present in the repository; the live monitoring stack is unverified. |
 | Sentry / OpenTelemetry | Adds a data processor (personal data in traces/errors): needs a DPA, region choice and scrubbing config first. |
-| Idempotency keys, background job queue | No endpoint currently needs them; exports and retention run as scripted jobs. Revisit with email/webhooks/billing. |
+| Background job queue | Scheduled maintenance reminders use a database-backed outbox with bounded retries; a general-purpose queue remains unnecessary until workload or other jobs require it. |
 | OpenAPI, feature flags | No public API or flag requirement yet. |
 | Request IDs | Add in `src/proxy.ts` together with the logger when a tracing backend is chosen. |

@@ -1,4 +1,5 @@
 import type { Equipment, MaintenanceEntry } from "../types";
+import { getTaskDisplayEnd } from "./schedule";
 
 export interface MaterialSummary {
   key: string;
@@ -47,7 +48,8 @@ export function summarizeMaterials(entries: MaintenanceEntry[]): MaterialSummary
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-const isOpen = (entry: MaintenanceEntry) => entry.status !== "completed";
+const isOpen = (entry: MaintenanceEntry) =>
+  entry.status === "scheduled" || entry.status === "in-progress";
 
 export function summarizeMetrics(
   entries: MaintenanceEntry[],
@@ -56,30 +58,42 @@ export function summarizeMetrics(
 ) {
   const count = (predicate: (entry: MaintenanceEntry) => boolean) =>
     entries.filter(predicate).length;
+  const countNonCancelled = (predicate: (entry: MaintenanceEntry) => boolean) =>
+    entries.filter((entry) => entry.status !== "cancelled" && predicate(entry))
+      .length;
   const open = entries.filter(isOpen);
   const completed = count((e) => e.status === "completed");
+  const cancelled = count((e) => e.status === "cancelled");
+  const nonCancelledTotal = entries.length - cancelled;
 
   return {
     total: entries.length,
-    completionRate: entries.length
-      ? Math.round((completed / entries.length) * 100)
+    completionRate: nonCancelledTotal
+      ? Math.round((completed / nonCancelledTotal) * 100)
       : 0,
-    overdue: open.filter((e) => +new Date(e.endTime) < now).length,
-    upcoming: open.filter((e) => +new Date(e.endTime) >= now).length,
+    overdue: open.filter(
+      (e) => +getTaskDisplayEnd(e.startTime, e.endTime) < now,
+    ).length,
+    upcoming: open.filter(
+      (e) => +getTaskDisplayEnd(e.startTime, e.endTime) >= now,
+    ).length,
     byType: {
-      preventive: count((e) => e.type === "PREVENTIVE"),
-      corrective: count((e) => e.type === "CORRECTIVE"),
-      inspection: count((e) => e.type === "INSPECTION"),
+      preventive: countNonCancelled((e) => e.type === "PREVENTIVE"),
+      corrective: countNonCancelled((e) => e.type === "CORRECTIVE"),
+      inspection: countNonCancelled((e) => e.type === "PREDICTIVE"),
     },
     byStatus: {
       scheduled: count((e) => e.status === "scheduled"),
       inProgress: count((e) => e.status === "in-progress"),
       completed,
+      cancelled,
     },
     topEquipment: equipment
       .map((item) => ({
         label: item.name,
-        value: entries.filter((e) => e.equipmentId === item.id).length,
+        value: entries.filter(
+          (e) => e.status !== "cancelled" && e.equipmentId === item.id,
+        ).length,
       }))
       .filter((item) => item.value > 0)
       .sort((a, b) => b.value - a.value)
@@ -95,14 +109,44 @@ export function summarizeEquipmentMaintenance(
 ) {
   const own = entries.filter((e) => e.equipmentId === equipmentId);
   const upcoming = own
-    .filter((e) => isOpen(e) && +new Date(e.endTime) >= now)
+    .filter(
+      (e) => e.status === "scheduled" && +new Date(e.startTime) >= now,
+    )
     .sort((a, b) => +new Date(a.startTime) - +new Date(b.startTime));
   const last = own
     .filter((e) => e.status === "completed")
-    .sort((a, b) => +new Date(b.endTime) - +new Date(a.endTime))[0];
+    .sort(
+      (a, b) =>
+        +getTaskDisplayEnd(b.startTime, b.endTime) -
+        +getTaskDisplayEnd(a.startTime, a.endTime),
+    )[0];
   return {
     upcomingCount: upcoming.length,
     next: upcoming[0]?.startTime,
-    last: last?.endTime,
+    last: last
+      ? getTaskDisplayEnd(last.startTime, last.endTime)
+      : undefined,
   };
+}
+
+export function getNextScheduledMaintenance(
+  entries: MaintenanceEntry[],
+  now: number,
+): MaintenanceEntry | undefined {
+  return entries
+    .filter(
+      (entry) =>
+        entry.status === "scheduled" && +new Date(entry.startTime) >= now,
+    )
+    .sort((a, b) => +new Date(a.startTime) - +new Date(b.startTime))[0];
+}
+
+export function countOverdueScheduledMaintenance(
+  entries: MaintenanceEntry[],
+  now: number,
+): number {
+  return entries.filter(
+    (entry) =>
+      entry.status === "scheduled" && +new Date(entry.startTime) < now,
+  ).length;
 }

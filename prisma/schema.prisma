@@ -10,25 +10,27 @@ generator client {
 }
 
 model Equipment {
-  id             String                @id @default(cuid())
-  name           String
-  category       String?
-  imageFileId    String?
-  sectionId      String?
-  organizationId String
-  siteId         String
-  deletedAt      DateTime?
-  deletedById    String?
-  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  site           Site                  @relation(fields: [siteId, organizationId], references: [id, organizationId], onDelete: Restrict)
-  imageFile      StoredFile?           @relation(fields: [imageFileId], references: [id], onDelete: SetNull)
+  id                    String                          @id @default(cuid())
+  name                  String
+  category              String?
+  imageFileId           String?
+  sectionId             String?
+  organizationId        String
+  siteId                String
+  deletedAt             DateTime?
+  deletedById           String?
+  organization          Organization                    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  site                  Site                            @relation(fields: [siteId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  imageFile             StoredFile?                     @relation(fields: [imageFileId], references: [id], onDelete: SetNull)
   // Optional area within `site`. `imageFileId` and `sectionId` are single-column FKs because
   // SET NULL can't null just one column of a composite FK; the equipment_same_tenant trigger
   // enforces that both belong to the same organization.
-  section        Section?              @relation(fields: [sectionId], references: [id], onDelete: SetNull)
-  tasks          MaintenanceTask[]
-  relocations    EquipmentRelocation[]
-  createdAt      DateTime              @default(now())
+  section               Section?                        @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  tasks                 MaintenanceTask[]
+  relocations           EquipmentRelocation[]
+  maintenancePoints     EquipmentMaintenancePoint[]
+  operatingHourReadings EquipmentOperatingHourReading[]
+  createdAt             DateTime                        @default(now())
 
   @@unique([id, organizationId])
   @@unique([organizationId, name])
@@ -104,27 +106,99 @@ model EquipmentRelocation {
 }
 
 model MaintenanceTask {
-  id             String                      @id @default(cuid())
-  title          String
-  description    String?
-  type           TaskType                    @default(PREVENTIVE)
-  startTime      DateTime
-  endTime        DateTime
-  equipmentId    String
-  organizationId String
-  organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  equipment      Equipment                   @relation(fields: [equipmentId, organizationId], references: [id, organizationId], onDelete: Cascade)
-  status         String                      @default("scheduled")
-  assignments    MaintenanceTaskAssignment[]
-  materials      Material[]
-  deletedAt      DateTime?
-  deletedById    String?
-  createdAt      DateTime                    @default(now())
-  updatedAt      DateTime                    @updatedAt
+  id                 String                         @id @default(cuid())
+  title              String
+  description        String?
+  type               TaskType                       @default(PREVENTIVE)
+  startTime          DateTime
+  endTime            DateTime?
+  equipmentId        String
+  maintenancePointId String?
+  organizationId     String
+  organization       Organization                   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  equipment          Equipment                      @relation(fields: [equipmentId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  maintenancePoint   EquipmentMaintenancePoint?     @relation(fields: [maintenancePointId], references: [id], onDelete: SetNull)
+  status             String                         @default("scheduled")
+  completedAt        DateTime?
+  assignments        MaintenanceTaskAssignment[]
+  dailyHours         MaintenanceTaskDailyHours[]
+  checklistItems     MaintenanceTaskChecklistItem[]
+  inventoryMovements InventoryMovement[]
+  reminders          MaintenanceTaskReminder[]
+  materials          Material[]
+  deletedAt          DateTime?
+  deletedById        String?
+  createdAt          DateTime                       @default(now())
+  updatedAt          DateTime                       @updatedAt
 
   @@unique([id, organizationId])
   @@index([organizationId, startTime])
   @@index([organizationId, deletedAt])
+}
+
+model EquipmentMaintenancePoint {
+  id             String                        @id @default(cuid())
+  equipmentId    String
+  organizationId String
+  name           String
+  description    String?
+  sortOrder      Int                           @default(0)
+  isActive       Boolean                       @default(true)
+  equipment      Equipment                     @relation(fields: [equipmentId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  checklistItems EquipmentPointChecklistItem[]
+  tasks          MaintenanceTask[]
+  createdAt      DateTime                      @default(now())
+
+  @@unique([id, equipmentId, organizationId])
+  @@unique([equipmentId, organizationId, name])
+  @@index([organizationId, equipmentId, isActive])
+}
+
+model EquipmentPointChecklistItem {
+  id             String                    @id @default(cuid())
+  pointId        String
+  equipmentId    String
+  organizationId String
+  title          String
+  sortOrder      Int                       @default(0)
+  isActive       Boolean                   @default(true)
+  point          EquipmentMaintenancePoint @relation(fields: [pointId, equipmentId, organizationId], references: [id, equipmentId, organizationId], onDelete: Cascade)
+  createdAt      DateTime                  @default(now())
+
+  @@unique([id, organizationId])
+  @@index([organizationId, pointId, isActive])
+}
+
+model MaintenanceTaskChecklistItem {
+  id             String          @id @default(cuid())
+  taskId         String
+  organizationId String
+  sourceItemId   String?
+  title          String
+  sortOrder      Int             @default(0)
+  isComplete     Boolean         @default(false)
+  completedAt    DateTime?
+  completedById  String?
+  task           MaintenanceTask @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  createdAt      DateTime        @default(now())
+
+  @@unique([id, organizationId])
+  @@index([organizationId, taskId, sortOrder])
+}
+
+model EquipmentOperatingHourReading {
+  id             String    @id @default(cuid())
+  equipmentId    String
+  organizationId String
+  reading        Decimal   @db.Decimal(12, 2)
+  measuredAt     DateTime  @default(now())
+  note           String?
+  recordedById   String?
+  equipment      Equipment @relation(fields: [equipmentId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+
+  @@unique([id, organizationId])
+  @@index([organizationId, equipmentId, measuredAt])
 }
 
 model Material {
@@ -139,10 +213,90 @@ model Material {
   task           MaintenanceTask @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
 }
 
+model InventoryItem {
+  id             String              @id @default(cuid())
+  name           String
+  reference      String?
+  unit           MaterialUnit        @default(PC)
+  onHand         Decimal             @default(0) @db.Decimal(12, 2)
+  reorderPoint   Decimal             @default(0) @db.Decimal(12, 2)
+  vendorId       String?
+  siteId         String
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  site           Site                @relation(fields: [siteId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  vendor         Vendor?             @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  movements      InventoryMovement[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@unique([id, organizationId])
+  @@unique([siteId, organizationId, name])
+  @@index([organizationId, siteId])
+  @@index([organizationId, vendorId])
+}
+
+model InventoryMovement {
+  id              String                @id @default(cuid())
+  inventoryItemId String
+  organizationId  String
+  taskId          String?
+  type            InventoryMovementType
+  quantity        Decimal               @db.Decimal(12, 2)
+  note            String?
+  recordedById    String?
+  inventoryItem   InventoryItem         @relation(fields: [inventoryItemId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  organization    Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  task            MaintenanceTask?      @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  createdAt       DateTime              @default(now())
+
+  @@unique([id, organizationId])
+  @@index([organizationId, inventoryItemId, createdAt])
+  @@index([organizationId, taskId])
+}
+
+model MaintenanceTaskReminder {
+  id             String                    @id @default(cuid())
+  taskId         String
+  workerId       String
+  organizationId String
+  recipientEmail String
+  locale         String                    @default("en")
+  scheduledFor   DateTime
+  nextAttemptAt  DateTime
+  status         MaintenanceReminderStatus @default(PENDING)
+  attempts       Int                       @default(0)
+  lastAttemptAt  DateTime?
+  sentAt         DateTime?
+  lastError      String?
+  task           MaintenanceTask           @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  worker         Worker                    @relation(fields: [workerId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+
+  @@unique([taskId, workerId])
+  @@index([organizationId, status, nextAttemptAt])
+  @@index([taskId, organizationId])
+}
+
+enum InventoryMovementType {
+  RECEIPT
+  CONSUMPTION
+  ADJUSTMENT
+}
+
 enum TaskType {
+  PREDICTIVE
   PREVENTIVE
-  INSPECTION
   CORRECTIVE
+}
+
+enum MaintenanceReminderStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+  CANCELLED
 }
 
 model MaintenanceTaskAssignment {
@@ -158,6 +312,21 @@ model MaintenanceTaskAssignment {
   @@unique([taskId, workerId])
 }
 
+model MaintenanceTaskDailyHours {
+  id             String          @id @default(cuid())
+  taskId         String
+  workerId       String
+  organizationId String
+  workDate       DateTime        @db.Date
+  hours          Decimal         @db.Decimal(4, 2)
+  task           MaintenanceTask @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  worker         Worker          @relation(fields: [workerId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  createdAt      DateTime        @default(now())
+
+  @@index([organizationId, workDate])
+  @@index([taskId, workerId])
+}
+
 model Worker {
   id             String                      @id @default(cuid())
   name           String
@@ -169,6 +338,8 @@ model Worker {
   organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   vendor         Vendor?                     @relation(fields: [vendorId, organizationId], references: [id, organizationId], onDelete: Restrict)
   assignments    MaintenanceTaskAssignment[]
+  dailyHours     MaintenanceTaskDailyHours[]
+  reminders      MaintenanceTaskReminder[]
   deletedAt      DateTime?
   deletedById    String?
   createdAt      DateTime                    @default(now())
@@ -180,14 +351,15 @@ model Worker {
 }
 
 model Vendor {
-  id             String       @id @default(cuid())
+  id             String          @id @default(cuid())
   name           String
   contact        String?
   email          String?
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   workers        Worker[]
-  createdAt      DateTime     @default(now())
+  inventoryItems InventoryItem[]
+  createdAt      DateTime        @default(now())
 
   @@unique([id, organizationId])
   @@unique([organizationId, name])
@@ -305,37 +477,40 @@ model RateLimit {
 }
 
 model Organization {
-  id          String                   @id
-  name        String
-  slug        String
-  logo        String?
-  createdAt   DateTime
-  metadata    String?
-  members     Member[]
-  invitations Invitation[]
-  sites       Site[]
-  sections    Section[]
-  files       StoredFile[]
-  equipment   Equipment[]
-  tasks       MaintenanceTask[]
-  workers     Worker[]
-  vendors     Vendor[]
-  auditEvents OrganizationAuditEvent[]
-  settings    TenantSettings?
-  exports     TenantExport[]
+  id                 String                   @id
+  name               String
+  slug               String
+  logo               String?
+  createdAt          DateTime
+  metadata           String?
+  members            Member[]
+  invitations        Invitation[]
+  sites              Site[]
+  sections           Section[]
+  files              StoredFile[]
+  equipment          Equipment[]
+  tasks              MaintenanceTask[]
+  workers            Worker[]
+  vendors            Vendor[]
+  inventoryItems     InventoryItem[]
+  inventoryMovements InventoryMovement[]
+  auditEvents        OrganizationAuditEvent[]
+  settings           TenantSettings?
+  exports            TenantExport[]
 
   @@unique([slug])
   @@map("organization")
 }
 
 model Site {
-  id             String       @id @default(cuid())
+  id             String          @id @default(cuid())
   name           String
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   equipment      Equipment[]
   sections       Section[]
-  createdAt      DateTime     @default(now())
+  inventoryItems InventoryItem[]
+  createdAt      DateTime        @default(now())
 
   @@unique([id, organizationId])
   @@unique([organizationId, name])

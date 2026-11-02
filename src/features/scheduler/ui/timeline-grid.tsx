@@ -27,7 +27,8 @@ import {
   isSameSlot,
   layoutEquipmentRow,
 } from "../utils/timeline-grid-layout";
-import { format, isSameDay } from "date-fns";
+import { format } from "date-fns";
+import { toZonedCalendarDate } from "@/lib/time-zone";
 import {
   Box,
   CalendarDays,
@@ -40,6 +41,7 @@ import { AddEntryDialog } from "./add-entry-dialog";
 import { EquipmentRowLabel } from "./equipment-row-label";
 import { EquipmentDialog } from "./equipment-dialog";
 import { MaintenanceEntryBlock } from "./maintenance-entry-block";
+import { getTaskDisplayEnd } from "../utils/schedule";
 
 export function TimelineGrid() {
   const locale = getValidLocale(useLocale());
@@ -51,6 +53,7 @@ export function TimelineGrid() {
   const entries = useSchedulerStore((state) => state.entries);
   const viewMode = useSchedulerStore((state) => state.viewMode);
   const currentDate = useSchedulerStore((state) => state.currentDate);
+  const timeZone = useSchedulerStore((state) => state.timeZone);
   const isLoading = useSchedulerStore((state) => state.isLoading);
   const setEquipment = useSchedulerStore((state) => state.setEquipment);
   const setEntries = useSchedulerStore((state) => state.setEntries);
@@ -81,26 +84,27 @@ export function TimelineGrid() {
   const gridRef = useRef<HTMLDivElement>(null);
 
   const timeSlots = useMemo(
-    () => getTimeSlots(viewMode, currentDate),
-    [viewMode, currentDate],
+    () => getTimeSlots(viewMode, currentDate, timeZone),
+    [viewMode, currentDate, timeZone],
   );
 
   const formatHeader = (date: Date): string => {
+    const zonedDate = toZonedCalendarDate(date, timeZone);
     switch (viewMode) {
       case "day":
-        return format(date, config.timeFormat, { locale: dateFnsLocale });
+        return format(zonedDate, config.timeFormat, { locale: dateFnsLocale });
       case "week":
-        return format(date, "EEE d", { locale: dateFnsLocale });
+        return format(zonedDate, "EEE d", { locale: dateFnsLocale });
       case "month":
-        return format(date, "d", { locale: dateFnsLocale });
+        return format(zonedDate, "d", { locale: dateFnsLocale });
       case "year":
-        return format(date, "MMM", { locale: dateFnsLocale });
+        return format(zonedDate, "MMM", { locale: dateFnsLocale });
     }
   };
 
   const viewRange = useMemo(
-    () => getViewRange(timeSlots, viewMode),
-    [timeSlots, viewMode],
+    () => getViewRange(timeSlots, viewMode, timeZone),
+    [timeSlots, viewMode, timeZone],
   );
 
   const getEntriesForEquipment = useCallback(
@@ -110,7 +114,7 @@ export function TimelineGrid() {
         (entry) =>
           entry.equipmentId === equipmentId &&
           new Date(entry.startTime) <= viewRange.end &&
-          new Date(entry.endTime) >= viewRange.start,
+          getTaskDisplayEnd(entry.startTime, entry.endTime) >= viewRange.start,
       );
     },
     [entries, viewRange],
@@ -148,17 +152,12 @@ export function TimelineGrid() {
   const handleDrop = async (date: Date, equipmentId: string) => {
     if (draggedEntry) {
       const previousEntries = entries;
-      const duration =
-        draggedEntry.endTime.getTime() - draggedEntry.startTime.getTime();
-      const newEndTime = new Date(date.getTime() + duration);
-
       moveEntry(draggedEntry.id, date, equipmentId);
 
       try {
         const updatedTask = await dbMoveTask(
           draggedEntry.id,
           date,
-          newEndTime,
           equipmentId,
         );
         replaceEntry(draggedEntry.id, updatedTask);
@@ -172,7 +171,8 @@ export function TimelineGrid() {
     setDragOverCell(null);
   };
 
-  const isToday = (date: Date) => isSameSlot(date, new Date(), viewMode);
+  const isToday = (date: Date) =>
+    isSameSlot(date, new Date(), viewMode, timeZone);
 
   const handleEditEquip = (equip: Equipment) => {
     setEditingEquipment(equip);
@@ -233,8 +233,12 @@ export function TimelineGrid() {
     year: t("periodYear"),
   }[viewMode];
   const now = new Date();
+  const dayDuration =
+    viewRange ? viewRange.end.getTime() + 1 - viewRange.start.getTime() : 0;
   const currentTimePosition =
-    ((now.getHours() * 60 + now.getMinutes()) / 1440) * 100;
+    dayDuration > 0 && viewRange
+      ? ((now.getTime() - viewRange.start.getTime()) / dayDuration) * 100
+      : 0;
 
   return (
     <>
@@ -247,7 +251,7 @@ export function TimelineGrid() {
           {isLoading && (
             <TimelineGridSkeleton
               boundaryClasses={timeSlots.map((_, index) =>
-                getTimelineBoundaryClass(timeSlots, viewMode, index),
+                getTimelineBoundaryClass(timeSlots, viewMode, index, timeZone),
               )}
               rowCount={Math.min(Math.max(equipment.length, 3), 6)}
               yAxisWidth={yAxisWidth}
@@ -295,7 +299,7 @@ export function TimelineGrid() {
                   onClick={() => handleHeaderClick(slot)}
                   disabled={viewMode !== "week" && viewMode !== "month"}
                   aria-label={format(
-                    slot,
+                    toZonedCalendarDate(slot, timeZone),
                     viewMode === "day" ? "PPpp" : "PP",
                     { locale: dateFnsLocale },
                   )}
@@ -306,7 +310,7 @@ export function TimelineGrid() {
                     cellWidth,
                     "relative flex-1 whitespace-nowrap border-b-0 border-r px-1 py-2 text-center tabular-nums text-xs font-medium text-muted-foreground transition-colors focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-default",
                     viewMode === "day" ? "px-0.5 leading-none tracking-tight" : "sm:text-sm",
-                    getTimelineBoundaryClass(timeSlots, viewMode, idx),
+                    getTimelineBoundaryClass(timeSlots, viewMode, idx, timeZone),
                     (viewMode === "week" || viewMode === "month") &&
                       "cursor-pointer hover:bg-accent hover:text-foreground active:bg-accent/80",
                     isToday(slot) &&
@@ -332,6 +336,7 @@ export function TimelineGrid() {
                     timeSlots,
                     viewRange,
                     viewMode,
+                    timeZone,
                   );
 
                 return (
@@ -354,7 +359,7 @@ export function TimelineGrid() {
                         const isDragOver =
                           dragOverCell &&
                           dragOverCell.equipmentId === equip.id &&
-                          isSameSlot(dragOverCell.date, slot, viewMode);
+                          isSameSlot(dragOverCell.date, slot, viewMode, timeZone);
 
                         return (
                           <button
@@ -362,7 +367,7 @@ export function TimelineGrid() {
                             aria-label={t("addEntryAt", {
                               equipment: equip.name,
                               date: format(
-                                slot,
+                                toZonedCalendarDate(slot, timeZone),
                                 viewMode === "day" ? "PPpp" : "PP",
                                 { locale: dateFnsLocale },
                               ),
@@ -370,7 +375,7 @@ export function TimelineGrid() {
                             title={t("addEntryAt", {
                               equipment: equip.name,
                               date: format(
-                                slot,
+                                toZonedCalendarDate(slot, timeZone),
                                 viewMode === "day" ? "PPpp" : "PP",
                                 { locale: dateFnsLocale },
                               ),
@@ -383,6 +388,7 @@ export function TimelineGrid() {
                                 timeSlots,
                                 viewMode,
                                 slotIdx,
+                                timeZone,
                               ),
                               "hover:bg-accent/50 active:bg-accent/80",
                               isDragOver && "bg-primary-muted",
@@ -413,7 +419,7 @@ export function TimelineGrid() {
                       })}
 
                       {viewMode === "day" &&
-                        isSameDay(currentDate, now) && (
+                        isSameSlot(currentDate, now, "month", timeZone) && (
                           <div
                             aria-hidden="true"
                             className="pointer-events-none absolute inset-y-0 border-l border-primary"
@@ -449,7 +455,6 @@ export function TimelineGrid() {
                               <MaintenanceEntryBlock
                                 key={entry.id}
                                 entry={entry}
-                                timeSlotsCount={timeSlots.length}
                                 style={{
                                   position: "absolute",
                                   left: `calc(${startPercent}% + 2px)`,
@@ -510,7 +515,7 @@ export function TimelineGrid() {
                       className={cn(
                         cellWidth,
                         "flex-1 border-r",
-                        getTimelineBoundaryClass(timeSlots, viewMode, index),
+                        getTimelineBoundaryClass(timeSlots, viewMode, index, timeZone),
                       )}
                     />
                   ))}

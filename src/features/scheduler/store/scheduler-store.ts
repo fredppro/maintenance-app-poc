@@ -1,5 +1,9 @@
-import { addDays, addMonths, addWeeks, addYears } from "date-fns";
 import { createStore } from "zustand/vanilla";
+import { DEFAULT_ORGANIZATION_TIMEZONE } from "@/features/organization/shared/organization-settings";
+import {
+  fromZonedDateTimeParts,
+  getZonedDateTimeParts,
+} from "@/lib/time-zone";
 import {
   Equipment,
   MaintenanceEntry,
@@ -28,6 +32,7 @@ export interface SchedulerState {
   sections: SectionOption[];
   viewMode: ViewMode;
   currentDate: Date;
+  timeZone: string;
   selectedEntry: MaintenanceEntry | null;
   isLoading: boolean;
 
@@ -69,10 +74,57 @@ export type SchedulerInitialState = Partial<
     | "sections"
     | "viewMode"
     | "currentDate"
+    | "timeZone"
     | "selectedEntry"
     | "isLoading"
   >
 >;
+
+function navigateCalendarDate(
+  currentDate: Date,
+  viewMode: ViewMode,
+  direction: 1 | -1,
+  timeZone: string,
+) {
+  const parts = getZonedDateTimeParts(currentDate, timeZone);
+  if (viewMode === "day" || viewMode === "week") {
+    const calendarDate = new Date(
+      Date.UTC(
+        parts.year,
+        parts.month - 1,
+        parts.day + direction * (viewMode === "week" ? 7 : 1),
+        parts.hour,
+        parts.minute,
+        parts.second,
+      ),
+    );
+    return fromZonedDateTimeParts(
+      {
+        ...parts,
+        year: calendarDate.getUTCFullYear(),
+        month: calendarDate.getUTCMonth() + 1,
+        day: calendarDate.getUTCDate(),
+      },
+      timeZone,
+    );
+  }
+
+  const monthOffset = direction * (viewMode === "year" ? 12 : 1);
+  const targetMonth = new Date(
+    Date.UTC(parts.year, parts.month - 1 + monthOffset, 1),
+  );
+  const year = targetMonth.getUTCFullYear();
+  const month = targetMonth.getUTCMonth() + 1;
+  const day = Math.min(
+    parts.day,
+    new Date(Date.UTC(year, month, 0)).getUTCDate(),
+  );
+
+  return fromZonedDateTimeParts(
+    { ...parts, year, month, day },
+    timeZone,
+  );
+}
 
 const defaultSchedulerState = (): Pick<
   SchedulerState,
@@ -83,6 +135,7 @@ const defaultSchedulerState = (): Pick<
   | "sections"
   | "viewMode"
   | "currentDate"
+  | "timeZone"
   | "selectedEntry"
   | "isLoading"
 > => ({
@@ -93,6 +146,7 @@ const defaultSchedulerState = (): Pick<
   sections: [],
   viewMode: "week",
   currentDate: new Date(),
+  timeZone: DEFAULT_ORGANIZATION_TIMEZONE,
   selectedEntry: null,
   isLoading: false,
 });
@@ -190,55 +244,40 @@ export function createSchedulerStore(initialState: SchedulerInitialState = {}) {
     navigateForward: () =>
       set((state) => {
         const { viewMode, currentDate } = state;
-        let newDate: Date;
-        switch (viewMode) {
-          case "day":
-            newDate = addDays(currentDate, 1);
-            break;
-          case "week":
-            newDate = addWeeks(currentDate, 1);
-            break;
-          case "month":
-            newDate = addMonths(currentDate, 1);
-            break;
-          case "year":
-            newDate = addYears(currentDate, 1);
-            break;
-          default:
-            newDate = currentDate;
-        }
-        return { currentDate: newDate };
+        return {
+          currentDate: navigateCalendarDate(
+            currentDate,
+            viewMode,
+            1,
+            state.timeZone,
+          ),
+        };
       }),
 
     navigateBackward: () =>
       set((state) => {
         const { viewMode, currentDate } = state;
-        let newDate: Date;
-        switch (viewMode) {
-          case "day":
-            newDate = addDays(currentDate, -1);
-            break;
-          case "week":
-            newDate = addWeeks(currentDate, -1);
-            break;
-          case "month":
-            newDate = addMonths(currentDate, -1);
-            break;
-          case "year":
-            newDate = addYears(currentDate, -1);
-            break;
-          default:
-            newDate = currentDate;
-        }
-        return { currentDate: newDate };
+        return {
+          currentDate: navigateCalendarDate(
+            currentDate,
+            viewMode,
+            -1,
+            state.timeZone,
+          ),
+        };
       }),
 
     moveEntry: (entryId, newStartTime, newEquipmentId) => {
       const entry = get().entries.find((item) => item.id === entryId);
       if (!entry) return;
 
-      const duration = entry.endTime.getTime() - entry.startTime.getTime();
-      const newEndTime = new Date(newStartTime.getTime() + duration);
+      const currentStart = new Date(entry.startTime);
+      const currentEnd = entry.endTime ? new Date(entry.endTime) : null;
+      const newEndTime = currentEnd
+        ? new Date(
+            newStartTime.getTime() + currentEnd.getTime() - currentStart.getTime(),
+          )
+        : null;
 
       set((state) => ({
         entries: state.entries.map((item) =>

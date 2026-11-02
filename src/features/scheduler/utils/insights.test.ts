@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Equipment, MaintenanceEntry } from "../types";
 import {
+  countOverdueScheduledMaintenance,
+  getNextScheduledMaintenance,
   summarizeEquipmentMaintenance,
   summarizeMaterials,
   summarizeMetrics,
@@ -57,17 +59,18 @@ describe("summarizeMaterials", () => {
 
 describe("summarizeMetrics", () => {
   const entries = [
-    entry({ id: "1", status: "completed", endTime: day(-2), type: "CORRECTIVE" }),
-    entry({ id: "2", status: "scheduled", endTime: day(-1) }),
-    entry({ id: "3", status: "in-progress", endTime: day(2), type: "INSPECTION" }),
-    entry({ id: "4", status: "scheduled", endTime: day(3), equipmentId: "eq-2" }),
+    entry({ id: "1", status: "completed", startTime: day(-3), endTime: day(-2), type: "CORRECTIVE" }),
+    entry({ id: "2", status: "scheduled", startTime: day(-2), endTime: day(-1) }),
+    entry({ id: "3", status: "in-progress", endTime: day(2), type: "PREDICTIVE" }),
+    entry({ id: "4", status: "scheduled", startTime: day(3), endTime: day(3), equipmentId: "eq-2" }),
+    entry({ id: "5", status: "cancelled", startTime: day(-5), endTime: day(-4) }),
   ];
 
   it("counts completion, overdue and upcoming tasks", () => {
     const m = summarizeMetrics(entries, [], NOW);
-    expect(m).toMatchObject({ total: 4, completionRate: 25, overdue: 1, upcoming: 2 });
+    expect(m).toMatchObject({ total: 5, completionRate: 25, overdue: 1, upcoming: 2 });
     expect(m.byType).toEqual({ preventive: 2, corrective: 1, inspection: 1 });
-    expect(m.byStatus).toEqual({ scheduled: 2, inProgress: 1, completed: 1 });
+    expect(m.byStatus).toEqual({ scheduled: 2, inProgress: 1, completed: 1, cancelled: 1 });
   });
 
   it("ranks equipment by task count and omits idle equipment", () => {
@@ -112,5 +115,32 @@ describe("summarizeEquipmentMaintenance", () => {
       next: undefined,
       last: undefined,
     });
+  });
+});
+
+describe("next scheduled maintenance", () => {
+  it("excludes overdue, completed, and cancelled tasks", () => {
+    const now = day(0).getTime();
+    const scheduled = entry({ id: "upcoming", startTime: day(2), endTime: null });
+    const result = getNextScheduledMaintenance(
+      [
+        entry({ id: "overdue", startTime: day(-1), endTime: null }),
+        scheduled,
+        entry({ id: "complete", status: "completed", startTime: day(1) }),
+        entry({ id: "cancelled", status: "cancelled", startTime: day(1) }),
+      ],
+      now,
+    );
+
+    expect(result?.id).toBe("upcoming");
+    expect(
+      countOverdueScheduledMaintenance(
+        [
+          entry({ status: "scheduled", startTime: day(-1), endTime: null }),
+          entry({ status: "cancelled", startTime: day(-2), endTime: null }),
+        ],
+        now,
+      ),
+    ).toBe(1);
   });
 });

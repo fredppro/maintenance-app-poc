@@ -15,6 +15,7 @@ export async function getMaintenanceTask(
     include: {
       equipment: true,
       assignments: { include: { worker: true } },
+      dailyHours: true,
       materials: true,
     },
   });
