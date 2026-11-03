@@ -42,6 +42,10 @@ Docker-mount, and Garage bucket usage separately.
 
 Operational scripts load `MIGRATION_DATABASE_URL` (the owner role). Treat that
 credential as deployment-only; never use it for the running application.
+The runtime-role verifier permits only the four reservation `SECURITY DEFINER`
+functions, and checks their fixed search path, runtime execution grants,
+absence of `PUBLIC` execution, and the runtime role's lack of direct access to
+the protected reservation table.
 The checked-in backup and maintenance workflows are conditional on external
 configuration; their schedules do not prove that a job ran or that its output
 is recoverable. See [the environment status record](../docs/reference/environment-status.md).

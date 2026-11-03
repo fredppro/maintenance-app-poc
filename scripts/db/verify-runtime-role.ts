@@ -4,6 +4,7 @@ import "dotenv/config";
 import { resolveRuntimeDatabaseUrl } from "../../src/lib/database-url";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
+import { getSecurityDefinerFunctionIssues } from "./runtime-role-security";
 
 // Tables deliberately outside RLS: the auth/lifecycle tables are read before a tenant is known
 // or by operators (docs/architecture/tenant-isolation.md). Anything else with organizationId must have RLS.
@@ -22,9 +23,35 @@ async function main() {
       SELECT has_table_privilege(current_user, 'public.organization_audit_event', 'UPDATE,DELETE') AS ok`;
     const [publicCreate] = await prisma.$queryRaw<{ ok: boolean }[]>`
       SELECT has_schema_privilege(current_user, 'public', 'CREATE') AS ok`;
-    const [definers] = await prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    const definers = await prisma.$queryRaw<{
+      signature: string;
+      hasSafeSearchPath: boolean;
+      publicCanExecute: boolean;
+      runtimeCanExecute: boolean;
+    }[]>`
+      SELECT
+        p.proname || '(' || regexp_replace(oidvectortypes(p.proargtypes), '\\s+', '', 'g') || ')' AS signature,
+        COALESCE(p.proconfig, ARRAY[]::text[]) @> ARRAY['search_path=public, pg_temp']::text[] AS "hasSafeSearchPath",
+        EXISTS (
+          SELECT 1
+          FROM aclexplode(COALESCE(p.proacl, acldefault('f', p.proowner))) AS acl
+          WHERE acl.grantee = 0 AND acl.privilege_type = 'EXECUTE'
+        ) AS "publicCanExecute",
+        has_function_privilege(current_user, p.oid, 'EXECUTE') AS "runtimeCanExecute"
+      FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
       WHERE n.nspname = 'public' AND p.prosecdef`;
+    const definerIssues = getSecurityDefinerFunctionIssues(definers);
+    const [reservationAccess] = await prisma.$queryRaw<{
+      canSelect: boolean;
+      canInsert: boolean;
+      canUpdate: boolean;
+      canDelete: boolean;
+    }[]>`
+      SELECT
+        has_table_privilege(current_user, 'public.tenant_export_temp_reservation', 'SELECT') AS "canSelect",
+        has_table_privilege(current_user, 'public.tenant_export_temp_reservation', 'INSERT') AS "canInsert",
+        has_table_privilege(current_user, 'public.tenant_export_temp_reservation', 'UPDATE') AS "canUpdate",
+        has_table_privilege(current_user, 'public.tenant_export_temp_reservation', 'DELETE') AS "canDelete"`;
     const [views] = await prisma.$queryRaw<{ count: bigint }[]>`
       SELECT count(*) FROM pg_views WHERE schemaname = 'public'`;
     const unprotected = await prisma.$queryRaw<{ table_name: string }[]>`
@@ -35,7 +62,9 @@ async function main() {
       role.rolcreatedb && "role has CREATEDB",
       role.rolcreaterole && "role has CREATEROLE",
       publicCreate.ok && "role can create objects in schema public",
-      Number(definers.count) > 0 && "SECURITY DEFINER functions exist in public (review for RLS bypass)",
+      ...definerIssues,
+      Object.values(reservationAccess).some(Boolean) &&
+        "runtime role has direct access to tenant_export_temp_reservation",
       Number(views.count) > 0 && "views exist in public (review: views run with owner rights)",
       unprotected.some((t) => !APP_LEVEL_ONLY.has(t.table_name)) &&
         `tables with organizationId but no RLS: ${unprotected.filter((t) => !APP_LEVEL_ONLY.has(t.table_name)).map((t) => t.table_name).join(", ")}`,
