@@ -37,7 +37,7 @@ RUN addgroup -S -g 1001 nodejs \
     && rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/pnpm /usr/local/bin/pnpx
 
 COPY src/lib/database-url.ts ./src/lib/database-url.ts
-COPY scripts/db/provision-runtime-role.ts scripts/db/verify-runtime-role.ts ./scripts/db/
+COPY scripts/db/provision-runtime-role.ts scripts/db/verify-runtime-role.ts scripts/db/runtime-role-security.ts ./scripts/db/
 COPY docker/migrate-entrypoint.sh ./docker/migrate-entrypoint.sh
 
 USER nextjs
