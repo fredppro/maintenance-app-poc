@@ -11,9 +11,17 @@ import {
 import { EditEntryDialog } from "./edit-entry-dialog";
 import { toast } from "sonner";
 
-const { deleteTaskMock, getMaintenancePointsMock, updateTaskMock } = vi.hoisted(() => ({
+const {
+  deleteTaskMock,
+  getMaintenancePointsMock,
+  previewMaintenanceTaskEmailMock,
+  sendMaintenanceTaskEmailMock,
+  updateTaskMock,
+} = vi.hoisted(() => ({
   deleteTaskMock: vi.fn(),
   getMaintenancePointsMock: vi.fn().mockResolvedValue([]),
+  previewMaintenanceTaskEmailMock: vi.fn(),
+  sendMaintenanceTaskEmailMock: vi.fn(),
   updateTaskMock: vi.fn(),
 }));
 
@@ -26,6 +34,8 @@ vi.mock("@/i18n/routing", () => ({
 vi.mock("../server/actions", () => ({
   deleteTask: deleteTaskMock,
   getMaintenancePoints: getMaintenancePointsMock,
+  previewMaintenanceTaskEmail: previewMaintenanceTaskEmailMock,
+  sendMaintenanceTaskEmail: sendMaintenanceTaskEmailMock,
   updateTask: updateTaskMock,
 }));
 
@@ -60,6 +70,28 @@ const entry: MaintenanceEntry = {
   materials: [],
   createdAt: startTime,
   updatedAt: startTime,
+};
+const notificationWorker: Worker = {
+  id: "worker-1",
+  name: "Taylor Worker",
+  email: "taylor@example.test",
+  phone: null,
+  type: "INTERNAL",
+  vendorId: null,
+  createdAt: startTime,
+};
+const taskWithNotificationAssignment: MaintenanceEntry = {
+  ...entry,
+  assignments: [
+    {
+      id: "assignment-1",
+      taskId: entry.id,
+      workerId: notificationWorker.id,
+      startTime,
+      endTime: null,
+      worker: notificationWorker,
+    },
+  ],
 };
 
 function EntryStatus() {
@@ -156,6 +188,8 @@ describe("EditEntryDialog", () => {
     deleteTaskMock.mockReset();
     updateTaskMock.mockReset();
     getMaintenancePointsMock.mockReset().mockResolvedValue([]);
+    previewMaintenanceTaskEmailMock.mockReset();
+    sendMaintenanceTaskEmailMock.mockReset();
     vi.mocked(toast.error).mockClear();
     vi.mocked(toast.success).mockClear();
   });
@@ -185,6 +219,225 @@ describe("EditEntryDialog", () => {
     expect(screen.getByRole("radio", { name: "Cancelled" })).toHaveClass(
       "data-[state=on]:bg-foreground",
     );
+  });
+
+  it("explains automatic notifications and distinguishes manual history", () => {
+    const taskWithNotificationHistory: MaintenanceEntry = {
+      ...taskWithNotificationAssignment,
+      reminders: [
+        {
+          id: "assignment-notice-1",
+          workerId: notificationWorker.id,
+          notificationType: "ASSIGNMENT",
+          status: "SENT",
+          scheduledFor: startTime,
+          sentAt: startTime,
+          attempts: 1,
+          worker: { name: notificationWorker.name },
+        },
+        {
+          id: "manual-notice-1",
+          workerId: notificationWorker.id,
+          notificationType: "MANUAL",
+          status: "PENDING",
+          scheduledFor: startTime,
+          sentAt: null,
+          attempts: 0,
+          worker: { name: notificationWorker.name },
+        },
+      ],
+    };
+    renderDialog(taskWithNotificationHistory, [notificationWorker]);
+
+    expect(
+      screen.getByText(/When a scheduled task is saved, an assignment notice/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Notification history")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 4,
+        name: "Automatic notifications",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Automatic")).toHaveLength(2);
+    expect(screen.getByText("Manual", { exact: true })).toBeInTheDocument();
+    expect(screen.getByText(/Assignment notice/)).toBeInTheDocument();
+    expect(screen.getByText(/Manual email/)).toBeInTheDocument();
+  });
+
+  it("shows recipient loading, previews recipients, and sends manually", async () => {
+    const user = userEvent.setup();
+    const requestId = "00000000-0000-4000-8000-000000000001";
+    vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(requestId);
+    let resolvePreview:
+      | ((result: {
+          taskId: string;
+          title: string;
+          startTime: Date;
+          recipients: {
+            workerId: string;
+            name: string;
+            email: string;
+          }[];
+          excludedRecipients: { workerId: string; name: string }[];
+        }) => void)
+      | undefined;
+    previewMaintenanceTaskEmailMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvePreview = resolve;
+        }),
+    );
+    let resolveSend:
+      | ((result: { sent: number; failed: number; pending: number }) => void)
+      | undefined;
+    sendMaintenanceTaskEmailMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSend = resolve;
+        }),
+    );
+    const preview = {
+      taskId: entry.id,
+      title: entry.title,
+      startTime: entry.startTime,
+      recipients: [
+        {
+          workerId: notificationWorker.id,
+          name: notificationWorker.name,
+          email: notificationWorker.email,
+        },
+      ],
+      excludedRecipients: [],
+    };
+    renderDialog(taskWithNotificationAssignment, [notificationWorker]);
+
+    await user.click(
+      screen.getByRole("button", { name: "Review recipients & send" }),
+    );
+    const loadingButton = screen.getByRole("button", {
+      name: "Loading recipients…",
+    });
+    expect(loadingButton).toBeDisabled();
+    await act(async () => {
+      resolvePreview?.(preview);
+    });
+
+    expect(
+      await screen.findByRole("alertdialog", {
+        name: "Confirm email recipients",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Taylor Worker.*taylor@example\.test/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Send email" }));
+
+    const sendingButton = await screen.findByRole("button", {
+      name: "Sending email…",
+    });
+    expect(sendingButton).toBeDisabled();
+    expect(sendingButton).toHaveAttribute("aria-busy", "true");
+    expect(sendMaintenanceTaskEmailMock).toHaveBeenCalledWith({
+      taskId: entry.id,
+      workerIds: [notificationWorker.id],
+      requestId,
+    });
+    await act(async () => {
+      resolveSend?.({ sent: 1, failed: 0, pending: 0 });
+    });
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("Email sent to 1 worker(s)."),
+    );
+  });
+
+  it("keeps the send action disabled when the preview has no valid recipients", async () => {
+    const user = userEvent.setup();
+    previewMaintenanceTaskEmailMock.mockResolvedValue({
+      taskId: entry.id,
+      title: entry.title,
+      startTime: entry.startTime,
+      recipients: [],
+      excludedRecipients: [
+        { workerId: notificationWorker.id, name: notificationWorker.name },
+      ],
+    });
+    renderDialog(taskWithNotificationAssignment, [notificationWorker]);
+
+    await user.click(
+      screen.getByRole("button", { name: "Review recipients & send" }),
+    );
+
+    expect(
+      await screen.findByText("No assigned workers have a valid email address."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "These assigned workers have no usable email address and will not receive the email: Taylor Worker.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send email" })).toBeDisabled();
+    expect(sendMaintenanceTaskEmailMock).not.toHaveBeenCalled();
+  });
+
+  it("shows a clear error when the manual email recipient preview fails", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    previewMaintenanceTaskEmailMock.mockRejectedValue(new Error("preview failed"));
+    renderDialog(taskWithNotificationAssignment, [notificationWorker]);
+
+    await user.click(
+      screen.getByRole("button", { name: "Review recipients & send" }),
+    );
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Could not load the current email recipients.",
+      ),
+    );
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  });
+
+  it("reports a manual send failure and keeps the confirmation open", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(
+      "00000000-0000-4000-8000-000000000001",
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    previewMaintenanceTaskEmailMock.mockResolvedValue({
+      taskId: entry.id,
+      title: entry.title,
+      startTime: entry.startTime,
+      recipients: [
+        {
+          workerId: notificationWorker.id,
+          name: notificationWorker.name,
+          email: notificationWorker.email,
+        },
+      ],
+      excludedRecipients: [],
+    });
+    sendMaintenanceTaskEmailMock.mockRejectedValue(new Error("send failed"));
+    renderDialog(taskWithNotificationAssignment, [notificationWorker]);
+
+    await user.click(
+      screen.getByRole("button", { name: "Review recipients & send" }),
+    );
+    expect(
+      await screen.findByRole("alertdialog", {
+        name: "Confirm email recipients",
+      }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Send email" }));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Could not send the maintenance task email.",
+      ),
+    );
+    expect(
+      screen.getByRole("alertdialog", {
+        name: "Confirm email recipients",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("updates the task and closes the dialog after a successful save", async () => {

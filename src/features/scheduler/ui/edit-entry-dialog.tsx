@@ -12,10 +12,19 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Select,
@@ -928,60 +937,138 @@ export function EditEntryDialog({
           {(entry.assignments?.length ?? 0) > 0 ||
           (entry.reminders?.length ?? 0) > 0 ? (
             <FormSection title={t("notifications.title")} showSeparator>
-              <div className="flex flex-col gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePreviewTaskEmail}
-                  disabled={isLoadingTaskEmailPreview}
-                  aria-busy={isLoadingTaskEmailPreview}
-                >
-                  {isLoadingTaskEmailPreview ? (
-                    <Spinner data-icon="inline-start" />
-                  ) : (
-                    <Mail data-icon="inline-start" />
-                  )}
-                  {t("notifications.send")}
-                </Button>
-                <div className="flex flex-col gap-2">
-                {entry.reminders?.map((reminder) => {
-                  const statusLabel = {
-                    PENDING: t("reminders.statusPending"),
-                    SENDING: t("reminders.statusSending"),
-                    SENT: t("reminders.statusSent"),
-                    FAILED: t("reminders.statusFailed"),
-                    CANCELLED: t("reminders.statusCancelled"),
-                  }[reminder.status];
-                  const scheduledDate = new Intl.DateTimeFormat(locale, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                    timeZone,
-                  }).format(new Date(reminder.scheduledFor));
-                  const notificationTypeLabel = {
-                    ASSIGNMENT: t("notifications.assignment"),
-                    REMINDER: t("notifications.reminder"),
-                    MANUAL: t("notifications.manual"),
-                  }[reminder.notificationType];
-                  return (
-                    <div
-                      key={reminder.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3 text-sm"
-                    >
-                      <div>
-                        <p className="font-medium">{reminder.worker.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {notificationTypeLabel} ·{" "}
-                          {t("reminders.scheduledFor", { date: scheduledDate })}
-                        </p>
-                      </div>
-                      <Badge variant={reminder.status === "FAILED" ? "destructive" : "outline"}>
-                        {statusLabel}
-                      </Badge>
+              <Card className="gap-0 overflow-hidden py-0">
+                <CardHeader className="gap-3 border-b bg-muted/30 px-4 py-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <CardTitle
+                        role="heading"
+                        aria-level={4}
+                        className="text-sm"
+                      >
+                        {t("notifications.automaticTitle")}
+                      </CardTitle>
+                      <CardDescription className="leading-relaxed">
+                        {t("notifications.automaticDescription")}
+                      </CardDescription>
                     </div>
-                  );
-                })}
-                </div>
-              </div>
+                    <Badge variant="outline" className="w-fit shrink-0">
+                      {t("notifications.automaticBadge")}
+                    </Badge>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="flex flex-col gap-3 px-4 py-4">
+                  <h5 className="text-sm font-medium">
+                    {t("notifications.historyTitle")}
+                  </h5>
+                  {entry.reminders?.length ? (
+                    <ul
+                      aria-label={t("notifications.historyTitle")}
+                      className="flex flex-col gap-2"
+                    >
+                      {entry.reminders.map((reminder) => {
+                        const statusLabel = {
+                          PENDING: t("reminders.statusPending"),
+                          SENDING: t("reminders.statusSending"),
+                          SENT: t("reminders.statusSent"),
+                          FAILED: t("reminders.statusFailed"),
+                          CANCELLED: t("reminders.statusCancelled"),
+                        }[reminder.status];
+                        const scheduledDate = new Intl.DateTimeFormat(locale, {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                          timeZone,
+                        }).format(new Date(reminder.scheduledFor));
+                        const notificationTypeLabel = {
+                          ASSIGNMENT: t("notifications.assignment"),
+                          REMINDER: t("notifications.reminder"),
+                          MANUAL: t("notifications.manual"),
+                        }[reminder.notificationType];
+                        const isManual =
+                          reminder.notificationType === "MANUAL";
+
+                        return (
+                          <li
+                            key={reminder.id}
+                            className="flex flex-col gap-2 rounded-md border p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                          >
+                            <div className="flex min-w-0 flex-col gap-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="font-medium">
+                                  {reminder.worker.name}
+                                </p>
+                                <Badge
+                                  variant={isManual ? "secondary" : "outline"}
+                                >
+                                  {t(
+                                    isManual
+                                      ? "notifications.manualBadge"
+                                      : "notifications.automaticBadge",
+                                  )}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {notificationTypeLabel} ·{" "}
+                                {t("reminders.scheduledFor", {
+                                  date: scheduledDate,
+                                })}
+                              </p>
+                            </div>
+                            <Badge
+                              variant={
+                                reminder.status === "FAILED"
+                                  ? "destructive"
+                                  : reminder.status === "SENT"
+                                    ? "secondary"
+                                    : "outline"
+                              }
+                              className="w-fit shrink-0"
+                            >
+                              {statusLabel}
+                            </Badge>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {t("notifications.historyEmpty")}
+                    </p>
+                  )}
+                </CardContent>
+
+                <Separator />
+
+                <CardFooter className="flex-col items-stretch gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-1">
+                    <h5 className="text-sm font-medium">
+                      {t("notifications.manualTitle")}
+                    </h5>
+                    <p className="text-sm text-muted-foreground">
+                      {t("notifications.manualDescription")}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={handlePreviewTaskEmail}
+                    disabled={isLoadingTaskEmailPreview}
+                    aria-busy={isLoadingTaskEmailPreview}
+                    className="w-full shrink-0 sm:w-auto"
+                  >
+                    {isLoadingTaskEmailPreview ? (
+                      <Spinner aria-hidden="true" data-icon="inline-start" />
+                    ) : (
+                      <Mail data-icon="inline-start" />
+                    )}
+                    {t(
+                      isLoadingTaskEmailPreview
+                        ? "notifications.loadingRecipients"
+                        : "notifications.send",
+                    )}
+                  </Button>
+                </CardFooter>
+              </Card>
             </FormSection>
           ) : null}
 
@@ -1081,8 +1168,14 @@ export function EditEntryDialog({
               }
               aria-busy={isSendingTaskEmail}
             >
-              {isSendingTaskEmail && <Spinner data-icon="inline-start" />}
-              {t("notifications.confirmSend")}
+              {isSendingTaskEmail && (
+                <Spinner aria-hidden="true" data-icon="inline-start" />
+              )}
+              {t(
+                isSendingTaskEmail
+                  ? "notifications.sending"
+                  : "notifications.confirmSend",
+              )}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
