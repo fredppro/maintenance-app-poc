@@ -45,7 +45,7 @@ test("schedule a task from the dashboard with accessible form controls", async (
     "E2E - Playwright scheduled task",
   );
   await page
-    .getByRole("combobox", { name: "Select workers..." })
+    .getByRole("combobox", { name: "Assigned Workers" })
     .click();
   await page.getByRole("option", { name: /E2E Playwright Worker/ }).click();
   await page.keyboard.press("Escape");

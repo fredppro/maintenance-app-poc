@@ -30,7 +30,6 @@ interface DateTimePickerProps {
   showTime?: boolean;
   placeholder?: string;
   ariaLabel?: string;
-  "aria-required"?: boolean;
   "aria-describedby"?: string;
   id?: string;
   hasError?: boolean;
@@ -49,7 +48,6 @@ export function DateTimePicker({
   showTime = true,
   placeholder,
   ariaLabel,
-  "aria-required": ariaRequired,
   "aria-describedby": ariaDescribedBy,
   id,
   hasError,
@@ -199,7 +197,6 @@ export function DateTimePicker({
         <Button
           id={id}
           aria-label={ariaLabel}
-          aria-required={ariaRequired}
           aria-invalid={displayError || undefined}
           aria-describedby={ariaDescribedBy}
           variant="outline"

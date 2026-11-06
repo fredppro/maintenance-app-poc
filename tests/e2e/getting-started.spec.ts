@@ -89,7 +89,7 @@ test("an operator-provisioned owner is guided through setup, and other organizat
   await test.step("scheduling the first task completes the checklist", async () => {
     await checklist(page).getByRole("button", { name: "Schedule maintenance" }).click();
     await page.getByPlaceholder("e.g., Monthly Inspection").fill("E2E first maintenance");
-    await page.getByRole("combobox", { name: "Select workers..." }).click();
+    await page.getByRole("combobox", { name: "Assigned Workers" }).click();
     await page.getByRole("option", { name: /E2E Checklist Technician/ }).click();
     await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Schedule", exact: true }).click();
