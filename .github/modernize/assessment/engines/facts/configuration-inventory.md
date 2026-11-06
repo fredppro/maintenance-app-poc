@@ -34,7 +34,7 @@ configuration repository, or checked-in secret-manager integration was found.
 | `build` | `pnpm build` | Standard Next.js production build. | Next.js build and Prisma generated client. |
 | `vercel-build` | Vercel framework build command or explicit `pnpm vercel-build` | Applies Prisma migrations, provisions the restricted runtime role, then builds Next.js. | Prisma CLI, `tsx`, `scripts/db/provision-runtime-role.ts`; owner connection required. |
 | Container build | `CONTAINER_BUILD=true` in the Docker builder stage | Produces Next.js standalone output for the runtime image. | Dockerfile multi-stage build. |
-| Docker `migrator` target | `docker build --target migrator` | Creates a one-shot image that applies migrations and provisions/verifies the runtime role. | Prisma CLI, `tsx`, `docker/migrate-entrypoint.sh`. The staging deploy job currently does not invoke this image. |
+| Docker `migrator` target | `docker build --target migrator` | Creates a one-shot image that applies migrations and provisions/verifies the runtime role. | Prisma CLI, `tsx`, `docker/migrate-entrypoint.sh`. The staging deployment workflow promotes but does not invoke this image. |
 | `start` | `pnpm start` or the production container command | Runs the built Next.js server. | Node.js 24; `PORT` defaults to 3000 and container `HOSTNAME` is `0.0.0.0`. |
 | Unit/browser tests | CI workflow or `pnpm test:run` / `pnpm test:e2e` | Unit, RLS, and browser validation. | Vitest, Playwright, PostgreSQL 17 in CI. |
 
@@ -125,7 +125,7 @@ server-side resolver rather than tenant credentials in a global env file.
 | Service | JVM/Runtime Options | Memory | Instance Count |
 | --- | --- | --- | --- |
 | Next.js application container | Node.js 24; `NODE_ENV=production`; `PORT=3000`; `HOSTNAME=0.0.0.0`; non-root user; Docker health check calls `/api/health` every 30 seconds after a 60-second start period. | No checked-in runtime memory/CPU limit or measured production requirement. | No repository-enforced production replica count. |
-| Migration container | Node.js 24; one-shot `prisma migrate deploy`, runtime-role provisioning, then verification. | No checked-in limit. | One-shot per target database; CI builds the image but current staging deploy workflow does not invoke it. |
+| Migration container | Node.js 24; one-shot `prisma migrate deploy`, runtime-role provisioning, then verification. | No checked-in limit. | One-shot per target database; CI builds and promotes the image, but the staging deployment workflow does not invoke it. |
 | Local PostgreSQL | PostgreSQL 17 Alpine; Compose health check uses `pg_isready`. | No explicit resource limit. | One development database; optional separate E2E database. |
 | Coolify / VPS | Host runbooks target Ubuntu 24.04; Docker/Coolify configuration is external to the app image. | Production resource limits and measured capacity are not established by this repository. | One current/target VPS is documented; production placement remains partly unverified. |
 

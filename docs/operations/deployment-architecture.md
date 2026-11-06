@@ -99,17 +99,26 @@ instructions.
 
 ### Build, migration, and deployment flow
 
-The checked-in workflow in
-[tests.yml](../../.github/workflows/tests.yml) runs tests, builds and scans
-the application and migration images, and publishes immutable commit-tagged
-images. Its staging job updates the Coolify application image and waits for
-`/api/health` to report the expected revision. It does **not** deploy
-production.
+The [tests workflow](../../.github/workflows/tests.yml) runs on PRs targeting
+`main` or `develop`, and on pushes to `main`. For a PR, it runs the unit,
+browser, integration, and image security checks, then uploads the validated
+application and migration images as a 30-day artifact. Pushing a fix to the PR
+branch reruns validation. The tests and security workflows do not run again
+when the PR is merged to `develop`.
+
+The [staging deployment workflow](../../.github/workflows/deploy-staging.yml)
+runs on a merged PR to `develop`. It requires successful test and security
+runs for the exact PR head, verifies that the uploaded artifact's source tree
+matches the merged commit, then promotes and deploys those already-tested
+images. It does not rerun tests, rebuild the images, or rescan them. Missing,
+expired, unsuccessful, or mismatched validation blocks deployment; a merge
+that is no longer the current `develop` head is skipped to avoid rolling
+staging back. Production deployment is not automated.
 
 The workflow builds a separate `migrator` image. Its entrypoint applies
 committed migrations, provisions the restricted runtime role, and verifies
-that role. The checked-in staging deploy job currently does **not** invoke
-that migration image. Before a release containing schema changes, verify that
+that role. The checked-in staging deploy workflow promotes but does **not**
+invoke that migration image. Before a release containing schema changes, verify that
 the target environment has a reviewed, one-shot migration step and that it
 finishes before the application rollout. Do not assume migrations ran merely
 because the app deployment succeeded.

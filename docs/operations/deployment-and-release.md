@@ -8,21 +8,28 @@ live state.
 
 ## CI and container image release
 
-GitHub Actions runs the unit and browser suites on pull requests and pushes to
-`main` or `develop`. After both pass, it builds the production [Dockerfile](../../Dockerfile)
-and scans the image for high and critical vulnerabilities. Pull requests do not
-publish images; successful branch pushes publish an immutable commit-tagged image
-to GHCR and expose its digest.
+GitHub Actions runs unit, browser, image-build, and image-scan checks on pull
+requests targeting `main` or `develop`. Pushing commits to an open PR reruns
+those checks. The `Security` workflow also checks PRs and pushes to `main`.
+Successful PR validation builds and scans the production and migration images,
+then stores them as a 30-day workflow artifact; it does not publish PR images
+to GHCR.
 
-The GHCR package must be kept private. The `deploy-staging` job is restricted to successful pushes to
-`develop`; it pins the Coolify application to that run's image digest and
-verifies `/api/health` reports the same commit revision. Older runs skip
-deployment if a newer commit is already at the head of `develop`.
+When a PR is merged to `develop`, the separate
+[`deploy-staging.yml`](../../.github/workflows/deploy-staging.yml) workflow
+locates the successful `Tests` and `Security` runs for that exact PR head. It
+downloads the tested images, verifies the artifact metadata and source-tree
+hash against the merged commit, then promotes those images to GHCR and deploys
+the application image by digest. It does not rerun tests, rebuild the images,
+or rescan them. Deployment fails closed if validation or the artifact is
+missing, unsuccessful, expired, or does not match the merged tree. If another
+PR has already advanced `develop`, the older deployment is skipped so it cannot
+roll staging back.
 
-The job runs only when the `staging` GitHub Environment secrets and the
-repository Actions variable `STAGING_AUTODEPLOY_ENABLED` are configured.
-Publishing an image without those settings does not deploy it. The job does not
-deploy production. On 2026-10-30, a one-time manual Coolify deployment of image
+The GHCR package must be kept private. Staging deployment also requires the
+`staging` GitHub Environment secrets and the repository Actions variable
+`STAGING_AUTODEPLOY_ENABLED=true`. The workflow does not deploy production.
+On 2026-10-30, a one-time manual Coolify deployment of image
 digest
 `sha256:c712ad154402609445cd2912aa6131084f1dd34a97e94626d408675326186cd6`
 reported a completed rolling update, and the staging login page loaded after
@@ -31,22 +38,27 @@ On 2026-10-31, workflow run 24 deployed image digest
 `sha256:b95c781cc3793026cc95fca8ebfd9a4dfdc3678cbb3bde5396cc24a35bdf1152`;
 Coolify reported success and `/api/health` returned the matching commit in
 `X-Application-Revision`. This verifies one end-to-end staging deployment, not
-production behavior. See [the environment status record](../reference/environment-status.md)
-for the evidence and remaining verification.
+production behavior. On 2026-11-06, PR #18's post-merge workflow run #34 also
+succeeded; staging returned HTTP 200 with
+`X-Application-Revision: 6a1b8bd48cb7452eaee6cfb826cd7efb6ffa7a2c`, and Coolify
+reported the app as `Running`. That confirms the previous push-to-`develop`
+flow, not the new PR-artifact promotion workflow. See
+[the environment status record](../reference/environment-status.md) for the
+evidence and remaining verification.
 
 ## Database migration image
 
-The workflow also builds, scans, and publishes a separate `migrator` image.
+The workflow builds and scans a separate `migrator` image alongside the
+application image, and promotes that validated image to GHCR with the release.
 Its entrypoint runs `prisma migrate deploy`, provisions the restricted runtime
 role, and verifies that role. The image needs the target environment's
 `MIGRATION_DATABASE_URL` and `DATABASE_URL`; keep the owner credential out of
 the application runtime.
 
-The checked-in `deploy-staging` job currently updates and deploys only the
-application image. It does not invoke the migration image. Before deploying a
-schema change, confirm that a reviewed one-shot migration step is configured
-and completed for the same commit before the application rollout. The
-repository's successful application deployment check is not evidence that
+The staging deployment workflow does **not** execute the migrator. Before
+deploying a schema change, confirm that a reviewed one-shot migration step is
+configured and completed for the same commit before the application rollout.
+The repository's successful application deployment check is not evidence that
 migrations ran.
 
 ## Enable automated staging deployment
@@ -67,10 +79,14 @@ Complete the external network and credential setup before enabling the job:
 3. In the GitHub repository's `staging` Environment, add these secrets:
    - `STAGING_WIREGUARD_CONFIG`: the dedicated peer's client configuration.
    - `COOLIFY_API_TOKEN`: the least-privilege token described above.
-4. Restrict the `staging` Environment to the `develop` branch and configure
-   required reviewers so a trusted human must approve each deployment. Protect
-   `develop` with pull-request review requirements and enable required
-   Code Owner review for workflow, script, and Dockerfile changes. The checked-in
+4. Restrict the `staging` Environment to the `develop` branch. A required
+   reviewer on that Environment pauses each deployment; leave that setting
+   unset for a fully automatic merge-to-staging flow, or retain it only if
+   manual approval is intentional. Protect `develop` with pull-request review
+   requirements and require the PR checks `Tests / unit`, `Tests / browser`,
+   `Tests / container-image`, `Security / secrets`, and
+   `Security / dependencies`. Also enable required Code Owner review for
+   workflow, script, and Dockerfile changes. The checked-in
    [CODEOWNERS](../../.github/CODEOWNERS) file routes those changes to `@fredppro`.
    Keep both deployment secrets environment-scoped; do not create repository-level
    copies. Only then set the repository Actions variable
@@ -78,24 +94,25 @@ Complete the external network and credential setup before enabling the job:
 
 The workflow's `staging` environment is an approval boundary only when required
 reviewers are configured in GitHub repository settings. A branch restriction
-alone does not require approval. Do not enable automated deployment until those
-protections are in place.
+alone does not require approval.
 
 The workflow targets the existing staging application UUID in
-`.github/workflows/tests.yml` and the private Coolify URL `http://10.242.0.1:8000`.
+`.github/workflows/deploy-staging.yml` and the private Coolify URL
+`http://10.242.0.1:8000`.
 It updates the repository image name and `sha256-<hex>` tag together; Coolify
 resolves that tag to the immutable digest reference. Keep `@sha256` out of the
 image-name field, or Coolify will construct an invalid doubled digest reference.
 Do not put WireGuard private keys or API tokens in the repository. The image
-build embeds its commit SHA in the successful `/api/health` response header
+build embeds its validated source SHA in the successful `/api/health` response header
 `X-Application-Revision`, allowing the workflow to distinguish the new
 container from an older container that may still serve during a rolling
 update.
 
 The runtime image in this repository declares a Docker health check that calls
 `http://127.0.0.1:3000/api/health`; Coolify can report the container as healthy
-only after an image containing this check is deployed. The current live image
-has not been verified to contain the latest Dockerfile change.
+only after an image containing this check is deployed. The PR #18 deployment
+was observed to change Coolify from `Running (no healthcheck)` to `Running`;
+the currently active image has not been rechecked for this workflow change.
 
 The workflow confirms Coolify returned a deployment UUID, then waits for a
 healthy response carrying the expected commit SHA. It does not read deployment
@@ -118,17 +135,19 @@ operational procedure and known limitations. Row-level security and tenant
 isolation are described in the [tenant-isolation guide](../architecture/tenant-isolation.md).
 ## CI
 
-`.github/workflows/tests.yml` runs on pull requests and pushes to `main` and
-`develop`. Its standard job uses the Node.js version in `.node-version` and
-pnpm 12.9.1 and runs, in order:
+[`tests.yml`](../../.github/workflows/tests.yml) and
+[`security.yml`](../../.github/workflows/security.yml) validate pull requests
+to `main` and `develop`. Tests also run on pushes to `main`; neither workflow
+runs again on a merge push to `develop`. Tests include documentation-link
+checks, lint, type-check, build, unit/coverage tests, PostgreSQL-backed
+integration tests, Playwright browser tests, and app/migrator image scans.
+Coverage is uploaded as `vitest-coverage` for 14 days; validated images are
+retained for 30 days.
 
-1. `pnpm install --frozen-lockfile`
-2. `pnpm lint`
-3. `pnpm typecheck`
-4. `pnpm build`
-5. `pnpm test:coverage`
-
-Coverage is uploaded as the `vitest-coverage` artifact for 14 days. The
-separate browser job provisions its own PostgreSQL 17 service, applies
-migrations, installs Chromium, and runs the Playwright suite without a hosted
-database secret.
+The staging workflow runs when a PR is merged to `develop`. It checks that the
+latest successful PR validation is for the merged head, that its image
+artifact's source tree matches the merged commit, and that both test and
+security workflows succeeded. It promotes and deploys those exact images
+without repeating their validation. An expired or mismatched artifact blocks
+deployment; do not rebuild or publish an unvalidated replacement from the
+deployment workflow.

@@ -585,7 +585,9 @@ container liveness probe; split them.
 - Rollback: Coolify rollbacks (rollbacks page) plus the N/N-1 migration rule, so a rollback never meets an
   incompatible schema.
 
-**Implementation status:** `tests.yml` builds the pinned, non-root production Docker image only after its unit and
+**Historical implementation status (superseded by the current
+[deployment and release flow](../operations/deployment-and-release.md)):**
+`tests.yml` built the pinned, non-root production Docker image only after its unit and
 browser jobs pass. Pull requests build and scan without publishing; pushes to `main` or `develop` scan first, then
 publish a commit-tagged image to GHCR and expose its digest for a later promotion step. High and critical Trivy
 findings fail the image job. The GHCR package is private. The post-merge image is
