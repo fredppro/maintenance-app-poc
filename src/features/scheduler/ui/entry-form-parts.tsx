@@ -849,7 +849,6 @@ export function ScheduleFields<T extends ScheduleShape>({
               locale={locale}
               timeZone={timeZone}
               id="task-start-time"
-              aria-required
               placeholder={t("pickDate")}
               aria-describedby={
                 [
@@ -908,7 +907,6 @@ export function ScheduleFields<T extends ScheduleShape>({
                 locale={locale}
                 timeZone={timeZone}
                 id="task-end-time"
-                aria-required
                 placeholder={t("pickDate")}
                 aria-describedby={endError ? "task-end-time-error" : undefined}
                 hasError={!!endError}

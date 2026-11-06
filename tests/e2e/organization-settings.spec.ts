@@ -90,7 +90,9 @@ test("owners and admins manage the organization's profile and regional settings,
     await expect(page.getByRole("combobox", { name: "Time zone" })).toContainText("America/Sao_Paulo");
     await expect(page.getByRole("combobox", { name: "Default language" })).toContainText("Português (PT)");
 
-    const preview = page.getByTestId("organization-logo-preview").locator("img");
+    const preview = page
+      .getByRole("form", { name: "Organization settings" })
+      .getByRole("img", { name: `${renamed} logo` });
     await expect(preview).toBeVisible();
     logoFileId = (await preview.getAttribute("src"))?.replace("/api/files/", "") ?? "";
     expect(logoFileId).not.toBe("");
@@ -219,7 +221,7 @@ test("a logo that is not an image is rejected without saving", async ({ page }) 
     mimeType: "application/pdf",
     buffer: Buffer.from("%PDF-1.4"),
   });
-  await expect(page.getByText("Choose a PNG, JPEG or WebP image up to 10 MB.")).toBeVisible();
+  await expect(page.getByText("Choose a PNG, JPEG or WebP image.")).toBeVisible();
   await expect(save(page)).toBeDisabled();
   await expect(page.getByLabel("No logo")).toBeVisible();
 });
