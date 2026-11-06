@@ -22,6 +22,12 @@ for evidence and live-state unknowns. For storage capacity checks and the
 read-only aged-object inventory, use the [storage capacity and portability
 runbook](../operations/storage-capacity-and-portability.md).
 
+For current deployment instructions, use the
+[deployment architecture guide](../operations/deployment-architecture.md).
+In particular, the topology and request path in section 2 below are a
+2026-10-13 proposal that includes dedicated-database routing; that routing is
+not implemented and must not be read as the current deployed request path.
+
 Evidence rules: facts about Coolify come from its documentation (fetched 2026-10-13) and are cited by page; facts about
 this repository come from the code at the branch point (`889df26`); everything else is a **proposal** or marked
 **[verify]**. Nothing here is a compliance statement: it describes engineering readiness only.
@@ -94,9 +100,12 @@ internet; TLS grade A; the database is never reachable from outside; a restore f
 measured; a clean rebuild of production from documentation works; the existing e2e suite passes against the
 containerised stack; capacity targets are met.
 
-## 2. Target architecture
+## 2. Historical target architecture (2026-10-13 proposal)
 
-### 2.1 Topology (day one)
+The following topology and request path preserve the original design for
+traceability. They are not implementation or live-deployment evidence.
+
+### 2.1 Historical topology proposal
 
 ```
                     Internet
@@ -133,7 +142,7 @@ containerised stack; capacity targets are met.
 - Object storage (files and backups) lives at a **different provider and account** from the VPS (decision D11), so one
   account lock, billing problem or compromise cannot remove data and its backups together.
 
-### 2.2 Request path
+### 2.2 Historical request-path proposal
 
 1. DNS (A/AAAA, CAA) → the server's public IP.
 2. Contabo firewall → host firewall → Coolify proxy (Traefik by default) terminates TLS and redirects HTTP to HTTPS.

@@ -1,12 +1,13 @@
 # Environment and operations status
 
-- **Repository review:** 2026-10-31
+- **Repository review:** 2026-11-06
 - **External systems checked for this record:** shared Coolify application
   logs, Instance Backup, staging resource, and server overview pages on
   2026-10-29; Coolify Advanced settings and GitHub Actions workflow runs on
   2026-10-30; Coolify deployment history and the staging health endpoint on
-  2026-10-31. The firewall and WireGuard changes were applied from Ansible on
-  2026-10-30; see the dated evidence below.
+  2026-10-31; Coolify's reminder scheduled-task list and application
+  configuration page on 2026-11-06. The firewall and WireGuard changes were
+  applied from Ansible on 2026-10-30; see the dated evidence below.
 - **Local restore validation:** the documented Coolify control-plane dump was
   restored to a disposable, network-isolated PostgreSQL container on 2026-10-29
 - **Purpose:** authoritative in-repository ledger of what the checked-in
@@ -19,6 +20,15 @@ evidence, and result, never secret values. Keep unresolved items marked
 **unverified**.
 
 ## Status from repository evidence
+
+On 2026-11-06, Coolify showed the `Maintenance reminder delivery` scheduled
+task configured for `*/15 * * * *`, with a 300-second timeout and no container
+selected. At creation its status was “Not run yet”; a later successful
+invocation and email delivery have not been verified. The Coolify application
+configuration page also showed unsaved changes. No configuration was saved and
+no deployment was triggered for this documentation work. The Dockerfile in
+this repository declares a health check, but the currently running image has
+not been confirmed to include it.
 
 | Area | Evidence and classification | Current conclusion |
 |---|---|---|
@@ -51,11 +61,13 @@ print, request, or record secret values.
   availability, deployed image digest, and last verification time. Distinguish
   manual Coolify deployment from an automated pipeline. Production was not
   independently viewed.
-- [ ] **Staging automation activation:** Provision and firewall-restrict a
-  dedicated WireGuard peer, configure the Coolify API allowlist and least-
-  privilege token, then add the GitHub `staging` Environment secrets and
-  `STAGING_AUTODEPLOY_ENABLED=true`. Verify a successful `develop` pipeline
-  deploys and reports the matching application revision.
+- [x] **Staging automation (2026-10-31):** One `develop` workflow run deployed
+  the image to Coolify and `/api/health` returned the matching revision. This
+  verifies one successful staging deployment, not production deployment or
+  ongoing health.
+- [ ] **Reminder delivery:** Inspect the Coolify task's latest execution and
+  confirm the authorized endpoint call and email delivery. The configured
+  `*/15 * * * *` schedule alone does not establish a successful run.
 - [ ] **Providers and regions:** Coolify lists staging services on its
   `localhost` server and a running `garage-staging` resource, but the inspected
   pages exposed no provider or region. Confirm the actual hosting, database,

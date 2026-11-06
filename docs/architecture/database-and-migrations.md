@@ -25,7 +25,10 @@ and client use PostgreSQL; switching between compatible PostgreSQL providers
 does not require application-code changes. Supply the provider's connection URL
 and any provider-required TLS or pooler options. Connection limits, TLS, and
 pooler behavior remain provider-specific settings; verify them against the
-actual deployment. A historical Neon compatibility example appears below.
+actual deployment. The retained Vercel + Neon compatibility path is documented
+separately as a fallback in the
+[Vercel + Neon guide](../operations/vercel-neon-fallback.md); its presence is
+not evidence of an active provider configuration.
 
 The committed migration history initializes the schema, including the
 historical `MaterialConsumed` creation and rename migrations. A forward

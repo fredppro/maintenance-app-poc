@@ -1,6 +1,10 @@
 # Deployment and release
 
-Repository deployment and release behavior. CI image publication is not proof of deployment; consult the [environment status record](../reference/environment-status.md) for unresolved live state.
+Repository deployment and release behavior. For the supported topology, see
+[deployment architecture](deployment-architecture.md). CI image publication
+is not proof of deployment; consult the
+[environment status record](../reference/environment-status.md) for unresolved
+live state.
 
 ## CI and container image release
 
@@ -15,10 +19,11 @@ The GHCR package must be kept private. The `deploy-staging` job is restricted to
 verifies `/api/health` reports the same commit revision. Older runs skip
 deployment if a newer commit is already at the head of `develop`.
 
-The job is disabled until the `staging` GitHub Environment secrets and the
-repository Actions variable `STAGING_AUTODEPLOY_ENABLED` are configured. Until then,
-publishing an image does not deploy it. It does not deploy production. On
-2026-10-30, a one-time manual Coolify deployment of image digest
+The job runs only when the `staging` GitHub Environment secrets and the
+repository Actions variable `STAGING_AUTODEPLOY_ENABLED` are configured.
+Publishing an image without those settings does not deploy it. The job does not
+deploy production. On 2026-10-30, a one-time manual Coolify deployment of image
+digest
 `sha256:c712ad154402609445cd2912aa6131084f1dd34a97e94626d408675326186cd6`
 reported a completed rolling update, and the staging login page loaded after
 refresh. The active runtime digest was not independently exposed at that time.
@@ -28,6 +33,21 @@ Coolify reported success and `/api/health` returned the matching commit in
 `X-Application-Revision`. This verifies one end-to-end staging deployment, not
 production behavior. See [the environment status record](../reference/environment-status.md)
 for the evidence and remaining verification.
+
+## Database migration image
+
+The workflow also builds, scans, and publishes a separate `migrator` image.
+Its entrypoint runs `prisma migrate deploy`, provisions the restricted runtime
+role, and verifies that role. The image needs the target environment's
+`MIGRATION_DATABASE_URL` and `DATABASE_URL`; keep the owner credential out of
+the application runtime.
+
+The checked-in `deploy-staging` job currently updates and deploys only the
+application image. It does not invoke the migration image. Before deploying a
+schema change, confirm that a reviewed one-shot migration step is configured
+and completed for the same commit before the application rollout. The
+repository's successful application deployment check is not evidence that
+migrations ran.
 
 ## Enable automated staging deployment
 
@@ -72,9 +92,10 @@ build embeds its commit SHA in the successful `/api/health` response header
 container from an older container that may still serve during a rolling
 update.
 
-The runtime image also declares a Docker health check that calls
+The runtime image in this repository declares a Docker health check that calls
 `http://127.0.0.1:3000/api/health`; Coolify can report the container as healthy
-only after a new image containing this check is deployed.
+only after an image containing this check is deployed. The current live image
+has not been verified to contain the latest Dockerfile change.
 
 The workflow confirms Coolify returned a deployment UUID, then waits for a
 healthy response carrying the expected commit SHA. It does not read deployment
