@@ -15,7 +15,14 @@ export async function getMaintenanceTask(
     include: {
       equipment: true,
       assignments: { include: { worker: true } },
-      dailyHours: true,
+      dailyHours: {
+        include: { worker: { select: { name: true } } },
+        orderBy: [
+          { workDate: "asc" },
+          { startTime: "asc" },
+          { createdAt: "asc" },
+        ],
+      },
       materials: true,
     },
   });

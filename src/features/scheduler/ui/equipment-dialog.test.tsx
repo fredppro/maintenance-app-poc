@@ -16,6 +16,7 @@ const {
   relocateEquipmentMock,
   saveMaintenancePointMock,
   updateEquipmentMock,
+  uploadEquipmentImageMock,
 } = vi.hoisted(() => ({
   addEquipmentMock: vi.fn(),
   createSectionMock: vi.fn(),
@@ -24,6 +25,7 @@ const {
   relocateEquipmentMock: vi.fn(),
   saveMaintenancePointMock: vi.fn(),
   updateEquipmentMock: vi.fn(),
+  uploadEquipmentImageMock: vi.fn(),
 }));
 
 vi.mock("../server/actions", () => ({
@@ -44,8 +46,31 @@ vi.mock("sonner", () => ({
 }));
 
 vi.mock("./equipment-image-field", () => ({
-  EquipmentImageField: () => null,
-  uploadEquipmentImage: vi.fn(),
+  EquipmentImageField: ({
+    onChange,
+  }: {
+    onChange: (value: {
+      fileId: string | null;
+      pending: Blob | null;
+      fileName?: string | null;
+      fileSize?: number | null;
+    }) => void;
+  }) => (
+    <button
+      type="button"
+      onClick={() =>
+        onChange({
+          fileId: null,
+          pending: new Blob(["photo"], { type: "image/jpeg" }),
+          fileName: "equipment-photo.jpg",
+          fileSize: 5,
+        })
+      }
+    >
+      Select equipment photo
+    </button>
+  ),
+  uploadEquipmentImage: uploadEquipmentImageMock,
 }));
 
 const equipment: Equipment = {
@@ -85,6 +110,8 @@ describe("EquipmentDialog maintenance-point editing", () => {
     getEquipmentRelocationsMock.mockResolvedValue([]);
     getMaintenancePointsMock.mockResolvedValue([]);
     updateEquipmentMock.mockClear();
+    uploadEquipmentImageMock.mockReset();
+    uploadEquipmentImageMock.mockResolvedValue("file-new");
     saveMaintenancePointMock.mockClear();
     saveMaintenancePointMock.mockResolvedValue({
       id: "point-1",
@@ -139,5 +166,28 @@ describe("EquipmentDialog maintenance-point editing", () => {
     );
     expect(updateEquipmentMock).not.toHaveBeenCalled();
     expect(saveMaintenancePointMock).not.toHaveBeenCalled();
+  });
+
+  it("reuses a confirmed equipment photo upload after a save retry", async () => {
+    const user = userEvent.setup();
+    updateEquipmentMock
+      .mockRejectedValueOnce(new Error("save failed"))
+      .mockResolvedValueOnce({ ...equipment, imageFileId: "file-new" });
+    const { onOpenChange } = renderDialog();
+
+    await user.click(screen.getByRole("button", { name: "Select equipment photo" }));
+    await user.click(screen.getByRole("button", { name: "Save Changes" }));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Failed to update equipment"),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save Changes" }));
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(uploadEquipmentImageMock).toHaveBeenCalledTimes(1);
+    expect(updateEquipmentMock).toHaveBeenLastCalledWith(
+      equipment.id,
+      expect.objectContaining({ imageFileId: "file-new" }),
+    );
   });
 });

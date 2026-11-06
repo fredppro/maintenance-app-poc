@@ -631,7 +631,7 @@ export type $EquipmentRelocationPayload<ExtArgs extends runtime.Types.Extensions
 export type EquipmentRelocationGetPayload<S extends boolean | null | undefined | EquipmentRelocationDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$EquipmentRelocationPayload, S>
 
 export type EquipmentRelocationCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<EquipmentRelocationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<EquipmentRelocationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: EquipmentRelocationCountAggregateInputType | true
   }
 
@@ -1081,6 +1081,7 @@ export type EquipmentRelocationFindUniqueArgs<ExtArgs extends runtime.Types.Exte
    * Filter, which EquipmentRelocation to fetch.
    */
   where: Prisma.EquipmentRelocationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1103,6 +1104,7 @@ export type EquipmentRelocationFindUniqueOrThrowArgs<ExtArgs extends runtime.Typ
    * Filter, which EquipmentRelocation to fetch.
    */
   where: Prisma.EquipmentRelocationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1155,6 +1157,7 @@ export type EquipmentRelocationFindFirstArgs<ExtArgs extends runtime.Types.Exten
    * Filter by unique combinations of EquipmentRelocations.
    */
   distinct?: Prisma.EquipmentRelocationScalarFieldEnum | Prisma.EquipmentRelocationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1207,6 +1210,7 @@ export type EquipmentRelocationFindFirstOrThrowArgs<ExtArgs extends runtime.Type
    * Filter by unique combinations of EquipmentRelocations.
    */
   distinct?: Prisma.EquipmentRelocationScalarFieldEnum | Prisma.EquipmentRelocationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1259,6 +1263,7 @@ export type EquipmentRelocationFindManyArgs<ExtArgs extends runtime.Types.Extens
    * Filter by unique combinations of EquipmentRelocations.
    */
   distinct?: Prisma.EquipmentRelocationScalarFieldEnum | Prisma.EquipmentRelocationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1281,6 +1286,7 @@ export type EquipmentRelocationCreateArgs<ExtArgs extends runtime.Types.Extensio
    * The data needed to create a EquipmentRelocation.
    */
   data: Prisma.XOR<Prisma.EquipmentRelocationCreateInput, Prisma.EquipmentRelocationUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1341,6 +1347,7 @@ export type EquipmentRelocationUpdateArgs<ExtArgs extends runtime.Types.Extensio
    * Choose, which EquipmentRelocation to update.
    */
   where: Prisma.EquipmentRelocationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1419,6 +1426,7 @@ export type EquipmentRelocationUpsertArgs<ExtArgs extends runtime.Types.Extensio
    * In case the EquipmentRelocation was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.EquipmentRelocationUpdateInput, Prisma.EquipmentRelocationUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1441,6 +1449,7 @@ export type EquipmentRelocationDeleteArgs<ExtArgs extends runtime.Types.Extensio
    * Filter which EquipmentRelocation to delete.
    */
   where: Prisma.EquipmentRelocationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

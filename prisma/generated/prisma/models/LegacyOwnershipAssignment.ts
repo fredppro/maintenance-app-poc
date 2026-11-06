@@ -492,7 +492,7 @@ export type $LegacyOwnershipAssignmentPayload<ExtArgs extends runtime.Types.Exte
 export type LegacyOwnershipAssignmentGetPayload<S extends boolean | null | undefined | LegacyOwnershipAssignmentDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$LegacyOwnershipAssignmentPayload, S>
 
 export type LegacyOwnershipAssignmentCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<LegacyOwnershipAssignmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<LegacyOwnershipAssignmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: LegacyOwnershipAssignmentCountAggregateInputType | true
   }
 
@@ -938,6 +938,7 @@ export type LegacyOwnershipAssignmentFindUniqueArgs<ExtArgs extends runtime.Type
    * Filter, which LegacyOwnershipAssignment to fetch.
    */
   where: Prisma.LegacyOwnershipAssignmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -956,6 +957,7 @@ export type LegacyOwnershipAssignmentFindUniqueOrThrowArgs<ExtArgs extends runti
    * Filter, which LegacyOwnershipAssignment to fetch.
    */
   where: Prisma.LegacyOwnershipAssignmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1004,6 +1006,7 @@ export type LegacyOwnershipAssignmentFindFirstArgs<ExtArgs extends runtime.Types
    * Filter by unique combinations of LegacyOwnershipAssignments.
    */
   distinct?: Prisma.LegacyOwnershipAssignmentScalarFieldEnum | Prisma.LegacyOwnershipAssignmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1052,6 +1055,7 @@ export type LegacyOwnershipAssignmentFindFirstOrThrowArgs<ExtArgs extends runtim
    * Filter by unique combinations of LegacyOwnershipAssignments.
    */
   distinct?: Prisma.LegacyOwnershipAssignmentScalarFieldEnum | Prisma.LegacyOwnershipAssignmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1100,6 +1104,7 @@ export type LegacyOwnershipAssignmentFindManyArgs<ExtArgs extends runtime.Types.
    * Filter by unique combinations of LegacyOwnershipAssignments.
    */
   distinct?: Prisma.LegacyOwnershipAssignmentScalarFieldEnum | Prisma.LegacyOwnershipAssignmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1118,6 +1123,7 @@ export type LegacyOwnershipAssignmentCreateArgs<ExtArgs extends runtime.Types.Ex
    * The data needed to create a LegacyOwnershipAssignment.
    */
   data: Prisma.XOR<Prisma.LegacyOwnershipAssignmentCreateInput, Prisma.LegacyOwnershipAssignmentUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1170,6 +1176,7 @@ export type LegacyOwnershipAssignmentUpdateArgs<ExtArgs extends runtime.Types.Ex
    * Choose, which LegacyOwnershipAssignment to update.
    */
   where: Prisma.LegacyOwnershipAssignmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1240,6 +1247,7 @@ export type LegacyOwnershipAssignmentUpsertArgs<ExtArgs extends runtime.Types.Ex
    * In case the LegacyOwnershipAssignment was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.LegacyOwnershipAssignmentUpdateInput, Prisma.LegacyOwnershipAssignmentUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1258,6 +1266,7 @@ export type LegacyOwnershipAssignmentDeleteArgs<ExtArgs extends runtime.Types.Ex
    * Filter which LegacyOwnershipAssignment to delete.
    */
   where: Prisma.LegacyOwnershipAssignmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

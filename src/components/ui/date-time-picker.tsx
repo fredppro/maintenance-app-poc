@@ -19,16 +19,19 @@ import {
   toZonedCalendarDate,
 } from "@/lib/time-zone";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface DateTimePickerProps {
   date?: Date;
   setDate: (date: Date) => void;
+  onTimeChange?: (time: string) => void;
   locale: AppLocale;
   timeZone?: string;
   showTime?: boolean;
   placeholder?: string;
   ariaLabel?: string;
+  "aria-required"?: boolean;
+  "aria-describedby"?: string;
   id?: string;
   hasError?: boolean;
   defaultMonth?: Date;
@@ -40,11 +43,14 @@ interface DateTimePickerProps {
 export function DateTimePicker({
   date,
   setDate,
+  onTimeChange,
   locale,
   timeZone,
   showTime = true,
   placeholder,
   ariaLabel,
+  "aria-required": ariaRequired,
+  "aria-describedby": ariaDescribedBy,
   id,
   hasError,
   defaultMonth,
@@ -79,10 +85,13 @@ export function DateTimePicker({
   const [minutes, setMinutesState] = useState(
     dateParts ? String(dateParts.minute).padStart(2, "0") : "00",
   );
+  const isEditingTime = useRef(false);
 
   const [currentMonth, setCurrentMonth] = useState<Date>(anchorMonth);
 
   useEffect(() => {
+    if (isEditingTime.current) return;
+
     if (date) {
       const parsedDate = date instanceof Date ? date : new Date(date);
 
@@ -130,7 +139,13 @@ export function DateTimePicker({
         const h = parseInt(val);
         if (h >= 0 && h < 24) {
           baseDate.setHours(h);
-          setDate(fromZonedCalendarDate(baseDate, resolvedTimeZone));
+          if (onTimeChange) {
+            onTimeChange(
+              `${String(baseDate.getHours()).padStart(2, "0")}:${String(baseDate.getMinutes()).padStart(2, "0")}`,
+            );
+          } else {
+            setDate(fromZonedCalendarDate(baseDate, resolvedTimeZone));
+          }
         }
       }
     } else {
@@ -139,7 +154,13 @@ export function DateTimePicker({
         const m = parseInt(val);
         if (m >= 0 && m < 60) {
           baseDate.setMinutes(m);
-          setDate(fromZonedCalendarDate(baseDate, resolvedTimeZone));
+          if (onTimeChange) {
+            onTimeChange(
+              `${String(baseDate.getHours()).padStart(2, "0")}:${String(baseDate.getMinutes()).padStart(2, "0")}`,
+            );
+          } else {
+            setDate(fromZonedCalendarDate(baseDate, resolvedTimeZone));
+          }
         }
       }
     }
@@ -163,7 +184,13 @@ export function DateTimePicker({
     const zonedTarget = toZonedCalendarDate(targetDate, resolvedTimeZone);
     setHoursState(format(zonedTarget, "HH", { locale: dateFnsLocale }));
     setMinutesState(format(zonedTarget, "mm", { locale: dateFnsLocale }));
-    setDate(targetDate);
+    if (onTimeChange) {
+      onTimeChange(
+        `${String(zonedTarget.getHours()).padStart(2, "0")}:${String(zonedTarget.getMinutes()).padStart(2, "0")}`,
+      );
+    } else {
+      setDate(targetDate);
+    }
   };
 
   return (
@@ -172,6 +199,9 @@ export function DateTimePicker({
         <Button
           id={id}
           aria-label={ariaLabel}
+          aria-required={ariaRequired}
+          aria-invalid={displayError || undefined}
+          aria-describedby={ariaDescribedBy}
           variant="outline"
           className={cn(
             "w-full justify-start text-left font-normal h-9 px-3",
@@ -182,7 +212,7 @@ export function DateTimePicker({
         >
           <CalendarIcon
             className={cn(
-              "mr-2 h-4 w-4 opacity-50",
+              "mr-2 opacity-50",
               displayError && "text-destructive opacity-100",
             )}
           />
@@ -222,7 +252,7 @@ export function DateTimePicker({
             <div className="flex items-center gap-2">
               <Clock
                 className={cn(
-                  "h-4 w-4 text-muted-foreground",
+                  "size-4 text-muted-foreground",
                   displayError && "text-destructive",
                 )}
               />
@@ -252,8 +282,14 @@ export function DateTimePicker({
                   aria-label={t("hours")}
                   value={hours}
                   onChange={(e) => handleTimeChange("hours", e.target.value)}
-                  onBlur={() => handleBlur("hours")}
-                  onFocus={(e) => e.target.select()}
+                  onBlur={() => {
+                    handleBlur("hours");
+                    isEditingTime.current = false;
+                  }}
+                  onFocus={(e) => {
+                    isEditingTime.current = true;
+                    e.target.select();
+                  }}
                   className={cn(
                     "h-8 w-16 bg-background p-0 text-center text-xs focus-visible:ring-1",
                     displayError &&
@@ -275,8 +311,14 @@ export function DateTimePicker({
                   aria-label={t("minutes")}
                   value={minutes}
                   onChange={(e) => handleTimeChange("minutes", e.target.value)}
-                  onBlur={() => handleBlur("minutes")}
-                  onFocus={(e) => e.target.select()}
+                  onBlur={() => {
+                    handleBlur("minutes");
+                    isEditingTime.current = false;
+                  }}
+                  onFocus={(e) => {
+                    isEditingTime.current = true;
+                    e.target.select();
+                  }}
                   className={cn(
                     "h-8 w-16 bg-background p-0 text-center text-xs focus-visible:ring-1",
                     displayError &&

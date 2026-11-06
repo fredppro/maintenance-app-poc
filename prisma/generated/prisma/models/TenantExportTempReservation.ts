@@ -461,7 +461,7 @@ export type $TenantExportTempReservationPayload<ExtArgs extends runtime.Types.Ex
 export type TenantExportTempReservationGetPayload<S extends boolean | null | undefined | TenantExportTempReservationDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$TenantExportTempReservationPayload, S>
 
 export type TenantExportTempReservationCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<TenantExportTempReservationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<TenantExportTempReservationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: TenantExportTempReservationCountAggregateInputType | true
   }
 
@@ -904,6 +904,7 @@ export type TenantExportTempReservationFindUniqueArgs<ExtArgs extends runtime.Ty
    * Filter, which TenantExportTempReservation to fetch.
    */
   where: Prisma.TenantExportTempReservationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -922,6 +923,7 @@ export type TenantExportTempReservationFindUniqueOrThrowArgs<ExtArgs extends run
    * Filter, which TenantExportTempReservation to fetch.
    */
   where: Prisma.TenantExportTempReservationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -970,6 +972,7 @@ export type TenantExportTempReservationFindFirstArgs<ExtArgs extends runtime.Typ
    * Filter by unique combinations of TenantExportTempReservations.
    */
   distinct?: Prisma.TenantExportTempReservationScalarFieldEnum | Prisma.TenantExportTempReservationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1018,6 +1021,7 @@ export type TenantExportTempReservationFindFirstOrThrowArgs<ExtArgs extends runt
    * Filter by unique combinations of TenantExportTempReservations.
    */
   distinct?: Prisma.TenantExportTempReservationScalarFieldEnum | Prisma.TenantExportTempReservationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1066,6 +1070,7 @@ export type TenantExportTempReservationFindManyArgs<ExtArgs extends runtime.Type
    * Filter by unique combinations of TenantExportTempReservations.
    */
   distinct?: Prisma.TenantExportTempReservationScalarFieldEnum | Prisma.TenantExportTempReservationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1084,6 +1089,7 @@ export type TenantExportTempReservationCreateArgs<ExtArgs extends runtime.Types.
    * The data needed to create a TenantExportTempReservation.
    */
   data: Prisma.XOR<Prisma.TenantExportTempReservationCreateInput, Prisma.TenantExportTempReservationUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1136,6 +1142,7 @@ export type TenantExportTempReservationUpdateArgs<ExtArgs extends runtime.Types.
    * Choose, which TenantExportTempReservation to update.
    */
   where: Prisma.TenantExportTempReservationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1206,6 +1213,7 @@ export type TenantExportTempReservationUpsertArgs<ExtArgs extends runtime.Types.
    * In case the TenantExportTempReservation was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.TenantExportTempReservationUpdateInput, Prisma.TenantExportTempReservationUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1224,6 +1232,7 @@ export type TenantExportTempReservationDeleteArgs<ExtArgs extends runtime.Types.
    * Filter which TenantExportTempReservation to delete.
    */
   where: Prisma.TenantExportTempReservationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

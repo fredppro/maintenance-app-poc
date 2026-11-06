@@ -10,6 +10,7 @@ export { MAX_FILE_BYTES } from "../file-policy";
 const FILE_DELETION_LEASE_MS = 5 * 60 * 1_000;
 const FILE_DELETION_RETRY_BASE_MS = 60 * 1_000;
 const FILE_DELETION_RETRY_MAX_MS = 24 * 60 * 60 * 1_000;
+export const UNATTACHED_FILE_RETENTION_MS = 7 * 24 * 60 * 60 * 1_000;
 const MAX_IMAGE_PIXELS = 16_000_000;
 const MAX_IMAGE_DIMENSION = 8_192;
 const MAX_STORED_IMAGE_DIMENSION = 4_096;
@@ -36,7 +37,11 @@ function deletionRetryDelay(attempts: number) {
   );
 }
 
-async function enqueueStoredFileDeletion(db: TenantDb, organizationId: string, key: string) {
+async function enqueueStoredFileDeletion(
+  db: Pick<TenantDb, "storedFileDeletion">,
+  organizationId: string,
+  key: string,
+) {
   return db.storedFileDeletion.upsert({
     where: { key },
     create: { organizationId, key },
@@ -200,6 +205,7 @@ export async function saveImageFile(input: {
         filename: safeFilename(input.filename),
         contentType,
         size: normalizedBytes.length,
+        unattachedUntil: new Date(Date.now() + UNATTACHED_FILE_RETENTION_MS),
       },
     });
   } catch (error) {
@@ -237,6 +243,57 @@ export async function saveImageFile(input: {
     }
     throw error;
   }
+}
+
+/** Keeps a file from orphan cleanup while it is being linked to a saved record. */
+export async function markStoredFileAttached(
+  db: Pick<TenantDb, "storedFile">,
+  id: string,
+  organizationId: string,
+) {
+  const result = await db.storedFile.updateMany({
+    where: { id, organizationId },
+    data: { unattachedUntil: null },
+  });
+  if (result.count !== 1) {
+    throw new Error("File not found in the active organization");
+  }
+}
+
+/**
+ * Deletes a file only after its unattached retention period and serializes against
+ * record saves by claiming the same metadata row that saves clear when attaching it.
+ */
+export async function deleteExpiredUnattachedStoredFile(
+  db: TenantDb,
+  id: string,
+  organizationId: string,
+  now = new Date(),
+): Promise<"deleted" | "retry_scheduled" | "not_due"> {
+  const deletionId = await db.transaction(async (tx) => {
+    const claimed = await tx.storedFile.updateMany({
+      where: { id, organizationId, unattachedUntil: { lte: now } },
+      data: { unattachedUntil: null },
+    });
+    if (claimed.count !== 1) return null;
+
+    const file = await tx.storedFile.findFirst({
+      where: {
+        id,
+        organizationId,
+        equipment: { none: {} },
+        organizationLogos: { none: {} },
+      },
+      select: { key: true },
+    });
+    if (!file) return null;
+
+    const deletion = await enqueueStoredFileDeletion(tx, organizationId, file.key);
+    await tx.storedFile.deleteMany({ where: { id, organizationId } });
+    return deletion.id;
+  });
+  if (!deletionId) return "not_due";
+  return processStoredFileDeletion(db, deletionId, now);
 }
 
 export async function readStoredFile(db: TenantDb, id: string, organizationId: string) {

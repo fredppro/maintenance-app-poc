@@ -42,6 +42,7 @@ export type StoredFileMinAggregateOutputType = {
   contentType: string | null
   size: number | null
   uploadedById: string | null
+  unattachedUntil: Date | null
   createdAt: Date | null
 }
 
@@ -53,6 +54,7 @@ export type StoredFileMaxAggregateOutputType = {
   contentType: string | null
   size: number | null
   uploadedById: string | null
+  unattachedUntil: Date | null
   createdAt: Date | null
 }
 
@@ -64,6 +66,7 @@ export type StoredFileCountAggregateOutputType = {
   contentType: number
   size: number
   uploadedById: number
+  unattachedUntil: number
   createdAt: number
   _all: number
 }
@@ -85,6 +88,7 @@ export type StoredFileMinAggregateInputType = {
   contentType?: true
   size?: true
   uploadedById?: true
+  unattachedUntil?: true
   createdAt?: true
 }
 
@@ -96,6 +100,7 @@ export type StoredFileMaxAggregateInputType = {
   contentType?: true
   size?: true
   uploadedById?: true
+  unattachedUntil?: true
   createdAt?: true
 }
 
@@ -107,6 +112,7 @@ export type StoredFileCountAggregateInputType = {
   contentType?: true
   size?: true
   uploadedById?: true
+  unattachedUntil?: true
   createdAt?: true
   _all?: true
 }
@@ -205,6 +211,7 @@ export type StoredFileGroupByOutputType = {
   contentType: string
   size: number
   uploadedById: string | null
+  unattachedUntil: Date | null
   createdAt: Date
   _count: StoredFileCountAggregateOutputType | null
   _avg: StoredFileAvgAggregateOutputType | null
@@ -239,6 +246,7 @@ export type StoredFileWhereInput = {
   contentType?: Prisma.StringFilter<"StoredFile"> | string
   size?: Prisma.IntFilter<"StoredFile"> | number
   uploadedById?: Prisma.StringNullableFilter<"StoredFile"> | string | null
+  unattachedUntil?: Prisma.DateTimeNullableFilter<"StoredFile"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"StoredFile"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   equipment?: Prisma.EquipmentListRelationFilter
@@ -253,6 +261,7 @@ export type StoredFileOrderByWithRelationInput = {
   contentType?: Prisma.SortOrder
   size?: Prisma.SortOrder
   uploadedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  unattachedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   organization?: Prisma.OrganizationOrderByWithRelationInput
   equipment?: Prisma.EquipmentOrderByRelationAggregateInput
@@ -271,6 +280,7 @@ export type StoredFileWhereUniqueInput = Prisma.AtLeast<{
   contentType?: Prisma.StringFilter<"StoredFile"> | string
   size?: Prisma.IntFilter<"StoredFile"> | number
   uploadedById?: Prisma.StringNullableFilter<"StoredFile"> | string | null
+  unattachedUntil?: Prisma.DateTimeNullableFilter<"StoredFile"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"StoredFile"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   equipment?: Prisma.EquipmentListRelationFilter
@@ -285,6 +295,7 @@ export type StoredFileOrderByWithAggregationInput = {
   contentType?: Prisma.SortOrder
   size?: Prisma.SortOrder
   uploadedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  unattachedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.StoredFileCountOrderByAggregateInput
   _avg?: Prisma.StoredFileAvgOrderByAggregateInput
@@ -304,6 +315,7 @@ export type StoredFileScalarWhereWithAggregatesInput = {
   contentType?: Prisma.StringWithAggregatesFilter<"StoredFile"> | string
   size?: Prisma.IntWithAggregatesFilter<"StoredFile"> | number
   uploadedById?: Prisma.StringNullableWithAggregatesFilter<"StoredFile"> | string | null
+  unattachedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"StoredFile"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"StoredFile"> | Date | string
 }
 
@@ -314,6 +326,7 @@ export type StoredFileCreateInput = {
   contentType: string
   size: number
   uploadedById?: string | null
+  unattachedUntil?: Date | string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutFilesInput
   equipment?: Prisma.EquipmentCreateNestedManyWithoutImageFileInput
@@ -328,6 +341,7 @@ export type StoredFileUncheckedCreateInput = {
   contentType: string
   size: number
   uploadedById?: string | null
+  unattachedUntil?: Date | string | null
   createdAt?: Date | string
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutImageFileInput
   organizationLogos?: Prisma.TenantSettingsUncheckedCreateNestedManyWithoutLogoFileInput
@@ -340,6 +354,7 @@ export type StoredFileUpdateInput = {
   contentType?: Prisma.StringFieldUpdateOperationsInput | string
   size?: Prisma.IntFieldUpdateOperationsInput | number
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unattachedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutFilesNestedInput
   equipment?: Prisma.EquipmentUpdateManyWithoutImageFileNestedInput
@@ -354,6 +369,7 @@ export type StoredFileUncheckedUpdateInput = {
   contentType?: Prisma.StringFieldUpdateOperationsInput | string
   size?: Prisma.IntFieldUpdateOperationsInput | number
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unattachedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutImageFileNestedInput
   organizationLogos?: Prisma.TenantSettingsUncheckedUpdateManyWithoutLogoFileNestedInput
@@ -367,6 +383,7 @@ export type StoredFileCreateManyInput = {
   contentType: string
   size: number
   uploadedById?: string | null
+  unattachedUntil?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -377,6 +394,7 @@ export type StoredFileUpdateManyMutationInput = {
   contentType?: Prisma.StringFieldUpdateOperationsInput | string
   size?: Prisma.IntFieldUpdateOperationsInput | number
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unattachedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -388,6 +406,7 @@ export type StoredFileUncheckedUpdateManyInput = {
   contentType?: Prisma.StringFieldUpdateOperationsInput | string
   size?: Prisma.IntFieldUpdateOperationsInput | number
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unattachedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -409,6 +428,7 @@ export type StoredFileCountOrderByAggregateInput = {
   contentType?: Prisma.SortOrder
   size?: Prisma.SortOrder
   uploadedById?: Prisma.SortOrder
+  unattachedUntil?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -424,6 +444,7 @@ export type StoredFileMaxOrderByAggregateInput = {
   contentType?: Prisma.SortOrder
   size?: Prisma.SortOrder
   uploadedById?: Prisma.SortOrder
+  unattachedUntil?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -435,6 +456,7 @@ export type StoredFileMinOrderByAggregateInput = {
   contentType?: Prisma.SortOrder
   size?: Prisma.SortOrder
   uploadedById?: Prisma.SortOrder
+  unattachedUntil?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -541,6 +563,7 @@ export type StoredFileCreateWithoutEquipmentInput = {
   contentType: string
   size: number
   uploadedById?: string | null
+  unattachedUntil?: Date | string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutFilesInput
   organizationLogos?: Prisma.TenantSettingsCreateNestedManyWithoutLogoFileInput
@@ -554,6 +577,7 @@ export type StoredFileUncheckedCreateWithoutEquipmentInput = {
   contentType: string
   size: number
   uploadedById?: string | null
+  unattachedUntil?: Date | string | null
   createdAt?: Date | string
   organizationLogos?: Prisma.TenantSettingsUncheckedCreateNestedManyWithoutLogoFileInput
 }
@@ -581,6 +605,7 @@ export type StoredFileUpdateWithoutEquipmentInput = {
   contentType?: Prisma.StringFieldUpdateOperationsInput | string
   size?: Prisma.IntFieldUpdateOperationsInput | number
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unattachedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutFilesNestedInput
   organizationLogos?: Prisma.TenantSettingsUpdateManyWithoutLogoFileNestedInput
@@ -594,6 +619,7 @@ export type StoredFileUncheckedUpdateWithoutEquipmentInput = {
   contentType?: Prisma.StringFieldUpdateOperationsInput | string
   size?: Prisma.IntFieldUpdateOperationsInput | number
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unattachedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organizationLogos?: Prisma.TenantSettingsUncheckedUpdateManyWithoutLogoFileNestedInput
 }
@@ -605,6 +631,7 @@ export type StoredFileCreateWithoutOrganizationInput = {
   contentType: string
   size: number
   uploadedById?: string | null
+  unattachedUntil?: Date | string | null
   createdAt?: Date | string
   equipment?: Prisma.EquipmentCreateNestedManyWithoutImageFileInput
   organizationLogos?: Prisma.TenantSettingsCreateNestedManyWithoutLogoFileInput
@@ -617,6 +644,7 @@ export type StoredFileUncheckedCreateWithoutOrganizationInput = {
   contentType: string
   size: number
   uploadedById?: string | null
+  unattachedUntil?: Date | string | null
   createdAt?: Date | string
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutImageFileInput
   organizationLogos?: Prisma.TenantSettingsUncheckedCreateNestedManyWithoutLogoFileInput
@@ -659,6 +687,7 @@ export type StoredFileScalarWhereInput = {
   contentType?: Prisma.StringFilter<"StoredFile"> | string
   size?: Prisma.IntFilter<"StoredFile"> | number
   uploadedById?: Prisma.StringNullableFilter<"StoredFile"> | string | null
+  unattachedUntil?: Prisma.DateTimeNullableFilter<"StoredFile"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"StoredFile"> | Date | string
 }
 
@@ -669,6 +698,7 @@ export type StoredFileCreateWithoutOrganizationLogosInput = {
   contentType: string
   size: number
   uploadedById?: string | null
+  unattachedUntil?: Date | string | null
   createdAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutFilesInput
   equipment?: Prisma.EquipmentCreateNestedManyWithoutImageFileInput
@@ -682,6 +712,7 @@ export type StoredFileUncheckedCreateWithoutOrganizationLogosInput = {
   contentType: string
   size: number
   uploadedById?: string | null
+  unattachedUntil?: Date | string | null
   createdAt?: Date | string
   equipment?: Prisma.EquipmentUncheckedCreateNestedManyWithoutImageFileInput
 }
@@ -709,6 +740,7 @@ export type StoredFileUpdateWithoutOrganizationLogosInput = {
   contentType?: Prisma.StringFieldUpdateOperationsInput | string
   size?: Prisma.IntFieldUpdateOperationsInput | number
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unattachedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutFilesNestedInput
   equipment?: Prisma.EquipmentUpdateManyWithoutImageFileNestedInput
@@ -722,6 +754,7 @@ export type StoredFileUncheckedUpdateWithoutOrganizationLogosInput = {
   contentType?: Prisma.StringFieldUpdateOperationsInput | string
   size?: Prisma.IntFieldUpdateOperationsInput | number
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unattachedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutImageFileNestedInput
 }
@@ -733,6 +766,7 @@ export type StoredFileCreateManyOrganizationInput = {
   contentType: string
   size: number
   uploadedById?: string | null
+  unattachedUntil?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -743,6 +777,7 @@ export type StoredFileUpdateWithoutOrganizationInput = {
   contentType?: Prisma.StringFieldUpdateOperationsInput | string
   size?: Prisma.IntFieldUpdateOperationsInput | number
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unattachedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUpdateManyWithoutImageFileNestedInput
   organizationLogos?: Prisma.TenantSettingsUpdateManyWithoutLogoFileNestedInput
@@ -755,6 +790,7 @@ export type StoredFileUncheckedUpdateWithoutOrganizationInput = {
   contentType?: Prisma.StringFieldUpdateOperationsInput | string
   size?: Prisma.IntFieldUpdateOperationsInput | number
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unattachedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUncheckedUpdateManyWithoutImageFileNestedInput
   organizationLogos?: Prisma.TenantSettingsUncheckedUpdateManyWithoutLogoFileNestedInput
@@ -767,6 +803,7 @@ export type StoredFileUncheckedUpdateManyWithoutOrganizationInput = {
   contentType?: Prisma.StringFieldUpdateOperationsInput | string
   size?: Prisma.IntFieldUpdateOperationsInput | number
   uploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unattachedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -818,6 +855,7 @@ export type StoredFileSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   contentType?: boolean
   size?: boolean
   uploadedById?: boolean
+  unattachedUntil?: boolean
   createdAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.StoredFile$equipmentArgs<ExtArgs>
@@ -833,6 +871,7 @@ export type StoredFileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   contentType?: boolean
   size?: boolean
   uploadedById?: boolean
+  unattachedUntil?: boolean
   createdAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["storedFile"]>
@@ -845,6 +884,7 @@ export type StoredFileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   contentType?: boolean
   size?: boolean
   uploadedById?: boolean
+  unattachedUntil?: boolean
   createdAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["storedFile"]>
@@ -857,10 +897,11 @@ export type StoredFileSelectScalar = {
   contentType?: boolean
   size?: boolean
   uploadedById?: boolean
+  unattachedUntil?: boolean
   createdAt?: boolean
 }
 
-export type StoredFileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationId" | "key" | "filename" | "contentType" | "size" | "uploadedById" | "createdAt", ExtArgs["result"]["storedFile"]>
+export type StoredFileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationId" | "key" | "filename" | "contentType" | "size" | "uploadedById" | "unattachedUntil" | "createdAt", ExtArgs["result"]["storedFile"]>
 export type StoredFileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.StoredFile$equipmentArgs<ExtArgs>
@@ -889,6 +930,7 @@ export type $StoredFilePayload<ExtArgs extends runtime.Types.Extensions.Internal
     contentType: string
     size: number
     uploadedById: string | null
+    unattachedUntil: Date | null
     createdAt: Date
   }, ExtArgs["result"]["storedFile"]>
   composites: {}
@@ -897,7 +939,7 @@ export type $StoredFilePayload<ExtArgs extends runtime.Types.Extensions.Internal
 export type StoredFileGetPayload<S extends boolean | null | undefined | StoredFileDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$StoredFilePayload, S>
 
 export type StoredFileCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<StoredFileFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<StoredFileFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: StoredFileCountAggregateInputType | true
   }
 
@@ -1323,6 +1365,7 @@ export interface StoredFileFieldRefs {
   readonly contentType: Prisma.FieldRef<"StoredFile", 'String'>
   readonly size: Prisma.FieldRef<"StoredFile", 'Int'>
   readonly uploadedById: Prisma.FieldRef<"StoredFile", 'String'>
+  readonly unattachedUntil: Prisma.FieldRef<"StoredFile", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"StoredFile", 'DateTime'>
 }
     
@@ -1348,6 +1391,7 @@ export type StoredFileFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.In
    * Filter, which StoredFile to fetch.
    */
   where: Prisma.StoredFileWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1370,6 +1414,7 @@ export type StoredFileFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extens
    * Filter, which StoredFile to fetch.
    */
   where: Prisma.StoredFileWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1422,6 +1467,7 @@ export type StoredFileFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Filter by unique combinations of StoredFiles.
    */
   distinct?: Prisma.StoredFileScalarFieldEnum | Prisma.StoredFileScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1474,6 +1520,7 @@ export type StoredFileFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensi
    * Filter by unique combinations of StoredFiles.
    */
   distinct?: Prisma.StoredFileScalarFieldEnum | Prisma.StoredFileScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1526,6 +1573,7 @@ export type StoredFileFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Filter by unique combinations of StoredFiles.
    */
   distinct?: Prisma.StoredFileScalarFieldEnum | Prisma.StoredFileScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1548,6 +1596,7 @@ export type StoredFileCreateArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * The data needed to create a StoredFile.
    */
   data: Prisma.XOR<Prisma.StoredFileCreateInput, Prisma.StoredFileUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1608,6 +1657,7 @@ export type StoredFileUpdateArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Choose, which StoredFile to update.
    */
   where: Prisma.StoredFileWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1686,6 +1736,7 @@ export type StoredFileUpsertArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * In case the StoredFile was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.StoredFileUpdateInput, Prisma.StoredFileUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1708,6 +1759,7 @@ export type StoredFileDeleteArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Filter which StoredFile to delete.
    */
   where: Prisma.StoredFileWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

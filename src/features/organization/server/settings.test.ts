@@ -9,13 +9,17 @@ const mocks = vi.hoisted(() => ({
   settingsUpsert: vi.fn(),
   fileFind: vi.fn(),
   deleteStoredFile: vi.fn(),
+  markStoredFileAttached: vi.fn(),
   recordAuditEvent: vi.fn(),
   transaction: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/audit", () => ({ recordAuditEvent: mocks.recordAuditEvent }));
-vi.mock("@/features/files/server/files", () => ({ deleteStoredFile: mocks.deleteStoredFile }));
+vi.mock("@/features/files/server/files", () => ({
+  deleteStoredFile: mocks.deleteStoredFile,
+  markStoredFileAttached: mocks.markStoredFileAttached,
+}));
 vi.mock("@/lib/tenant-context", () => ({ getOrganizationContext: mocks.getOrganizationContext }));
 vi.mock("@/lib/prisma", () => ({
   default: {
@@ -224,6 +228,11 @@ describe("organization settings", () => {
         where: { id: "file-1", organizationId: "org-a", equipment: { none: {} } },
         select: { id: true },
       });
+      expect(mocks.markStoredFileAttached).toHaveBeenCalledWith(
+        expect.anything(),
+        "file-1",
+        "org-a",
+      );
       expect(mocks.settingsUpsert.mock.calls[0][0].update.logoFileId).toBe("file-1");
     });
 

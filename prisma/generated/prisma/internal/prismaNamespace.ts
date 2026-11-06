@@ -2871,6 +2871,14 @@ export const EquipmentScalarFieldEnum = {
 export type EquipmentScalarFieldEnum = (typeof EquipmentScalarFieldEnum)[keyof typeof EquipmentScalarFieldEnum]
 
 
+export const RelationLoadStrategy = {
+  query: 'query',
+  join: 'join'
+} as const
+
+export type RelationLoadStrategy = (typeof RelationLoadStrategy)[keyof typeof RelationLoadStrategy]
+
+
 export const StoredFileScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
@@ -2879,6 +2887,7 @@ export const StoredFileScalarFieldEnum = {
   contentType: 'contentType',
   size: 'size',
   uploadedById: 'uploadedById',
+  unattachedUntil: 'unattachedUntil',
   createdAt: 'createdAt'
 } as const
 
@@ -3054,6 +3063,8 @@ export const MaintenanceTaskReminderScalarFieldEnum = {
   taskId: 'taskId',
   workerId: 'workerId',
   organizationId: 'organizationId',
+  notificationType: 'notificationType',
+  idempotencyKey: 'idempotencyKey',
   recipientEmail: 'recipientEmail',
   locale: 'locale',
   scheduledFor: 'scheduledFor',
@@ -3063,6 +3074,7 @@ export const MaintenanceTaskReminderScalarFieldEnum = {
   lastAttemptAt: 'lastAttemptAt',
   sentAt: 'sentAt',
   lastError: 'lastError',
+  requestedById: 'requestedById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -3088,6 +3100,7 @@ export const MaintenanceTaskDailyHoursScalarFieldEnum = {
   workerId: 'workerId',
   organizationId: 'organizationId',
   workDate: 'workDate',
+  startTime: 'startTime',
   hours: 'hours',
   createdAt: 'createdAt'
 } as const
@@ -3481,7 +3494,18 @@ export type EnumInventoryMovementTypeFieldRefInput<$PrismaModel> = FieldRefInput
  * Reference to a field of type 'InventoryMovementType[]'
  */
 export type ListEnumInventoryMovementTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InventoryMovementType[]'>
-    
+
+
+/**
+ * Reference to a field of type 'MaintenanceTaskNotificationType'
+ */
+export type EnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MaintenanceTaskNotificationType'>
+
+
+/**
+ * Reference to a field of type 'MaintenanceTaskNotificationType[]'
+ */
+export type ListEnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MaintenanceTaskNotificationType[]'>
 
 
 /**
@@ -3826,4 +3850,3 @@ export type PrismaAction =
  * `PrismaClient` proxy available in interactive transactions.
  */
 export type TransactionClient = Omit<DefaultPrismaClient, runtime.ITXClientDenyList>
-

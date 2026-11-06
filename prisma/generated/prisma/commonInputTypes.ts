@@ -307,11 +307,28 @@ export type EnumInventoryMovementTypeWithAggregatesFilter<$PrismaModel = never> 
   _max?: Prisma.NestedEnumInventoryMovementTypeFilter<$PrismaModel>
 }
 
+export type EnumMaintenanceTaskNotificationTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.MaintenanceTaskNotificationType | Prisma.EnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.MaintenanceTaskNotificationType[] | Prisma.ListEnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MaintenanceTaskNotificationType[] | Prisma.ListEnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMaintenanceTaskNotificationTypeFilter<$PrismaModel> | $Enums.MaintenanceTaskNotificationType
+}
+
 export type EnumMaintenanceReminderStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.MaintenanceReminderStatus | Prisma.EnumMaintenanceReminderStatusFieldRefInput<$PrismaModel>
   in?: $Enums.MaintenanceReminderStatus[] | Prisma.ListEnumMaintenanceReminderStatusFieldRefInput<$PrismaModel>
   notIn?: $Enums.MaintenanceReminderStatus[] | Prisma.ListEnumMaintenanceReminderStatusFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumMaintenanceReminderStatusFilter<$PrismaModel> | $Enums.MaintenanceReminderStatus
+}
+
+export type EnumMaintenanceTaskNotificationTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.MaintenanceTaskNotificationType | Prisma.EnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.MaintenanceTaskNotificationType[] | Prisma.ListEnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MaintenanceTaskNotificationType[] | Prisma.ListEnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMaintenanceTaskNotificationTypeWithAggregatesFilter<$PrismaModel> | $Enums.MaintenanceTaskNotificationType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumMaintenanceTaskNotificationTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumMaintenanceTaskNotificationTypeFilter<$PrismaModel>
 }
 
 export type EnumMaintenanceReminderStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -792,11 +809,28 @@ export type NestedEnumInventoryMovementTypeWithAggregatesFilter<$PrismaModel = n
   _max?: Prisma.NestedEnumInventoryMovementTypeFilter<$PrismaModel>
 }
 
+export type NestedEnumMaintenanceTaskNotificationTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.MaintenanceTaskNotificationType | Prisma.EnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.MaintenanceTaskNotificationType[] | Prisma.ListEnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MaintenanceTaskNotificationType[] | Prisma.ListEnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMaintenanceTaskNotificationTypeFilter<$PrismaModel> | $Enums.MaintenanceTaskNotificationType
+}
+
 export type NestedEnumMaintenanceReminderStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.MaintenanceReminderStatus | Prisma.EnumMaintenanceReminderStatusFieldRefInput<$PrismaModel>
   in?: $Enums.MaintenanceReminderStatus[] | Prisma.ListEnumMaintenanceReminderStatusFieldRefInput<$PrismaModel>
   notIn?: $Enums.MaintenanceReminderStatus[] | Prisma.ListEnumMaintenanceReminderStatusFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumMaintenanceReminderStatusFilter<$PrismaModel> | $Enums.MaintenanceReminderStatus
+}
+
+export type NestedEnumMaintenanceTaskNotificationTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.MaintenanceTaskNotificationType | Prisma.EnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.MaintenanceTaskNotificationType[] | Prisma.ListEnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MaintenanceTaskNotificationType[] | Prisma.ListEnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMaintenanceTaskNotificationTypeWithAggregatesFilter<$PrismaModel> | $Enums.MaintenanceTaskNotificationType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumMaintenanceTaskNotificationTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumMaintenanceTaskNotificationTypeFilter<$PrismaModel>
 }
 
 export type NestedEnumMaintenanceReminderStatusWithAggregatesFilter<$PrismaModel = never> = {

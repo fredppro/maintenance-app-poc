@@ -600,7 +600,7 @@ export type $OrganizationAuditEventPayload<ExtArgs extends runtime.Types.Extensi
 export type OrganizationAuditEventGetPayload<S extends boolean | null | undefined | OrganizationAuditEventDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$OrganizationAuditEventPayload, S>
 
 export type OrganizationAuditEventCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<OrganizationAuditEventFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<OrganizationAuditEventFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: OrganizationAuditEventCountAggregateInputType | true
   }
 
@@ -1049,6 +1049,7 @@ export type OrganizationAuditEventFindUniqueArgs<ExtArgs extends runtime.Types.E
    * Filter, which OrganizationAuditEvent to fetch.
    */
   where: Prisma.OrganizationAuditEventWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1071,6 +1072,7 @@ export type OrganizationAuditEventFindUniqueOrThrowArgs<ExtArgs extends runtime.
    * Filter, which OrganizationAuditEvent to fetch.
    */
   where: Prisma.OrganizationAuditEventWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1123,6 +1125,7 @@ export type OrganizationAuditEventFindFirstArgs<ExtArgs extends runtime.Types.Ex
    * Filter by unique combinations of OrganizationAuditEvents.
    */
   distinct?: Prisma.OrganizationAuditEventScalarFieldEnum | Prisma.OrganizationAuditEventScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1175,6 +1178,7 @@ export type OrganizationAuditEventFindFirstOrThrowArgs<ExtArgs extends runtime.T
    * Filter by unique combinations of OrganizationAuditEvents.
    */
   distinct?: Prisma.OrganizationAuditEventScalarFieldEnum | Prisma.OrganizationAuditEventScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1227,6 +1231,7 @@ export type OrganizationAuditEventFindManyArgs<ExtArgs extends runtime.Types.Ext
    * Filter by unique combinations of OrganizationAuditEvents.
    */
   distinct?: Prisma.OrganizationAuditEventScalarFieldEnum | Prisma.OrganizationAuditEventScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1249,6 +1254,7 @@ export type OrganizationAuditEventCreateArgs<ExtArgs extends runtime.Types.Exten
    * The data needed to create a OrganizationAuditEvent.
    */
   data: Prisma.XOR<Prisma.OrganizationAuditEventCreateInput, Prisma.OrganizationAuditEventUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1309,6 +1315,7 @@ export type OrganizationAuditEventUpdateArgs<ExtArgs extends runtime.Types.Exten
    * Choose, which OrganizationAuditEvent to update.
    */
   where: Prisma.OrganizationAuditEventWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1387,6 +1394,7 @@ export type OrganizationAuditEventUpsertArgs<ExtArgs extends runtime.Types.Exten
    * In case the OrganizationAuditEvent was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.OrganizationAuditEventUpdateInput, Prisma.OrganizationAuditEventUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1409,6 +1417,7 @@ export type OrganizationAuditEventDeleteArgs<ExtArgs extends runtime.Types.Exten
    * Filter which OrganizationAuditEvent to delete.
    */
   where: Prisma.OrganizationAuditEventWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

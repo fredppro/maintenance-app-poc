@@ -90,7 +90,80 @@ describe("maintenance report labor", () => {
     ]);
   });
 
-  it("renders per-worker totals from every persisted daily-hour record", () => {
+  it("renders each work log with its persisted start time and calculated end", () => {
+    const { document, textCalls } = createRecordingDocument();
+    const entry = {
+      id: "task-12345678",
+      title: "Repair conveyor",
+      description: null,
+      type: "CORRECTIVE",
+      status: "completed",
+      startTime: new Date("2026-06-01T08:00:00.000Z"),
+      endTime: null,
+      equipment: { id: "equipment-1", name: "Conveyor", category: "Line" },
+      assignments: [],
+      dailyHours: [
+        {
+          workerId: "worker-1",
+          worker: { name: "Fabio" },
+          workDate: new Date("2026-06-02T00:00:00.000Z"),
+          startTime: new Date("2026-06-02T22:30:00.000Z"),
+          hours: "2.00",
+        },
+        {
+          workerId: "worker-1",
+          worker: { name: "Fabio" },
+          workDate: new Date("2026-06-04T00:00:00.000Z"),
+          startTime: new Date("2026-06-04T08:00:00.000Z"),
+          hours: "1.25",
+        },
+        {
+          workerId: "worker-1",
+          worker: { name: "Fabio" },
+          workDate: new Date("2026-06-05T00:00:00.000Z"),
+          startTime: null,
+          hours: "3.00",
+        },
+      ],
+      materials: [],
+    };
+
+    renderMaintenanceReport(
+      document as PDFKit.PDFDocument,
+      entry as never,
+      enMessages.PDF,
+      "en-US",
+      "UTC",
+    );
+
+    const valuesAt = (x: number) =>
+      textCalls
+        .filter(
+          ([value, position]) =>
+            position === x &&
+            value !== enMessages.PDF.labor.start &&
+            value !== enMessages.PDF.labor.end &&
+            value !== enMessages.PDF.labor.duration,
+        )
+        .map(([value]) => value);
+
+    expect(
+      textCalls.filter(([value, position]) => value === "Fabio" && position === 42),
+    ).toHaveLength(3);
+    expect(valuesAt(240)).toEqual([
+      "06/02/2026, 10:30 PM",
+      "06/04/2026, 08:00 AM",
+      "06/05/2026",
+    ]);
+    expect(valuesAt(360)).toEqual([
+      "06/03/2026, 12:30 AM",
+      "06/04/2026, 09:15 AM",
+      "Not recorded",
+    ]);
+    expect(valuesAt(470)).toEqual(["2h", "1h 15m", "3h"]);
+  });
+
+  it("renders each persisted work-log duration separately", () => {
     const { document, textCalls } = createRecordingDocument();
     const entry = {
       id: "task-87654321",
@@ -155,7 +228,7 @@ describe("maintenance report labor", () => {
       )
       .map(([value]) => value);
 
-    expect(durationValues).toEqual(["9h", "4h"]);
+    expect(durationValues).toEqual(["8h", "1h", "2h 30m", "1h 30m"]);
     expect(textCalls).toContainEqual([
       "12/20/2026, 05:15 PM",
       300,

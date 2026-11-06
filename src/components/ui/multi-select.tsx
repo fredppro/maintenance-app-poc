@@ -30,6 +30,10 @@ interface MultiSelectProps {
   onChange: (value: string[]) => void
   placeholder?: string
   id?: string
+  'aria-label'?: string
+  'aria-required'?: boolean
+  'aria-invalid'?: boolean
+  'aria-describedby'?: string
   className?: string
   searchPlaceholder?: string
   emptyText?: string
@@ -43,6 +47,10 @@ export function MultiSelect({
   onChange,
   placeholder = 'Select items...',
   id,
+  'aria-label': ariaLabel,
+  'aria-required': ariaRequired,
+  'aria-invalid': ariaInvalid,
+  'aria-describedby': ariaDescribedBy,
   className,
   searchPlaceholder,
   emptyText = 'No item found.',
@@ -70,11 +78,14 @@ export function MultiSelect({
             id={id}
             variant="outline"
             role="combobox"
-            aria-label={placeholder}
+            aria-label={ariaLabel ?? placeholder}
+            aria-required={ariaRequired}
+            aria-invalid={ariaInvalid}
+            aria-describedby={ariaDescribedBy}
             aria-expanded={open}
-            className="w-full justify-between h-auto min-h-10 py-2"
+            className="h-auto min-h-10 w-full justify-between py-1.5"
           >
-            <div className="flex flex-wrap gap-1 items-center">
+            <div className="flex flex-wrap items-center gap-1">
               {selected.length > 0 ? (
                 options
                   .filter((option) => selected.includes(option.value))
@@ -82,7 +93,6 @@ export function MultiSelect({
                     <Badge
                       key={option.value}
                       variant="secondary"
-                      className="mr-1 mb-1"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleUnselect(option.value)

@@ -22,11 +22,17 @@ import {
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { summarizeEquipmentMaintenance } from "@/features/scheduler/utils/insights";
 import { useSchedulerStore } from "@/features/scheduler/store/scheduler-provider";
 import type { Equipment } from "@/features/scheduler/types";
@@ -114,6 +120,9 @@ export function EquipmentPageClient() {
           </InputGroup>
           <div className="rounded-lg border bg-card">
             <Table>
+              <TableCaption className="sr-only">
+                {t("title")}
+              </TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("columns.name")}</TableHead>
@@ -130,7 +139,9 @@ export function EquipmentPageClient() {
                   <TableHead className="hidden lg:table-cell">
                     {t("columns.last")}
                   </TableHead>
-                  <TableHead className="w-24" />
+                  <TableHead className="w-24">
+                    <span className="sr-only">{t("columns.actions")}</span>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -179,27 +190,39 @@ export function EquipmentPageClient() {
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          asChild
-                          aria-label={t("viewInSchedule")}
-                        >
-                          <Link href="/">
-                            <CalendarDays />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`${tCommon("edit")} ${row.equipment.name}`}
-                          onClick={() => {
-                            setEditing(row.equipment);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <Pencil />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              asChild
+                              aria-label={t("viewInSchedule")}
+                            >
+                              <Link href="/">
+                                <CalendarDays />
+                              </Link>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t("viewInSchedule")}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`${tCommon("edit")} ${row.equipment.name}`}
+                              onClick={() => {
+                                setEditing(row.equipment);
+                                setDialogOpen(true);
+                              }}
+                            >
+                              <Pencil />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {`${tCommon("edit")} ${row.equipment.name}`}
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </TableCell>
                   </TableRow>

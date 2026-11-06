@@ -1,6 +1,5 @@
 import { MaintenanceEntry } from "@/features/scheduler/types";
 import {
-  aggregateWorkerDailyHours,
   formatWorkerDurationInHours,
   formatWorkerWorkDuration,
 } from "@/features/scheduler/utils/worker-hours";
@@ -114,6 +113,12 @@ function renderMaintenanceReport(
     });
 
   let currentY = 130;
+  const PAGE_CONTENT_BOTTOM = 770;
+
+  const startNewPage = () => {
+    doc.addPage();
+    currentY = 50;
+  };
 
   // Section Title Helper
   const drawSectionHeader = (title: string, y: number): number => {
@@ -238,33 +243,6 @@ function renderMaintenanceReport(
   }
   currentY += entry.completedAt ? 82 : 62;
 
-  // 3. Section 2: Labor & Duration
-  currentY = drawSectionHeader(t.sections.labor, currentY);
-
-  // Tabular Header
-  doc
-    .fillColor("#f8fafc") // slate-50
-    .rect(36, currentY, 523, 14)
-    .fill();
-
-  doc
-    .fillColor("#475569")
-    .font("Helvetica-Bold")
-    .fontSize(7.5)
-    .text(t.labor.technician, 42, currentY + 3)
-    .text(t.labor.start, 240, currentY + 3)
-    .text(t.labor.end, 360, currentY + 3)
-    .text(t.labor.duration, 470, currentY + 3, { align: "right", width: 80 });
-
-  doc
-    .moveTo(36, currentY + 14)
-    .lineTo(559, currentY + 14)
-    .lineWidth(0.5)
-    .strokeColor("#cbd5e1")
-    .stroke();
-
-  currentY += 14;
-
   const formatWorkTime = (date: Date | string | null | undefined) => {
     if (!date || !Number.isFinite(new Date(date).getTime())) {
       return t.labor.notRecorded;
@@ -272,39 +250,126 @@ function renderMaintenanceReport(
     return formatDate(date);
   };
 
-  const dailyHourTotals = aggregateWorkerDailyHours(entry.dailyHours ?? []);
-  if (entry.assignments && entry.assignments.length > 0) {
-    entry.assignments.forEach((assignment, index) => {
+  const formatWorkDate = (date: Date | string) => {
+    const parsedDate = new Date(date);
+    if (!Number.isFinite(parsedDate.getTime())) {
+      return t.labor.notRecorded;
+    }
+    return parsedDate.toLocaleDateString(dateLocale, {
+      timeZone: "UTC",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const drawLaborTableHeader = () => {
+    doc
+      .fillColor("#f8fafc")
+      .rect(36, currentY, 523, 14)
+      .fill();
+
+    doc
+      .fillColor("#475569")
+      .font("Helvetica-Bold")
+      .fontSize(7.5)
+      .text(t.labor.technician, 42, currentY + 3)
+      .text(t.labor.start, 240, currentY + 3)
+      .text(t.labor.end, 360, currentY + 3)
+      .text(t.labor.duration, 470, currentY + 3, {
+        align: "right",
+        width: 80,
+      });
+
+    doc
+      .moveTo(36, currentY + 14)
+      .lineTo(559, currentY + 14)
+      .lineWidth(0.5)
+      .strokeColor("#cbd5e1")
+      .stroke();
+
+    currentY += 14;
+  };
+
+  // 3. Section 2: Labor & Duration
+  currentY = drawSectionHeader(t.sections.labor, currentY);
+  drawLaborTableHeader();
+
+  const assignments = entry.assignments ?? [];
+  const dailyHours = entry.dailyHours ?? [];
+  const workersWithWorkLogs = new Set(
+    dailyHours.map((workLog) => workLog.workerId),
+  );
+  const laborRows = [
+    ...dailyHours.map((workLog) => {
+      const startTime = workLog.startTime
+        ? new Date(workLog.startTime)
+        : null;
+      const hasStartTime =
+        startTime !== null && Number.isFinite(startTime.getTime());
+      const durationHours = Number(workLog.hours);
+      const endTime =
+        hasStartTime &&
+        Number.isFinite(durationHours) &&
+        durationHours > 0
+          ? new Date(startTime.getTime() + durationHours * 60 * 60 * 1000)
+          : null;
+
+      return {
+        workerName:
+          workLog.worker?.name ??
+          assignments.find(({ workerId }) => workerId === workLog.workerId)
+            ?.worker.name ??
+          t.labor.notRecorded,
+        start: hasStartTime
+          ? formatWorkTime(startTime)
+          : formatWorkDate(workLog.workDate),
+        end: formatWorkTime(endTime),
+        duration:
+          formatWorkerDurationInHours(durationHours) ?? t.labor.notRecorded,
+      };
+    }),
+    ...assignments
+      .filter(({ workerId }) => !workersWithWorkLogs.has(workerId))
+      .map((assignment) => ({
+        workerName: assignment.worker.name,
+        start: formatWorkTime(assignment.startTime),
+        end: formatWorkTime(assignment.endTime),
+        duration:
+          formatWorkerWorkDuration(
+            assignment.startTime,
+            assignment.endTime,
+          ) ?? t.labor.notRecorded,
+      })),
+  ];
+
+  if (laborRows.length > 0) {
+    laborRows.forEach((row, index) => {
+      if (currentY + 16 > PAGE_CONTENT_BOTTOM) {
+        startNewPage();
+        currentY = drawSectionHeader(t.sections.labor, currentY);
+        drawLaborTableHeader();
+      }
+
       if (index % 2 === 1) {
         doc.fillColor("#f8fafc").rect(36, currentY, 523, 16).fill();
       }
-
-      const dailyHours = dailyHourTotals.get(assignment.workerId);
-      const duration =
-        dailyHours === undefined
-          ? formatWorkerWorkDuration(
-              assignment.startTime,
-              assignment.endTime,
-            )
-          : formatWorkerDurationInHours(dailyHours);
 
       doc
         .fillColor("#0f172a")
         .font("Helvetica")
         .fontSize(8)
-        .text(assignment.worker.name, 42, currentY + 4, {
+        .text(row.workerName, 42, currentY + 4, {
           width: 190,
           lineBreak: false,
         })
-        .text(formatWorkTime(assignment.startTime), 240, currentY + 4)
-        .text(formatWorkTime(assignment.endTime), 360, currentY + 4)
+        .text(row.start, 240, currentY + 4)
+        .text(row.end, 360, currentY + 4)
         .font("Helvetica-Bold")
-        .text(
-          duration ?? t.labor.notRecorded,
-          470,
-          currentY + 4,
-          { align: "right", width: 80 },
-        );
+        .text(row.duration, 470, currentY + 4, {
+          align: "right",
+          width: 80,
+        });
 
       doc
         .moveTo(36, currentY + 16)
@@ -316,6 +381,12 @@ function renderMaintenanceReport(
       currentY += 16;
     });
   } else {
+    if (currentY + 16 > PAGE_CONTENT_BOTTOM) {
+      startNewPage();
+      currentY = drawSectionHeader(t.sections.labor, currentY);
+      drawLaborTableHeader();
+    }
+
     doc
       .fillColor("#64748b")
       .font("Helvetica-Oblique")
@@ -326,42 +397,52 @@ function renderMaintenanceReport(
 
   currentY += 10;
 
+  const drawMaterialsTableHeader = () => {
+    doc.fillColor("#f8fafc").rect(36, currentY, 523, 14).fill();
+
+    doc
+      .fillColor("#475569")
+      .font("Helvetica-Bold")
+      .fontSize(7.5)
+      .text(t.materials.item, 42, currentY + 3)
+      .text(t.materials.reference, 242, currentY + 3)
+      .text(t.materials.quantity, 332, currentY + 3, {
+        align: "right",
+        width: 70,
+      })
+      .text(t.materials.unit, 402, currentY + 3, {
+        align: "center",
+        width: 60,
+      })
+      .text(t.materials.price, 472, currentY + 3, {
+        align: "right",
+        width: 80,
+      });
+
+    doc
+      .moveTo(36, currentY + 14)
+      .lineTo(559, currentY + 14)
+      .lineWidth(0.5)
+      .strokeColor("#cbd5e1")
+      .stroke();
+
+    currentY += 14;
+  };
+
+  if (currentY + 38 > PAGE_CONTENT_BOTTOM) startNewPage();
+
   // 4. Section 3: Materials Utilized
   currentY = drawSectionHeader(t.sections.materialsUtilized, currentY);
-
-  // Tabular Header
-  doc.fillColor("#f8fafc").rect(36, currentY, 523, 14).fill();
-
-  doc
-    .fillColor("#475569")
-    .font("Helvetica-Bold")
-    .fontSize(7.5)
-    .text(t.materials.item, 42, currentY + 3)
-    .text(t.materials.reference, 242, currentY + 3)
-    .text(t.materials.quantity, 332, currentY + 3, {
-      align: "right",
-      width: 70,
-    })
-    .text(t.materials.unit, 402, currentY + 3, {
-      align: "center",
-      width: 60,
-    })
-    .text(t.materials.price, 472, currentY + 3, {
-      align: "right",
-      width: 80,
-    });
-
-  doc
-    .moveTo(36, currentY + 14)
-    .lineTo(559, currentY + 14)
-    .lineWidth(0.5)
-    .strokeColor("#cbd5e1")
-    .stroke();
-
-  currentY += 14;
+  drawMaterialsTableHeader();
 
   if (entry.materials && entry.materials.length > 0) {
     entry.materials.forEach((material, index) => {
+      if (currentY + 16 > PAGE_CONTENT_BOTTOM) {
+        startNewPage();
+        currentY = drawSectionHeader(t.sections.materialsUtilized, currentY);
+        drawMaterialsTableHeader();
+      }
+
       if (index % 2 === 1) {
         doc.fillColor("#f8fafc").rect(36, currentY, 523, 16).fill();
       }
@@ -404,6 +485,12 @@ function renderMaintenanceReport(
       currentY += 16;
     });
   } else {
+    if (currentY + 16 > PAGE_CONTENT_BOTTOM) {
+      startNewPage();
+      currentY = drawSectionHeader(t.sections.materialsUtilized, currentY);
+      drawMaterialsTableHeader();
+    }
+
     doc
       .fillColor("#64748b")
       .font("Helvetica-Oblique")
@@ -413,6 +500,8 @@ function renderMaintenanceReport(
   }
 
   currentY += 10;
+
+  if (currentY + 100 > PAGE_CONTENT_BOTTOM) startNewPage();
 
   // 5. Section 4: Summary & Technical Overview
   currentY = drawSectionHeader(t.sections.technicalOverview, currentY);

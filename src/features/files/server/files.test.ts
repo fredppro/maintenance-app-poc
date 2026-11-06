@@ -3,11 +3,14 @@ import sharp from "sharp";
 import prisma from "@/lib/prisma";
 import {
   deleteStoredFile,
+  deleteExpiredUnattachedStoredFile,
   FileValidationError,
   MAX_FILE_BYTES,
+  markStoredFileAttached,
   processStoredFileDeletion,
   readStoredFile,
   saveImageFile,
+  UNATTACHED_FILE_RETENTION_MS,
 } from "./files";
 
 const storage = vi.hoisted(() => ({
@@ -28,6 +31,7 @@ function makeTenantDb() {
       create: vi.fn(),
       findFirst: vi.fn(),
       deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+      updateMany: vi.fn(),
     },
     storedFileDeletion: {
       upsert: vi.fn(),
@@ -103,8 +107,94 @@ describe("file storage service", () => {
         contentType: "image/png",
         size: storedBytes.length,
         filename: ".._we ird_name_.png",
+        unattachedUntil: expect.any(Date),
       }),
     });
+    const unattachedUntil = create.mock.calls[0]![0].data.unattachedUntil;
+    if (!(unattachedUntil instanceof Date)) {
+      throw new Error("The new image must have a cleanup expiration");
+    }
+    expect(unattachedUntil.getTime()).toBeGreaterThanOrEqual(
+      Date.now() + UNATTACHED_FILE_RETENTION_MS - 1_000,
+    );
+    expect(unattachedUntil.getTime()).toBeLessThanOrEqual(
+      Date.now() + UNATTACHED_FILE_RETENTION_MS + 1_000,
+    );
+  });
+
+  it("clears the unattached expiration when a record claims the file", async () => {
+    const db = makeTenantDb();
+    db.storedFile.updateMany.mockResolvedValue({ count: 1 });
+
+    await markStoredFileAttached(db as never, "f-1", "org-1");
+
+    expect(db.storedFile.updateMany).toHaveBeenCalledWith({
+      where: { id: "f-1", organizationId: "org-1" },
+      data: { unattachedUntil: null },
+    });
+  });
+
+  it("rejects claiming a missing or cross-organization file", async () => {
+    const db = makeTenantDb();
+    db.storedFile.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(markStoredFileAttached(db as never, "f-1", "org-2")).rejects.toThrow(
+      "File not found in the active organization",
+    );
+  });
+
+  it("deletes expired unattached files through the durable deletion queue", async () => {
+    const db = makeTenantDb();
+    const now = new Date("2026-11-05T00:00:00Z");
+    db.storedFile.updateMany.mockResolvedValue({ count: 1 });
+    db.storedFile.findFirst.mockResolvedValue({ key: "org-1/orphan.png" });
+    db.storedFileDeletion.upsert.mockResolvedValue({ id: "delete-1" });
+    db.storedFileDeletion.findFirst.mockResolvedValue({
+      id: "delete-1",
+      organizationId: "org-1",
+      key: "org-1/orphan.png",
+      attempts: 0,
+    });
+    db.storedFileDeletion.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(
+      deleteExpiredUnattachedStoredFile(db as never, "f-1", "org-1", now),
+    ).resolves.toBe("deleted");
+
+    expect(db.storedFile.updateMany).toHaveBeenCalledWith({
+      where: { id: "f-1", organizationId: "org-1", unattachedUntil: { lte: now } },
+      data: { unattachedUntil: null },
+    });
+    expect(db.storedFile.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "f-1",
+        organizationId: "org-1",
+        equipment: { none: {} },
+        organizationLogos: { none: {} },
+      },
+      select: { key: true },
+    });
+    expect(storage.delete).toHaveBeenCalledWith("org-1/orphan.png");
+    expect(db.storedFileDeletion.deleteMany).toHaveBeenCalledWith({
+      where: { id: "delete-1" },
+    });
+  });
+
+  it("keeps an expired file if a record has already attached it", async () => {
+    const db = makeTenantDb();
+    db.storedFile.updateMany.mockResolvedValue({ count: 1 });
+    db.storedFile.findFirst.mockResolvedValue(null);
+
+    await expect(
+      deleteExpiredUnattachedStoredFile(
+        db as never,
+        "f-1",
+        "org-1",
+        new Date("2026-11-05T00:00:00Z"),
+      ),
+    ).resolves.toBe("not_due");
+    expect(db.storedFileDeletion.upsert).not.toHaveBeenCalled();
+    expect(storage.delete).not.toHaveBeenCalled();
   });
 
   it.each([

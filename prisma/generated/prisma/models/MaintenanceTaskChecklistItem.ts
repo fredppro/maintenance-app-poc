@@ -715,7 +715,7 @@ export type $MaintenanceTaskChecklistItemPayload<ExtArgs extends runtime.Types.E
 export type MaintenanceTaskChecklistItemGetPayload<S extends boolean | null | undefined | MaintenanceTaskChecklistItemDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskChecklistItemPayload, S>
 
 export type MaintenanceTaskChecklistItemCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<MaintenanceTaskChecklistItemFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<MaintenanceTaskChecklistItemFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: MaintenanceTaskChecklistItemCountAggregateInputType | true
   }
 
@@ -1166,6 +1166,7 @@ export type MaintenanceTaskChecklistItemFindUniqueArgs<ExtArgs extends runtime.T
    * Filter, which MaintenanceTaskChecklistItem to fetch.
    */
   where: Prisma.MaintenanceTaskChecklistItemWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1188,6 +1189,7 @@ export type MaintenanceTaskChecklistItemFindUniqueOrThrowArgs<ExtArgs extends ru
    * Filter, which MaintenanceTaskChecklistItem to fetch.
    */
   where: Prisma.MaintenanceTaskChecklistItemWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1240,6 +1242,7 @@ export type MaintenanceTaskChecklistItemFindFirstArgs<ExtArgs extends runtime.Ty
    * Filter by unique combinations of MaintenanceTaskChecklistItems.
    */
   distinct?: Prisma.MaintenanceTaskChecklistItemScalarFieldEnum | Prisma.MaintenanceTaskChecklistItemScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1292,6 +1295,7 @@ export type MaintenanceTaskChecklistItemFindFirstOrThrowArgs<ExtArgs extends run
    * Filter by unique combinations of MaintenanceTaskChecklistItems.
    */
   distinct?: Prisma.MaintenanceTaskChecklistItemScalarFieldEnum | Prisma.MaintenanceTaskChecklistItemScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1344,6 +1348,7 @@ export type MaintenanceTaskChecklistItemFindManyArgs<ExtArgs extends runtime.Typ
    * Filter by unique combinations of MaintenanceTaskChecklistItems.
    */
   distinct?: Prisma.MaintenanceTaskChecklistItemScalarFieldEnum | Prisma.MaintenanceTaskChecklistItemScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1366,6 +1371,7 @@ export type MaintenanceTaskChecklistItemCreateArgs<ExtArgs extends runtime.Types
    * The data needed to create a MaintenanceTaskChecklistItem.
    */
   data: Prisma.XOR<Prisma.MaintenanceTaskChecklistItemCreateInput, Prisma.MaintenanceTaskChecklistItemUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1426,6 +1432,7 @@ export type MaintenanceTaskChecklistItemUpdateArgs<ExtArgs extends runtime.Types
    * Choose, which MaintenanceTaskChecklistItem to update.
    */
   where: Prisma.MaintenanceTaskChecklistItemWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1504,6 +1511,7 @@ export type MaintenanceTaskChecklistItemUpsertArgs<ExtArgs extends runtime.Types
    * In case the MaintenanceTaskChecklistItem was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.MaintenanceTaskChecklistItemUpdateInput, Prisma.MaintenanceTaskChecklistItemUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1526,6 +1534,7 @@ export type MaintenanceTaskChecklistItemDeleteArgs<ExtArgs extends runtime.Types
    * Filter which MaintenanceTaskChecklistItem to delete.
    */
   where: Prisma.MaintenanceTaskChecklistItemWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

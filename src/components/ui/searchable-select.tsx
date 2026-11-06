@@ -32,6 +32,9 @@ interface SearchableSelectProps {
   emptyText: string
   id?: string
   'aria-label'?: string
+  'aria-required'?: boolean
+  'aria-invalid'?: boolean
+  'aria-describedby'?: string
   className?: string
   /** Shown centered when there are no options, and as a footer row otherwise. */
   action?: { label: string; onClick: () => void }
@@ -47,6 +50,9 @@ export function SearchableSelect({
   emptyText,
   id,
   'aria-label': ariaLabel,
+  'aria-required': ariaRequired,
+  'aria-invalid': ariaInvalid,
+  'aria-describedby': ariaDescribedBy,
   className,
   action,
 }: SearchableSelectProps) {
@@ -62,6 +68,9 @@ export function SearchableSelect({
           variant="outline"
           role="combobox"
           aria-label={ariaLabel}
+          aria-required={ariaRequired}
+          aria-invalid={ariaInvalid}
+          aria-describedby={ariaDescribedBy}
           aria-expanded={open}
           className={cn(
             'w-full justify-between px-3 font-normal',

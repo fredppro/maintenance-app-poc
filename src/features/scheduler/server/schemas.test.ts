@@ -144,6 +144,7 @@ describe("daily worker-hour allocations", () => {
   const validAllocation = {
     workerId: "worker-1",
     workDate: "2026-10-12",
+    startTime: "08:00",
     hours: 7.5,
   };
 
@@ -153,7 +154,7 @@ describe("daily worker-hour allocations", () => {
       workerIds: ["worker-1", "worker-2"],
       dailyHours: [
         validAllocation,
-        { workerId: "worker-2", workDate: "2026-10-13", hours: 4.25 },
+        { workerId: "worker-2", workDate: "2026-10-13", startTime: "09:15", hours: 4.25 },
       ],
     });
 
@@ -171,6 +172,21 @@ describe("daily worker-hour allocations", () => {
     });
 
     expect(parsed.dailyHours).toHaveLength(2);
+  });
+
+  it("allows inferred starts for new logs and preserves missing historical starts", () => {
+    expect(
+      createTaskSchema.safeParse({
+        ...base,
+        workerIds: ["worker-1"],
+        dailyHours: [{ ...validAllocation, startTime: "" }],
+      }).success,
+    ).toBe(true);
+    expect(
+      updateTaskSchema.safeParse({
+        dailyHours: [{ id: "legacy-log", ...validAllocation, startTime: "" }],
+      }).success,
+    ).toBe(true);
   });
 
   it("rejects entries for unassigned workers", () => {

@@ -654,7 +654,7 @@ export type $MaintenanceTaskAssignmentPayload<ExtArgs extends runtime.Types.Exte
 export type MaintenanceTaskAssignmentGetPayload<S extends boolean | null | undefined | MaintenanceTaskAssignmentDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskAssignmentPayload, S>
 
 export type MaintenanceTaskAssignmentCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<MaintenanceTaskAssignmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<MaintenanceTaskAssignmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: MaintenanceTaskAssignmentCountAggregateInputType | true
   }
 
@@ -1102,6 +1102,7 @@ export type MaintenanceTaskAssignmentFindUniqueArgs<ExtArgs extends runtime.Type
    * Filter, which MaintenanceTaskAssignment to fetch.
    */
   where: Prisma.MaintenanceTaskAssignmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1124,6 +1125,7 @@ export type MaintenanceTaskAssignmentFindUniqueOrThrowArgs<ExtArgs extends runti
    * Filter, which MaintenanceTaskAssignment to fetch.
    */
   where: Prisma.MaintenanceTaskAssignmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1176,6 +1178,7 @@ export type MaintenanceTaskAssignmentFindFirstArgs<ExtArgs extends runtime.Types
    * Filter by unique combinations of MaintenanceTaskAssignments.
    */
   distinct?: Prisma.MaintenanceTaskAssignmentScalarFieldEnum | Prisma.MaintenanceTaskAssignmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1228,6 +1231,7 @@ export type MaintenanceTaskAssignmentFindFirstOrThrowArgs<ExtArgs extends runtim
    * Filter by unique combinations of MaintenanceTaskAssignments.
    */
   distinct?: Prisma.MaintenanceTaskAssignmentScalarFieldEnum | Prisma.MaintenanceTaskAssignmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1280,6 +1284,7 @@ export type MaintenanceTaskAssignmentFindManyArgs<ExtArgs extends runtime.Types.
    * Filter by unique combinations of MaintenanceTaskAssignments.
    */
   distinct?: Prisma.MaintenanceTaskAssignmentScalarFieldEnum | Prisma.MaintenanceTaskAssignmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1302,6 +1307,7 @@ export type MaintenanceTaskAssignmentCreateArgs<ExtArgs extends runtime.Types.Ex
    * The data needed to create a MaintenanceTaskAssignment.
    */
   data: Prisma.XOR<Prisma.MaintenanceTaskAssignmentCreateInput, Prisma.MaintenanceTaskAssignmentUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1362,6 +1368,7 @@ export type MaintenanceTaskAssignmentUpdateArgs<ExtArgs extends runtime.Types.Ex
    * Choose, which MaintenanceTaskAssignment to update.
    */
   where: Prisma.MaintenanceTaskAssignmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1440,6 +1447,7 @@ export type MaintenanceTaskAssignmentUpsertArgs<ExtArgs extends runtime.Types.Ex
    * In case the MaintenanceTaskAssignment was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.MaintenanceTaskAssignmentUpdateInput, Prisma.MaintenanceTaskAssignmentUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1462,6 +1470,7 @@ export type MaintenanceTaskAssignmentDeleteArgs<ExtArgs extends runtime.Types.Ex
    * Filter which MaintenanceTaskAssignment to delete.
    */
   where: Prisma.MaintenanceTaskAssignmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

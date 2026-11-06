@@ -29,6 +29,7 @@ import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -224,6 +225,9 @@ export function InventoryPageClient() {
         ) : (
           <div className="rounded-lg border bg-card">
             <Table>
+              <TableCaption className="sr-only">
+                {t("stockTitle")}
+              </TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("columns.name")}</TableHead>
@@ -309,6 +313,9 @@ export function InventoryPageClient() {
             </InputGroup>
             <div className="rounded-lg border bg-card">
               <Table>
+                <TableCaption className="sr-only">
+                  {t("plannedMaterialsTitle")}
+                </TableCaption>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("columns.name")}</TableHead>

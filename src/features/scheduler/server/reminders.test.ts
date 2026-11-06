@@ -20,7 +20,10 @@ vi.mock("@/features/auth/server/email", () => ({
   sendTransactionalEmail: mocks.dispatchEmail,
 }));
 
-import { MaintenanceReminderStatus } from "../../../../prisma/generated/prisma/enums";
+import {
+  MaintenanceReminderStatus,
+  MaintenanceTaskNotificationType,
+} from "../../../../prisma/generated/prisma/enums";
 import { dispatchMaintenanceReminders } from "./reminders";
 
 const now = new Date("2026-07-01T10:00:00.000Z");
@@ -37,6 +40,8 @@ const reminder = {
   taskId: task.id,
   workerId: "worker-1",
   organizationId: "org-1",
+  notificationType: MaintenanceTaskNotificationType.REMINDER,
+  idempotencyKey: `auto:${task.id}:worker-1:REMINDER`,
   recipientEmail: "worker@example.test",
   locale: "en",
   scheduledFor: new Date(taskStart.getTime() - 24 * 60 * 60 * 1000),
@@ -78,20 +83,145 @@ describe("maintenance reminder dispatch", () => {
     vi.unstubAllEnvs();
   });
 
-  it("schedules a reminder 24 hours before the task, immediately due for near-term tasks", async () => {
+  it("schedules an assignment notice immediately and a reminder one hour before short-notice tasks", async () => {
     mocks.taskFindMany.mockResolvedValue([task]);
+
+    await dispatchMaintenanceReminders("org-1", now);
+
+    expect(mocks.reminderUpsert).toHaveBeenCalledTimes(2);
+    expect(mocks.reminderUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          idempotencyKey: `auto:${task.id}:worker-1:ASSIGNMENT`,
+        },
+        create: expect.objectContaining({
+          notificationType: MaintenanceTaskNotificationType.ASSIGNMENT,
+          scheduledFor: now,
+          nextAttemptAt: now,
+        }),
+      }),
+    );
+    expect(mocks.reminderUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          idempotencyKey: `auto:${task.id}:worker-1:REMINDER`,
+        },
+        create: expect.objectContaining({
+          notificationType: MaintenanceTaskNotificationType.REMINDER,
+          scheduledFor: new Date("2026-07-01T11:00:00.000Z"),
+          nextAttemptAt: new Date("2026-07-01T11:00:00.000Z"),
+        }),
+      }),
+    );
+    expect(mocks.dispatchEmail).not.toHaveBeenCalled();
+  });
+
+  it("schedules the reminder 24 hours before tasks with sufficient notice", async () => {
+    const laterTask = {
+      ...task,
+      startTime: new Date("2026-07-03T10:00:00.000Z"),
+    };
+    mocks.taskFindMany.mockResolvedValue([laterTask]);
 
     await dispatchMaintenanceReminders("org-1", now);
 
     expect(mocks.reminderUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
+        where: {
+          idempotencyKey: `auto:${laterTask.id}:worker-1:REMINDER`,
+        },
         create: expect.objectContaining({
-          scheduledFor: new Date("2026-06-30T12:00:00.000Z"),
-          nextAttemptAt: new Date("2026-06-30T12:00:00.000Z"),
+          scheduledFor: new Date("2026-07-02T10:00:00.000Z"),
+          nextAttemptAt: new Date("2026-07-02T10:00:00.000Z"),
         }),
       }),
     );
-    expect(mocks.dispatchEmail).not.toHaveBeenCalled();
+  });
+
+  it("creates independent automatic notifications for every assigned worker", async () => {
+    mocks.taskFindMany.mockResolvedValue([
+      {
+        ...task,
+        assignments: [
+          task.assignments[0],
+          { worker: { id: "worker-2", email: "worker2@example.test" } },
+        ],
+      },
+    ]);
+
+    await dispatchMaintenanceReminders("org-1", now);
+
+    expect(mocks.reminderUpsert).toHaveBeenCalledTimes(4);
+    for (const workerId of ["worker-1", "worker-2"]) {
+      for (const notificationType of [
+        MaintenanceTaskNotificationType.ASSIGNMENT,
+        MaintenanceTaskNotificationType.REMINDER,
+      ]) {
+        expect(mocks.reminderUpsert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: {
+              idempotencyKey: `auto:${task.id}:${workerId}:${notificationType}`,
+            },
+            create: expect.objectContaining({ notificationType }),
+          }),
+        );
+      }
+    }
+  });
+
+  it("makes the reminder immediately due when the task starts within an hour", async () => {
+    const soonTask = {
+      ...task,
+      startTime: new Date("2026-07-01T10:30:00.000Z"),
+    };
+    mocks.taskFindMany.mockResolvedValue([soonTask]);
+
+    await dispatchMaintenanceReminders("org-1", now);
+
+    expect(mocks.reminderUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          idempotencyKey: `auto:${soonTask.id}:worker-1:REMINDER`,
+        },
+        create: expect.objectContaining({
+          scheduledFor: now,
+          nextAttemptAt: now,
+        }),
+      }),
+    );
+  });
+
+  it("sends the assignment notice immediately with a task-specific link", async () => {
+    const assignmentNotice = {
+      ...reminder,
+      notificationType: MaintenanceTaskNotificationType.ASSIGNMENT,
+      idempotencyKey: `auto:${task.id}:worker-1:ASSIGNMENT`,
+      scheduledFor: now,
+      nextAttemptAt: now,
+    };
+    mocks.taskFindMany.mockResolvedValue([task]);
+    mocks.reminderFindMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([assignmentNotice]);
+    mocks.equipmentTaskFindFirst.mockResolvedValue({
+      title: task.title,
+      startTime: task.startTime,
+      equipment: task.equipment,
+      assignments: [{ worker: { email: reminder.recipientEmail } }],
+    });
+    vi.stubEnv("BETTER_AUTH_URL", "https://maintenance.example.test");
+
+    const result = await dispatchMaintenanceReminders("org-1", now);
+
+    expect(result.sent).toBe(1);
+    expect(mocks.dispatchEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: `New maintenance task: ${task.title}`,
+        to: reminder.recipientEmail,
+        url: `https://maintenance.example.test/en?taskId=${task.id}`,
+      }),
+    );
   });
 
   it("cancels reminders when the task is no longer scheduled with that worker", async () => {
@@ -107,6 +237,16 @@ describe("maintenance reminder dispatch", () => {
           organizationId: "org-1",
         }),
         data: { status: MaintenanceReminderStatus.CANCELLED },
+      }),
+    );
+    expect(mocks.reminderFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId: "org-1",
+          notificationType: {
+            not: MaintenanceTaskNotificationType.MANUAL,
+          },
+        }),
       }),
     );
   });
@@ -341,6 +481,7 @@ describe("maintenance reminder dispatch", () => {
       title: task.title,
       startTime: task.startTime,
       equipment: task.equipment,
+      assignments: [{ worker: { email: reminder.recipientEmail } }],
     });
     mocks.dispatchEmail.mockRejectedValue(new Error("provider unavailable"));
     vi.stubEnv("BETTER_AUTH_URL", "https://maintenance.example.test");
@@ -350,7 +491,11 @@ describe("maintenance reminder dispatch", () => {
     expect(result.failed).toBe(1);
     expect(mocks.reminderUpdateMany).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        where: { id: reminder.id, status: MaintenanceReminderStatus.SENDING },
+        where: {
+          id: reminder.id,
+          organizationId: "org-1",
+          status: MaintenanceReminderStatus.SENDING,
+        },
         data: expect.objectContaining({
           status: MaintenanceReminderStatus.FAILED,
           nextAttemptAt: new Date("2026-07-01T10:01:00.000Z"),
@@ -361,6 +506,10 @@ describe("maintenance reminder dispatch", () => {
   });
 
   it("uses a stable Resend idempotency key when delivery succeeds", async () => {
+    mocks.settingsFindUnique.mockResolvedValue({
+      locale: "en",
+      timezone: "America/Los_Angeles",
+    });
     mocks.taskFindMany.mockResolvedValue([task]);
     mocks.reminderFindMany
       .mockResolvedValueOnce([reminder])
@@ -370,6 +519,7 @@ describe("maintenance reminder dispatch", () => {
       title: task.title,
       startTime: task.startTime,
       equipment: task.equipment,
+      assignments: [{ worker: { email: reminder.recipientEmail } }],
     });
     vi.stubEnv("BETTER_AUTH_URL", "https://maintenance.example.test");
 
@@ -378,8 +528,11 @@ describe("maintenance reminder dispatch", () => {
     expect(result.sent).toBe(1);
     expect(mocks.dispatchEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        idempotencyKey: `maintenance-reminder-${reminder.id}`,
+        idempotencyKey: `maintenance-notification-${reminder.id}`,
         to: reminder.recipientEmail,
+        url: `https://maintenance.example.test/en?taskId=${task.id}`,
+        urlLabel: "Open maintenance task",
+        text: expect.stringContaining("July 1, 2026 at 5:00 AM"),
       }),
     );
   });

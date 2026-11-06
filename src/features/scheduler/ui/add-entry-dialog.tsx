@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { MultiSelect } from "@/components/ui/multi-select";
@@ -20,7 +21,7 @@ import { useRouter } from "@/i18n/routing";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { areIntervalsOverlapping } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -29,11 +30,15 @@ import {
   getDefaultMaintenanceStartTime,
   getTaskDisplayEnd,
 } from "../utils/schedule";
+import { inferWorkLogStartTimes } from "../utils/worker-hours";
 import {
   EntrySheet,
   FieldError,
   FormSection,
+  ChecklistEditor,
+  type ChecklistFormValue,
   DailyHoursEditor,
+  dailyHoursFormSchema,
   MaintenancePointField,
   MaterialsEditor,
   materialSchema,
@@ -50,15 +55,7 @@ const formSchema = z.object({
   endTimeKnown: z.boolean(),
   endTime: z.date().nullable(),
   workerIds: z.array(z.string()).min(1, "Select at least one worker"),
-  dailyHours: z
-    .array(
-      z.object({
-        workerId: z.string().min(1),
-        workDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-        hours: z.number().min(0.25).max(24).multipleOf(0.25),
-      }),
-    )
-    .optional(),
+  dailyHours: z.array(dailyHoursFormSchema).optional(),
   materials: z.array(materialSchema).optional(),
 }).superRefine((data, ctx) => {
   if (data.endTimeKnown && !data.endTime) {
@@ -132,6 +129,16 @@ export function AddEntryDialog({
   const watchType = useWatch({ control: form.control, name: "type" });
   const watchWorkerIds = useWatch({ control: form.control, name: "workerIds" });
   const watchDailyHours = useWatch({ control: form.control, name: "dailyHours" });
+  const [checklistPreviewState, setChecklistPreviewState] = useState<{
+    key: string;
+    items: ChecklistFormValue[];
+  }>({ key: "", items: [] });
+  const checklistPreviewKey =
+    `${open}:${watchEquipmentId}:${selectedCell?.date?.getTime() ?? ""}`;
+  const checklistPreview =
+    checklistPreviewState.key === checklistPreviewKey
+      ? checklistPreviewState.items
+      : [];
 
   const hasConflict = useMemo(() => {
     if (!watchEquipmentId || !watchStartTime) {
@@ -157,16 +164,43 @@ export function AddEntryDialog({
     });
   }, [entries, watchEquipmentId, watchStartTime, watchEndTime, watchEndTimeKnown]);
 
+  const selectedCellDate = selectedCell?.date?.getTime();
+  const selectedCellEquipmentId = selectedCell?.equipmentId;
+
   useEffect(() => {
-    if (selectedCell && open) {
-      form.setValue("equipmentId", selectedCell.equipmentId);
+    if (selectedCellDate !== undefined && open) {
+      form.setValue("equipmentId", selectedCellEquipmentId ?? "");
       form.setValue("maintenancePointId", null);
-      const start = new Date(selectedCell.date);
-      form.setValue("startTime", start);
+      form.setValue("startTime", new Date(selectedCellDate));
     }
-  }, [selectedCell, open, form]);
+  }, [selectedCellDate, selectedCellEquipmentId, open, form]);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setChecklistPreviewState({ key: "", items: [] });
+      form.clearErrors();
+    }
+    onOpenChange(nextOpen);
+  };
 
   const onSubmit = async (values: FormValues) => {
+    const dailyHours = values.dailyHours ?? [];
+    const inferredStarts = inferWorkLogStartTimes(
+      dailyHours,
+      values.startTime,
+      timeZone,
+    );
+    const unresolvedStartIndex = dailyHours.findIndex(
+      (row, index) =>
+        !row.id && Boolean(row.workerId) && !row.startTime && !inferredStarts[index],
+    );
+    if (unresolvedStartIndex !== -1) {
+      form.setError(`dailyHours.${unresolvedStartIndex}.startTime`, {
+        type: "validate",
+        message: t("dailyHours.startTimeRequired"),
+      });
+      return;
+    }
     if (hasConflict) {
       toast.error(t("errors.conflict"));
       return;
@@ -182,9 +216,13 @@ export function AddEntryDialog({
       addEntry(newTask);
       toast.success(t("errors.success"));
       form.reset();
-      onOpenChange(false);
+      handleOpenChange(false);
     } catch (error) {
       console.error("Failed to add entry:", error);
+      form.setError("root.server", {
+        type: "server",
+        message: t("errors.failure"),
+      });
       toast.error(t("errors.failure"));
     }
   };
@@ -197,7 +235,7 @@ export function AddEntryDialog({
   return (
     <EntrySheet
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       formId="add-entry-form"
       onSubmit={form.handleSubmit(onSubmit)}
       title={t("schedule")}
@@ -207,13 +245,15 @@ export function AddEntryDialog({
           <Button
             type="button"
             variant="ghost"
-            onClick={() => onOpenChange(false)}
+            className="w-full sm:w-auto"
+            onClick={() => handleOpenChange(false)}
           >
             {tCommon("cancel")}
           </Button>
           <Button
             type="submit"
             form="add-entry-form"
+            className="w-full sm:w-auto"
             disabled={form.formState.isSubmitting || hasConflict}
             aria-busy={form.formState.isSubmitting}
           >
@@ -222,34 +262,75 @@ export function AddEntryDialog({
           </Button>
         </>
       }
+      onChange={() => form.clearErrors("root.server")}
     >
       <FieldGroup>
-        <FormSection title={t("sectionDetails")}>
-          <Field>
+        {form.formState.errors.root?.server?.message && (
+          <Alert variant="destructive" role="alert">
+            <AlertDescription>
+              {form.formState.errors.root.server.message}
+            </AlertDescription>
+          </Alert>
+        )}
+        <FormSection title={t("sectionDetails")} showSeparator>
+          <Field data-invalid={!!form.formState.errors.title || undefined}>
             <FieldLabel htmlFor="task-title">{t("title")}</FieldLabel>
             <Input
               id="task-title"
               autoFocus
+              aria-required="true"
+              aria-invalid={!!form.formState.errors.title || undefined}
+              aria-describedby={
+                form.formState.errors.title ? "task-title-error" : undefined
+              }
               {...form.register("title")}
               placeholder={t("titlePlaceholder")}
             />
-            <FieldError message={form.formState.errors.title?.message} />
+            <FieldError
+              id="task-title-error"
+              message={form.formState.errors.title?.message}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="task-description">
+              {t("description")}
+            </FieldLabel>
+            <Textarea
+              id="task-description"
+              {...form.register("description")}
+              placeholder={t("descriptionPlaceholder")}
+              rows={3}
+            />
           </Field>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field>
+            <Field
+              data-invalid={
+                !!form.formState.errors.equipmentId || hasConflict || undefined
+              }
+            >
               <FieldLabel htmlFor="task-equipment">{t("equipment")}</FieldLabel>
               <Select
                 value={watchEquipmentId}
                 onValueChange={(v) => {
                   form.setValue("equipmentId", v, { shouldValidate: true })
-                  form.setValue("maintenancePointId", null)
+                  form.setValue("maintenancePointId", null, {
+                    shouldDirty: true,
+                  });
                 }}
               >
                 <SelectTrigger
                   id="task-equipment"
                   className="w-full"
-                  aria-invalid={hasConflict || undefined}
+                  aria-required="true"
+                  aria-invalid={
+                    !!form.formState.errors.equipmentId || hasConflict || undefined
+                  }
+                  aria-describedby={
+                    form.formState.errors.equipmentId
+                      ? "task-equipment-error"
+                      : undefined
+                  }
                 >
                   <SelectValue placeholder={t("selectEquipment")} />
                 </SelectTrigger>
@@ -261,7 +342,10 @@ export function AddEntryDialog({
                   ))}
                 </SelectContent>
               </Select>
-              <FieldError message={form.formState.errors.equipmentId?.message} />
+              <FieldError
+                id="task-equipment-error"
+                message={form.formState.errors.equipmentId?.message}
+              />
             </Field>
 
             <Field>
@@ -270,7 +354,11 @@ export function AddEntryDialog({
                 value={watchType}
                 onValueChange={(v) => form.setValue("type", v as TaskType)}
               >
-                <SelectTrigger id="task-type" className="w-full">
+                <SelectTrigger
+                  id="task-type"
+                  className="w-full"
+                  aria-required="true"
+                >
                   <SelectValue placeholder={t("selectType")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -287,20 +375,9 @@ export function AddEntryDialog({
               </Select>
             </Field>
           </div>
-          <MaintenancePointField
-            key={`${watchEquipmentId}-${open}`}
-            equipmentId={watchEquipmentId}
-            open={open}
-            value={watchMaintenancePointId}
-            onChange={(value) =>
-              form.setValue("maintenancePointId", value, {
-                shouldValidate: true,
-              })
-            }
-          />
         </FormSection>
 
-        <FormSection title={t("sectionSchedule")}>
+        <FormSection title={t("sectionSchedule")} showSeparator>
           <ScheduleFields
             form={form}
             locale={locale}
@@ -310,11 +387,40 @@ export function AddEntryDialog({
           />
         </FormSection>
 
-        <FormSection title={t("sectionTeam")}>
-          <Field>
+        <ChecklistEditor
+          value={checklistPreview}
+          readOnly
+          maintenancePointField={
+            <MaintenancePointField
+              key={`${watchEquipmentId}-${open}`}
+              equipmentId={watchEquipmentId}
+              open={open}
+              value={watchMaintenancePointId}
+              onChange={(value, items) => {
+                form.setValue("maintenancePointId", value, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                });
+                setChecklistPreviewState({
+                  key: checklistPreviewKey,
+                  items,
+                });
+              }}
+            />
+          }
+        />
+
+        <FormSection title={t("sectionTeam")} showSeparator>
+          <Field data-invalid={!!form.formState.errors.workerIds || undefined}>
             <FieldLabel htmlFor="task-workers">{t("assignedWorkers")}</FieldLabel>
             <MultiSelect
               id="task-workers"
+              aria-label={t("assignedWorkers")}
+              aria-required
+              aria-invalid={!!form.formState.errors.workerIds || undefined}
+              aria-describedby={
+                form.formState.errors.workerIds ? "task-workers-error" : undefined
+              }
               options={workerOptions}
               selected={watchWorkerIds}
               onChange={(v) =>
@@ -330,20 +436,14 @@ export function AddEntryDialog({
               action={{
                 label: t("addWorker"),
                 onClick: () => {
-                  onOpenChange(false);
+                  handleOpenChange(false);
                   router.push("/workers");
                 },
               }}
             />
-            <FieldError message={form.formState.errors.workerIds?.message} />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="task-description">{t("description")}</FieldLabel>
-            <Textarea
-              id="task-description"
-              {...form.register("description")}
-              placeholder={t("descriptionPlaceholder")}
-              rows={3}
+            <FieldError
+              id="task-workers-error"
+              message={form.formState.errors.workerIds?.message}
             />
           </Field>
         </FormSection>
@@ -352,9 +452,10 @@ export function AddEntryDialog({
           value={watchDailyHours ?? []}
           workers={workers}
           assignedWorkerIds={watchWorkerIds}
-          startTime={watchStartTime ?? new Date()}
+          startTime={watchStartTime}
           locale={locale}
           timeZone={timeZone}
+          showValidationErrors={form.formState.submitCount > 0}
           onChange={(dailyHours) =>
             form.setValue("dailyHours", dailyHours, { shouldValidate: true })
           }

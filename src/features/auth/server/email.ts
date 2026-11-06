@@ -3,6 +3,7 @@ type TransactionalEmail = {
   subject: string;
   text: string;
   url: string;
+  urlLabel?: string;
   idempotencyKey?: string;
 };
 
@@ -24,6 +25,7 @@ export async function sendTransactionalEmail({
   subject,
   text,
   url,
+  urlLabel = "Continue",
   idempotencyKey,
 }: TransactionalEmail) {
   const apiKey = process.env.RESEND_API_KEY;
@@ -47,7 +49,7 @@ export async function sendTransactionalEmail({
       to: [to],
       subject,
       text: `${text}\n\n${url}`,
-      html: `<p>${escapeHtml(text)}</p><p><a href="${escapeHtml(url)}">Continue</a></p>`,
+      html: `<p>${escapeHtml(text)}</p><p><a href="${escapeHtml(url)}">${escapeHtml(urlLabel)}</a></p>`,
     }),
   });
 

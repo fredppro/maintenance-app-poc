@@ -749,7 +749,7 @@ export type $SectionPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type SectionGetPayload<S extends boolean | null | undefined | SectionDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$SectionPayload, S>
 
 export type SectionCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<SectionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<SectionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: SectionCountAggregateInputType | true
   }
 
@@ -1197,6 +1197,7 @@ export type SectionFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Filter, which Section to fetch.
    */
   where: Prisma.SectionWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1219,6 +1220,7 @@ export type SectionFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extension
    * Filter, which Section to fetch.
    */
   where: Prisma.SectionWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1271,6 +1273,7 @@ export type SectionFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Filter by unique combinations of Sections.
    */
   distinct?: Prisma.SectionScalarFieldEnum | Prisma.SectionScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1323,6 +1326,7 @@ export type SectionFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions
    * Filter by unique combinations of Sections.
    */
   distinct?: Prisma.SectionScalarFieldEnum | Prisma.SectionScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1375,6 +1379,7 @@ export type SectionFindManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Filter by unique combinations of Sections.
    */
   distinct?: Prisma.SectionScalarFieldEnum | Prisma.SectionScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1397,6 +1402,7 @@ export type SectionCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * The data needed to create a Section.
    */
   data: Prisma.XOR<Prisma.SectionCreateInput, Prisma.SectionUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1457,6 +1463,7 @@ export type SectionUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Choose, which Section to update.
    */
   where: Prisma.SectionWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1535,6 +1542,7 @@ export type SectionUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * In case the Section was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.SectionUpdateInput, Prisma.SectionUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1557,6 +1565,7 @@ export type SectionDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Filter which Section to delete.
    */
   where: Prisma.SectionWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

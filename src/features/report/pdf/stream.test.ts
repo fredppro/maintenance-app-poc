@@ -155,4 +155,43 @@ describe("createMaintenanceReportPDFStream", () => {
       pdf.toString("latin1").match(/\/Type\s*\/Page\b/g)?.length ?? 0;
     expect(pageCount).toBeGreaterThan(1);
   });
+
+  it("keeps long labor and material tables within page content bounds", async () => {
+    const entry = {
+      id: "task-many-rows",
+      title: "High-volume maintenance",
+      description: "Multiple logged work periods and materials.",
+      type: "PREVENTIVE",
+      startTime: new Date("2026-08-01T08:00:00.000Z"),
+      endTime: new Date("2026-08-01T17:00:00.000Z"),
+      equipmentId: "eq-1",
+      equipment: { id: "eq-1", name: "Main Line Turbine", category: "Power" },
+      status: "completed",
+      assignments: [],
+      dailyHours: Array.from({ length: 60 }, (_, index) => ({
+        workerId: `worker-${index}`,
+        workDate: new Date("2026-08-01T00:00:00.000Z"),
+        startTime: new Date("2026-08-01T08:00:00.000Z"),
+        hours: "1.00",
+        worker: { name: `Technician ${index + 1}` },
+      })),
+      materials: Array.from({ length: 60 }, (_, index) => ({
+        id: `material-${index}`,
+        name: `Part ${index + 1}`,
+        reference: `REF-${index + 1}`,
+        quantity: 1,
+        unit: "PC",
+        price: 1,
+      })),
+    } as any;
+
+    const pdf = await collectStream(
+      createMaintenanceReportPDFStream(entry, "en"),
+    );
+    const pageCount =
+      pdf.toString("latin1").match(/\/Type\s*\/Page\b/g)?.length ?? 0;
+
+    expect(pdf.toString("latin1").startsWith("%PDF")).toBe(true);
+    expect(pageCount).toBeGreaterThan(2);
+  });
 });

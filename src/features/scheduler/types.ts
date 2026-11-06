@@ -6,7 +6,10 @@ import {
   MaintenanceTaskChecklistItem as PrismaTaskChecklistItem,
   Material as PrismaMaterial
 } from '../../../prisma/generated/prisma/client';
-import type { MaintenanceReminderStatus } from "../../../prisma/generated/prisma/enums";
+import type {
+  MaintenanceReminderStatus,
+  MaintenanceTaskNotificationType,
+} from "../../../prisma/generated/prisma/enums";
 import type { Worker } from "@/features/worker/types";
 
 export type { Worker } from "@/features/worker/types";
@@ -20,8 +23,10 @@ export type Material = Omit<PrismaMaterial, "organizationId">;
 export type DailyHourEntry = {
   id?: string;
   workerId: string;
+  worker?: Pick<Worker, "name">;
   workDate: Date | string;
   hours: number | string | PrismaDailyHours["hours"];
+  startTime?: Date | string | null;
   createdAt?: Date;
 };
 
@@ -33,6 +38,7 @@ export type TaskChecklistItem = Omit<
 export type TaskReminder = {
   id: string;
   workerId: string;
+  notificationType: MaintenanceTaskNotificationType;
   status: MaintenanceReminderStatus;
   scheduledFor: Date | string;
   sentAt: Date | string | null;
@@ -68,5 +74,11 @@ export type UpdateEntryPayload = Omit<
 > & {
   workerIds?: string[];
   workerLogs?: WorkerLogPayload[];
-  dailyHours?: { workerId: string; workDate: string; hours: number }[];
+  dailyHours?: {
+    id?: string;
+    workerId: string;
+    workDate: string;
+    startTime: string | null;
+    hours: number;
+  }[];
 };

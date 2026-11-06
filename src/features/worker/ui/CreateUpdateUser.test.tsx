@@ -50,11 +50,15 @@ describe("CreateUpdateWorker", () => {
     renderWorkerForm();
 
     await user.type(screen.getByLabelText("Name"), "Morgan Lee");
-    await user.type(screen.getByLabelText("Email"), "not-an-email");
+    const email = screen.getByLabelText("Email");
+    await user.type(email, "not-an-email");
     await user.click(screen.getByRole("button", { name: "Save worker" }));
 
     expect(createWorkerMock).not.toHaveBeenCalled();
     expect(updateWorkerMock).not.toHaveBeenCalled();
+    expect(email).toHaveAttribute("aria-invalid", "true");
+    expect(email).toHaveAttribute("aria-describedby", "worker-email-error");
+    expect(screen.getByRole("alert")).toBeInTheDocument();
   });
 
   it("creates a worker with the default internal type", async () => {

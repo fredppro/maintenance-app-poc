@@ -1213,7 +1213,7 @@ export type $WorkerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
 export type WorkerGetPayload<S extends boolean | null | undefined | WorkerDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$WorkerPayload, S>
 
 export type WorkerCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<WorkerFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<WorkerFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: WorkerCountAggregateInputType | true
   }
 
@@ -1668,6 +1668,7 @@ export type WorkerFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Filter, which Worker to fetch.
    */
   where: Prisma.WorkerWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1690,6 +1691,7 @@ export type WorkerFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensions
    * Filter, which Worker to fetch.
    */
   where: Prisma.WorkerWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1742,6 +1744,7 @@ export type WorkerFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Filter by unique combinations of Workers.
    */
   distinct?: Prisma.WorkerScalarFieldEnum | Prisma.WorkerScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1794,6 +1797,7 @@ export type WorkerFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions.
    * Filter by unique combinations of Workers.
    */
   distinct?: Prisma.WorkerScalarFieldEnum | Prisma.WorkerScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1846,6 +1850,7 @@ export type WorkerFindManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Filter by unique combinations of Workers.
    */
   distinct?: Prisma.WorkerScalarFieldEnum | Prisma.WorkerScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1868,6 +1873,7 @@ export type WorkerCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * The data needed to create a Worker.
    */
   data: Prisma.XOR<Prisma.WorkerCreateInput, Prisma.WorkerUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1928,6 +1934,7 @@ export type WorkerUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Choose, which Worker to update.
    */
   where: Prisma.WorkerWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2006,6 +2013,7 @@ export type WorkerUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * In case the Worker was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.WorkerUpdateInput, Prisma.WorkerUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2028,6 +2036,7 @@ export type WorkerDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Filter which Worker to delete.
    */
   where: Prisma.WorkerWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

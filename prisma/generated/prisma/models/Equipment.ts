@@ -1688,7 +1688,7 @@ export type $EquipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalA
 export type EquipmentGetPayload<S extends boolean | null | undefined | EquipmentDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$EquipmentPayload, S>
 
 export type EquipmentCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<EquipmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<EquipmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: EquipmentCountAggregateInputType | true
   }
 
@@ -2146,6 +2146,7 @@ export type EquipmentFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Filter, which Equipment to fetch.
    */
   where: Prisma.EquipmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2168,6 +2169,7 @@ export type EquipmentFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensi
    * Filter, which Equipment to fetch.
    */
   where: Prisma.EquipmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2220,6 +2222,7 @@ export type EquipmentFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Filter by unique combinations of Equipment.
    */
   distinct?: Prisma.EquipmentScalarFieldEnum | Prisma.EquipmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2272,6 +2275,7 @@ export type EquipmentFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensio
    * Filter by unique combinations of Equipment.
    */
   distinct?: Prisma.EquipmentScalarFieldEnum | Prisma.EquipmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2324,6 +2328,7 @@ export type EquipmentFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Filter by unique combinations of Equipment.
    */
   distinct?: Prisma.EquipmentScalarFieldEnum | Prisma.EquipmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2346,6 +2351,7 @@ export type EquipmentCreateArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * The data needed to create a Equipment.
    */
   data: Prisma.XOR<Prisma.EquipmentCreateInput, Prisma.EquipmentUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2406,6 +2412,7 @@ export type EquipmentUpdateArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Choose, which Equipment to update.
    */
   where: Prisma.EquipmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2484,6 +2491,7 @@ export type EquipmentUpsertArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * In case the Equipment was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.EquipmentUpdateInput, Prisma.EquipmentUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2506,6 +2514,7 @@ export type EquipmentDeleteArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Filter which Equipment to delete.
    */
   where: Prisma.EquipmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

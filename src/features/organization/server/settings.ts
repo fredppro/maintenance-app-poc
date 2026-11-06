@@ -1,7 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { deleteStoredFile } from "@/features/files/server/files";
+import {
+  deleteStoredFile,
+  markStoredFileAttached,
+} from "@/features/files/server/files";
 import { recordAuditEvent } from "@/lib/audit";
 import { logEvent } from "@/lib/logger";
 import prisma, { type TenantDb } from "@/lib/prisma";
@@ -85,6 +88,9 @@ export async function updateOrganizationSettings(
   };
   // Inside the tenant transaction so the same-tenant logo trigger can read the stored file.
   await db.transaction(async (tx) => {
+    if (next.logoFileId && next.logoFileId !== current.logoFileId) {
+      await markStoredFileAttached(tx, next.logoFileId, organizationId);
+    }
     await tx.organization.update({ where: { id: organizationId }, data: { name: next.name } });
     await tx.tenantSettings.upsert({
       where: { organizationId },

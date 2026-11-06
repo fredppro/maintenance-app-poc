@@ -27,11 +27,17 @@ import {
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { deleteWorker, getWorkers } from "../server/actions";
 import type { Worker as WorkerEntity } from "../types";
 import {
@@ -91,9 +97,11 @@ type WorkerManagementPageProps = {
 function DragHandle({
   attributes,
   listeners,
+  label,
 }: {
   attributes: ReturnType<typeof useSortable>["attributes"];
   listeners: ReturnType<typeof useSortable>["listeners"];
+  label: string;
 }) {
   return (
     <Button
@@ -104,7 +112,7 @@ function DragHandle({
       className="size-7 text-muted-foreground hover:bg-transparent"
     >
       <GripVertical className="size-4" />
-      <span className="sr-only">Drag to reorder</span>
+      <span className="sr-only">{label}</span>
     </Button>
   );
 }
@@ -112,9 +120,11 @@ function DragHandle({
 function DraggableRow({
   row,
   onOpenDrawer,
+  reorderLabel,
 }: {
   row: Row<WorkerRow>;
   onOpenDrawer: (worker: WorkerRow) => void;
+  reorderLabel: string;
 }) {
   const {
     transform,
@@ -131,10 +141,18 @@ function DraggableRow({
       data-dragging={isDragging}
       ref={setNodeRef}
       onClick={() => onOpenDrawer(row.original)}
-      className="relative z-0 cursor-pointer data-[dragging=true]:z-10 data-[dragging=true]:opacity-80 hover:bg-muted"
+      className="relative z-0 cursor-pointer data-[dragging=true]:z-10 data-[dragging=true]:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
+      }}
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpenDrawer(row.original);
+        }
       }}
     >
       {row.getVisibleCells().map((cell) => (
@@ -151,7 +169,11 @@ function DraggableRow({
           }}
         >
           {cell.column.id === "drag" ? (
-            <DragHandle attributes={attributes} listeners={listeners} />
+            <DragHandle
+              attributes={attributes}
+              listeners={listeners}
+              label={reorderLabel}
+            />
           ) : (
             flexRender(cell.column.columnDef.cell, cell.getContext())
           )}
@@ -239,7 +261,9 @@ export default function WorkerManagementPage({
     () => [
       {
         id: "drag",
-        header: () => null,
+        header: () => (
+          <span className="sr-only">{t("columnReorder")}</span>
+        ),
         cell: () => null,
         enableSorting: false,
         enableHiding: false,
@@ -324,42 +348,50 @@ export default function WorkerManagementPage({
       },
       {
         id: "actions",
-        header: () => null,
-        cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
-                size="icon"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreVertical />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32">
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenDrawer(row.original);
-                }}
-              >
-                {tCommon("edit")}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRequestDelete(row.original);
-                }}
-              >
-                {tCommon("remove")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
+        header: () => <span className="sr-only">{t("columnActions")}</span>,
+        cell: ({ row }) => {
+          const label = t("openActions", { name: row.original.name });
+          return (
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
+                      size="icon"
+                      aria-label={label}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>{label}</TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end" className="w-32">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDrawer(row.original);
+                  }}
+                >
+                  {tCommon("edit")}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRequestDelete(row.original);
+                  }}
+                >
+                  {tCommon("remove")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
         enableSorting: false,
         enableHiding: false,
       },
@@ -476,7 +508,10 @@ export default function WorkerManagementPage({
                 sensors={sensors}
               >
                 <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-muted">
+                  <TableCaption className="sr-only">
+                    {t("title")}
+                  </TableCaption>
+                  <TableHeader className="sticky top-0 z-10">
                     {table.getHeaderGroups().map((headerGroup) => (
                       <TableRow key={headerGroup.id}>
                         {headerGroup.headers.map((header) => (
@@ -503,6 +538,7 @@ export default function WorkerManagementPage({
                             key={row.id}
                             row={row}
                             onOpenDrawer={handleOpenDrawer}
+                            reorderLabel={t("dragToReorder")}
                           />
                         ))}
                       </SortableContext>

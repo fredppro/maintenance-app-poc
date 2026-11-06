@@ -1,0 +1,4 @@
+# Deployment workflow and scripts can access staging credentials.
+/.github/workflows/ @fredppro
+/scripts/ @fredppro
+/Dockerfile @fredppro

@@ -5,6 +5,7 @@ import { TASK_STATUSES } from "../task-status";
 const idSchema = z.string().trim().min(1);
 
 const dailyHoursSchema = z.object({
+  id: idSchema.optional(),
   workerId: idSchema,
   workDate: z
     .string()
@@ -13,6 +14,13 @@ const dailyHoursSchema = z.object({
       const date = new Date(`${value}T00:00:00.000Z`);
       return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
     }),
+  startTime: z
+    .union([
+      z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+      z.literal(""),
+    ])
+    .nullable()
+    .optional(),
   hours: z.number().finite().min(0.25).max(24).multipleOf(0.25),
 });
 
@@ -119,6 +127,16 @@ export const updateTaskSchema = z
     {
       path: ["workerIds"],
       message: "Worker IDs must be unique",
+    },
+  )
+  .refine(
+    (task) =>
+      task.dailyHours === undefined ||
+      new Set(task.dailyHours.flatMap((entry) => entry.id ? [entry.id] : [])).size ===
+        task.dailyHours.filter((entry) => entry.id).length,
+    {
+      path: ["dailyHours"],
+      message: "Work log IDs must be unique",
     },
   )
   .refine(

@@ -32,6 +32,8 @@ describe("InventoryPageClient", () => {
 
   it("totals the same material across tasks", () => {
     renderPage({ entries });
+    const table = screen.getByRole("table", { name: "Planned materials" });
+    expect(table.querySelector("tbody")).toHaveClass("bg-background");
     const oil = screen.getByRole("row", { name: /Oil/ });
     expect(oil).toHaveTextContent("5");
     expect(oil).toHaveTextContent("2");

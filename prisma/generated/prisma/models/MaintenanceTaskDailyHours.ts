@@ -40,6 +40,7 @@ export type MaintenanceTaskDailyHoursMinAggregateOutputType = {
   workerId: string | null
   organizationId: string | null
   workDate: Date | null
+  startTime: Date | null
   hours: runtime.Decimal | null
   createdAt: Date | null
 }
@@ -50,6 +51,7 @@ export type MaintenanceTaskDailyHoursMaxAggregateOutputType = {
   workerId: string | null
   organizationId: string | null
   workDate: Date | null
+  startTime: Date | null
   hours: runtime.Decimal | null
   createdAt: Date | null
 }
@@ -60,6 +62,7 @@ export type MaintenanceTaskDailyHoursCountAggregateOutputType = {
   workerId: number
   organizationId: number
   workDate: number
+  startTime: number
   hours: number
   createdAt: number
   _all: number
@@ -80,6 +83,7 @@ export type MaintenanceTaskDailyHoursMinAggregateInputType = {
   workerId?: true
   organizationId?: true
   workDate?: true
+  startTime?: true
   hours?: true
   createdAt?: true
 }
@@ -90,6 +94,7 @@ export type MaintenanceTaskDailyHoursMaxAggregateInputType = {
   workerId?: true
   organizationId?: true
   workDate?: true
+  startTime?: true
   hours?: true
   createdAt?: true
 }
@@ -100,6 +105,7 @@ export type MaintenanceTaskDailyHoursCountAggregateInputType = {
   workerId?: true
   organizationId?: true
   workDate?: true
+  startTime?: true
   hours?: true
   createdAt?: true
   _all?: true
@@ -197,6 +203,7 @@ export type MaintenanceTaskDailyHoursGroupByOutputType = {
   workerId: string
   organizationId: string
   workDate: Date
+  startTime: Date | null
   hours: runtime.Decimal
   createdAt: Date
   _count: MaintenanceTaskDailyHoursCountAggregateOutputType | null
@@ -230,6 +237,7 @@ export type MaintenanceTaskDailyHoursWhereInput = {
   workerId?: Prisma.StringFilter<"MaintenanceTaskDailyHours"> | string
   organizationId?: Prisma.StringFilter<"MaintenanceTaskDailyHours"> | string
   workDate?: Prisma.DateTimeFilter<"MaintenanceTaskDailyHours"> | Date | string
+  startTime?: Prisma.DateTimeNullableFilter<"MaintenanceTaskDailyHours"> | Date | string | null
   hours?: Prisma.DecimalFilter<"MaintenanceTaskDailyHours"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTaskDailyHours"> | Date | string
   task?: Prisma.XOR<Prisma.MaintenanceTaskScalarRelationFilter, Prisma.MaintenanceTaskWhereInput>
@@ -242,6 +250,7 @@ export type MaintenanceTaskDailyHoursOrderByWithRelationInput = {
   workerId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   workDate?: Prisma.SortOrder
+  startTime?: Prisma.SortOrderInput | Prisma.SortOrder
   hours?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   task?: Prisma.MaintenanceTaskOrderByWithRelationInput
@@ -257,6 +266,7 @@ export type MaintenanceTaskDailyHoursWhereUniqueInput = Prisma.AtLeast<{
   workerId?: Prisma.StringFilter<"MaintenanceTaskDailyHours"> | string
   organizationId?: Prisma.StringFilter<"MaintenanceTaskDailyHours"> | string
   workDate?: Prisma.DateTimeFilter<"MaintenanceTaskDailyHours"> | Date | string
+  startTime?: Prisma.DateTimeNullableFilter<"MaintenanceTaskDailyHours"> | Date | string | null
   hours?: Prisma.DecimalFilter<"MaintenanceTaskDailyHours"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTaskDailyHours"> | Date | string
   task?: Prisma.XOR<Prisma.MaintenanceTaskScalarRelationFilter, Prisma.MaintenanceTaskWhereInput>
@@ -269,6 +279,7 @@ export type MaintenanceTaskDailyHoursOrderByWithAggregationInput = {
   workerId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   workDate?: Prisma.SortOrder
+  startTime?: Prisma.SortOrderInput | Prisma.SortOrder
   hours?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.MaintenanceTaskDailyHoursCountOrderByAggregateInput
@@ -287,6 +298,7 @@ export type MaintenanceTaskDailyHoursScalarWhereWithAggregatesInput = {
   workerId?: Prisma.StringWithAggregatesFilter<"MaintenanceTaskDailyHours"> | string
   organizationId?: Prisma.StringWithAggregatesFilter<"MaintenanceTaskDailyHours"> | string
   workDate?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTaskDailyHours"> | Date | string
+  startTime?: Prisma.DateTimeNullableWithAggregatesFilter<"MaintenanceTaskDailyHours"> | Date | string | null
   hours?: Prisma.DecimalWithAggregatesFilter<"MaintenanceTaskDailyHours"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTaskDailyHours"> | Date | string
 }
@@ -294,6 +306,7 @@ export type MaintenanceTaskDailyHoursScalarWhereWithAggregatesInput = {
 export type MaintenanceTaskDailyHoursCreateInput = {
   id?: string
   workDate: Date | string
+  startTime?: Date | string | null
   hours: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
   task: Prisma.MaintenanceTaskCreateNestedOneWithoutDailyHoursInput
@@ -306,6 +319,7 @@ export type MaintenanceTaskDailyHoursUncheckedCreateInput = {
   workerId: string
   organizationId: string
   workDate: Date | string
+  startTime?: Date | string | null
   hours: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
 }
@@ -313,6 +327,7 @@ export type MaintenanceTaskDailyHoursUncheckedCreateInput = {
 export type MaintenanceTaskDailyHoursUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   workDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hours?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   task?: Prisma.MaintenanceTaskUpdateOneRequiredWithoutDailyHoursNestedInput
@@ -325,6 +340,7 @@ export type MaintenanceTaskDailyHoursUncheckedUpdateInput = {
   workerId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   workDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hours?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -335,6 +351,7 @@ export type MaintenanceTaskDailyHoursCreateManyInput = {
   workerId: string
   organizationId: string
   workDate: Date | string
+  startTime?: Date | string | null
   hours: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
 }
@@ -342,6 +359,7 @@ export type MaintenanceTaskDailyHoursCreateManyInput = {
 export type MaintenanceTaskDailyHoursUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   workDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hours?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -352,6 +370,7 @@ export type MaintenanceTaskDailyHoursUncheckedUpdateManyInput = {
   workerId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   workDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hours?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -372,6 +391,7 @@ export type MaintenanceTaskDailyHoursCountOrderByAggregateInput = {
   workerId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   workDate?: Prisma.SortOrder
+  startTime?: Prisma.SortOrder
   hours?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -386,6 +406,7 @@ export type MaintenanceTaskDailyHoursMaxOrderByAggregateInput = {
   workerId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   workDate?: Prisma.SortOrder
+  startTime?: Prisma.SortOrder
   hours?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -396,6 +417,7 @@ export type MaintenanceTaskDailyHoursMinOrderByAggregateInput = {
   workerId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
   workDate?: Prisma.SortOrder
+  startTime?: Prisma.SortOrder
   hours?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -491,6 +513,7 @@ export type MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutWorkerNestedInput
 export type MaintenanceTaskDailyHoursCreateWithoutTaskInput = {
   id?: string
   workDate: Date | string
+  startTime?: Date | string | null
   hours: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
   worker: Prisma.WorkerCreateNestedOneWithoutDailyHoursInput
@@ -500,6 +523,7 @@ export type MaintenanceTaskDailyHoursUncheckedCreateWithoutTaskInput = {
   id?: string
   workerId: string
   workDate: Date | string
+  startTime?: Date | string | null
   hours: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
 }
@@ -539,6 +563,7 @@ export type MaintenanceTaskDailyHoursScalarWhereInput = {
   workerId?: Prisma.StringFilter<"MaintenanceTaskDailyHours"> | string
   organizationId?: Prisma.StringFilter<"MaintenanceTaskDailyHours"> | string
   workDate?: Prisma.DateTimeFilter<"MaintenanceTaskDailyHours"> | Date | string
+  startTime?: Prisma.DateTimeNullableFilter<"MaintenanceTaskDailyHours"> | Date | string | null
   hours?: Prisma.DecimalFilter<"MaintenanceTaskDailyHours"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTaskDailyHours"> | Date | string
 }
@@ -546,6 +571,7 @@ export type MaintenanceTaskDailyHoursScalarWhereInput = {
 export type MaintenanceTaskDailyHoursCreateWithoutWorkerInput = {
   id?: string
   workDate: Date | string
+  startTime?: Date | string | null
   hours: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
   task: Prisma.MaintenanceTaskCreateNestedOneWithoutDailyHoursInput
@@ -555,6 +581,7 @@ export type MaintenanceTaskDailyHoursUncheckedCreateWithoutWorkerInput = {
   id?: string
   taskId: string
   workDate: Date | string
+  startTime?: Date | string | null
   hours: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
 }
@@ -589,6 +616,7 @@ export type MaintenanceTaskDailyHoursCreateManyTaskInput = {
   id?: string
   workerId: string
   workDate: Date | string
+  startTime?: Date | string | null
   hours: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
 }
@@ -596,6 +624,7 @@ export type MaintenanceTaskDailyHoursCreateManyTaskInput = {
 export type MaintenanceTaskDailyHoursUpdateWithoutTaskInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   workDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hours?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   worker?: Prisma.WorkerUpdateOneRequiredWithoutDailyHoursNestedInput
@@ -605,6 +634,7 @@ export type MaintenanceTaskDailyHoursUncheckedUpdateWithoutTaskInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   workerId?: Prisma.StringFieldUpdateOperationsInput | string
   workDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hours?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -613,6 +643,7 @@ export type MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutTaskInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   workerId?: Prisma.StringFieldUpdateOperationsInput | string
   workDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hours?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -621,6 +652,7 @@ export type MaintenanceTaskDailyHoursCreateManyWorkerInput = {
   id?: string
   taskId: string
   workDate: Date | string
+  startTime?: Date | string | null
   hours: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
 }
@@ -628,6 +660,7 @@ export type MaintenanceTaskDailyHoursCreateManyWorkerInput = {
 export type MaintenanceTaskDailyHoursUpdateWithoutWorkerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   workDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hours?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   task?: Prisma.MaintenanceTaskUpdateOneRequiredWithoutDailyHoursNestedInput
@@ -637,6 +670,7 @@ export type MaintenanceTaskDailyHoursUncheckedUpdateWithoutWorkerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   taskId?: Prisma.StringFieldUpdateOperationsInput | string
   workDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hours?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -645,6 +679,7 @@ export type MaintenanceTaskDailyHoursUncheckedUpdateManyWithoutWorkerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   taskId?: Prisma.StringFieldUpdateOperationsInput | string
   workDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hours?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -657,6 +692,7 @@ export type MaintenanceTaskDailyHoursSelect<ExtArgs extends runtime.Types.Extens
   workerId?: boolean
   organizationId?: boolean
   workDate?: boolean
+  startTime?: boolean
   hours?: boolean
   createdAt?: boolean
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
@@ -669,6 +705,7 @@ export type MaintenanceTaskDailyHoursSelectCreateManyAndReturn<ExtArgs extends r
   workerId?: boolean
   organizationId?: boolean
   workDate?: boolean
+  startTime?: boolean
   hours?: boolean
   createdAt?: boolean
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
@@ -681,6 +718,7 @@ export type MaintenanceTaskDailyHoursSelectUpdateManyAndReturn<ExtArgs extends r
   workerId?: boolean
   organizationId?: boolean
   workDate?: boolean
+  startTime?: boolean
   hours?: boolean
   createdAt?: boolean
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
@@ -693,11 +731,12 @@ export type MaintenanceTaskDailyHoursSelectScalar = {
   workerId?: boolean
   organizationId?: boolean
   workDate?: boolean
+  startTime?: boolean
   hours?: boolean
   createdAt?: boolean
 }
 
-export type MaintenanceTaskDailyHoursOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "taskId" | "workerId" | "organizationId" | "workDate" | "hours" | "createdAt", ExtArgs["result"]["maintenanceTaskDailyHours"]>
+export type MaintenanceTaskDailyHoursOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "taskId" | "workerId" | "organizationId" | "workDate" | "startTime" | "hours" | "createdAt", ExtArgs["result"]["maintenanceTaskDailyHours"]>
 export type MaintenanceTaskDailyHoursInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
   worker?: boolean | Prisma.WorkerDefaultArgs<ExtArgs>
@@ -723,6 +762,7 @@ export type $MaintenanceTaskDailyHoursPayload<ExtArgs extends runtime.Types.Exte
     workerId: string
     organizationId: string
     workDate: Date
+    startTime: Date | null
     hours: runtime.Decimal
     createdAt: Date
   }, ExtArgs["result"]["maintenanceTaskDailyHours"]>
@@ -732,7 +772,7 @@ export type $MaintenanceTaskDailyHoursPayload<ExtArgs extends runtime.Types.Exte
 export type MaintenanceTaskDailyHoursGetPayload<S extends boolean | null | undefined | MaintenanceTaskDailyHoursDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskDailyHoursPayload, S>
 
 export type MaintenanceTaskDailyHoursCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<MaintenanceTaskDailyHoursFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<MaintenanceTaskDailyHoursFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: MaintenanceTaskDailyHoursCountAggregateInputType | true
   }
 
@@ -1155,6 +1195,7 @@ export interface MaintenanceTaskDailyHoursFieldRefs {
   readonly workerId: Prisma.FieldRef<"MaintenanceTaskDailyHours", 'String'>
   readonly organizationId: Prisma.FieldRef<"MaintenanceTaskDailyHours", 'String'>
   readonly workDate: Prisma.FieldRef<"MaintenanceTaskDailyHours", 'DateTime'>
+  readonly startTime: Prisma.FieldRef<"MaintenanceTaskDailyHours", 'DateTime'>
   readonly hours: Prisma.FieldRef<"MaintenanceTaskDailyHours", 'Decimal'>
   readonly createdAt: Prisma.FieldRef<"MaintenanceTaskDailyHours", 'DateTime'>
 }
@@ -1181,6 +1222,7 @@ export type MaintenanceTaskDailyHoursFindUniqueArgs<ExtArgs extends runtime.Type
    * Filter, which MaintenanceTaskDailyHours to fetch.
    */
   where: Prisma.MaintenanceTaskDailyHoursWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1203,6 +1245,7 @@ export type MaintenanceTaskDailyHoursFindUniqueOrThrowArgs<ExtArgs extends runti
    * Filter, which MaintenanceTaskDailyHours to fetch.
    */
   where: Prisma.MaintenanceTaskDailyHoursWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1255,6 +1298,7 @@ export type MaintenanceTaskDailyHoursFindFirstArgs<ExtArgs extends runtime.Types
    * Filter by unique combinations of MaintenanceTaskDailyHours.
    */
   distinct?: Prisma.MaintenanceTaskDailyHoursScalarFieldEnum | Prisma.MaintenanceTaskDailyHoursScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1307,6 +1351,7 @@ export type MaintenanceTaskDailyHoursFindFirstOrThrowArgs<ExtArgs extends runtim
    * Filter by unique combinations of MaintenanceTaskDailyHours.
    */
   distinct?: Prisma.MaintenanceTaskDailyHoursScalarFieldEnum | Prisma.MaintenanceTaskDailyHoursScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1359,6 +1404,7 @@ export type MaintenanceTaskDailyHoursFindManyArgs<ExtArgs extends runtime.Types.
    * Filter by unique combinations of MaintenanceTaskDailyHours.
    */
   distinct?: Prisma.MaintenanceTaskDailyHoursScalarFieldEnum | Prisma.MaintenanceTaskDailyHoursScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1381,6 +1427,7 @@ export type MaintenanceTaskDailyHoursCreateArgs<ExtArgs extends runtime.Types.Ex
    * The data needed to create a MaintenanceTaskDailyHours.
    */
   data: Prisma.XOR<Prisma.MaintenanceTaskDailyHoursCreateInput, Prisma.MaintenanceTaskDailyHoursUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1441,6 +1488,7 @@ export type MaintenanceTaskDailyHoursUpdateArgs<ExtArgs extends runtime.Types.Ex
    * Choose, which MaintenanceTaskDailyHours to update.
    */
   where: Prisma.MaintenanceTaskDailyHoursWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1519,6 +1567,7 @@ export type MaintenanceTaskDailyHoursUpsertArgs<ExtArgs extends runtime.Types.Ex
    * In case the MaintenanceTaskDailyHours was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.MaintenanceTaskDailyHoursUpdateInput, Prisma.MaintenanceTaskDailyHoursUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1541,6 +1590,7 @@ export type MaintenanceTaskDailyHoursDeleteArgs<ExtArgs extends runtime.Types.Ex
    * Filter which MaintenanceTaskDailyHours to delete.
    */
   where: Prisma.MaintenanceTaskDailyHoursWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

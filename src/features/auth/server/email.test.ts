@@ -34,6 +34,7 @@ describe("transactional email delivery", () => {
       subject: "Invitation",
       text: "<script>unsafe</script>",
       url: "https://example.test/?a=1&b=2",
+      urlLabel: "Open & view",
     });
 
     const [, request] = fetchMock.mock.calls[0]!;
@@ -41,6 +42,7 @@ describe("transactional email delivery", () => {
     expect(request.headers.Authorization).toBe("Bearer test-key");
     expect(body.html).toContain("&lt;script&gt;unsafe&lt;/script&gt;");
     expect(body.html).toContain("a=1&amp;b=2");
+    expect(body.html).toContain(">Open &amp; view</a>");
 
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 503 }));
     await expect(

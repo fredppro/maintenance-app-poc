@@ -2325,7 +2325,7 @@ export type $OrganizationPayload<ExtArgs extends runtime.Types.Extensions.Intern
 export type OrganizationGetPayload<S extends boolean | null | undefined | OrganizationDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$OrganizationPayload, S>
 
 export type OrganizationCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<OrganizationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<OrganizationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: OrganizationCountAggregateInputType | true
   }
 
@@ -2785,6 +2785,7 @@ export type OrganizationFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.
    * Filter, which Organization to fetch.
    */
   where: Prisma.OrganizationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2807,6 +2808,7 @@ export type OrganizationFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Exte
    * Filter, which Organization to fetch.
    */
   where: Prisma.OrganizationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2859,6 +2861,7 @@ export type OrganizationFindFirstArgs<ExtArgs extends runtime.Types.Extensions.I
    * Filter by unique combinations of Organizations.
    */
   distinct?: Prisma.OrganizationScalarFieldEnum | Prisma.OrganizationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2911,6 +2914,7 @@ export type OrganizationFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Exten
    * Filter by unique combinations of Organizations.
    */
   distinct?: Prisma.OrganizationScalarFieldEnum | Prisma.OrganizationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2963,6 +2967,7 @@ export type OrganizationFindManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Filter by unique combinations of Organizations.
    */
   distinct?: Prisma.OrganizationScalarFieldEnum | Prisma.OrganizationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2985,6 +2990,7 @@ export type OrganizationCreateArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * The data needed to create a Organization.
    */
   data: Prisma.XOR<Prisma.OrganizationCreateInput, Prisma.OrganizationUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -3041,6 +3047,7 @@ export type OrganizationUpdateArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Choose, which Organization to update.
    */
   where: Prisma.OrganizationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -3115,6 +3122,7 @@ export type OrganizationUpsertArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * In case the Organization was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.OrganizationUpdateInput, Prisma.OrganizationUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -3137,6 +3145,7 @@ export type OrganizationDeleteArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Filter which Organization to delete.
    */
   where: Prisma.OrganizationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

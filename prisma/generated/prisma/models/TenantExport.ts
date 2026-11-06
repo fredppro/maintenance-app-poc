@@ -798,7 +798,7 @@ export type $TenantExportPayload<ExtArgs extends runtime.Types.Extensions.Intern
 export type TenantExportGetPayload<S extends boolean | null | undefined | TenantExportDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$TenantExportPayload, S>
 
 export type TenantExportCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<TenantExportFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<TenantExportFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: TenantExportCountAggregateInputType | true
   }
 
@@ -1251,6 +1251,7 @@ export type TenantExportFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.
    * Filter, which TenantExport to fetch.
    */
   where: Prisma.TenantExportWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1273,6 +1274,7 @@ export type TenantExportFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Exte
    * Filter, which TenantExport to fetch.
    */
   where: Prisma.TenantExportWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1325,6 +1327,7 @@ export type TenantExportFindFirstArgs<ExtArgs extends runtime.Types.Extensions.I
    * Filter by unique combinations of TenantExports.
    */
   distinct?: Prisma.TenantExportScalarFieldEnum | Prisma.TenantExportScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1377,6 +1380,7 @@ export type TenantExportFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Exten
    * Filter by unique combinations of TenantExports.
    */
   distinct?: Prisma.TenantExportScalarFieldEnum | Prisma.TenantExportScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1429,6 +1433,7 @@ export type TenantExportFindManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Filter by unique combinations of TenantExports.
    */
   distinct?: Prisma.TenantExportScalarFieldEnum | Prisma.TenantExportScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1451,6 +1456,7 @@ export type TenantExportCreateArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * The data needed to create a TenantExport.
    */
   data: Prisma.XOR<Prisma.TenantExportCreateInput, Prisma.TenantExportUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1511,6 +1517,7 @@ export type TenantExportUpdateArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Choose, which TenantExport to update.
    */
   where: Prisma.TenantExportWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1589,6 +1596,7 @@ export type TenantExportUpsertArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * In case the TenantExport was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.TenantExportUpdateInput, Prisma.TenantExportUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1611,6 +1619,7 @@ export type TenantExportDeleteArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Filter which TenantExport to delete.
    */
   where: Prisma.TenantExportWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

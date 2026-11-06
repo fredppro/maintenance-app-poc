@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Tooltip,
   TooltipContent,
@@ -137,19 +138,28 @@ export function SchedulerToolbar() {
         </div>
 
         {/* Center: View Mode Buttons */}
-        <ButtonGroup className="col-span-2 row-start-2 w-full lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-fit lg:justify-self-center" aria-label={t("viewSelector")}>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          value={viewMode}
+          aria-label={t("viewSelector")}
+          className="col-span-2 row-start-2 grid w-full grid-cols-4 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:flex lg:w-fit lg:justify-self-center"
+          onValueChange={(value) => {
+            const selectedMode = viewModeOrder.find((mode) => mode === value);
+            if (selectedMode) setViewMode(selectedMode);
+          }}
+        >
           {viewModeOrder.map((mode) => (
-            <Button
+            <ToggleGroupItem
               key={mode}
-              variant={viewMode === mode ? "default" : "outline"}
-              aria-pressed={viewMode === mode}
-              onClick={() => setViewMode(mode)}
-              className="h-9 flex-1 px-2 text-sm capitalize pointer-coarse:h-10 lg:flex-none lg:px-3"
+              value={mode}
+              className="h-9 px-2 text-sm capitalize pointer-coarse:h-10 lg:flex-none lg:px-3"
             >
               {t(mode)}
-            </Button>
+            </ToggleGroupItem>
           ))}
-        </ButtonGroup>
+        </ToggleGroup>
 
         {/* Right side: Zoom Controls */}
         <div className="col-start-2 row-start-1 flex items-center gap-2 lg:col-start-3 lg:justify-self-end">
