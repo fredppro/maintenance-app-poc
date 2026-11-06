@@ -16,6 +16,7 @@ import {
   isEmailVerificationRequired,
   resendVerificationOnExistingSignup,
 } from "./email-verification";
+import { requireActiveOrganization } from "./organization-status";
 import { mayCreateAccount, mayCreateOrganization } from "./signup-policy";
 
 const secret = process.env.BETTER_AUTH_SECRET;
@@ -199,6 +200,7 @@ export const auth = betterAuth({
             invitation.organizationId,
             inviter.id,
           );
+          await requireActiveOrganization(invitation.organizationId);
           if (!canAssignOrganizationRole(actorRole, invitation.role)) {
             throw new APIError("FORBIDDEN", {
               message: "You cannot invite a member with this role",

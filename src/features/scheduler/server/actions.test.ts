@@ -1423,6 +1423,45 @@ describe("scheduler server actions", () => {
       }
     });
 
+    it("clears an existing completion timestamp when explicitly cleared", async () => {
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-123",
+        startTime: new Date("2026-12-19T08:00:00.000Z"),
+        equipmentId: "eq-1",
+        maintenancePointId: null,
+        status: "completed",
+        completedAt: new Date("2026-12-19T17:15:00.000Z"),
+        assignments: [],
+      } as never);
+      const updateTaskRecord = vi.fn(async (args: any) => ({
+        id: "task-123",
+        ...args.data,
+      }));
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) =>
+          callback({ maintenanceTask: { update: updateTaskRecord } }),
+        );
+
+      try {
+        await updateTask("task-123", {
+          status: "scheduled",
+          completedAt: null,
+        });
+
+        expect(updateTaskRecord).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: {
+              status: "scheduled",
+              completedAt: null,
+            },
+          }),
+        );
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+
     it("does not replace a historical completion timestamp when completing the task again", async () => {
       const completedAt = new Date("2026-12-19T17:15:00.000Z");
       vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
@@ -1975,6 +2014,8 @@ describe("scheduler server actions", () => {
           findFirst: vi.fn().mockResolvedValue({
             startTime: oldStart,
             endTime: oldEnd,
+            equipmentId: "eq-old",
+            maintenancePointId: "point-old",
           }),
           update: vi.fn().mockResolvedValue({
             id: "task-123",
@@ -2020,6 +2061,7 @@ describe("scheduler server actions", () => {
               startTime: newStart,
               endTime: newEnd,
               equipmentId: "eq-new",
+              maintenancePointId: null,
             },
             include: {
               equipment: true,

@@ -44,7 +44,7 @@ Each organization has a `tenant_settings` row (`status`, `isolationTier`). A mis
 
 `isolationTier` is `POOLED` for every tenant. `DEDICATED` is reserved for a future per-tenant database; nothing reads it yet.
 
-`getTenantContext` enforces the status on every server action, page and API route, so there is no separate check to forget.
+`getTenantContext` enforces status for application pages, server actions, and API routes that use it. Better Auth endpoints do not use this context, so lifecycle checks belong in their hooks. Invitation creation rejects inactive tenants; managers can still cancel an existing invitation.
 
 Operator commands (owner database connection, `MIGRATION_DATABASE_URL`):
 
@@ -52,8 +52,10 @@ Operator commands (owner database connection, `MIGRATION_DATABASE_URL`):
 pnpm ops:tenant suspend <orgId> "reason"
 pnpm ops:tenant reactivate <orgId>
 pnpm ops:tenant purge-due     # permanently deletes organizations past the grace period, with their stored files
-pnpm ops:purge-trash [days]         # permanently deletes soft-deleted equipment/tasks/workers older than 30 days
+pnpm ops:purge-trash [days]         # permanently deletes soft-deleted equipment/tasks/workers older than 30 days by default
 ```
+
+The optional `days` value must be a non-negative integer. A value of `0` makes all previously soft-deleted records eligible for immediate permanent deletion.
 
 Schedule `purge-due` and `ops:purge-trash` daily from your job runner. Owners can also transfer ownership (`transferOrganizationOwnership`).
 

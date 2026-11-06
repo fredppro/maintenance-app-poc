@@ -527,7 +527,7 @@ export async function updateEquipment(
   id: string,
   data: { name?: string; category?: string | null; imageFileId?: string | null },
 ) {
-  const { db, organizationId, siteId, userId } = await getTenantContext("manageMaintenance");
+  const { db, organizationId, siteId } = await getTenantContext("manageMaintenance");
   const equipmentId = equipmentIdSchema.parse(id);
   const input = equipmentUpdateSchema.parse(data);
   await assertOwnFile(db, input.imageFileId, organizationId);
@@ -1178,12 +1178,13 @@ export async function updateTask(
   if (effectiveEndTime && effectiveEndTime <= effectiveStartTime) {
     throw new Error("Task end time must be after start time");
   }
-  const completionTime =
-    completedAt ??
-    currentTask.completedAt ??
-    (taskData.status === "completed" && currentTask.status !== "completed"
-      ? new Date()
-      : null);
+  const hasCompletionTime = completedAt !== undefined;
+  const completionTime = hasCompletionTime
+    ? completedAt
+    : currentTask.completedAt ??
+      (taskData.status === "completed" && currentTask.status !== "completed"
+        ? new Date()
+        : null);
   const workLogTimeZone = dailyHours?.length
     ? await getOrganizationTimeZone(db, organizationId)
     : DEFAULT_ORGANIZATION_TIMEZONE;
@@ -1447,7 +1448,9 @@ export async function updateTask(
         },
         data: {
           ...taskData,
-          ...(completionTime && { completedAt: completionTime }),
+          ...((hasCompletionTime || completionTime) && {
+            completedAt: completionTime ?? null,
+          }),
           ...(hasMaintenancePointInput ||
           targetEquipmentId !== currentTask.equipmentId
             ? { maintenancePointId: nextMaintenancePointId }
@@ -1541,14 +1544,18 @@ export async function moveTask(
   const { db, organizationId, siteId } = await getTenantContext("manageMaintenance");
   const validatedTaskId = equipmentIdSchema.parse(taskId);
   const startTime = new Date(newStartTime);
+  const targetEquipmentId =
+    newEquipmentId === undefined
+      ? undefined
+      : equipmentIdSchema.parse(newEquipmentId);
   if (Number.isNaN(startTime.getTime())) {
     throw new Error("Task start time is invalid");
   }
   const workLogTimeZone = await getOrganizationTimeZone(db, organizationId);
 
-  if (newEquipmentId !== undefined) {
+  if (targetEquipmentId !== undefined) {
     const equipment = await db.equipment.findFirst({
-      where: { id: equipmentIdSchema.parse(newEquipmentId), organizationId, siteId },
+      where: { id: targetEquipmentId, organizationId, siteId },
       select: { id: true },
     });
     if (!equipment) {
@@ -1563,7 +1570,7 @@ export async function moveTask(
         organizationId,
         equipment: { is: { siteId } },
       },
-      select: { startTime: true, endTime: true },
+      select: { startTime: true, endTime: true, equipmentId: true },
     });
     if (!current) {
       throw new Error("Maintenance task not found in the active organization");
@@ -1624,8 +1631,11 @@ export async function moveTask(
       data: {
         startTime,
         endTime,
-        ...(newEquipmentId !== undefined && {
-          equipmentId: equipmentIdSchema.parse(newEquipmentId),
+        ...(targetEquipmentId !== undefined && {
+          equipmentId: targetEquipmentId,
+          ...(current.equipmentId !== targetEquipmentId && {
+            maintenancePointId: null,
+          }),
         }),
       },
       include: {

@@ -7,6 +7,9 @@ import prisma from "../../src/lib/prisma";
 export const TRASH_RETENTION_DAYS = 30;
 
 export async function purgeTrash(days = TRASH_RETENTION_DAYS, now = new Date()) {
+  if (!Number.isSafeInteger(days) || days < 0) {
+    throw new RangeError("Trash retention days must be a non-negative integer");
+  }
   const cutoff = new Date(now.getTime() - days * 86_400_000);
   const where = { deletedAt: { lt: cutoff } };
   // Tasks first: they reference equipment and workers.
