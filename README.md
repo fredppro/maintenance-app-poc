@@ -70,6 +70,10 @@ workflows and production configuration.
 
 - [Documentation index](./docs/README.md)
 - [Full development setup, tests, and workflows](./docs/getting-started/development.md)
+- [Current deployment architecture](./docs/operations/deployment-architecture.md)
+- [Environment configuration reference](./docs/reference/configuration.md)
+- [Dedicated database feasibility](./docs/architecture/dedicated-database-per-tenant.md)
+- [Vercel + Neon fallback](./docs/operations/vercel-neon-fallback.md)
 - [Current repository-evidence status](./docs/reference/environment-status.md)
 - [Architecture: database and migrations](./docs/architecture/database-and-migrations.md)
 - [Operations: deployment and release](./docs/operations/deployment-and-release.md)

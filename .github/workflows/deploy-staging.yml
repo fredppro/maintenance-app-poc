@@ -1,0 +1,361 @@
+name: Deploy staging
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  locate-validation:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
+    outputs:
+      artifact_name: ${{ steps.validation.outputs.artifact_name }}
+      app_build_sha: ${{ steps.validation.outputs.app_build_sha }}
+      should_deploy: ${{ steps.validation.outputs.should_deploy }}
+      tested_tree_sha: ${{ steps.validation.outputs.tested_tree_sha }}
+      merge_commit_sha: ${{ steps.validation.outputs.merge_commit_sha }}
+      test_run_id: ${{ steps.validation.outputs.test_run_id }}
+    steps:
+      - name: Find successful PR checks and validated image artifact
+        id: validation
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pullRequest = context.payload.pull_request;
+            const pullNumber = pullRequest.number;
+            const headSha = pullRequest.head.sha;
+            const mergeCommitSha = pullRequest.merge_commit_sha;
+
+            if (!mergeCommitSha) {
+              core.setFailed(`Merged PR #${pullNumber} did not include a merge commit SHA.`);
+              return;
+            }
+
+            const { data: branch } = await github.rest.repos.getBranch({
+              owner,
+              repo,
+              branch: 'develop',
+            });
+            if (branch.commit.sha !== mergeCommitSha) {
+              core.notice(`Skipping ${mergeCommitSha}; develop has advanced to ${branch.commit.sha}.`);
+              core.setOutput('should_deploy', 'false');
+              return;
+            }
+
+            const { data: mergeCommit } = await github.rest.repos.getCommit({
+              owner,
+              repo,
+              ref: mergeCommitSha,
+            });
+            const testedTreeSha = mergeCommit.commit.tree.sha;
+
+            async function latestRun(workflowId) {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                owner,
+                repo,
+                workflow_id: workflowId,
+                event: 'pull_request',
+                branch: pullRequest.head.ref,
+                per_page: 100,
+              });
+              const matching = data.workflow_runs
+                .filter(run => run.pull_requests?.some(pr =>
+                  pr.number === pullNumber && pr.head?.sha === headSha
+                ))
+                .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+
+              if (matching.length === 0) {
+                throw new Error(`No ${workflowId} validation run was found for PR #${pullNumber} at ${headSha}.`);
+              }
+
+              const run = matching[0];
+              if (run.status !== 'completed' || run.conclusion !== 'success') {
+                throw new Error(`${workflowId} run ${run.id} is ${run.status}/${run.conclusion}; refusing deployment.`);
+              }
+              return run;
+            }
+
+            const testRun = await latestRun('tests.yml');
+            await latestRun('security.yml');
+
+            const artifacts = await github.paginate(
+              github.rest.actions.listWorkflowRunArtifacts,
+              { owner, repo, run_id: testRun.id, per_page: 100 }
+            );
+            const artifactName = `validated-images-pr-${pullNumber}-${headSha}-${testRun.run_attempt}`;
+            const artifact = artifacts.find(item => item.name === artifactName && !item.expired);
+            if (!artifact) {
+              throw new Error(`Validated image artifact ${artifactName} is missing or expired.`);
+            }
+
+            core.setOutput('artifact_name', artifactName);
+            core.setOutput('app_build_sha', headSha);
+            core.setOutput('should_deploy', 'true');
+            core.setOutput('tested_tree_sha', testedTreeSha);
+            core.setOutput('merge_commit_sha', mergeCommitSha);
+            core.setOutput('test_run_id', String(testRun.id));
+
+  deploy:
+    needs: [locate-validation]
+    if: needs.locate-validation.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    environment: staging
+    concurrency:
+      group: staging-deploy
+      cancel-in-progress: false
+    permissions:
+      actions: read
+      contents: read
+      packages: write
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.locate-validation.outputs.artifact_name }}
+          path: ${{ runner.temp }}/validated-images
+          run-id: ${{ needs.locate-validation.outputs.test_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify and load validated images
+        shell: bash
+        env:
+          EXPECTED_PR: ${{ github.event.pull_request.number }}
+          EXPECTED_HEAD_SHA: ${{ needs.locate-validation.outputs.app_build_sha }}
+          EXPECTED_TREE_SHA: ${{ needs.locate-validation.outputs.tested_tree_sha }}
+          EXPECTED_MERGE_SHA: ${{ needs.locate-validation.outputs.merge_commit_sha }}
+          APP_IMAGE_NAME: ghcr.io/${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          manifest="$RUNNER_TEMP/validated-images/manifest.json"
+          if [[ ! -f "$manifest" || ! -f "$RUNNER_TEMP/validated-images/images.tar" ]]; then
+            echo "::error::The validated image artifact is incomplete."
+            exit 1
+          fi
+
+          jq -e \
+            --argjson pr "$EXPECTED_PR" \
+            --arg head "$EXPECTED_HEAD_SHA" \
+            --arg tree "$EXPECTED_TREE_SHA" \
+            --arg app "${APP_IMAGE_NAME}:pr-${EXPECTED_PR}-${EXPECTED_HEAD_SHA}" \
+            --arg migrator "${APP_IMAGE_NAME}:pr-${EXPECTED_PR}-${EXPECTED_HEAD_SHA}-migrator" \
+            '.schema_version == 1 and .pull_request == $pr and .head_sha == $head and .app_build_sha == $head and .tested_tree_sha == $tree and .app_image == $app and .migrator_image == $migrator' \
+            "$manifest" >/dev/null
+
+          docker load --input "$RUNNER_TEMP/validated-images/images.tar"
+          echo "Validated image source tree matches merged commit $EXPECTED_MERGE_SHA."
+      - name: Check deployment configuration
+        env:
+          STAGING_AUTODEPLOY_ENABLED: ${{ vars.STAGING_AUTODEPLOY_ENABLED }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          STAGING_WIREGUARD_CONFIG: ${{ secrets.STAGING_WIREGUARD_CONFIG }}
+        run: |
+          set -euo pipefail
+          if [[ "$STAGING_AUTODEPLOY_ENABLED" != "true" ]]; then
+            echo "::error::Set the STAGING_AUTODEPLOY_ENABLED repository variable to true to deploy staging."
+            exit 1
+          fi
+          if [[ -z "$COOLIFY_API_TOKEN" || -z "$STAGING_WIREGUARD_CONFIG" ]]; then
+            echo "::error::Configure COOLIFY_API_TOKEN and STAGING_WIREGUARD_CONFIG in the staging environment."
+            exit 1
+          fi
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Promote validated images
+        id: promote
+        shell: bash
+        env:
+          EXPECTED_PR: ${{ github.event.pull_request.number }}
+          EXPECTED_HEAD_SHA: ${{ needs.locate-validation.outputs.app_build_sha }}
+          EXPECTED_MERGE_SHA: ${{ needs.locate-validation.outputs.merge_commit_sha }}
+          IMAGE_NAME: ghcr.io/${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          current_head="$(git ls-remote --exit-code origin refs/heads/develop | awk 'NR == 1 { print $1 }')"
+          if [[ "$current_head" != "$EXPECTED_MERGE_SHA" ]]; then
+            echo "::notice::Skipping image promotion because develop advanced to $current_head."
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          app_source="${IMAGE_NAME}:pr-${EXPECTED_PR}-${EXPECTED_HEAD_SHA}"
+          migrator_source="${app_source}-migrator"
+          app_tag="${IMAGE_NAME}:${EXPECTED_HEAD_SHA}"
+          migrator_tag="${app_tag}-migrator"
+
+          push_with_retries() {
+            local image="$1"
+            local attempt
+            for attempt in 1 2 3; do
+              echo "Pushing $image (attempt $attempt/3)"
+              if docker push "$image"; then
+                return 0
+              fi
+              if [[ "$attempt" -eq 3 ]]; then
+                echo "::error::Failed to push $image after $attempt attempts."
+                return 1
+              fi
+              sleep $((attempt * 10))
+            done
+          }
+
+          docker tag "$app_source" "$app_tag"
+          docker tag "$migrator_source" "$migrator_tag"
+          push_with_retries "$app_tag"
+          push_with_retries "$migrator_tag"
+
+          app_digest="$(docker buildx imagetools inspect "$app_tag" | awk '$1 == "Digest:" { print $2; exit }')"
+          migrator_digest="$(docker buildx imagetools inspect "$migrator_tag" | awk '$1 == "Digest:" { print $2; exit }')"
+          if [[ ! "$app_digest" =~ ^sha256:[0-9a-f]{64}$ || ! "$migrator_digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::Could not resolve promoted image digests."
+            exit 1
+          fi
+
+          app_digest_tag="${IMAGE_NAME}:sha256-${app_digest#sha256:}"
+          migrator_digest_tag="${IMAGE_NAME}:sha256-${migrator_digest#sha256:}-migrator"
+          docker tag "$app_tag" "$app_digest_tag"
+          docker tag "$migrator_tag" "$migrator_digest_tag"
+          push_with_retries "$app_digest_tag"
+          push_with_retries "$migrator_digest_tag"
+          echo "app_digest=${IMAGE_NAME}@${app_digest}" >> "$GITHUB_OUTPUT"
+          echo "migrator_digest=${IMAGE_NAME}@${migrator_digest}" >> "$GITHUB_OUTPUT"
+          echo "coolify_image_tag=${app_digest_tag##*:}" >> "$GITHUB_OUTPUT"
+          echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+      - name: Deploy exact image to staging
+        if: steps.promote.outputs.should_deploy == 'true'
+        shell: bash
+        env:
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          STAGING_WIREGUARD_CONFIG: ${{ secrets.STAGING_WIREGUARD_CONFIG }}
+          COOLIFY_IMAGE_TAG: ${{ steps.promote.outputs.coolify_image_tag }}
+          EXPECTED_REVISION: ${{ needs.locate-validation.outputs.app_build_sha }}
+          EXPECTED_MERGE_SHA: ${{ needs.locate-validation.outputs.merge_commit_sha }}
+        run: |
+          set -euo pipefail
+
+          current_head="$(git ls-remote --exit-code origin refs/heads/develop | awk 'NR == 1 { print $1 }')"
+          if [[ "$current_head" != "$EXPECTED_MERGE_SHA" ]]; then
+            echo "::notice::Skipping staging deployment because develop advanced to $current_head."
+            exit 0
+          fi
+
+          coolify_api_url="http://10.242.0.1:8000"
+          coolify_app_uuid="s3ykxyqc8bfryycpesrrib2p"
+          staging_health_url="https://staging.maintenance.isosist.com/api/health"
+          wg_config_path="/etc/wireguard/staging-deploy.conf"
+          response_headers="$(mktemp)"
+          deployment_response="$(mktemp)"
+
+          cleanup() {
+            if [[ -f "$wg_config_path" ]]; then
+              if ! sudo wg-quick down "$wg_config_path" >/dev/null 2>&1; then
+                echo "::warning::Could not tear down the temporary WireGuard interface."
+              fi
+              if ! sudo rm -f "$wg_config_path"; then
+                echo "::warning::Could not remove the temporary WireGuard config."
+              fi
+            fi
+            if ! rm -f "$response_headers"; then
+              echo "::warning::Could not remove temporary health response headers."
+            fi
+            if ! rm -f "$deployment_response"; then
+              echo "::warning::Could not remove the temporary deployment response."
+            fi
+          }
+          trap cleanup EXIT
+
+          if ! command -v wg-quick >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install --yes wireguard-tools
+          fi
+
+          sudo install -d -m 700 /etc/wireguard
+          printf '%s\n' "$STAGING_WIREGUARD_CONFIG" | sudo tee "$wg_config_path" >/dev/null
+          sudo chmod 600 "$wg_config_path"
+          if sudo grep -Eiq '^[[:space:]]*(PreUp|PostUp|PreDown|PostDown|SaveConfig|Table|DNS)[[:space:]]*=' "$wg_config_path"; then
+            echo "::error::The staging WireGuard config contains unsupported directives."
+            exit 1
+          fi
+          allowed_ips="$(sudo awk -F= '/^[[:space:]]*AllowedIPs[[:space:]]*=/ { gsub(/[[:space:]]/, "", $2); print $2 }' "$wg_config_path")"
+          if [[ "$allowed_ips" != "10.242.0.1/32" ]]; then
+            echo "::error::The staging WireGuard peer must route only 10.242.0.1/32."
+            exit 1
+          fi
+          sudo wg-quick up "$wg_config_path"
+
+          application_url="$coolify_api_url/api/v1/applications/$coolify_app_uuid"
+          payload="$(jq -cn \
+            --arg image_name 'ghcr.io/fredppro/maintenance-app-poc' \
+            --arg tag "$COOLIFY_IMAGE_TAG" \
+            '{docker_registry_image_name: $image_name, docker_registry_image_tag: $tag}')"
+          if ! patch_status="$(curl --silent --show-error --max-time 30 \
+            --output /dev/null --write-out '%{http_code}' \
+            --request PATCH \
+            --header "Authorization: Bearer $COOLIFY_API_TOKEN" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data "$payload" \
+            "$application_url")"; then
+            echo "::error::Could not update the staging image in Coolify."
+            exit 1
+          fi
+          if [[ ! "$patch_status" =~ ^2[0-9][0-9]$ ]]; then
+            echo "::error::Coolify rejected the staging image update (HTTP $patch_status)."
+            exit 1
+          fi
+
+          if ! deploy_status="$(curl --silent --show-error --max-time 30 \
+            --output "$deployment_response" --write-out '%{http_code}' \
+            --request POST \
+            --header "Authorization: Bearer $COOLIFY_API_TOKEN" \
+            --header 'Accept: application/json' \
+            "$coolify_api_url/api/v1/deploy?uuid=$coolify_app_uuid")"; then
+            echo "::error::Could not trigger the Coolify staging deployment."
+            exit 1
+          fi
+          if [[ ! "$deploy_status" =~ ^2[0-9][0-9]$ ]]; then
+            echo "::error::Coolify rejected the staging deployment request (HTTP $deploy_status)."
+            exit 1
+          fi
+          if ! deployment_uuid="$(jq -er --arg uuid "$coolify_app_uuid" \
+            '.deployments[] | select(.resource_uuid == $uuid) | .deployment_uuid' \
+            "$deployment_response")"; then
+            echo "::error::Coolify did not return a deployment UUID for the staging application."
+            exit 1
+          fi
+
+          echo "Coolify queued deployment $deployment_uuid. Waiting for staging to serve revision $EXPECTED_REVISION."
+          for attempt in $(seq 1 36); do
+            if http_status="$(curl --silent --max-time 5 \
+              --dump-header "$response_headers" \
+              --output /dev/null --write-out '%{http_code}' \
+              "$staging_health_url")"; then
+              deployed_revision="$(awk 'tolower($1) == "x-application-revision:" { gsub("\r", "", $2); print $2; exit }' "$response_headers")"
+              if [[ "$http_status" == "200" && "$deployed_revision" == "$EXPECTED_REVISION" ]]; then
+                echo "Staging is healthy and serves revision $deployed_revision."
+                exit 0
+              fi
+              echo "Health probe $attempt/36: HTTP $http_status; revision=${deployed_revision:-not reported}."
+            else
+              echo "Health probe $attempt/36: staging is not reachable yet."
+            fi
+            sleep 10
+          done
+
+          echo "::error::Staging did not become healthy on revision $EXPECTED_REVISION before the timeout."
+          exit 1

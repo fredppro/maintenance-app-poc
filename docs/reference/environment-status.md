@@ -1,12 +1,14 @@
 # Environment and operations status
 
-- **Repository review:** 2026-10-31
+- **Repository review:** 2026-11-06
 - **External systems checked for this record:** shared Coolify application
   logs, Instance Backup, staging resource, and server overview pages on
   2026-10-29; Coolify Advanced settings and GitHub Actions workflow runs on
   2026-10-30; Coolify deployment history and the staging health endpoint on
-  2026-10-31. The firewall and WireGuard changes were applied from Ansible on
-  2026-10-30; see the dated evidence below.
+  2026-10-31; Coolify's reminder scheduled-task list and application
+  configuration page, plus the post-merge workflow run and staging health
+  endpoint for PR #18 on 2026-11-06. The firewall and WireGuard changes were
+  applied from Ansible on 2026-10-30; see the dated evidence below.
 - **Local restore validation:** the documented Coolify control-plane dump was
   restored to a disposable, network-isolated PostgreSQL container on 2026-10-29
 - **Purpose:** authoritative in-repository ledger of what the checked-in
@@ -20,10 +22,21 @@ evidence, and result, never secret values. Keep unresolved items marked
 
 ## Status from repository evidence
 
+On 2026-11-06, Coolify showed the `Maintenance reminder delivery` scheduled
+task configured for `*/15 * * * *`, with a 300-second timeout and no container
+selected. At creation its status was “Not run yet”; a later successful
+invocation and email delivery have not been verified. The Coolify application
+configuration page also showed unsaved changes. No external configuration was
+saved, and no deployment was triggered by the current workflow changes. After
+PR #18 was merged, workflow run #34 succeeded, staging returned HTTP 200 with
+`X-Application-Revision: 6a1b8bd48cb7452eaee6cfb826cd7efb6ffa7a2c`, and Coolify
+reported the app as `Running`. This is evidence for that deployment, not a
+verification that the newly changed workflow has run.
+
 | Area | Evidence and classification | Current conclusion |
 |---|---|---|
 | Application environments | The operator confirmed in chat on 2026-10-29 that staging and production are deployed. On 2026-10-30, Coolify was manually configured to deploy application image digest `sha256:c712ad154402609445cd2912aa6131084f1dd34a97e94626d408675326186cd6`; deployment record `ds95qdvfjltaa4kn0fb5speb` reported a completed rolling update, and the staging login page loaded after refresh. On 2026-10-31, automated deployment record `s6uljmwhwbxikhvuem6kevac` succeeded with image digest `sha256:b95c781cc3793026cc95fca8ebfd9a4dfdc3678cbb3bde5396cc24a35bdf1152`; `/api/health` returned HTTP 200 and `X-Application-Revision: 7a7e55b33744325935eb5fe8d5ce7168ad1362c2`. At the 2026-10-29 inspection, Coolify showed `maintenance-staging-app`, `maintenance-staging-db` (synthetic-data PostgreSQL 17), and `garage-staging` running on `localhost`; the app had no configured health check. | **Automated staging deployment and exact served revision were verified on 2026-10-31.** Production remains operator-reported, not independently viewed; database readiness and production health remain **unverified**. Earlier dated sources: [self-hosted platform plan](../planning/self-hosted-platform-plan.md), [WireGuard and Coolify runbook](../operations/wireguard-admin-access.md). |
-| Deployment pipeline | Commit `1f465f0` on `develop` adds the gated `deploy-staging` job. Security and Tests run 22 passed, but deployment was skipped because the repository Actions variable was enabled after that run started. Run 23 initially received HTTP 403 because its token lacked `deploy`; the replacement token was confirmed in Coolify as `write` + `deploy`. Its retry exposed an invalid image reference, fixed in commit `7a7e55b`. Run 24 passed tests, image scans, GHCR publication, and `deploy-staging`; Coolify deployment `s6uljmwhwbxikhvuem6kevac` used digest `sha256:b95c781cc3793026cc95fca8ebfd9a4dfdc3678cbb3bde5396cc24a35bdf1152` and served the expected revision. | **One end-to-end automated deployment to staging is verified.** The job remains gated to successful `develop` pushes with `STAGING_AUTODEPLOY_ENABLED=true` and does not deploy production. Continue verifying each deployment through the health revision check; CI publication alone is not proof of deployment. |
+| Deployment pipeline | The previous push-to-`develop` workflow was verified in run 24: tests, image scans, GHCR publication, and `deploy-staging` passed; Coolify deployment `s6uljmwhwbxikhvuem6kevac` used digest `sha256:b95c781cc3793026cc95fca8ebfd9a4dfdc3678cbb3bde5396cc24a35bdf1152` and served the expected revision. Its earlier setup failures were resolved in commit `7a7e55b`. The current repository workflows now validate PRs and promote the tested artifact after merge; this new flow has not yet been executed. No staging deployment was triggered by this code change. | **Historical automated staging deployment is verified; the new PR-artifact promotion flow remains unverified until its first successful merge deployment.** The latest known live revision was not rechecked for this workflow change. |
 | Host and control plane | On 2026-10-30, the `staging-firewall` Ansible tag was applied: UFW denies host access from `10.242.0.3`, restricts WireGuard SSH to `10.242.0.2`, and `DOCKER-USER` permits the staging peer's forwarded TCP traffic only to `10.242.0.1:8000` before dropping other forwarded traffic. The firewall systemd service is enabled and active; a fresh operator SSH connection succeeded. The `wireguard` tag applied the staging peer and its live-peer assertion passed. Coolify Advanced settings show API access enabled and allowed IP `10.242.0.3/32`; on 2026-10-31, the issued-token list showed `write` and `deploy` permissions only, and the operator confirmed the replacement value was saved in the GitHub Environment. On 2026-10-29, Coolify identified the staging host as `localhost`; its overview said reachable, validated, and ready, while its status also showed `Attention required`. The Coolify UI reported a real-time-service connection warning. | **Network policy, WireGuard peer, API allowlist, and token permission scope are verified.** The GitHub secret value is operator-confirmed, not independently inspectable. The cause of the earlier conflicting host-status signals remains unverified. Coolify did not expose a provider or region label in the inspected server overview. See [runbook 02](../operations/wireguard-admin-access.md) and [runbook 03](../operations/coolify-backup-and-upgrade.md). |
 | Database | Application code uses PostgreSQL/Prisma, migrations, RLS, and separate migration/runtime connection handling. The code retains a conditional Vercel/Neon compatibility path. | **Code-verified.** The current staging or production database host, region, account, and availability are **unverified**. |
 | Object storage | Code uses an S3-compatible interface. Coolify lists a running service named `garage-staging` on the staging `localhost` server. The platform plan describes single-node Garage for synthetic staging files and selects Scaleway Object Storage for planned production files. The focused storage unit suite passed 7 tests on 2026-10-29, covering local storage and backend selection, not S3 requests or provider portability. | **A staging Garage resource is present; its app integration, data location, and region are unverified.** No provider-portability test was run. Production provider remains planned, not confirmed deployed. See [the platform plan](../planning/self-hosted-platform-plan.md) and [storage usage runbook](../operations/storage-capacity-and-portability.md). |
@@ -51,11 +64,13 @@ print, request, or record secret values.
   availability, deployed image digest, and last verification time. Distinguish
   manual Coolify deployment from an automated pipeline. Production was not
   independently viewed.
-- [ ] **Staging automation activation:** Provision and firewall-restrict a
-  dedicated WireGuard peer, configure the Coolify API allowlist and least-
-  privilege token, then add the GitHub `staging` Environment secrets and
-  `STAGING_AUTODEPLOY_ENABLED=true`. Verify a successful `develop` pipeline
-  deploys and reports the matching application revision.
+- [x] **Staging automation (2026-10-31):** One `develop` workflow run deployed
+  the image to Coolify and `/api/health` returned the matching revision. This
+  verifies one successful staging deployment, not production deployment or
+  ongoing health.
+- [ ] **Reminder delivery:** Inspect the Coolify task's latest execution and
+  confirm the authorized endpoint call and email delivery. The configured
+  `*/15 * * * *` schedule alone does not establish a successful run.
 - [ ] **Providers and regions:** Coolify lists staging services on its
   `localhost` server and a running `garage-staging` resource, but the inspected
   pages exposed no provider or region. Confirm the actual hosting, database,
