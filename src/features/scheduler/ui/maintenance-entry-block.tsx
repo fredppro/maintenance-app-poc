@@ -12,6 +12,8 @@ interface MaintenanceEntryBlockProps {
   style?: React.CSSProperties;
   onDragStart: () => void;
   isDragging?: boolean;
+  autoOpen?: boolean;
+  onAutoOpenClose?: () => void;
 }
 
 export function MaintenanceEntryBlock({
@@ -19,6 +21,8 @@ export function MaintenanceEntryBlock({
   style,
   onDragStart,
   isDragging,
+  autoOpen = false,
+  onAutoOpenClose,
 }: MaintenanceEntryBlockProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
 
@@ -98,8 +102,11 @@ export function MaintenanceEntryBlock({
 
       <EditEntryDialog
         entry={entry}
-        open={detailsOpen}
-        onOpenChange={setDetailsOpen}
+        open={detailsOpen || autoOpen}
+        onOpenChange={(open) => {
+          setDetailsOpen(open);
+          if (!open && autoOpen) onAutoOpenClose?.();
+        }}
       />
     </>
   );

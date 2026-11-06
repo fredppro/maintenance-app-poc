@@ -623,7 +623,7 @@ export type $MemberPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
 export type MemberGetPayload<S extends boolean | null | undefined | MemberDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$MemberPayload, S>
 
 export type MemberCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<MemberFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<MemberFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: MemberCountAggregateInputType | true
   }
 
@@ -1070,6 +1070,7 @@ export type MemberFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Filter, which Member to fetch.
    */
   where: Prisma.MemberWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1092,6 +1093,7 @@ export type MemberFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensions
    * Filter, which Member to fetch.
    */
   where: Prisma.MemberWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1144,6 +1146,7 @@ export type MemberFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Filter by unique combinations of Members.
    */
   distinct?: Prisma.MemberScalarFieldEnum | Prisma.MemberScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1196,6 +1199,7 @@ export type MemberFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions.
    * Filter by unique combinations of Members.
    */
   distinct?: Prisma.MemberScalarFieldEnum | Prisma.MemberScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1248,6 +1252,7 @@ export type MemberFindManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Filter by unique combinations of Members.
    */
   distinct?: Prisma.MemberScalarFieldEnum | Prisma.MemberScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1270,6 +1275,7 @@ export type MemberCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * The data needed to create a Member.
    */
   data: Prisma.XOR<Prisma.MemberCreateInput, Prisma.MemberUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1330,6 +1336,7 @@ export type MemberUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Choose, which Member to update.
    */
   where: Prisma.MemberWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1408,6 +1415,7 @@ export type MemberUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * In case the Member was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.MemberUpdateInput, Prisma.MemberUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1430,6 +1438,7 @@ export type MemberDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Filter which Member to delete.
    */
   where: Prisma.MemberWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

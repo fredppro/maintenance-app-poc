@@ -891,7 +891,7 @@ export type $EquipmentMaintenancePointPayload<ExtArgs extends runtime.Types.Exte
 export type EquipmentMaintenancePointGetPayload<S extends boolean | null | undefined | EquipmentMaintenancePointDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$EquipmentMaintenancePointPayload, S>
 
 export type EquipmentMaintenancePointCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<EquipmentMaintenancePointFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<EquipmentMaintenancePointFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: EquipmentMaintenancePointCountAggregateInputType | true
   }
 
@@ -1342,6 +1342,7 @@ export type EquipmentMaintenancePointFindUniqueArgs<ExtArgs extends runtime.Type
    * Filter, which EquipmentMaintenancePoint to fetch.
    */
   where: Prisma.EquipmentMaintenancePointWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1364,6 +1365,7 @@ export type EquipmentMaintenancePointFindUniqueOrThrowArgs<ExtArgs extends runti
    * Filter, which EquipmentMaintenancePoint to fetch.
    */
   where: Prisma.EquipmentMaintenancePointWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1416,6 +1418,7 @@ export type EquipmentMaintenancePointFindFirstArgs<ExtArgs extends runtime.Types
    * Filter by unique combinations of EquipmentMaintenancePoints.
    */
   distinct?: Prisma.EquipmentMaintenancePointScalarFieldEnum | Prisma.EquipmentMaintenancePointScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1468,6 +1471,7 @@ export type EquipmentMaintenancePointFindFirstOrThrowArgs<ExtArgs extends runtim
    * Filter by unique combinations of EquipmentMaintenancePoints.
    */
   distinct?: Prisma.EquipmentMaintenancePointScalarFieldEnum | Prisma.EquipmentMaintenancePointScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1520,6 +1524,7 @@ export type EquipmentMaintenancePointFindManyArgs<ExtArgs extends runtime.Types.
    * Filter by unique combinations of EquipmentMaintenancePoints.
    */
   distinct?: Prisma.EquipmentMaintenancePointScalarFieldEnum | Prisma.EquipmentMaintenancePointScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1542,6 +1547,7 @@ export type EquipmentMaintenancePointCreateArgs<ExtArgs extends runtime.Types.Ex
    * The data needed to create a EquipmentMaintenancePoint.
    */
   data: Prisma.XOR<Prisma.EquipmentMaintenancePointCreateInput, Prisma.EquipmentMaintenancePointUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1602,6 +1608,7 @@ export type EquipmentMaintenancePointUpdateArgs<ExtArgs extends runtime.Types.Ex
    * Choose, which EquipmentMaintenancePoint to update.
    */
   where: Prisma.EquipmentMaintenancePointWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1680,6 +1687,7 @@ export type EquipmentMaintenancePointUpsertArgs<ExtArgs extends runtime.Types.Ex
    * In case the EquipmentMaintenancePoint was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.EquipmentMaintenancePointUpdateInput, Prisma.EquipmentMaintenancePointUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1702,6 +1710,7 @@ export type EquipmentMaintenancePointDeleteArgs<ExtArgs extends runtime.Types.Ex
    * Filter which EquipmentMaintenancePoint to delete.
    */
   where: Prisma.EquipmentMaintenancePointWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

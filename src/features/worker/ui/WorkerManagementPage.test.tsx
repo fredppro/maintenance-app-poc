@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import WorkerManagementPage from "./WorkerManagementPage";
@@ -48,5 +48,44 @@ describe("WorkerManagementPage", () => {
     });
     expect(getWorkersMock).toHaveBeenCalledTimes(2);
     expect(onWorkersChange).toHaveBeenCalledWith([]);
+  });
+
+  it("renders a named semantic table and supports opening a row with the keyboard", async () => {
+    getWorkersMock.mockResolvedValue([
+      {
+        id: "worker-1",
+        name: "Morgan Lee",
+        email: "morgan@example.test",
+        phone: null,
+        type: "INTERNAL",
+        vendorId: null,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      },
+    ]);
+
+    render(
+      <WorkerManagementPage
+        onWorkersChange={vi.fn()}
+      />,
+    );
+
+    const table = await screen.findByRole("table", { name: "title" });
+    expect(table.querySelector("thead")).toHaveClass("bg-muted");
+    expect(table.querySelector("tbody")).toHaveClass("bg-background");
+    expect(
+      screen.getByRole("columnheader", { name: "columnName" }),
+    ).toHaveAttribute("scope", "col");
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "openActions" }),
+    );
+    expect(await screen.findByRole("menuitem", { name: "edit" })).toBeVisible();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+
+    const row = screen.getByRole("row", { name: /Morgan Lee/ });
+    expect(row).toHaveAttribute("tabindex", "0");
+    fireEvent.keyDown(row, { key: "Enter" });
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 });

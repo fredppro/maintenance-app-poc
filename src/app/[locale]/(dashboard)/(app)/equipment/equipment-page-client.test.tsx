@@ -50,6 +50,12 @@ describe("EquipmentPageClient", () => {
       entries: [entry],
       sections: [{ id: "sec-1", name: "Dock", siteId: "site-1" }],
     });
+    const table = screen.getByRole("table", { name: "Equipment" });
+    expect(table.querySelector("thead")).toHaveClass("bg-muted");
+    expect(table.querySelector("tbody")).toHaveClass("bg-background");
+    expect(
+      within(table).getByRole("columnheader", { name: "Actions" }),
+    ).toHaveAttribute("scope", "col");
     const press = screen.getByRole("row", { name: /Press/ });
     expect(within(press).getByText("Dock")).toBeInTheDocument();
     expect(within(press).getByText("1")).toBeInTheDocument();

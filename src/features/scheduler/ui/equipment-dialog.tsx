@@ -16,6 +16,7 @@ import {
   FieldLabel,
   FieldLegend,
   FieldSet,
+  FieldTitle,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,6 +51,7 @@ import {
   uploadEquipmentImage,
   type EquipmentImageValue,
 } from "./equipment-image-field";
+import { getImageUploadErrorKey } from "@/features/files/client/image";
 
 const NO_SECTION = "__none__";
 
@@ -99,6 +101,8 @@ export function EquipmentDialog({
   const [pointChecklist, setPointChecklist] = useState<string[]>([]);
   const [pointDraftDirty, setPointDraftDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<ReturnType<typeof getImageUploadErrorKey> | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -107,6 +111,8 @@ export function EquipmentDialog({
     setName(equipment?.name ?? "");
     setCategory(equipment?.category ?? "");
     setImage({ fileId: equipment?.imageFileId ?? null, pending: null });
+    setUploadProgress(null);
+    setUploadError(null);
     setSiteId(currentSiteId);
     setSectionId(equipment?.sectionId ?? NO_SECTION);
     setNewSection("");
@@ -188,11 +194,21 @@ export function EquipmentDialog({
     try {
       let imageFileId = image.fileId;
       if (image.pending) {
+        setUploadError(null);
+        setUploadProgress(null);
         try {
-          imageFileId = await uploadEquipmentImage(image.pending);
-        } catch {
-          toast.error(t("failedUploadImage"));
+          imageFileId = await uploadEquipmentImage(image.pending, setUploadProgress);
+          setImage({
+            fileId: imageFileId,
+            pending: null,
+            fileName: image.fileName,
+            fileSize: image.fileSize,
+          });
+        } catch (error) {
+          setUploadError(getImageUploadErrorKey(error));
           return;
+        } finally {
+          setUploadProgress(null);
         }
       }
       const details = {
@@ -278,11 +294,19 @@ export function EquipmentDialog({
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4">
           <FieldGroup>
             <Field>
-              <FieldLabel>{t("equipmentImage")}</FieldLabel>
+              <FieldLabel htmlFor="equipment-image">{t("equipmentImage")}</FieldLabel>
+              <FieldDescription>{t("imageHint")}</FieldDescription>
               <EquipmentImageField
                 value={image}
-                onChange={setImage}
+                onChange={(next) => {
+                  setImage(next);
+                  setUploadError(null);
+                }}
                 disabled={saving}
+                uploading={saving && image.pending !== null}
+                uploadProgress={uploadProgress}
+                uploadError={uploadError}
+                onUploadErrorClear={() => setUploadError(null)}
               />
             </Field>
             <Field>
@@ -399,8 +423,16 @@ export function EquipmentDialog({
               )}
             </FieldSet>
             {equipment && history.length > 0 && (
-              <FieldSet>
-                <FieldLegend variant="label">{t("locationHistory")}</FieldLegend>
+              <section
+                aria-labelledby="equipment-location-history-heading"
+                className="flex flex-col gap-3"
+              >
+                <h3
+                  id="equipment-location-history-heading"
+                  className="text-sm font-medium"
+                >
+                  {t("locationHistory")}
+                </h3>
                 <ol className="flex flex-col gap-1.5 text-xs text-muted-foreground">
                   {history.slice(0, 5).map((entry) => (
                     <li
@@ -436,7 +468,7 @@ export function EquipmentDialog({
                     </li>
                   ))}
                 </ol>
-              </FieldSet>
+              </section>
             )}
             {equipment && (
               <>
@@ -509,7 +541,7 @@ export function EquipmentDialog({
                     />
                   </Field>
                   <Field>
-                    <FieldLabel>{t("pointChecklist")}</FieldLabel>
+                    <FieldTitle>{t("pointChecklist")}</FieldTitle>
                     <ChecklistTemplateEditor
                       value={pointChecklist}
                       onChange={(value) => {

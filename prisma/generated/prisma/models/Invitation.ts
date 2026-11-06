@@ -743,7 +743,7 @@ export type $InvitationPayload<ExtArgs extends runtime.Types.Extensions.Internal
 export type InvitationGetPayload<S extends boolean | null | undefined | InvitationDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$InvitationPayload, S>
 
 export type InvitationCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<InvitationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<InvitationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: InvitationCountAggregateInputType | true
   }
 
@@ -1193,6 +1193,7 @@ export type InvitationFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.In
    * Filter, which Invitation to fetch.
    */
   where: Prisma.InvitationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1215,6 +1216,7 @@ export type InvitationFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extens
    * Filter, which Invitation to fetch.
    */
   where: Prisma.InvitationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1267,6 +1269,7 @@ export type InvitationFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Filter by unique combinations of Invitations.
    */
   distinct?: Prisma.InvitationScalarFieldEnum | Prisma.InvitationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1319,6 +1322,7 @@ export type InvitationFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensi
    * Filter by unique combinations of Invitations.
    */
   distinct?: Prisma.InvitationScalarFieldEnum | Prisma.InvitationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1371,6 +1375,7 @@ export type InvitationFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Filter by unique combinations of Invitations.
    */
   distinct?: Prisma.InvitationScalarFieldEnum | Prisma.InvitationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1393,6 +1398,7 @@ export type InvitationCreateArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * The data needed to create a Invitation.
    */
   data: Prisma.XOR<Prisma.InvitationCreateInput, Prisma.InvitationUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1453,6 +1459,7 @@ export type InvitationUpdateArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Choose, which Invitation to update.
    */
   where: Prisma.InvitationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1531,6 +1538,7 @@ export type InvitationUpsertArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * In case the Invitation was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.InvitationUpdateInput, Prisma.InvitationUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1553,6 +1561,7 @@ export type InvitationDeleteArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Filter which Invitation to delete.
    */
   where: Prisma.InvitationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

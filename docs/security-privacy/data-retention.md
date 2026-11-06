@@ -15,6 +15,7 @@ customer-facing retention claim.
 | Expired invitations | Removed 30 days after expiry | `pnpm ops:retention` |
 | Rate-limit counters | Removed after 24 h | `pnpm ops:retention` |
 | Tenant export archives | Expire after 7 days; object and row removed | `pnpm ops:retention` |
+| Unattached equipment/logo image uploads | Deleted after a 7-day grace period | `pnpm ops:storage:cleanup` (daily maintenance workflow) |
 | Audit events | **No automatic deletion** | The runtime DB role cannot update or delete them (migration `20261010000000_privacy_hardening`) |
 | Backups | The application backup workflow file declares a daily schedule on `develop`, but is absent from the default-branch workflow list; no backup run was found in the recorded `develop` runs through 2026-10-15. Provider PITR and actual backup retention are unknown. | The workflow may skip when required settings are absent; it is not evidenced as active. Bucket lifecycle, provider retention, and application backup/restore remain unverified. |
 
@@ -23,7 +24,12 @@ Run all jobs with the owner connection (`MIGRATION_DATABASE_URL`).
 `MIGRATION_DATABASE_URL` is absent; the workflow definition does not establish
 that its environment is configured or that any run succeeded. Confirm execution
 and object-storage settings in the workflow and service logs before relying on
-the jobs.
+the jobs. In particular, unattached image cleanup does not run automatically
+unless the workflow has `MIGRATION_DATABASE_URL`; when `S3_BUCKET` is set, both
+`S3_CLEANUP_ACCESS_KEY_ID` and `S3_CLEANUP_SECRET_ACCESS_KEY` must also be
+configured or the entire maintenance workflow skips. If the workflow is not
+configured, run `pnpm ops:storage:cleanup` manually with the owner database and
+storage credentials.
 
 ## Backups are not instantly erased
 

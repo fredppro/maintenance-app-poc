@@ -1221,7 +1221,7 @@ export type $InventoryItemPayload<ExtArgs extends runtime.Types.Extensions.Inter
 export type InventoryItemGetPayload<S extends boolean | null | undefined | InventoryItemDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$InventoryItemPayload, S>
 
 export type InventoryItemCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<InventoryItemFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<InventoryItemFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: InventoryItemCountAggregateInputType | true
   }
 
@@ -1676,6 +1676,7 @@ export type InventoryItemFindUniqueArgs<ExtArgs extends runtime.Types.Extensions
    * Filter, which InventoryItem to fetch.
    */
   where: Prisma.InventoryItemWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1698,6 +1699,7 @@ export type InventoryItemFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Ext
    * Filter, which InventoryItem to fetch.
    */
   where: Prisma.InventoryItemWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1750,6 +1752,7 @@ export type InventoryItemFindFirstArgs<ExtArgs extends runtime.Types.Extensions.
    * Filter by unique combinations of InventoryItems.
    */
   distinct?: Prisma.InventoryItemScalarFieldEnum | Prisma.InventoryItemScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1802,6 +1805,7 @@ export type InventoryItemFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Exte
    * Filter by unique combinations of InventoryItems.
    */
   distinct?: Prisma.InventoryItemScalarFieldEnum | Prisma.InventoryItemScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1854,6 +1858,7 @@ export type InventoryItemFindManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Filter by unique combinations of InventoryItems.
    */
   distinct?: Prisma.InventoryItemScalarFieldEnum | Prisma.InventoryItemScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1876,6 +1881,7 @@ export type InventoryItemCreateArgs<ExtArgs extends runtime.Types.Extensions.Int
    * The data needed to create a InventoryItem.
    */
   data: Prisma.XOR<Prisma.InventoryItemCreateInput, Prisma.InventoryItemUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1936,6 +1942,7 @@ export type InventoryItemUpdateArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Choose, which InventoryItem to update.
    */
   where: Prisma.InventoryItemWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2014,6 +2021,7 @@ export type InventoryItemUpsertArgs<ExtArgs extends runtime.Types.Extensions.Int
    * In case the InventoryItem was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.InventoryItemUpdateInput, Prisma.InventoryItemUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -2036,6 +2044,7 @@ export type InventoryItemDeleteArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Filter which InventoryItem to delete.
    */
   where: Prisma.InventoryItemWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

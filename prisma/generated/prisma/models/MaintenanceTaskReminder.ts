@@ -39,6 +39,8 @@ export type MaintenanceTaskReminderMinAggregateOutputType = {
   taskId: string | null
   workerId: string | null
   organizationId: string | null
+  notificationType: $Enums.MaintenanceTaskNotificationType | null
+  idempotencyKey: string | null
   recipientEmail: string | null
   locale: string | null
   scheduledFor: Date | null
@@ -48,6 +50,7 @@ export type MaintenanceTaskReminderMinAggregateOutputType = {
   lastAttemptAt: Date | null
   sentAt: Date | null
   lastError: string | null
+  requestedById: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -57,6 +60,8 @@ export type MaintenanceTaskReminderMaxAggregateOutputType = {
   taskId: string | null
   workerId: string | null
   organizationId: string | null
+  notificationType: $Enums.MaintenanceTaskNotificationType | null
+  idempotencyKey: string | null
   recipientEmail: string | null
   locale: string | null
   scheduledFor: Date | null
@@ -66,6 +71,7 @@ export type MaintenanceTaskReminderMaxAggregateOutputType = {
   lastAttemptAt: Date | null
   sentAt: Date | null
   lastError: string | null
+  requestedById: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -75,6 +81,8 @@ export type MaintenanceTaskReminderCountAggregateOutputType = {
   taskId: number
   workerId: number
   organizationId: number
+  notificationType: number
+  idempotencyKey: number
   recipientEmail: number
   locale: number
   scheduledFor: number
@@ -84,6 +92,7 @@ export type MaintenanceTaskReminderCountAggregateOutputType = {
   lastAttemptAt: number
   sentAt: number
   lastError: number
+  requestedById: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -103,6 +112,8 @@ export type MaintenanceTaskReminderMinAggregateInputType = {
   taskId?: true
   workerId?: true
   organizationId?: true
+  notificationType?: true
+  idempotencyKey?: true
   recipientEmail?: true
   locale?: true
   scheduledFor?: true
@@ -112,6 +123,7 @@ export type MaintenanceTaskReminderMinAggregateInputType = {
   lastAttemptAt?: true
   sentAt?: true
   lastError?: true
+  requestedById?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -121,6 +133,8 @@ export type MaintenanceTaskReminderMaxAggregateInputType = {
   taskId?: true
   workerId?: true
   organizationId?: true
+  notificationType?: true
+  idempotencyKey?: true
   recipientEmail?: true
   locale?: true
   scheduledFor?: true
@@ -130,6 +144,7 @@ export type MaintenanceTaskReminderMaxAggregateInputType = {
   lastAttemptAt?: true
   sentAt?: true
   lastError?: true
+  requestedById?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -139,6 +154,8 @@ export type MaintenanceTaskReminderCountAggregateInputType = {
   taskId?: true
   workerId?: true
   organizationId?: true
+  notificationType?: true
+  idempotencyKey?: true
   recipientEmail?: true
   locale?: true
   scheduledFor?: true
@@ -148,6 +165,7 @@ export type MaintenanceTaskReminderCountAggregateInputType = {
   lastAttemptAt?: true
   sentAt?: true
   lastError?: true
+  requestedById?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -244,6 +262,8 @@ export type MaintenanceTaskReminderGroupByOutputType = {
   taskId: string
   workerId: string
   organizationId: string
+  notificationType: $Enums.MaintenanceTaskNotificationType
+  idempotencyKey: string
   recipientEmail: string
   locale: string
   scheduledFor: Date
@@ -253,6 +273,7 @@ export type MaintenanceTaskReminderGroupByOutputType = {
   lastAttemptAt: Date | null
   sentAt: Date | null
   lastError: string | null
+  requestedById: string | null
   createdAt: Date
   updatedAt: Date
   _count: MaintenanceTaskReminderCountAggregateOutputType | null
@@ -285,6 +306,8 @@ export type MaintenanceTaskReminderWhereInput = {
   taskId?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   workerId?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   organizationId?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFilter<"MaintenanceTaskReminder"> | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   recipientEmail?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   locale?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   scheduledFor?: Prisma.DateTimeFilter<"MaintenanceTaskReminder"> | Date | string
@@ -294,6 +317,7 @@ export type MaintenanceTaskReminderWhereInput = {
   lastAttemptAt?: Prisma.DateTimeNullableFilter<"MaintenanceTaskReminder"> | Date | string | null
   sentAt?: Prisma.DateTimeNullableFilter<"MaintenanceTaskReminder"> | Date | string | null
   lastError?: Prisma.StringNullableFilter<"MaintenanceTaskReminder"> | string | null
+  requestedById?: Prisma.StringNullableFilter<"MaintenanceTaskReminder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTaskReminder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaintenanceTaskReminder"> | Date | string
   task?: Prisma.XOR<Prisma.MaintenanceTaskScalarRelationFilter, Prisma.MaintenanceTaskWhereInput>
@@ -305,6 +329,8 @@ export type MaintenanceTaskReminderOrderByWithRelationInput = {
   taskId?: Prisma.SortOrder
   workerId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
+  notificationType?: Prisma.SortOrder
+  idempotencyKey?: Prisma.SortOrder
   recipientEmail?: Prisma.SortOrder
   locale?: Prisma.SortOrder
   scheduledFor?: Prisma.SortOrder
@@ -314,6 +340,7 @@ export type MaintenanceTaskReminderOrderByWithRelationInput = {
   lastAttemptAt?: Prisma.SortOrderInput | Prisma.SortOrder
   sentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastError?: Prisma.SortOrderInput | Prisma.SortOrder
+  requestedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   task?: Prisma.MaintenanceTaskOrderByWithRelationInput
@@ -322,13 +349,14 @@ export type MaintenanceTaskReminderOrderByWithRelationInput = {
 
 export type MaintenanceTaskReminderWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  taskId_workerId?: Prisma.MaintenanceTaskReminderTaskIdWorkerIdCompoundUniqueInput
+  idempotencyKey?: string
   AND?: Prisma.MaintenanceTaskReminderWhereInput | Prisma.MaintenanceTaskReminderWhereInput[]
   OR?: Prisma.MaintenanceTaskReminderWhereInput[]
   NOT?: Prisma.MaintenanceTaskReminderWhereInput | Prisma.MaintenanceTaskReminderWhereInput[]
   taskId?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   workerId?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   organizationId?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFilter<"MaintenanceTaskReminder"> | $Enums.MaintenanceTaskNotificationType
   recipientEmail?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   locale?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   scheduledFor?: Prisma.DateTimeFilter<"MaintenanceTaskReminder"> | Date | string
@@ -338,17 +366,20 @@ export type MaintenanceTaskReminderWhereUniqueInput = Prisma.AtLeast<{
   lastAttemptAt?: Prisma.DateTimeNullableFilter<"MaintenanceTaskReminder"> | Date | string | null
   sentAt?: Prisma.DateTimeNullableFilter<"MaintenanceTaskReminder"> | Date | string | null
   lastError?: Prisma.StringNullableFilter<"MaintenanceTaskReminder"> | string | null
+  requestedById?: Prisma.StringNullableFilter<"MaintenanceTaskReminder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTaskReminder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaintenanceTaskReminder"> | Date | string
   task?: Prisma.XOR<Prisma.MaintenanceTaskScalarRelationFilter, Prisma.MaintenanceTaskWhereInput>
   worker?: Prisma.XOR<Prisma.WorkerScalarRelationFilter, Prisma.WorkerWhereInput>
-}, "id" | "taskId_workerId">
+}, "id" | "idempotencyKey">
 
 export type MaintenanceTaskReminderOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   taskId?: Prisma.SortOrder
   workerId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
+  notificationType?: Prisma.SortOrder
+  idempotencyKey?: Prisma.SortOrder
   recipientEmail?: Prisma.SortOrder
   locale?: Prisma.SortOrder
   scheduledFor?: Prisma.SortOrder
@@ -358,6 +389,7 @@ export type MaintenanceTaskReminderOrderByWithAggregationInput = {
   lastAttemptAt?: Prisma.SortOrderInput | Prisma.SortOrder
   sentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastError?: Prisma.SortOrderInput | Prisma.SortOrder
+  requestedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.MaintenanceTaskReminderCountOrderByAggregateInput
@@ -375,6 +407,8 @@ export type MaintenanceTaskReminderScalarWhereWithAggregatesInput = {
   taskId?: Prisma.StringWithAggregatesFilter<"MaintenanceTaskReminder"> | string
   workerId?: Prisma.StringWithAggregatesFilter<"MaintenanceTaskReminder"> | string
   organizationId?: Prisma.StringWithAggregatesFilter<"MaintenanceTaskReminder"> | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeWithAggregatesFilter<"MaintenanceTaskReminder"> | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringWithAggregatesFilter<"MaintenanceTaskReminder"> | string
   recipientEmail?: Prisma.StringWithAggregatesFilter<"MaintenanceTaskReminder"> | string
   locale?: Prisma.StringWithAggregatesFilter<"MaintenanceTaskReminder"> | string
   scheduledFor?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTaskReminder"> | Date | string
@@ -384,12 +418,15 @@ export type MaintenanceTaskReminderScalarWhereWithAggregatesInput = {
   lastAttemptAt?: Prisma.DateTimeNullableWithAggregatesFilter<"MaintenanceTaskReminder"> | Date | string | null
   sentAt?: Prisma.DateTimeNullableWithAggregatesFilter<"MaintenanceTaskReminder"> | Date | string | null
   lastError?: Prisma.StringNullableWithAggregatesFilter<"MaintenanceTaskReminder"> | string | null
+  requestedById?: Prisma.StringNullableWithAggregatesFilter<"MaintenanceTaskReminder"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTaskReminder"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"MaintenanceTaskReminder"> | Date | string
 }
 
 export type MaintenanceTaskReminderCreateInput = {
   id?: string
+  notificationType?: $Enums.MaintenanceTaskNotificationType
+  idempotencyKey: string
   recipientEmail: string
   locale?: string
   scheduledFor: Date | string
@@ -399,6 +436,7 @@ export type MaintenanceTaskReminderCreateInput = {
   lastAttemptAt?: Date | string | null
   sentAt?: Date | string | null
   lastError?: string | null
+  requestedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   task: Prisma.MaintenanceTaskCreateNestedOneWithoutRemindersInput
@@ -410,6 +448,8 @@ export type MaintenanceTaskReminderUncheckedCreateInput = {
   taskId: string
   workerId: string
   organizationId: string
+  notificationType?: $Enums.MaintenanceTaskNotificationType
+  idempotencyKey: string
   recipientEmail: string
   locale?: string
   scheduledFor: Date | string
@@ -419,12 +459,15 @@ export type MaintenanceTaskReminderUncheckedCreateInput = {
   lastAttemptAt?: Date | string | null
   sentAt?: Date | string | null
   lastError?: string | null
+  requestedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type MaintenanceTaskReminderUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFieldUpdateOperationsInput | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   recipientEmail?: Prisma.StringFieldUpdateOperationsInput | string
   locale?: Prisma.StringFieldUpdateOperationsInput | string
   scheduledFor?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -434,6 +477,7 @@ export type MaintenanceTaskReminderUpdateInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   task?: Prisma.MaintenanceTaskUpdateOneRequiredWithoutRemindersNestedInput
@@ -445,6 +489,8 @@ export type MaintenanceTaskReminderUncheckedUpdateInput = {
   taskId?: Prisma.StringFieldUpdateOperationsInput | string
   workerId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFieldUpdateOperationsInput | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   recipientEmail?: Prisma.StringFieldUpdateOperationsInput | string
   locale?: Prisma.StringFieldUpdateOperationsInput | string
   scheduledFor?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -454,6 +500,7 @@ export type MaintenanceTaskReminderUncheckedUpdateInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -463,6 +510,8 @@ export type MaintenanceTaskReminderCreateManyInput = {
   taskId: string
   workerId: string
   organizationId: string
+  notificationType?: $Enums.MaintenanceTaskNotificationType
+  idempotencyKey: string
   recipientEmail: string
   locale?: string
   scheduledFor: Date | string
@@ -472,12 +521,15 @@ export type MaintenanceTaskReminderCreateManyInput = {
   lastAttemptAt?: Date | string | null
   sentAt?: Date | string | null
   lastError?: string | null
+  requestedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type MaintenanceTaskReminderUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFieldUpdateOperationsInput | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   recipientEmail?: Prisma.StringFieldUpdateOperationsInput | string
   locale?: Prisma.StringFieldUpdateOperationsInput | string
   scheduledFor?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -487,6 +539,7 @@ export type MaintenanceTaskReminderUpdateManyMutationInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -496,6 +549,8 @@ export type MaintenanceTaskReminderUncheckedUpdateManyInput = {
   taskId?: Prisma.StringFieldUpdateOperationsInput | string
   workerId?: Prisma.StringFieldUpdateOperationsInput | string
   organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFieldUpdateOperationsInput | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   recipientEmail?: Prisma.StringFieldUpdateOperationsInput | string
   locale?: Prisma.StringFieldUpdateOperationsInput | string
   scheduledFor?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -505,6 +560,7 @@ export type MaintenanceTaskReminderUncheckedUpdateManyInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -519,16 +575,13 @@ export type MaintenanceTaskReminderOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type MaintenanceTaskReminderTaskIdWorkerIdCompoundUniqueInput = {
-  taskId: string
-  workerId: string
-}
-
 export type MaintenanceTaskReminderCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   taskId?: Prisma.SortOrder
   workerId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
+  notificationType?: Prisma.SortOrder
+  idempotencyKey?: Prisma.SortOrder
   recipientEmail?: Prisma.SortOrder
   locale?: Prisma.SortOrder
   scheduledFor?: Prisma.SortOrder
@@ -538,6 +591,7 @@ export type MaintenanceTaskReminderCountOrderByAggregateInput = {
   lastAttemptAt?: Prisma.SortOrder
   sentAt?: Prisma.SortOrder
   lastError?: Prisma.SortOrder
+  requestedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -551,6 +605,8 @@ export type MaintenanceTaskReminderMaxOrderByAggregateInput = {
   taskId?: Prisma.SortOrder
   workerId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
+  notificationType?: Prisma.SortOrder
+  idempotencyKey?: Prisma.SortOrder
   recipientEmail?: Prisma.SortOrder
   locale?: Prisma.SortOrder
   scheduledFor?: Prisma.SortOrder
@@ -560,6 +616,7 @@ export type MaintenanceTaskReminderMaxOrderByAggregateInput = {
   lastAttemptAt?: Prisma.SortOrder
   sentAt?: Prisma.SortOrder
   lastError?: Prisma.SortOrder
+  requestedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -569,6 +626,8 @@ export type MaintenanceTaskReminderMinOrderByAggregateInput = {
   taskId?: Prisma.SortOrder
   workerId?: Prisma.SortOrder
   organizationId?: Prisma.SortOrder
+  notificationType?: Prisma.SortOrder
+  idempotencyKey?: Prisma.SortOrder
   recipientEmail?: Prisma.SortOrder
   locale?: Prisma.SortOrder
   scheduledFor?: Prisma.SortOrder
@@ -578,6 +637,7 @@ export type MaintenanceTaskReminderMinOrderByAggregateInput = {
   lastAttemptAt?: Prisma.SortOrder
   sentAt?: Prisma.SortOrder
   lastError?: Prisma.SortOrder
+  requestedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -628,6 +688,10 @@ export type MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskNestedInput = {
   deleteMany?: Prisma.MaintenanceTaskReminderScalarWhereInput | Prisma.MaintenanceTaskReminderScalarWhereInput[]
 }
 
+export type EnumMaintenanceTaskNotificationTypeFieldUpdateOperationsInput = {
+  set?: $Enums.MaintenanceTaskNotificationType
+}
+
 export type EnumMaintenanceReminderStatusFieldUpdateOperationsInput = {
   set?: $Enums.MaintenanceReminderStatus
 }
@@ -676,6 +740,8 @@ export type MaintenanceTaskReminderUncheckedUpdateManyWithoutWorkerNestedInput =
 
 export type MaintenanceTaskReminderCreateWithoutTaskInput = {
   id?: string
+  notificationType?: $Enums.MaintenanceTaskNotificationType
+  idempotencyKey: string
   recipientEmail: string
   locale?: string
   scheduledFor: Date | string
@@ -685,6 +751,7 @@ export type MaintenanceTaskReminderCreateWithoutTaskInput = {
   lastAttemptAt?: Date | string | null
   sentAt?: Date | string | null
   lastError?: string | null
+  requestedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   worker: Prisma.WorkerCreateNestedOneWithoutRemindersInput
@@ -693,6 +760,8 @@ export type MaintenanceTaskReminderCreateWithoutTaskInput = {
 export type MaintenanceTaskReminderUncheckedCreateWithoutTaskInput = {
   id?: string
   workerId: string
+  notificationType?: $Enums.MaintenanceTaskNotificationType
+  idempotencyKey: string
   recipientEmail: string
   locale?: string
   scheduledFor: Date | string
@@ -702,6 +771,7 @@ export type MaintenanceTaskReminderUncheckedCreateWithoutTaskInput = {
   lastAttemptAt?: Date | string | null
   sentAt?: Date | string | null
   lastError?: string | null
+  requestedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -740,6 +810,8 @@ export type MaintenanceTaskReminderScalarWhereInput = {
   taskId?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   workerId?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   organizationId?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFilter<"MaintenanceTaskReminder"> | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   recipientEmail?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   locale?: Prisma.StringFilter<"MaintenanceTaskReminder"> | string
   scheduledFor?: Prisma.DateTimeFilter<"MaintenanceTaskReminder"> | Date | string
@@ -749,12 +821,15 @@ export type MaintenanceTaskReminderScalarWhereInput = {
   lastAttemptAt?: Prisma.DateTimeNullableFilter<"MaintenanceTaskReminder"> | Date | string | null
   sentAt?: Prisma.DateTimeNullableFilter<"MaintenanceTaskReminder"> | Date | string | null
   lastError?: Prisma.StringNullableFilter<"MaintenanceTaskReminder"> | string | null
+  requestedById?: Prisma.StringNullableFilter<"MaintenanceTaskReminder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MaintenanceTaskReminder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MaintenanceTaskReminder"> | Date | string
 }
 
 export type MaintenanceTaskReminderCreateWithoutWorkerInput = {
   id?: string
+  notificationType?: $Enums.MaintenanceTaskNotificationType
+  idempotencyKey: string
   recipientEmail: string
   locale?: string
   scheduledFor: Date | string
@@ -764,6 +839,7 @@ export type MaintenanceTaskReminderCreateWithoutWorkerInput = {
   lastAttemptAt?: Date | string | null
   sentAt?: Date | string | null
   lastError?: string | null
+  requestedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   task: Prisma.MaintenanceTaskCreateNestedOneWithoutRemindersInput
@@ -772,6 +848,8 @@ export type MaintenanceTaskReminderCreateWithoutWorkerInput = {
 export type MaintenanceTaskReminderUncheckedCreateWithoutWorkerInput = {
   id?: string
   taskId: string
+  notificationType?: $Enums.MaintenanceTaskNotificationType
+  idempotencyKey: string
   recipientEmail: string
   locale?: string
   scheduledFor: Date | string
@@ -781,6 +859,7 @@ export type MaintenanceTaskReminderUncheckedCreateWithoutWorkerInput = {
   lastAttemptAt?: Date | string | null
   sentAt?: Date | string | null
   lastError?: string | null
+  requestedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -814,6 +893,8 @@ export type MaintenanceTaskReminderUpdateManyWithWhereWithoutWorkerInput = {
 export type MaintenanceTaskReminderCreateManyTaskInput = {
   id?: string
   workerId: string
+  notificationType?: $Enums.MaintenanceTaskNotificationType
+  idempotencyKey: string
   recipientEmail: string
   locale?: string
   scheduledFor: Date | string
@@ -823,12 +904,15 @@ export type MaintenanceTaskReminderCreateManyTaskInput = {
   lastAttemptAt?: Date | string | null
   sentAt?: Date | string | null
   lastError?: string | null
+  requestedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type MaintenanceTaskReminderUpdateWithoutTaskInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFieldUpdateOperationsInput | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   recipientEmail?: Prisma.StringFieldUpdateOperationsInput | string
   locale?: Prisma.StringFieldUpdateOperationsInput | string
   scheduledFor?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -838,6 +922,7 @@ export type MaintenanceTaskReminderUpdateWithoutTaskInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   worker?: Prisma.WorkerUpdateOneRequiredWithoutRemindersNestedInput
@@ -846,6 +931,8 @@ export type MaintenanceTaskReminderUpdateWithoutTaskInput = {
 export type MaintenanceTaskReminderUncheckedUpdateWithoutTaskInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   workerId?: Prisma.StringFieldUpdateOperationsInput | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFieldUpdateOperationsInput | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   recipientEmail?: Prisma.StringFieldUpdateOperationsInput | string
   locale?: Prisma.StringFieldUpdateOperationsInput | string
   scheduledFor?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -855,6 +942,7 @@ export type MaintenanceTaskReminderUncheckedUpdateWithoutTaskInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -862,6 +950,8 @@ export type MaintenanceTaskReminderUncheckedUpdateWithoutTaskInput = {
 export type MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   workerId?: Prisma.StringFieldUpdateOperationsInput | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFieldUpdateOperationsInput | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   recipientEmail?: Prisma.StringFieldUpdateOperationsInput | string
   locale?: Prisma.StringFieldUpdateOperationsInput | string
   scheduledFor?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -871,6 +961,7 @@ export type MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -878,6 +969,8 @@ export type MaintenanceTaskReminderUncheckedUpdateManyWithoutTaskInput = {
 export type MaintenanceTaskReminderCreateManyWorkerInput = {
   id?: string
   taskId: string
+  notificationType?: $Enums.MaintenanceTaskNotificationType
+  idempotencyKey: string
   recipientEmail: string
   locale?: string
   scheduledFor: Date | string
@@ -887,12 +980,15 @@ export type MaintenanceTaskReminderCreateManyWorkerInput = {
   lastAttemptAt?: Date | string | null
   sentAt?: Date | string | null
   lastError?: string | null
+  requestedById?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type MaintenanceTaskReminderUpdateWithoutWorkerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFieldUpdateOperationsInput | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   recipientEmail?: Prisma.StringFieldUpdateOperationsInput | string
   locale?: Prisma.StringFieldUpdateOperationsInput | string
   scheduledFor?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -902,6 +998,7 @@ export type MaintenanceTaskReminderUpdateWithoutWorkerInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   task?: Prisma.MaintenanceTaskUpdateOneRequiredWithoutRemindersNestedInput
@@ -910,6 +1007,8 @@ export type MaintenanceTaskReminderUpdateWithoutWorkerInput = {
 export type MaintenanceTaskReminderUncheckedUpdateWithoutWorkerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   taskId?: Prisma.StringFieldUpdateOperationsInput | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFieldUpdateOperationsInput | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   recipientEmail?: Prisma.StringFieldUpdateOperationsInput | string
   locale?: Prisma.StringFieldUpdateOperationsInput | string
   scheduledFor?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -919,6 +1018,7 @@ export type MaintenanceTaskReminderUncheckedUpdateWithoutWorkerInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -926,6 +1026,8 @@ export type MaintenanceTaskReminderUncheckedUpdateWithoutWorkerInput = {
 export type MaintenanceTaskReminderUncheckedUpdateManyWithoutWorkerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   taskId?: Prisma.StringFieldUpdateOperationsInput | string
+  notificationType?: Prisma.EnumMaintenanceTaskNotificationTypeFieldUpdateOperationsInput | $Enums.MaintenanceTaskNotificationType
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   recipientEmail?: Prisma.StringFieldUpdateOperationsInput | string
   locale?: Prisma.StringFieldUpdateOperationsInput | string
   scheduledFor?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -935,6 +1037,7 @@ export type MaintenanceTaskReminderUncheckedUpdateManyWithoutWorkerInput = {
   lastAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -946,6 +1049,8 @@ export type MaintenanceTaskReminderSelect<ExtArgs extends runtime.Types.Extensio
   taskId?: boolean
   workerId?: boolean
   organizationId?: boolean
+  notificationType?: boolean
+  idempotencyKey?: boolean
   recipientEmail?: boolean
   locale?: boolean
   scheduledFor?: boolean
@@ -955,6 +1060,7 @@ export type MaintenanceTaskReminderSelect<ExtArgs extends runtime.Types.Extensio
   lastAttemptAt?: boolean
   sentAt?: boolean
   lastError?: boolean
+  requestedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
@@ -966,6 +1072,8 @@ export type MaintenanceTaskReminderSelectCreateManyAndReturn<ExtArgs extends run
   taskId?: boolean
   workerId?: boolean
   organizationId?: boolean
+  notificationType?: boolean
+  idempotencyKey?: boolean
   recipientEmail?: boolean
   locale?: boolean
   scheduledFor?: boolean
@@ -975,6 +1083,7 @@ export type MaintenanceTaskReminderSelectCreateManyAndReturn<ExtArgs extends run
   lastAttemptAt?: boolean
   sentAt?: boolean
   lastError?: boolean
+  requestedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
@@ -986,6 +1095,8 @@ export type MaintenanceTaskReminderSelectUpdateManyAndReturn<ExtArgs extends run
   taskId?: boolean
   workerId?: boolean
   organizationId?: boolean
+  notificationType?: boolean
+  idempotencyKey?: boolean
   recipientEmail?: boolean
   locale?: boolean
   scheduledFor?: boolean
@@ -995,6 +1106,7 @@ export type MaintenanceTaskReminderSelectUpdateManyAndReturn<ExtArgs extends run
   lastAttemptAt?: boolean
   sentAt?: boolean
   lastError?: boolean
+  requestedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
@@ -1006,6 +1118,8 @@ export type MaintenanceTaskReminderSelectScalar = {
   taskId?: boolean
   workerId?: boolean
   organizationId?: boolean
+  notificationType?: boolean
+  idempotencyKey?: boolean
   recipientEmail?: boolean
   locale?: boolean
   scheduledFor?: boolean
@@ -1015,11 +1129,12 @@ export type MaintenanceTaskReminderSelectScalar = {
   lastAttemptAt?: boolean
   sentAt?: boolean
   lastError?: boolean
+  requestedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type MaintenanceTaskReminderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "taskId" | "workerId" | "organizationId" | "recipientEmail" | "locale" | "scheduledFor" | "nextAttemptAt" | "status" | "attempts" | "lastAttemptAt" | "sentAt" | "lastError" | "createdAt" | "updatedAt", ExtArgs["result"]["maintenanceTaskReminder"]>
+export type MaintenanceTaskReminderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "taskId" | "workerId" | "organizationId" | "notificationType" | "idempotencyKey" | "recipientEmail" | "locale" | "scheduledFor" | "nextAttemptAt" | "status" | "attempts" | "lastAttemptAt" | "sentAt" | "lastError" | "requestedById" | "createdAt" | "updatedAt", ExtArgs["result"]["maintenanceTaskReminder"]>
 export type MaintenanceTaskReminderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   task?: boolean | Prisma.MaintenanceTaskDefaultArgs<ExtArgs>
   worker?: boolean | Prisma.WorkerDefaultArgs<ExtArgs>
@@ -1044,6 +1159,8 @@ export type $MaintenanceTaskReminderPayload<ExtArgs extends runtime.Types.Extens
     taskId: string
     workerId: string
     organizationId: string
+    notificationType: $Enums.MaintenanceTaskNotificationType
+    idempotencyKey: string
     recipientEmail: string
     locale: string
     scheduledFor: Date
@@ -1053,6 +1170,7 @@ export type $MaintenanceTaskReminderPayload<ExtArgs extends runtime.Types.Extens
     lastAttemptAt: Date | null
     sentAt: Date | null
     lastError: string | null
+    requestedById: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["maintenanceTaskReminder"]>
@@ -1062,7 +1180,7 @@ export type $MaintenanceTaskReminderPayload<ExtArgs extends runtime.Types.Extens
 export type MaintenanceTaskReminderGetPayload<S extends boolean | null | undefined | MaintenanceTaskReminderDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$MaintenanceTaskReminderPayload, S>
 
 export type MaintenanceTaskReminderCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<MaintenanceTaskReminderFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<MaintenanceTaskReminderFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: MaintenanceTaskReminderCountAggregateInputType | true
   }
 
@@ -1484,6 +1602,8 @@ export interface MaintenanceTaskReminderFieldRefs {
   readonly taskId: Prisma.FieldRef<"MaintenanceTaskReminder", 'String'>
   readonly workerId: Prisma.FieldRef<"MaintenanceTaskReminder", 'String'>
   readonly organizationId: Prisma.FieldRef<"MaintenanceTaskReminder", 'String'>
+  readonly notificationType: Prisma.FieldRef<"MaintenanceTaskReminder", 'MaintenanceTaskNotificationType'>
+  readonly idempotencyKey: Prisma.FieldRef<"MaintenanceTaskReminder", 'String'>
   readonly recipientEmail: Prisma.FieldRef<"MaintenanceTaskReminder", 'String'>
   readonly locale: Prisma.FieldRef<"MaintenanceTaskReminder", 'String'>
   readonly scheduledFor: Prisma.FieldRef<"MaintenanceTaskReminder", 'DateTime'>
@@ -1493,6 +1613,7 @@ export interface MaintenanceTaskReminderFieldRefs {
   readonly lastAttemptAt: Prisma.FieldRef<"MaintenanceTaskReminder", 'DateTime'>
   readonly sentAt: Prisma.FieldRef<"MaintenanceTaskReminder", 'DateTime'>
   readonly lastError: Prisma.FieldRef<"MaintenanceTaskReminder", 'String'>
+  readonly requestedById: Prisma.FieldRef<"MaintenanceTaskReminder", 'String'>
   readonly createdAt: Prisma.FieldRef<"MaintenanceTaskReminder", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"MaintenanceTaskReminder", 'DateTime'>
 }
@@ -1519,6 +1640,7 @@ export type MaintenanceTaskReminderFindUniqueArgs<ExtArgs extends runtime.Types.
    * Filter, which MaintenanceTaskReminder to fetch.
    */
   where: Prisma.MaintenanceTaskReminderWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1541,6 +1663,7 @@ export type MaintenanceTaskReminderFindUniqueOrThrowArgs<ExtArgs extends runtime
    * Filter, which MaintenanceTaskReminder to fetch.
    */
   where: Prisma.MaintenanceTaskReminderWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1593,6 +1716,7 @@ export type MaintenanceTaskReminderFindFirstArgs<ExtArgs extends runtime.Types.E
    * Filter by unique combinations of MaintenanceTaskReminders.
    */
   distinct?: Prisma.MaintenanceTaskReminderScalarFieldEnum | Prisma.MaintenanceTaskReminderScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1645,6 +1769,7 @@ export type MaintenanceTaskReminderFindFirstOrThrowArgs<ExtArgs extends runtime.
    * Filter by unique combinations of MaintenanceTaskReminders.
    */
   distinct?: Prisma.MaintenanceTaskReminderScalarFieldEnum | Prisma.MaintenanceTaskReminderScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1697,6 +1822,7 @@ export type MaintenanceTaskReminderFindManyArgs<ExtArgs extends runtime.Types.Ex
    * Filter by unique combinations of MaintenanceTaskReminders.
    */
   distinct?: Prisma.MaintenanceTaskReminderScalarFieldEnum | Prisma.MaintenanceTaskReminderScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1719,6 +1845,7 @@ export type MaintenanceTaskReminderCreateArgs<ExtArgs extends runtime.Types.Exte
    * The data needed to create a MaintenanceTaskReminder.
    */
   data: Prisma.XOR<Prisma.MaintenanceTaskReminderCreateInput, Prisma.MaintenanceTaskReminderUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1779,6 +1906,7 @@ export type MaintenanceTaskReminderUpdateArgs<ExtArgs extends runtime.Types.Exte
    * Choose, which MaintenanceTaskReminder to update.
    */
   where: Prisma.MaintenanceTaskReminderWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1857,6 +1985,7 @@ export type MaintenanceTaskReminderUpsertArgs<ExtArgs extends runtime.Types.Exte
    * In case the MaintenanceTaskReminder was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.MaintenanceTaskReminderUpdateInput, Prisma.MaintenanceTaskReminderUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1879,6 +2008,7 @@ export type MaintenanceTaskReminderDeleteArgs<ExtArgs extends runtime.Types.Exte
    * Filter which MaintenanceTaskReminder to delete.
    */
   where: Prisma.MaintenanceTaskReminderWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

@@ -17,12 +17,19 @@ import {
   getTasks,
   createTask,
   updateTask,
+  previewMaintenanceTaskEmail,
+  sendMaintenanceTaskEmail,
   deleteTask,
   moveTask,
   recordOperatingHours,
   consumeInventory,
 } from "./actions";
-import { MaterialUnit, TaskType } from "../../../../prisma/generated/prisma/enums";
+import {
+  MaintenanceReminderStatus,
+  MaintenanceTaskNotificationType,
+  MaterialUnit,
+  TaskType,
+} from "../../../../prisma/generated/prisma/enums";
 import { cookies } from "next/headers";
 import {
   getOrganizationContext,
@@ -30,7 +37,20 @@ import {
   setActiveSiteCookie,
 } from "@/lib/tenant-context";
 import { recordAuditEvent } from "@/lib/audit";
-import { deleteStoredFile } from "@/features/files/server/files";
+import {
+  deleteStoredFile,
+  markStoredFileAttached,
+} from "@/features/files/server/files";
+
+const notificationMocks = vi.hoisted(() => ({
+  dispatchById: vi.fn(),
+  dispatch: vi.fn(),
+}));
+
+vi.mock("./reminders", () => ({
+  dispatchMaintenanceReminderById: notificationMocks.dispatchById,
+  dispatchMaintenanceReminders: notificationMocks.dispatch,
+}));
 
 // The tenant client is the shared prisma object, so spies on `prisma` observe the actions' queries.
 vi.mock("@/lib/tenant-context", async () => {
@@ -59,6 +79,7 @@ vi.mock("@/lib/audit", () => ({ recordAuditEvent: vi.fn() }));
 
 vi.mock("@/features/files/server/files", () => ({
   deleteStoredFile: vi.fn(),
+  markStoredFileAttached: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -73,6 +94,15 @@ describe("scheduler server actions", () => {
   beforeEach(() => {
     vi.mocked(revalidatePath).mockClear();
     vi.mocked(getTenantContext).mockClear();
+    notificationMocks.dispatch.mockClear();
+    notificationMocks.dispatchById.mockClear();
+    notificationMocks.dispatch.mockResolvedValue({
+      cancelled: 0,
+      failed: 0,
+      sent: 0,
+      skipped: 0,
+    });
+    notificationMocks.dispatchById.mockResolvedValue("sent");
     vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue({ id: "eq-1" } as never);
     vi.spyOn(prisma.worker, "count").mockResolvedValue(2);
     vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({ id: "task-123" } as never);
@@ -142,6 +172,18 @@ describe("scheduler server actions", () => {
       } finally {
         createMock.mockRestore();
       }
+    });
+
+    it("claims a new equipment photo in the same transaction that links it", async () => {
+      vi.spyOn(prisma, "$transaction").mockImplementation(
+        (callback) => callback(prisma as never),
+      );
+      vi.spyOn(prisma.storedFile, "findFirst").mockResolvedValue({ id: "file-1" } as never);
+      vi.spyOn(prisma.equipment, "create").mockResolvedValue({ id: "eq-2" } as never);
+
+      await addEquipment({ name: "Press", imageFileId: "file-1" });
+
+      expect(markStoredFileAttached).toHaveBeenCalledWith(prisma, "file-1", "org-1");
     });
 
     it("updateEquipment updates record and revalidates path", async () => {
@@ -302,6 +344,9 @@ describe("scheduler server actions", () => {
     });
 
     it("deletes the previous image when it is replaced", async () => {
+      vi.spyOn(prisma, "$transaction").mockImplementation(
+        (callback) => callback(prisma as never),
+      );
       vi.spyOn(prisma.storedFile, "findFirst").mockResolvedValue({ id: "new" } as never);
       vi.spyOn(prisma.equipment, "findFirst").mockResolvedValue({ imageFileId: "old" } as never);
       vi.spyOn(prisma.equipment, "update").mockResolvedValue({ id: "eq-1" } as never);
@@ -464,6 +509,128 @@ describe("scheduler server actions", () => {
   });
 
   describe("task actions", () => {
+    it("previews only current task assignments and identifies unusable addresses", async () => {
+      const startTime = new Date("2026-06-01T08:00:00.000Z");
+      const taskFind = vi
+        .spyOn(prisma.maintenanceTask, "findFirst")
+        .mockResolvedValue({
+          id: "task-1",
+          title: "Inspect pump",
+          startTime,
+          assignments: [
+            {
+              workerId: "worker-1",
+              worker: { name: "Ana", email: "ana@example.test" },
+            },
+            {
+              workerId: "worker-2",
+              worker: { name: "No email", email: "" },
+            },
+          ],
+        } as never);
+
+      const preview = await previewMaintenanceTaskEmail("task-1");
+
+      expect(taskFind).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: "task-1",
+            organizationId: "org-1",
+            equipment: { is: { siteId: "site-1" } },
+          }),
+        }),
+      );
+      expect(preview).toEqual({
+        taskId: "task-1",
+        title: "Inspect pump",
+        startTime,
+        recipients: [
+          {
+            workerId: "worker-1",
+            name: "Ana",
+            email: "ana@example.test",
+          },
+        ],
+        excludedRecipients: [{ workerId: "worker-2", name: "No email" }],
+      });
+    });
+
+    it("sends a confirmed manual email only to workers still assigned to the task", async () => {
+      const requestId = "d3f4b24c-9a7e-41b8-8fbd-07d75c55e580";
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-1",
+        assignments: [
+          {
+            workerId: "worker-1",
+            worker: { email: "ana@example.test" },
+          },
+        ],
+      } as never);
+      vi.spyOn(prisma.tenantSettings, "findUnique").mockResolvedValue({
+        locale: "en",
+      } as never);
+      const upsert = vi
+        .spyOn(prisma.maintenanceTaskReminder, "upsert")
+        .mockResolvedValue({
+          id: "manual-notification-1",
+          status: MaintenanceReminderStatus.PENDING,
+        } as never);
+
+      const result = await sendMaintenanceTaskEmail({
+        taskId: "task-1",
+        workerIds: ["worker-1"],
+        requestId,
+      });
+
+      expect(getTenantContext).toHaveBeenCalledWith("manageMaintenance");
+      expect(prisma.maintenanceTask.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: "task-1",
+            organizationId: "org-1",
+            equipment: { is: { siteId: "site-1" } },
+          }),
+        }),
+      );
+      expect(upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            idempotencyKey: `manual:${requestId}:task-1:worker-1`,
+          },
+          create: expect.objectContaining({
+            notificationType: MaintenanceTaskNotificationType.MANUAL,
+            requestedById: "user-1",
+            recipientEmail: "ana@example.test",
+          }),
+        }),
+      );
+      expect(notificationMocks.dispatchById).toHaveBeenCalledWith(
+        "org-1",
+        "manual-notification-1",
+        expect.any(Date),
+      );
+      expect(result).toEqual({ sent: 1, failed: 0, pending: 0 });
+    });
+
+    it("rejects manual recipients that are no longer assigned", async () => {
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-1",
+        assignments: [],
+      } as never);
+      const upsert = vi.spyOn(prisma.maintenanceTaskReminder, "upsert");
+
+      await expect(
+        sendMaintenanceTaskEmail({
+          taskId: "task-1",
+          workerIds: ["worker-1"],
+          requestId: "d3f4b24c-9a7e-41b8-8fbd-07d75c55e580",
+        }),
+      ).rejects.toThrow("One or more selected workers are no longer assigned");
+
+      expect(upsert).not.toHaveBeenCalled();
+      expect(notificationMocks.dispatchById).not.toHaveBeenCalled();
+    });
+
     it("requires write permission before attempting a task mutation", async () => {
       vi.mocked(getTenantContext).mockRejectedValueOnce(
         new Error("Permission denied"),
@@ -764,6 +931,7 @@ describe("scheduler server actions", () => {
               organizationId: "org-1",
               equipment: { is: { siteId: "site-1" } },
             },
+            relationLoadStrategy: "join",
             include: {
               equipment: true,
               dailyHours: true,
@@ -774,6 +942,7 @@ describe("scheduler server actions", () => {
                 select: {
                   id: true,
                   workerId: true,
+                  notificationType: true,
                   status: true,
                   scheduledFor: true,
                   sentAt: true,
@@ -847,6 +1016,129 @@ describe("scheduler server actions", () => {
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {
         createMock.mockRestore();
+      }
+    });
+
+    it("stores a work-log start instant using the organization time zone", async () => {
+      vi.spyOn(prisma.worker, "count").mockResolvedValue(1);
+      vi.spyOn(prisma.tenantSettings, "findUnique").mockResolvedValue({
+        timezone: "Europe/Lisbon",
+      } as never);
+      const createTaskRecord = vi
+        .spyOn(prisma.maintenanceTask, "create")
+        .mockResolvedValue({ id: "task-new" } as never);
+
+      try {
+        await createTask({
+          title: "Inspect drive",
+          startTime: new Date("2026-07-01T08:00:00.000Z"),
+          equipmentId: "eq-1",
+          workerIds: ["worker-1"],
+          dailyHours: [
+            {
+              workerId: "worker-1",
+              workDate: "2026-07-01",
+              startTime: "08:30",
+              hours: 2,
+            },
+          ],
+        });
+
+        expect(createTaskRecord).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              dailyHours: {
+                createMany: {
+                  data: [
+                    {
+                      workerId: "worker-1",
+                      workDate: new Date("2026-07-01T00:00:00.000Z"),
+                      startTime: new Date("2026-07-01T07:30:00.000Z"),
+                      hours: "2.00",
+                    },
+                  ],
+                },
+              },
+            }),
+          }),
+        );
+      } finally {
+        createTaskRecord.mockRestore();
+      }
+    });
+
+    it("infers duration-only work-log starts from the scheduled time per worker", async () => {
+      vi.spyOn(prisma.tenantSettings, "findUnique").mockResolvedValue({
+        timezone: "Europe/Lisbon",
+      } as never);
+      const createTaskRecord = vi
+        .spyOn(prisma.maintenanceTask, "create")
+        .mockResolvedValue({ id: "task-new" } as never);
+
+      try {
+        await createTask({
+          title: "Inspect drive",
+          startTime: new Date("2026-07-01T07:00:00.000Z"),
+          equipmentId: "eq-1",
+          workerIds: ["worker-a", "worker-b"],
+          dailyHours: [
+            { workerId: "worker-a", workDate: "2026-07-01", hours: 3 },
+            { workerId: "worker-b", workDate: "2026-07-01", hours: 2 },
+            { workerId: "worker-a", workDate: "2026-07-01", hours: 2 },
+            { workerId: "worker-b", workDate: "2026-07-01", hours: 1 },
+            {
+              workerId: "worker-a",
+              workDate: "2026-07-01",
+              startTime: "14:30",
+              hours: 1,
+            },
+          ],
+        });
+
+        expect(createTaskRecord).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              dailyHours: {
+                createMany: {
+                  data: [
+                    {
+                      workerId: "worker-a",
+                      workDate: new Date("2026-07-01T00:00:00.000Z"),
+                      startTime: new Date("2026-07-01T07:00:00.000Z"),
+                      hours: "3.00",
+                    },
+                    {
+                      workerId: "worker-b",
+                      workDate: new Date("2026-07-01T00:00:00.000Z"),
+                      startTime: new Date("2026-07-01T07:00:00.000Z"),
+                      hours: "2.00",
+                    },
+                    {
+                      workerId: "worker-a",
+                      workDate: new Date("2026-07-01T00:00:00.000Z"),
+                      startTime: new Date("2026-07-01T10:00:00.000Z"),
+                      hours: "2.00",
+                    },
+                    {
+                      workerId: "worker-b",
+                      workDate: new Date("2026-07-01T00:00:00.000Z"),
+                      startTime: new Date("2026-07-01T09:00:00.000Z"),
+                      hours: "1.00",
+                    },
+                    {
+                      workerId: "worker-a",
+                      workDate: new Date("2026-07-01T00:00:00.000Z"),
+                      startTime: new Date("2026-07-01T13:30:00.000Z"),
+                      hours: "1.00",
+                    },
+                  ],
+                },
+              },
+            }),
+          }),
+        );
+      } finally {
+        createTaskRecord.mockRestore();
       }
     });
 
@@ -1131,6 +1423,45 @@ describe("scheduler server actions", () => {
       }
     });
 
+    it("clears an existing completion timestamp when explicitly cleared", async () => {
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-123",
+        startTime: new Date("2026-12-19T08:00:00.000Z"),
+        equipmentId: "eq-1",
+        maintenancePointId: null,
+        status: "completed",
+        completedAt: new Date("2026-12-19T17:15:00.000Z"),
+        assignments: [],
+      } as never);
+      const updateTaskRecord = vi.fn(async (args: any) => ({
+        id: "task-123",
+        ...args.data,
+      }));
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) =>
+          callback({ maintenanceTask: { update: updateTaskRecord } }),
+        );
+
+      try {
+        await updateTask("task-123", {
+          status: "scheduled",
+          completedAt: null,
+        });
+
+        expect(updateTaskRecord).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: {
+              status: "scheduled",
+              completedAt: null,
+            },
+          }),
+        );
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+
     it("does not replace a historical completion timestamp when completing the task again", async () => {
       const completedAt = new Date("2026-12-19T17:15:00.000Z");
       vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
@@ -1331,19 +1662,26 @@ describe("scheduler server actions", () => {
     });
 
     it("shifts daily worker hours when an edited task moves to another date", async () => {
-      const previousStart = new Date("2026-06-30T10:00:00.000Z");
-      const nextStart = new Date("2026-07-01T10:00:00.000Z");
+      const previousStart = new Date("2026-06-01T22:30:00.000Z");
+      const nextStart = new Date("2026-06-01T23:30:00.000Z");
       vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
         id: "task-123",
         startTime: previousStart,
         assignments: [{ workerId: "worker-1" }],
       } as never);
       vi.spyOn(prisma.worker, "count").mockResolvedValue(1);
-      const createDailyHours = vi.fn();
+      vi.spyOn(prisma.tenantSettings, "findUnique").mockResolvedValue({
+        timezone: "Europe/Lisbon",
+      } as never);
+      const updateDailyHours = vi.fn();
       const fakeTx = {
         maintenanceTaskDailyHours: {
+          findMany: vi
+            .fn()
+            .mockResolvedValue([{ id: "daily-log-1" }, { id: "daily-log-2" }]),
           deleteMany: vi.fn(),
-          createMany: createDailyHours,
+          updateMany: updateDailyHours,
+          createMany: vi.fn(),
         },
         maintenanceTask: {
           update: vi.fn().mockResolvedValue({ id: "task-123" }),
@@ -1358,24 +1696,250 @@ describe("scheduler server actions", () => {
           startTime: nextStart,
           dailyHours: [
             {
+              id: "daily-log-1",
               workerId: "worker-1",
-              workDate: "2026-06-30",
+              workDate: "2026-06-01",
+              startTime: "23:00",
               hours: 4,
             },
           ],
         });
 
-        expect(createDailyHours).toHaveBeenCalledWith({
-          data: [
+        expect(updateDailyHours).toHaveBeenCalledWith({
+          where: {
+            id: "daily-log-1",
+            taskId: "task-123",
+            organizationId: "org-1",
+          },
+          data: {
+            workerId: "worker-1",
+            workDate: new Date("2026-06-02T00:00:00.000Z"),
+            startTime: new Date("2026-06-02T22:00:00.000Z"),
+            hours: "4.00",
+          },
+        });
+        expect(fakeTx.maintenanceTaskDailyHours.deleteMany).toHaveBeenCalledWith({
+          where: {
+            taskId: "task-123",
+            organizationId: "org-1",
+            id: { notIn: ["daily-log-1"] },
+          },
+        });
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+
+    it("preserves existing work logs and creates a new log for the same worker", async () => {
+      const currentTaskStart = new Date("2026-06-01T08:00:00.000Z");
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-123",
+        startTime: currentTaskStart,
+        endTime: null,
+        status: "scheduled",
+        completedAt: null,
+        equipmentId: "eq-1",
+        maintenancePointId: null,
+        assignments: [{ workerId: "worker-paulo" }, { workerId: "worker-fabio" }],
+      } as never);
+      vi.spyOn(prisma.tenantSettings, "findUnique").mockResolvedValue({
+        timezone: "Europe/Lisbon",
+      } as never);
+
+      const createdWorkLogs: unknown[] = [];
+      const deleteWorkLogs = vi.fn();
+      const fakeTx = {
+        maintenanceTaskAssignment: {
+          deleteMany: vi.fn(),
+          createMany: vi.fn(),
+        },
+        maintenanceTaskDailyHours: {
+          findMany: vi.fn().mockResolvedValue([
+            { id: "work-log-paulo" },
+            { id: "work-log-fabio" },
+          ]),
+          deleteMany: deleteWorkLogs,
+          updateMany: vi.fn(),
+          createMany: vi.fn(async ({ data }: { data: unknown[] }) => {
+            createdWorkLogs.push(...data);
+            return { count: data.length };
+          }),
+        },
+        maintenanceTask: {
+          update: vi.fn().mockResolvedValue({ id: "task-123" }),
+        },
+      };
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) => callback(fakeTx));
+
+      try {
+        await updateTask("task-123", {
+          dailyHours: [
             {
-              taskId: "task-123",
-              organizationId: "org-1",
-              workerId: "worker-1",
-              workDate: new Date("2026-07-01T00:00:00.000Z"),
-              hours: "4.00",
+              id: "work-log-paulo",
+              workerId: "worker-paulo",
+              workDate: "2026-06-01",
+              startTime: "08:00",
+              hours: 1,
+            },
+            {
+              id: "work-log-fabio",
+              workerId: "worker-fabio",
+              workDate: "2026-06-01",
+              startTime: "09:00",
+              hours: 1,
+            },
+            {
+              workerId: "worker-fabio",
+              workDate: "2026-06-01",
+              startTime: "10:00",
+              hours: 2,
+            },
+          ],
+          workerIds: ["worker-paulo", "worker-fabio"],
+          workerLogs: [
+            {
+              workerId: "worker-paulo",
+              startTime: currentTaskStart,
+              endTime: null,
+            },
+            {
+              workerId: "worker-fabio",
+              startTime: currentTaskStart,
+              endTime: null,
             },
           ],
         });
+
+        expect(
+          fakeTx.maintenanceTaskAssignment.createMany,
+        ).toHaveBeenCalledWith({
+          data: [
+            {
+              taskId: "task-123",
+              workerId: "worker-paulo",
+              organizationId: "org-1",
+              startTime: currentTaskStart,
+              endTime: null,
+            },
+            {
+              taskId: "task-123",
+              workerId: "worker-fabio",
+              organizationId: "org-1",
+              startTime: currentTaskStart,
+              endTime: null,
+            },
+          ],
+        });
+        expect(deleteWorkLogs).toHaveBeenCalledWith({
+          where: {
+            taskId: "task-123",
+            organizationId: "org-1",
+            id: { notIn: ["work-log-paulo", "work-log-fabio"] },
+          },
+        });
+        expect(createdWorkLogs).toEqual([
+          {
+            taskId: "task-123",
+            workerId: "worker-fabio",
+            organizationId: "org-1",
+            workDate: new Date("2026-06-01T00:00:00.000Z"),
+            startTime: new Date("2026-06-01T09:00:00.000Z"),
+            hours: "2.00",
+          },
+        ]);
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+
+    it("infers update starts from the same worker's latest end, not another worker's", async () => {
+      const currentTaskStart = new Date("2026-07-01T07:00:00.000Z");
+      vi.spyOn(prisma.maintenanceTask, "findFirst").mockResolvedValue({
+        id: "task-123",
+        startTime: currentTaskStart,
+        endTime: null,
+        status: "scheduled",
+        completedAt: null,
+        equipmentId: "eq-1",
+        maintenancePointId: null,
+        assignments: [{ workerId: "worker-a" }, { workerId: "worker-b" }],
+      } as never);
+      vi.spyOn(prisma.tenantSettings, "findUnique").mockResolvedValue({
+        timezone: "Europe/Lisbon",
+      } as never);
+
+      const createdWorkLogs: unknown[] = [];
+      const fakeTx = {
+        maintenanceTaskDailyHours: {
+          findMany: vi.fn().mockResolvedValue([
+            { id: "work-log-a" },
+            { id: "work-log-b" },
+          ]),
+          deleteMany: vi.fn(),
+          updateMany: vi.fn(),
+          createMany: vi.fn(async ({ data }: { data: unknown[] }) => {
+            createdWorkLogs.push(...data);
+            return { count: data.length };
+          }),
+        },
+        maintenanceTask: {
+          update: vi.fn().mockResolvedValue({ id: "task-123" }),
+        },
+      };
+      const transaction = vi
+        .spyOn(prisma, "$transaction")
+        .mockImplementation(async (callback: any) => callback(fakeTx));
+
+      try {
+        await updateTask("task-123", {
+          dailyHours: [
+            {
+              id: "work-log-a",
+              workerId: "worker-a",
+              workDate: "2026-07-01",
+              startTime: "08:00",
+              hours: 3,
+            },
+            {
+              id: "work-log-b",
+              workerId: "worker-b",
+              workDate: "2026-07-01",
+              startTime: "08:00",
+              hours: 2,
+            },
+            {
+              workerId: "worker-a",
+              workDate: "2026-07-01",
+              hours: 2,
+            },
+            {
+              workerId: "worker-b",
+              workDate: "2026-07-01",
+              hours: 1,
+            },
+          ],
+        });
+
+        expect(createdWorkLogs).toEqual([
+          {
+            taskId: "task-123",
+            workerId: "worker-a",
+            organizationId: "org-1",
+            workDate: new Date("2026-07-01T00:00:00.000Z"),
+            startTime: new Date("2026-07-01T10:00:00.000Z"),
+            hours: "2.00",
+          },
+          {
+            taskId: "task-123",
+            workerId: "worker-b",
+            organizationId: "org-1",
+            workDate: new Date("2026-07-01T00:00:00.000Z"),
+            startTime: new Date("2026-07-01T09:00:00.000Z"),
+            hours: "1.00",
+          },
+        ]);
       } finally {
         transaction.mockRestore();
       }
@@ -1437,16 +2001,21 @@ describe("scheduler server actions", () => {
       expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
     });
 
-    it("moves the task schedule without shifting actual worker work logs", async () => {
-      const newStart = new Date("2026-07-01T10:00:00.000Z");
-      const newEnd = new Date("2026-07-01T12:00:00.000Z");
-      const oldStart = new Date("2026-06-30T10:00:00.000Z");
-      const oldEnd = new Date("2026-06-30T12:00:00.000Z");
+    it("moves the task and shifts work-log dates without changing assignment logs", async () => {
+      const newStart = new Date("2026-06-01T23:30:00.000Z");
+      const newEnd = new Date("2026-06-02T00:30:00.000Z");
+      const oldStart = new Date("2026-06-01T22:30:00.000Z");
+      const oldEnd = new Date("2026-06-01T23:30:00.000Z");
+      vi.spyOn(prisma.tenantSettings, "findUnique").mockResolvedValue({
+        timezone: "Europe/Lisbon",
+      } as never);
       const fakeTx = {
         maintenanceTask: {
           findFirst: vi.fn().mockResolvedValue({
             startTime: oldStart,
             endTime: oldEnd,
+            equipmentId: "eq-old",
+            maintenancePointId: "point-old",
           }),
           update: vi.fn().mockResolvedValue({
             id: "task-123",
@@ -1464,14 +2033,14 @@ describe("scheduler server actions", () => {
         maintenanceTaskDailyHours: {
           findMany: vi.fn().mockResolvedValue([
             {
+              id: "daily-log-1",
               workerId: "worker-1",
-              workDate: new Date("2026-06-30T00:00:00.000Z"),
+              workDate: new Date("2026-06-01T00:00:00.000Z"),
+              startTime: null,
               hours: "4.00",
-              createdAt: new Date("2026-06-30T08:00:00.000Z"),
             },
           ]),
-          deleteMany: vi.fn(),
-          createMany: vi.fn(),
+          updateMany: vi.fn(),
         },
       };
       const transaction = vi
@@ -1492,6 +2061,7 @@ describe("scheduler server actions", () => {
               startTime: newStart,
               endTime: newEnd,
               equipmentId: "eq-new",
+              maintenancePointId: null,
             },
             include: {
               equipment: true,
@@ -1504,20 +2074,15 @@ describe("scheduler server actions", () => {
         );
         expect(fakeTx.maintenanceTaskAssignment.findMany).not.toHaveBeenCalled();
         expect(fakeTx.maintenanceTaskAssignment.update).not.toHaveBeenCalled();
-        expect(fakeTx.maintenanceTaskDailyHours.deleteMany).toHaveBeenCalledWith({
-          where: { taskId: "task-123", organizationId: "org-1" },
-        });
-        expect(fakeTx.maintenanceTaskDailyHours.createMany).toHaveBeenCalledWith({
-          data: [
-            {
-              taskId: "task-123",
-              organizationId: "org-1",
-              workerId: "worker-1",
-              workDate: new Date("2026-07-01T00:00:00.000Z"),
-              hours: "4.00",
-              createdAt: new Date("2026-06-30T08:00:00.000Z"),
-            },
-          ],
+        expect(fakeTx.maintenanceTaskDailyHours.updateMany).toHaveBeenCalledWith({
+          where: {
+            id: "daily-log-1",
+            taskId: "task-123",
+            organizationId: "org-1",
+          },
+          data: {
+            workDate: new Date("2026-06-02T00:00:00.000Z"),
+          },
         });
         expect(vi.mocked(revalidatePath)).toHaveBeenCalledTimes(1);
       } finally {

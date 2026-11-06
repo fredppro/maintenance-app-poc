@@ -104,6 +104,11 @@ describe("OrganizationSettingsForm", () => {
     expect(await screen.findByText("Enter at least 2 characters.")).toBeInTheDocument();
     expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
     expect(nameField()).toHaveAttribute("aria-invalid", "true");
+    expect(nameField()).toHaveAttribute("aria-describedby", "organization-name-error");
+    expect(screen.getByLabelText("Contact email")).toHaveAttribute(
+      "aria-describedby",
+      "organization-contact-email-hint organization-contact-email-error",
+    );
     expect(mocks.update).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();
   });
@@ -156,6 +161,10 @@ describe("OrganizationSettingsForm", () => {
     await user.click(saveButton());
 
     expect(await screen.findByText("Enter a valid phone number, e.g. +351 21 000 0000.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Contact phone")).toHaveAttribute(
+      "aria-describedby",
+      "organization-contact-phone-hint organization-contact-phone-error",
+    );
     expect(toast.success).not.toHaveBeenCalled();
     expect(mocks.refresh).not.toHaveBeenCalled();
     expect(saveButton()).toBeEnabled();
@@ -176,7 +185,7 @@ describe("OrganizationSettingsForm", () => {
 
   describe("logo", () => {
     const pickLogo = async (user: ReturnType<typeof userEvent.setup>, file: File) => {
-      await user.upload(screen.getByLabelText("Upload logo", { selector: "input" }), file);
+      await user.upload(screen.getByTestId("image-upload-input"), file);
     };
 
     it("rejects files that are not images without uploading anything", async () => {
@@ -185,7 +194,9 @@ describe("OrganizationSettingsForm", () => {
 
       await pickLogo(user, new File(["x"], "logo.pdf", { type: "application/pdf" }));
 
-      expect(await screen.findByRole("alert")).toHaveTextContent("Choose a PNG, JPEG or WebP image up to 10 MB.");
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent("logo.pdf");
+      expect(alert).toHaveTextContent("Choose a PNG, JPEG or WebP image.");
       expect(mocks.resize).not.toHaveBeenCalled();
       expect(saveButton()).toBeDisabled();
     });
@@ -201,7 +212,11 @@ describe("OrganizationSettingsForm", () => {
       await user.click(saveButton());
 
       await waitFor(() => expect(toast.success).toHaveBeenCalled());
-      expect(mocks.upload).toHaveBeenCalledWith(expect.any(Blob), "logo.png");
+      expect(mocks.upload).toHaveBeenCalledWith(
+        expect.any(Blob),
+        "logo.png",
+        expect.any(Function),
+      );
       expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ logoFileId: "file-new" }));
       expect(screen.getByRole("img", { name: "ACME Facilities logo" })).toHaveAttribute("src", "/api/files/file-new");
     });
@@ -215,9 +230,38 @@ describe("OrganizationSettingsForm", () => {
       await pickLogo(user, new File(["x"], "logo.png", { type: "image/png" }));
       await user.click(saveButton());
 
-      expect(await screen.findByRole("alert")).toHaveTextContent("The logo could not be uploaded. Please try again.");
+      expect(await screen.findByRole("alert")).toHaveTextContent("The upload could not be completed. Please try again.");
       expect(mocks.update).not.toHaveBeenCalled();
       expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it("shows upload progress while the server is receiving the selected logo", async () => {
+      const user = userEvent.setup();
+      let finishUpload: (fileId: string) => void = () => undefined;
+      mocks.resize.mockResolvedValue(new Blob(["png"], { type: "image/png" }));
+      mocks.upload.mockImplementation(
+        (
+          _blob: Blob,
+          _filename: string,
+          onProgress?: (percent: number | null) => void,
+        ) => {
+          onProgress?.(37);
+          return new Promise<string>((resolve) => {
+            finishUpload = resolve;
+          });
+        },
+      );
+      renderForm();
+
+      await pickLogo(user, new File(["x"], "logo.png", { type: "image/png" }));
+      await user.click(saveButton());
+
+      expect(await screen.findByRole("progressbar")).toHaveAttribute(
+        "aria-valuenow",
+        "37",
+      );
+      finishUpload("file-progress");
+      await waitFor(() => expect(toast.success).toHaveBeenCalled());
     });
 
     it("does not upload the logo twice when the save is retried after a validation error", async () => {

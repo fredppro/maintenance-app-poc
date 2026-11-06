@@ -138,6 +138,41 @@ export function fromZonedDateTimeParts(
   throw new RangeError(`Unable to resolve a date in ${timeZone}`);
 }
 
+export function fromZonedDateAndTime(
+  date: string,
+  time: string,
+  timeZone: string,
+) {
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  const timeMatch = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time);
+  if (!dateMatch || !timeMatch) {
+    throw new RangeError("Date and time must use YYYY-MM-DD and HH:mm formats");
+  }
+
+  const [, yearValue, monthValue, dayValue] = dateMatch;
+  const [, hourValue, minuteValue] = timeMatch;
+  const parts: ZonedDateTimeParts = {
+    year: Number(yearValue),
+    month: Number(monthValue),
+    day: Number(dayValue),
+    hour: Number(hourValue),
+    minute: Number(minuteValue),
+    second: 0,
+  };
+  const normalizedDate = new Date(
+    Date.UTC(parts.year, parts.month - 1, parts.day),
+  );
+  if (
+    normalizedDate.getUTCFullYear() !== parts.year ||
+    normalizedDate.getUTCMonth() + 1 !== parts.month ||
+    normalizedDate.getUTCDate() !== parts.day
+  ) {
+    throw new RangeError("Date is not a valid calendar date");
+  }
+
+  return fromZonedDateTimeParts(parts, timeZone);
+}
+
 export function fromZonedCalendarDate(date: Date, timeZone: string) {
   return fromZonedDateTimeParts(
     {
@@ -155,6 +190,11 @@ export function fromZonedCalendarDate(date: Date, timeZone: string) {
 export function formatDateOnlyInTimeZone(date: Date, timeZone: string) {
   const { year, month, day } = getParts(date, timeZone);
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function formatTimeInTimeZone(date: Date, timeZone: string) {
+  const { hour, minute } = getParts(date, timeZone);
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
 export function dateOnlyAtNoonInTimeZone(value: string, timeZone: string) {

@@ -5,8 +5,9 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client"
-  output   = "./generated/prisma"
+  provider        = "prisma-client"
+  output          = "./generated/prisma"
+  previewFeatures = ["relationJoins"]
 }
 
 model Equipment {
@@ -50,12 +51,14 @@ model StoredFile {
   contentType       String
   size              Int
   uploadedById      String?
+  unattachedUntil   DateTime?
   equipment         Equipment[]
   organizationLogos TenantSettings[]
   createdAt         DateTime         @default(now())
 
   @@unique([id, organizationId])
   @@index([organizationId])
+  @@index([unattachedUntil])
 }
 
 // Durable outbox for object deletion. It intentionally has no organization FK so
@@ -256,27 +259,29 @@ model InventoryMovement {
 }
 
 model MaintenanceTaskReminder {
-  id             String                    @id @default(cuid())
-  taskId         String
-  workerId       String
-  organizationId String
-  recipientEmail String
-  locale         String                    @default("en")
-  scheduledFor   DateTime
-  nextAttemptAt  DateTime
-  status         MaintenanceReminderStatus @default(PENDING)
-  attempts       Int                       @default(0)
-  lastAttemptAt  DateTime?
-  sentAt         DateTime?
-  lastError      String?
-  task           MaintenanceTask           @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
-  worker         Worker                    @relation(fields: [workerId, organizationId], references: [id, organizationId], onDelete: Cascade)
-  createdAt      DateTime                  @default(now())
-  updatedAt      DateTime                  @updatedAt
+  id               String                          @id @default(cuid())
+  taskId           String
+  workerId         String
+  organizationId   String
+  notificationType MaintenanceTaskNotificationType @default(REMINDER)
+  idempotencyKey   String                          @unique
+  recipientEmail   String
+  locale           String                          @default("en")
+  scheduledFor     DateTime
+  nextAttemptAt    DateTime
+  status           MaintenanceReminderStatus       @default(PENDING)
+  attempts         Int                             @default(0)
+  lastAttemptAt    DateTime?
+  sentAt           DateTime?
+  lastError        String?
+  requestedById    String?
+  task             MaintenanceTask                 @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  worker           Worker                          @relation(fields: [workerId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  createdAt        DateTime                        @default(now())
+  updatedAt        DateTime                        @updatedAt
 
-  @@unique([taskId, workerId])
   @@index([organizationId, status, nextAttemptAt])
-  @@index([taskId, organizationId])
+  @@index([taskId, organizationId, notificationType, scheduledFor])
 }
 
 enum InventoryMovementType {
@@ -299,6 +304,12 @@ enum MaintenanceReminderStatus {
   CANCELLED
 }
 
+enum MaintenanceTaskNotificationType {
+  ASSIGNMENT
+  REMINDER
+  MANUAL
+}
+
 model MaintenanceTaskAssignment {
   id             String          @id @default(cuid())
   taskId         String
@@ -318,6 +329,7 @@ model MaintenanceTaskDailyHours {
   workerId       String
   organizationId String
   workDate       DateTime        @db.Date
+  startTime      DateTime?
   hours          Decimal         @db.Decimal(4, 2)
   task           MaintenanceTask @relation(fields: [taskId, organizationId], references: [id, organizationId], onDelete: Cascade)
   worker         Worker          @relation(fields: [workerId, organizationId], references: [id, organizationId], onDelete: Restrict)

@@ -667,7 +667,7 @@ export type $MaterialPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type MaterialGetPayload<S extends boolean | null | undefined | MaterialDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$MaterialPayload, S>
 
 export type MaterialCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<MaterialFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<MaterialFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: MaterialCountAggregateInputType | true
   }
 
@@ -1116,6 +1116,7 @@ export type MaterialFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Filter, which Material to fetch.
    */
   where: Prisma.MaterialWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1138,6 +1139,7 @@ export type MaterialFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensio
    * Filter, which Material to fetch.
    */
   where: Prisma.MaterialWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1190,6 +1192,7 @@ export type MaterialFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Filter by unique combinations of Materials.
    */
   distinct?: Prisma.MaterialScalarFieldEnum | Prisma.MaterialScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1242,6 +1245,7 @@ export type MaterialFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extension
    * Filter by unique combinations of Materials.
    */
   distinct?: Prisma.MaterialScalarFieldEnum | Prisma.MaterialScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1294,6 +1298,7 @@ export type MaterialFindManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Filter by unique combinations of Materials.
    */
   distinct?: Prisma.MaterialScalarFieldEnum | Prisma.MaterialScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1316,6 +1321,7 @@ export type MaterialCreateArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * The data needed to create a Material.
    */
   data: Prisma.XOR<Prisma.MaterialCreateInput, Prisma.MaterialUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1376,6 +1382,7 @@ export type MaterialUpdateArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Choose, which Material to update.
    */
   where: Prisma.MaterialWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1454,6 +1461,7 @@ export type MaterialUpsertArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * In case the Material was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.MaterialUpdateInput, Prisma.MaterialUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1476,6 +1484,7 @@ export type MaterialDeleteArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Filter which Material to delete.
    */
   where: Prisma.MaterialWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

@@ -97,6 +97,7 @@ describe.skipIf(!url)("tenant isolation in PostgreSQL", () => {
           taskId,
           workerId,
           organizationId: id,
+          idempotencyKey: `auto:${taskId}:${workerId}:REMINDER`,
           recipientEmail: `${id}@example.test`,
           scheduledFor: new Date("2026-06-29T08:00:00.000Z"),
           nextAttemptAt: new Date("2026-06-29T08:00:00.000Z"),

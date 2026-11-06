@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   dateOnlyAtNoonInTimeZone,
   formatDateOnlyInTimeZone,
+  formatTimeInTimeZone,
+  fromZonedDateAndTime,
   fromZonedCalendarDate,
   toZonedCalendarDate,
 } from "./time-zone";
@@ -46,5 +48,21 @@ describe("time-zone conversion", () => {
     const date = dateOnlyAtNoonInTimeZone("2026-07-01", "Asia/Tokyo");
 
     expect(formatDateOnlyInTimeZone(date, "Asia/Tokyo")).toBe("2026-07-01");
+  });
+
+  it("converts a work-log date and 24-hour time using the organization zone", () => {
+    const date = fromZonedDateAndTime("2026-07-01", "08:30", "Europe/Lisbon");
+
+    expect(date.toISOString()).toBe("2026-07-01T07:30:00.000Z");
+    expect(formatTimeInTimeZone(date, "Europe/Lisbon")).toBe("08:30");
+  });
+
+  it("rejects malformed or impossible work-log date and time values", () => {
+    expect(() =>
+      fromZonedDateAndTime("2026-02-31", "08:30", "Europe/Lisbon"),
+    ).toThrow(RangeError);
+    expect(() =>
+      fromZonedDateAndTime("2026-02-28", "8:30", "Europe/Lisbon"),
+    ).toThrow(RangeError);
   });
 });

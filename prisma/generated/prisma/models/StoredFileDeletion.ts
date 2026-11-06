@@ -455,7 +455,7 @@ export type $StoredFileDeletionPayload<ExtArgs extends runtime.Types.Extensions.
 export type StoredFileDeletionGetPayload<S extends boolean | null | undefined | StoredFileDeletionDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$StoredFileDeletionPayload, S>
 
 export type StoredFileDeletionCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<StoredFileDeletionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<StoredFileDeletionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: StoredFileDeletionCountAggregateInputType | true
   }
 
@@ -898,6 +898,7 @@ export type StoredFileDeletionFindUniqueArgs<ExtArgs extends runtime.Types.Exten
    * Filter, which StoredFileDeletion to fetch.
    */
   where: Prisma.StoredFileDeletionWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -916,6 +917,7 @@ export type StoredFileDeletionFindUniqueOrThrowArgs<ExtArgs extends runtime.Type
    * Filter, which StoredFileDeletion to fetch.
    */
   where: Prisma.StoredFileDeletionWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -964,6 +966,7 @@ export type StoredFileDeletionFindFirstArgs<ExtArgs extends runtime.Types.Extens
    * Filter by unique combinations of StoredFileDeletions.
    */
   distinct?: Prisma.StoredFileDeletionScalarFieldEnum | Prisma.StoredFileDeletionScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1012,6 +1015,7 @@ export type StoredFileDeletionFindFirstOrThrowArgs<ExtArgs extends runtime.Types
    * Filter by unique combinations of StoredFileDeletions.
    */
   distinct?: Prisma.StoredFileDeletionScalarFieldEnum | Prisma.StoredFileDeletionScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1060,6 +1064,7 @@ export type StoredFileDeletionFindManyArgs<ExtArgs extends runtime.Types.Extensi
    * Filter by unique combinations of StoredFileDeletions.
    */
   distinct?: Prisma.StoredFileDeletionScalarFieldEnum | Prisma.StoredFileDeletionScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1078,6 +1083,7 @@ export type StoredFileDeletionCreateArgs<ExtArgs extends runtime.Types.Extension
    * The data needed to create a StoredFileDeletion.
    */
   data: Prisma.XOR<Prisma.StoredFileDeletionCreateInput, Prisma.StoredFileDeletionUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1130,6 +1136,7 @@ export type StoredFileDeletionUpdateArgs<ExtArgs extends runtime.Types.Extension
    * Choose, which StoredFileDeletion to update.
    */
   where: Prisma.StoredFileDeletionWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1200,6 +1207,7 @@ export type StoredFileDeletionUpsertArgs<ExtArgs extends runtime.Types.Extension
    * In case the StoredFileDeletion was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.StoredFileDeletionUpdateInput, Prisma.StoredFileDeletionUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1218,6 +1226,7 @@ export type StoredFileDeletionDeleteArgs<ExtArgs extends runtime.Types.Extension
    * Filter which StoredFileDeletion to delete.
    */
   where: Prisma.StoredFileDeletionWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

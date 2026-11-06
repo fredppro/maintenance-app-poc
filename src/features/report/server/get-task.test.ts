@@ -9,7 +9,13 @@ describe("getMaintenanceTask", () => {
       title: "Test Task",
       equipment: { id: "eq-1", name: "Turbine" },
       assignments: [{ id: "as-1", worker: { id: "w-1", name: "John Doe" } }],
-      dailyHours: [{ workerId: "w-1", workDate: new Date("2026-06-01"), hours: "8.00" }],
+      dailyHours: [{
+        workerId: "w-1",
+        workDate: new Date("2026-06-01"),
+        startTime: new Date("2026-06-01T08:00:00.000Z"),
+        hours: "8.00",
+        worker: { name: "John Doe" },
+      }],
       materials: [{ id: "mat-1", name: "Filter", quantity: 2 }],
     };
 
@@ -30,7 +36,14 @@ describe("getMaintenanceTask", () => {
             equipment: true,
             materials: true,
             assignments: { include: { worker: true } },
-            dailyHours: true,
+            dailyHours: {
+              include: { worker: { select: { name: true } } },
+              orderBy: [
+                { workDate: "asc" },
+                { startTime: "asc" },
+                { createdAt: "asc" },
+              ],
+            },
           },
         }),
       );

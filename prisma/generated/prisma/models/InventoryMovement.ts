@@ -976,7 +976,7 @@ export type $InventoryMovementPayload<ExtArgs extends runtime.Types.Extensions.I
 export type InventoryMovementGetPayload<S extends boolean | null | undefined | InventoryMovementDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$InventoryMovementPayload, S>
 
 export type InventoryMovementCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<InventoryMovementFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<InventoryMovementFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: InventoryMovementCountAggregateInputType | true
   }
 
@@ -1428,6 +1428,7 @@ export type InventoryMovementFindUniqueArgs<ExtArgs extends runtime.Types.Extens
    * Filter, which InventoryMovement to fetch.
    */
   where: Prisma.InventoryMovementWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1450,6 +1451,7 @@ export type InventoryMovementFindUniqueOrThrowArgs<ExtArgs extends runtime.Types
    * Filter, which InventoryMovement to fetch.
    */
   where: Prisma.InventoryMovementWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1502,6 +1504,7 @@ export type InventoryMovementFindFirstArgs<ExtArgs extends runtime.Types.Extensi
    * Filter by unique combinations of InventoryMovements.
    */
   distinct?: Prisma.InventoryMovementScalarFieldEnum | Prisma.InventoryMovementScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1554,6 +1557,7 @@ export type InventoryMovementFindFirstOrThrowArgs<ExtArgs extends runtime.Types.
    * Filter by unique combinations of InventoryMovements.
    */
   distinct?: Prisma.InventoryMovementScalarFieldEnum | Prisma.InventoryMovementScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1606,6 +1610,7 @@ export type InventoryMovementFindManyArgs<ExtArgs extends runtime.Types.Extensio
    * Filter by unique combinations of InventoryMovements.
    */
   distinct?: Prisma.InventoryMovementScalarFieldEnum | Prisma.InventoryMovementScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1628,6 +1633,7 @@ export type InventoryMovementCreateArgs<ExtArgs extends runtime.Types.Extensions
    * The data needed to create a InventoryMovement.
    */
   data: Prisma.XOR<Prisma.InventoryMovementCreateInput, Prisma.InventoryMovementUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1688,6 +1694,7 @@ export type InventoryMovementUpdateArgs<ExtArgs extends runtime.Types.Extensions
    * Choose, which InventoryMovement to update.
    */
   where: Prisma.InventoryMovementWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1766,6 +1773,7 @@ export type InventoryMovementUpsertArgs<ExtArgs extends runtime.Types.Extensions
    * In case the InventoryMovement was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.InventoryMovementUpdateInput, Prisma.InventoryMovementUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1788,6 +1796,7 @@ export type InventoryMovementDeleteArgs<ExtArgs extends runtime.Types.Extensions
    * Filter which InventoryMovement to delete.
    */
   where: Prisma.InventoryMovementWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

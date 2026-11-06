@@ -43,7 +43,13 @@ import { EquipmentDialog } from "./equipment-dialog";
 import { MaintenanceEntryBlock } from "./maintenance-entry-block";
 import { getTaskDisplayEnd } from "../utils/schedule";
 
-export function TimelineGrid() {
+export function TimelineGrid({
+  openTaskId,
+  onTaskLinkOpened,
+}: {
+  openTaskId?: string | null;
+  onTaskLinkOpened?: () => void;
+}) {
   const locale = getValidLocale(useLocale());
   const dateFnsLocale = LOCALE_MAP[locale];
   const config = APPLICATION_LOCALES[locale];
@@ -455,6 +461,8 @@ export function TimelineGrid() {
                               <MaintenanceEntryBlock
                                 key={entry.id}
                                 entry={entry}
+                                autoOpen={entry.id === openTaskId}
+                                onAutoOpenClose={onTaskLinkOpened}
                                 style={{
                                   position: "absolute",
                                   left: `calc(${startPercent}% + 2px)`,

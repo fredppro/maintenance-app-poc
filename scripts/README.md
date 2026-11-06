@@ -40,6 +40,10 @@ Copy it to the VPS and run it with `sudo`, as documented in
 [runbook 04](../docs/operations/storage-capacity-and-portability.md). It reports host,
 Docker-mount, and Garage bucket usage separately.
 
+`pnpm ops:storage:cleanup` also removes unlinked image uploads after a seven-day
+grace period. Saving an equipment photo or organization logo clears its cleanup
+deadline in the same transaction that attaches it to the record.
+
 Operational scripts load `MIGRATION_DATABASE_URL` (the owner role). Treat that
 credential as deployment-only; never use it for the running application.
 The runtime-role verifier permits only the four reservation `SECURITY DEFINER`

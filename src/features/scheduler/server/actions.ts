@@ -5,11 +5,24 @@ import { revalidatePath } from "next/cache";
 import type { TenantDb } from "@/lib/prisma";
 import {
   InventoryMovementType,
+  MaintenanceReminderStatus,
+  MaintenanceTaskNotificationType,
   MaterialUnit,
   TaskType,
 } from "../../../../prisma/generated/prisma/enums";
-import { deleteStoredFile } from "@/features/files/server/files";
+import { z } from "zod";
+import {
+  deleteStoredFile,
+  markStoredFileAttached,
+} from "@/features/files/server/files";
 import { recordAuditEvent } from "@/lib/audit";
+import { DEFAULT_ORGANIZATION_TIMEZONE } from "@/features/organization/shared/organization-settings";
+import {
+  formatDateOnlyInTimeZone,
+  fromZonedDateAndTime,
+  formatTimeInTimeZone,
+} from "@/lib/time-zone";
+import { inferWorkLogStartTimes } from "../utils/worker-hours";
 import {
   ACTIVE_SITE_COOKIE,
   getOrganizationContext,
@@ -30,25 +43,107 @@ import {
   operatingHourReadingSchema,
   updateTaskSchema,
 } from "./schemas";
+import {
+  dispatchMaintenanceReminderById,
+  dispatchMaintenanceReminders,
+} from "./reminders";
 
 const DAY_MS = 86_400_000;
 
-function getUtcDayOffset(nextDate: Date, previousDate: Date) {
-  const nextUtcDay = Date.UTC(
-    nextDate.getUTCFullYear(),
-    nextDate.getUTCMonth(),
-    nextDate.getUTCDate(),
-  );
+async function dispatchTaskNotificationsAfterSave(
+  organizationId: string,
+  taskId: string,
+) {
+  try {
+    const result = await dispatchMaintenanceReminders(
+      organizationId,
+      new Date(),
+      taskId,
+    );
+    if (result.failed > 0) {
+      console.error("Some maintenance task notifications failed", {
+        organizationId,
+        failed: result.failed,
+      });
+    }
+  } catch (error) {
+    console.error("Could not dispatch maintenance task notifications", error);
+  }
+}
+
+async function getOrganizationTimeZone(db: TenantDb, organizationId: string) {
+  const settings = await db.tenantSettings.findUnique({
+    where: { organizationId },
+    select: { timezone: true },
+  });
+  return settings?.timezone ?? DEFAULT_ORGANIZATION_TIMEZONE;
+}
+
+function getCalendarDayOffset(
+  nextDate: Date,
+  previousDate: Date,
+  timeZone: string,
+) {
+  const [nextYear, nextMonth, nextDay] = formatDateOnlyInTimeZone(
+    nextDate,
+    timeZone,
+  )
+    .split("-")
+    .map(Number);
+  const [previousYear, previousMonth, previousDay] = formatDateOnlyInTimeZone(
+    previousDate,
+    timeZone,
+  )
+    .split("-")
+    .map(Number);
+  const nextUtcDay = Date.UTC(nextYear, nextMonth - 1, nextDay);
   const previousUtcDay = Date.UTC(
-    previousDate.getUTCFullYear(),
-    previousDate.getUTCMonth(),
-    previousDate.getUTCDate(),
+    previousYear,
+    previousMonth - 1,
+    previousDay,
   );
   return Math.round((nextUtcDay - previousUtcDay) / DAY_MS);
 }
 
 function shiftDateOnly(date: Date, dayOffset: number) {
   return new Date(date.getTime() + dayOffset * DAY_MS);
+}
+
+function resolveDailyHoursStartTimes<
+  T extends {
+    id?: string;
+    workerId: string;
+    workDate: string;
+    startTime?: string | null;
+    hours: number;
+  },
+>(
+  entries: T[],
+  scheduledStartTime: Date,
+  timeZone: string,
+) {
+  const inferredStarts = inferWorkLogStartTimes(
+    entries,
+    scheduledStartTime,
+    timeZone,
+  );
+
+  return entries.map((entry, index) => {
+    if (entry.startTime) {
+      return entry;
+    }
+    if (entry.id) {
+      return { ...entry, startTime: null };
+    }
+
+    const inferredStart = inferredStarts[index];
+    if (!inferredStart) {
+      throw new Error(
+        "Cannot infer a start time for this worker log. Enter a start time.",
+      );
+    }
+    return { ...entry, ...inferredStart };
+  });
 }
 
 // Equipment Actions
@@ -404,21 +499,26 @@ export async function addEquipment(data: {
   await assertOwnFile(db, input.imageFileId, organizationId);
   const section = await assertSectionInSite(db, input.sectionId, organizationId, siteId);
 
-  const equipment = await db.equipment.create({
-    data: {
-      ...input,
-      sectionId: section?.id ?? null,
-      organizationId,
-      siteId,
-      relocations: {
-        create: {
-          toSiteName: siteName,
-          toSectionName: section?.name ?? null,
-          movedById: userId,
-        },
+  const createData = {
+    ...input,
+    sectionId: section?.id ?? null,
+    organizationId,
+    siteId,
+    relocations: {
+      create: {
+        toSiteName: siteName,
+        toSectionName: section?.name ?? null,
+        movedById: userId,
       },
     },
-  });
+  };
+  const imageFileId = input.imageFileId;
+  const equipment = imageFileId
+    ? await db.transaction(async (tx) => {
+        await markStoredFileAttached(tx, imageFileId, organizationId);
+        return tx.equipment.create({ data: createData });
+      })
+    : await db.equipment.create({ data: createData });
   revalidatePath("/");
   return equipment;
 }
@@ -427,7 +527,7 @@ export async function updateEquipment(
   id: string,
   data: { name?: string; category?: string | null; imageFileId?: string | null },
 ) {
-  const { db, organizationId, siteId, userId } = await getTenantContext("manageMaintenance");
+  const { db, organizationId, siteId } = await getTenantContext("manageMaintenance");
   const equipmentId = equipmentIdSchema.parse(id);
   const input = equipmentUpdateSchema.parse(data);
   await assertOwnFile(db, input.imageFileId, organizationId);
@@ -438,10 +538,19 @@ export async function updateEquipment(
   });
   if (!previous) throw new Error("Equipment not found");
 
-  const equipment = await db.equipment.update({
-    where: { id: equipmentId, organizationId, siteId },
-    data: input,
-  });
+  const imageFileId = input.imageFileId;
+  const equipment = imageFileId && imageFileId !== previous.imageFileId
+    ? await db.transaction(async (tx) => {
+        await markStoredFileAttached(tx, imageFileId, organizationId);
+        return tx.equipment.update({
+          where: { id: equipmentId, organizationId, siteId },
+          data: input,
+        });
+      })
+    : await db.equipment.update({
+        where: { id: equipmentId, organizationId, siteId },
+        data: input,
+      });
 
   if (
     input.imageFileId !== undefined &&
@@ -670,6 +779,7 @@ export async function getTasks() {
       organizationId,
       equipment: { is: { siteId } },
     },
+    relationLoadStrategy: "join",
     include: {
       equipment: true,
       assignments: {
@@ -684,6 +794,7 @@ export async function getTasks() {
         select: {
           id: true,
           workerId: true,
+          notificationType: true,
           status: true,
           scheduledFor: true,
           sentAt: true,
@@ -697,6 +808,157 @@ export async function getTasks() {
   });
 }
 
+const taskEmailRequestSchema = z.object({
+  taskId: equipmentIdSchema,
+  workerIds: z.array(equipmentIdSchema).min(1),
+  requestId: z.string().uuid(),
+});
+
+function isValidNotificationEmail(email: string) {
+  return z.string().email().safeParse(email.trim()).success;
+}
+
+export async function previewMaintenanceTaskEmail(taskId: string) {
+  const { db, organizationId, siteId } = await getTenantContext("manageMaintenance");
+  const validatedTaskId = equipmentIdSchema.parse(taskId);
+  const task = await db.maintenanceTask.findFirst({
+    where: {
+      id: validatedTaskId,
+      organizationId,
+      deletedAt: null,
+      equipment: { is: { siteId } },
+    },
+    select: {
+      id: true,
+      title: true,
+      startTime: true,
+      assignments: {
+        where: { worker: { deletedAt: null } },
+        select: {
+          workerId: true,
+          worker: { select: { name: true, email: true } },
+        },
+      },
+    },
+  });
+  if (!task) throw new Error("Task not found in the active site");
+
+  const recipients = task.assignments.map(({ workerId, worker }) => ({
+    workerId,
+    name: worker.name,
+    email: worker.email.trim(),
+  }));
+  return {
+    taskId: task.id,
+    title: task.title,
+    startTime: task.startTime,
+    recipients: recipients.filter(({ email }) =>
+      isValidNotificationEmail(email),
+    ),
+    excludedRecipients: recipients
+      .filter(({ email }) => !isValidNotificationEmail(email))
+      .map(({ workerId, name }) => ({ workerId, name })),
+  };
+}
+
+export async function sendMaintenanceTaskEmail(
+  input: z.input<typeof taskEmailRequestSchema>,
+) {
+  const { db, organizationId, siteId, userId } =
+    await getTenantContext("manageMaintenance");
+  const request = taskEmailRequestSchema.parse(input);
+  if (new Set(request.workerIds).size !== request.workerIds.length) {
+    throw new Error("Worker IDs must be unique");
+  }
+
+  const task = await db.maintenanceTask.findFirst({
+    where: {
+      id: request.taskId,
+      organizationId,
+      deletedAt: null,
+      equipment: { is: { siteId } },
+    },
+    select: {
+      id: true,
+      assignments: {
+        where: {
+          workerId: { in: request.workerIds },
+          worker: { deletedAt: null },
+        },
+        select: {
+          workerId: true,
+          worker: { select: { email: true } },
+        },
+      },
+    },
+  });
+  if (!task) throw new Error("Task not found in the active site");
+  if (task.assignments.length !== request.workerIds.length) {
+    throw new Error("One or more selected workers are no longer assigned");
+  }
+  if (task.assignments.some(({ worker }) =>
+    !isValidNotificationEmail(worker.email),
+  )) {
+    throw new Error("One or more assigned workers do not have a valid email address");
+  }
+
+  const settings = await db.tenantSettings.findUnique({
+    where: { organizationId },
+    select: { locale: true },
+  });
+  const locale = settings?.locale?.toLowerCase().startsWith("pt")
+    ? "pt-pt"
+    : "en";
+  const now = new Date();
+  const notifications = await Promise.all(
+    task.assignments.map(async ({ workerId, worker }) => {
+      const email = worker.email.trim();
+      const idempotencyKey = `manual:${request.requestId}:${task.id}:${workerId}`;
+      const notification = await db.maintenanceTaskReminder.upsert({
+        where: { idempotencyKey },
+        create: {
+          taskId: task.id,
+          workerId,
+          organizationId,
+          notificationType: MaintenanceTaskNotificationType.MANUAL,
+          idempotencyKey,
+          recipientEmail: email,
+          locale,
+          scheduledFor: now,
+          nextAttemptAt: now,
+          requestedById: userId,
+        },
+        update: {},
+        select: { id: true, status: true },
+      });
+      return notification;
+    }),
+  );
+
+  const outcomes = await Promise.all(
+    notifications.map((notification) =>
+      notification.status === MaintenanceReminderStatus.SENT
+        ? Promise.resolve("sent" as const)
+        : dispatchMaintenanceReminderById(
+            organizationId,
+            notification.id,
+            now,
+          ),
+    ),
+  );
+  revalidatePath("/");
+  return {
+    sent: outcomes.filter((outcome) => outcome === "sent").length,
+    failed: outcomes.filter(
+      (outcome) => outcome === "failed" || outcome === "cancelled",
+    ).length,
+    pending: outcomes.filter(
+      (outcome) =>
+        outcome === "skipped" || outcome === "missing",
+    ).length,
+  };
+}
+
 export async function createTask(data: {
   title: string;
   description?: string;
@@ -707,7 +969,12 @@ export async function createTask(data: {
   status?: string;
   maintenancePointId?: string | null;
   workerIds: string[];
-  dailyHours?: { workerId: string; workDate: string; hours: number }[];
+  dailyHours?: {
+    workerId: string;
+    workDate: string;
+    startTime?: string | null;
+    hours: number;
+  }[];
   materials?: {
     name: string;
     reference?: string;
@@ -719,6 +986,19 @@ export async function createTask(data: {
   const { db, organizationId, siteId } = await getTenantContext("manageMaintenance");
   const input = createTaskSchema.parse(data);
   const { workerIds, dailyHours, materials, ...taskData } = input;
+  if (dailyHours?.some((entry) => entry.id)) {
+    throw new Error("New work logs cannot include existing record IDs");
+  }
+  const workLogTimeZone = dailyHours?.length
+    ? await getOrganizationTimeZone(db, organizationId)
+    : DEFAULT_ORGANIZATION_TIMEZONE;
+  const resolvedDailyHours = dailyHours
+    ? resolveDailyHoursStartTimes(
+        dailyHours,
+        taskData.startTime,
+        workLogTimeZone,
+      )
+    : undefined;
   const equipment = await db.equipment.findFirst({
     where: {
       id: taskData.equipmentId,
@@ -778,12 +1058,19 @@ export async function createTask(data: {
           workerId,
         })),
       },
-      ...(dailyHours && {
+      ...(resolvedDailyHours && {
         dailyHours: {
           createMany: {
-            data: dailyHours.map((entry) => ({
+            data: resolvedDailyHours.map((entry) => ({
               workerId: entry.workerId,
               workDate: new Date(`${entry.workDate}T00:00:00.000Z`),
+              startTime: entry.startTime
+                ? fromZonedDateAndTime(
+                    entry.workDate,
+                    entry.startTime,
+                    workLogTimeZone,
+                  )
+                : null,
               hours: entry.hours.toFixed(2),
             })),
           },
@@ -812,6 +1099,7 @@ export async function createTask(data: {
     },
   });
   revalidatePath("/");
+  await dispatchTaskNotificationsAfterSave(organizationId, task.id);
   return task;
 }
 
@@ -828,7 +1116,13 @@ export async function updateTask(
     completedAt: Date | null;
     maintenancePointId?: string | null;
     workerIds: string[];
-    dailyHours: { workerId: string; workDate: string; hours: number }[];
+    dailyHours: {
+      id?: string;
+      workerId: string;
+      workDate: string;
+      startTime?: string | null;
+      hours: number;
+    }[];
     workerLogs: {
       workerId: string;
       startTime?: Date | null;
@@ -884,12 +1178,16 @@ export async function updateTask(
   if (effectiveEndTime && effectiveEndTime <= effectiveStartTime) {
     throw new Error("Task end time must be after start time");
   }
-  const completionTime =
-    completedAt ??
-    currentTask.completedAt ??
-    (taskData.status === "completed" && currentTask.status !== "completed"
-      ? new Date()
-      : null);
+  const hasCompletionTime = completedAt !== undefined;
+  const completionTime = hasCompletionTime
+    ? completedAt
+    : currentTask.completedAt ??
+      (taskData.status === "completed" && currentTask.status !== "completed"
+        ? new Date()
+        : null);
+  const workLogTimeZone = dailyHours?.length
+    ? await getOrganizationTimeZone(db, organizationId)
+    : DEFAULT_ORGANIZATION_TIMEZONE;
 
   if (taskData.equipmentId) {
     const equipment = await db.equipment.findFirst({
@@ -951,7 +1249,11 @@ export async function updateTask(
   const task = await db.transaction(async (tx) => {
     const dailyHoursDayOffset =
       taskData.startTime && currentTask.startTime
-        ? getUtcDayOffset(taskData.startTime, currentTask.startTime)
+        ? getCalendarDayOffset(
+            taskData.startTime,
+            currentTask.startTime,
+            workLogTimeZone,
+          )
         : 0;
 
     // If workerLogs are explicitly passed, overwrite the assignment entries with times
@@ -989,21 +1291,90 @@ export async function updateTask(
     }
 
     if (dailyHours) {
-      await tx.maintenanceTaskDailyHours.deleteMany({
+      const currentWorkLogs = await tx.maintenanceTaskDailyHours.findMany({
         where: { taskId, organizationId },
+        select: { id: true },
       });
-      if (dailyHours.length > 0) {
-        await tx.maintenanceTaskDailyHours.createMany({
-          data: dailyHours.map((entry) => ({
+      const currentWorkLogIds = new Set(currentWorkLogs.map(({ id }) => id));
+      if (dailyHours.some((entry) => entry.id && !currentWorkLogIds.has(entry.id))) {
+        throw new Error("Work log not found in the active maintenance task");
+      }
+
+      const submittedWorkLogIds = dailyHours.flatMap((entry) =>
+        entry.id ? [entry.id] : [],
+      );
+      await tx.maintenanceTaskDailyHours.deleteMany({
+        where: {
+          taskId,
+          organizationId,
+          ...(submittedWorkLogIds.length > 0 && {
+            id: { notIn: submittedWorkLogIds },
+          }),
+        },
+      });
+
+      const shiftedDailyHours = dailyHours.map((entry) => {
+        const workDate = shiftDateOnly(
+          new Date(`${entry.workDate}T00:00:00.000Z`),
+          dailyHoursDayOffset,
+        );
+        return {
+          ...entry,
+          workDate: workDate.toISOString().slice(0, 10),
+        };
+      });
+      const resolvedDailyHours = resolveDailyHoursStartTimes(
+        shiftedDailyHours,
+        effectiveStartTime,
+        workLogTimeZone,
+      );
+      const workLogData = resolvedDailyHours.map((entry) => {
+        return {
+          id: entry.id,
+          taskId,
+          workerId: entry.workerId,
+          organizationId,
+          workDate: new Date(`${entry.workDate}T00:00:00.000Z`),
+          startTime: entry.startTime
+            ? fromZonedDateAndTime(
+                entry.workDate,
+                entry.startTime,
+                workLogTimeZone,
+              )
+            : null,
+          hours: entry.hours.toFixed(2),
+        };
+      });
+
+      for (const entry of workLogData.filter((workLog) => workLog.id)) {
+        await tx.maintenanceTaskDailyHours.updateMany({
+          where: {
+            id: entry.id,
             taskId,
-            workerId: entry.workerId,
             organizationId,
-            workDate: shiftDateOnly(
-              new Date(`${entry.workDate}T00:00:00.000Z`),
-              dailyHoursDayOffset,
-            ),
-            hours: entry.hours.toFixed(2),
-          })),
+          },
+          data: {
+            workerId: entry.workerId,
+            workDate: entry.workDate,
+            startTime: entry.startTime,
+            hours: entry.hours,
+          },
+        });
+      }
+
+      const newWorkLogs = workLogData
+        .filter((entry) => !entry.id)
+        .map((entry) => ({
+          taskId: entry.taskId,
+          workerId: entry.workerId,
+          organizationId: entry.organizationId,
+          workDate: entry.workDate,
+          startTime: entry.startTime,
+          hours: entry.hours,
+        }));
+      if (newWorkLogs.length > 0) {
+        await tx.maintenanceTaskDailyHours.createMany({
+          data: newWorkLogs,
         });
       }
     }
@@ -1077,7 +1448,9 @@ export async function updateTask(
         },
         data: {
           ...taskData,
-          ...(completionTime && { completedAt: completionTime }),
+          ...((hasCompletionTime || completionTime) && {
+            completedAt: completionTime ?? null,
+          }),
           ...(hasMaintenancePointInput ||
           targetEquipmentId !== currentTask.equipmentId
             ? { maintenancePointId: nextMaintenancePointId }
@@ -1112,6 +1485,7 @@ export async function updateTask(
   });
 
   revalidatePath("/");
+  await dispatchTaskNotificationsAfterSave(organizationId, task.id);
   return task;
 }
 
@@ -1170,13 +1544,18 @@ export async function moveTask(
   const { db, organizationId, siteId } = await getTenantContext("manageMaintenance");
   const validatedTaskId = equipmentIdSchema.parse(taskId);
   const startTime = new Date(newStartTime);
+  const targetEquipmentId =
+    newEquipmentId === undefined
+      ? undefined
+      : equipmentIdSchema.parse(newEquipmentId);
   if (Number.isNaN(startTime.getTime())) {
     throw new Error("Task start time is invalid");
   }
+  const workLogTimeZone = await getOrganizationTimeZone(db, organizationId);
 
-  if (newEquipmentId !== undefined) {
+  if (targetEquipmentId !== undefined) {
     const equipment = await db.equipment.findFirst({
-      where: { id: equipmentIdSchema.parse(newEquipmentId), organizationId, siteId },
+      where: { id: targetEquipmentId, organizationId, siteId },
       select: { id: true },
     });
     if (!equipment) {
@@ -1191,7 +1570,7 @@ export async function moveTask(
         organizationId,
         equipment: { is: { siteId } },
       },
-      select: { startTime: true, endTime: true },
+      select: { startTime: true, endTime: true, equipmentId: true },
     });
     if (!current) {
       throw new Error("Maintenance task not found in the active organization");
@@ -1201,31 +1580,45 @@ export async function moveTask(
     const endTime = current.endTime
       ? new Date(current.endTime.getTime() + offsetMs)
       : null;
-    const dayOffset = getUtcDayOffset(startTime, current.startTime);
+    const dayOffset = getCalendarDayOffset(
+      startTime,
+      current.startTime,
+      workLogTimeZone,
+    );
     if (dayOffset !== 0) {
       const dailyHours = await tx.maintenanceTaskDailyHours.findMany({
         where: { taskId: validatedTaskId, organizationId },
         select: {
-          workerId: true,
+          id: true,
           workDate: true,
-          hours: true,
-          createdAt: true,
+          startTime: true,
         },
       });
       if (dailyHours.length > 0) {
-        await tx.maintenanceTaskDailyHours.deleteMany({
-          where: { taskId: validatedTaskId, organizationId },
-        });
-        await tx.maintenanceTaskDailyHours.createMany({
-          data: dailyHours.map((allocation) => ({
-            taskId: validatedTaskId,
-            organizationId,
-            workerId: allocation.workerId,
-            workDate: shiftDateOnly(allocation.workDate, dayOffset),
-            hours: allocation.hours,
-            createdAt: allocation.createdAt,
-          })),
-        });
+        for (const allocation of dailyHours) {
+          const workDate = shiftDateOnly(allocation.workDate, dayOffset);
+          const shiftedDate = workDate.toISOString().slice(0, 10);
+          await tx.maintenanceTaskDailyHours.updateMany({
+            where: {
+              id: allocation.id,
+              taskId: validatedTaskId,
+              organizationId,
+            },
+            data: {
+              workDate,
+              ...(allocation.startTime && {
+                startTime: fromZonedDateAndTime(
+                  shiftedDate,
+                  formatTimeInTimeZone(
+                    allocation.startTime,
+                    workLogTimeZone,
+                  ),
+                  workLogTimeZone,
+                ),
+              }),
+            },
+          });
+        }
       }
     }
 
@@ -1238,8 +1631,11 @@ export async function moveTask(
       data: {
         startTime,
         endTime,
-        ...(newEquipmentId !== undefined && {
-          equipmentId: equipmentIdSchema.parse(newEquipmentId),
+        ...(targetEquipmentId !== undefined && {
+          equipmentId: targetEquipmentId,
+          ...(current.equipmentId !== targetEquipmentId && {
+            maintenancePointId: null,
+          }),
         }),
       },
       include: {
@@ -1256,6 +1652,7 @@ export async function moveTask(
     });
   });
   revalidatePath("/");
+  await dispatchTaskNotificationsAfterSave(organizationId, task.id);
   return task;
 }
 

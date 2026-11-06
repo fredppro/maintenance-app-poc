@@ -29,7 +29,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { uploadImage } from "@/features/files/client/image";
+import {
+  getImageUploadErrorKey,
+  uploadImage,
+} from "@/features/files/client/image";
 import { updateOrganizationSettings } from "@/features/organization/server/settings";
 import {
   firstErrorPerField,
@@ -58,6 +61,9 @@ const FIELD_IDS = {
   logoFileId: "organization-logo",
 } as const;
 
+const fieldErrorId = (field: OrganizationSettingsField) =>
+  `${FIELD_IDS[field]}-error`;
+
 const toValues = (view: OrganizationSettingsView): Values => ({
   name: view.name,
   contactEmail: view.contactEmail,
@@ -81,6 +87,8 @@ export function OrganizationSettingsForm({ initial }: { initial: OrganizationSet
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<ReturnType<typeof getImageUploadErrorKey> | null>(null);
 
   const dirty =
     logo.pending !== null ||
@@ -103,6 +111,7 @@ export function OrganizationSettingsForm({ initial }: { initial: OrganizationSet
     event.preventDefault();
     if (pending || !dirty) return;
     setFormError(null);
+    setUploadError(null);
 
     const check = organizationSettingsSchema.safeParse({ ...values, logoFileId: logo.fileId });
     if (!check.success) {
@@ -117,14 +126,25 @@ export function OrganizationSettingsForm({ initial }: { initial: OrganizationSet
     try {
       let logoFileId = logo.fileId;
       if (logo.pending) {
+        setUploadProgress(null);
         try {
-          logoFileId = await uploadImage(logo.pending, logo.pending.type === "image/jpeg" ? "logo.jpg" : "logo.png");
-        } catch {
-          setFormError(t("logoUploadFailed"));
+          logoFileId = await uploadImage(
+            logo.pending,
+            logo.pending.type === "image/jpeg" ? "logo.jpg" : "logo.png",
+            setUploadProgress,
+          );
+        } catch (error) {
+          setUploadError(getImageUploadErrorKey(error));
           return;
+        } finally {
+          setUploadProgress(null);
         }
-        // Keep the uploaded file so a retry after a validation error does not upload it again.
-        setLogo({ fileId: logoFileId, pending: null });
+        setLogo({
+          fileId: logoFileId,
+          pending: null,
+          fileName: logo.fileName,
+          fileSize: logo.fileSize,
+        });
       }
 
       const result = await updateOrganizationSettings({ ...values, logoFileId });
@@ -172,12 +192,28 @@ export function OrganizationSettingsForm({ initial }: { initial: OrganizationSet
                 value={logo}
                 onChange={(next) => {
                   setLogo(next);
+                  setUploadError(null);
                   setErrors((current) => ({ ...current, logoFileId: undefined }));
                 }}
                 disabled={pending}
+                uploading={pending && logo.pending !== null}
+                uploadProgress={uploadProgress}
+                uploadError={uploadError}
+                onUploadErrorClear={() => setUploadError(null)}
+                ariaInvalid={invalid("logoFileId")}
+                ariaDescribedBy={[
+                  "organization-logo-hint",
+                  message("logoFileId") ? fieldErrorId("logoFileId") : null,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
               />
-              <FieldDescription>{t("logoHint")}</FieldDescription>
-              {message("logoFileId") && <FieldError>{message("logoFileId")}</FieldError>}
+              <FieldDescription id="organization-logo-hint">
+                {t("logoHint")}
+              </FieldDescription>
+              <FieldError id={fieldErrorId("logoFileId")}>
+                {message("logoFileId")}
+              </FieldError>
             </Field>
             <Field data-invalid={invalid("name") || undefined}>
               <FieldLabel htmlFor={FIELD_IDS.name}>{t("name")}</FieldLabel>
@@ -186,13 +222,17 @@ export function OrganizationSettingsForm({ initial }: { initial: OrganizationSet
                 value={values.name}
                 autoComplete="organization"
                 maxLength={100}
+                aria-required="true"
                 aria-invalid={invalid("name")}
+                aria-describedby={
+                  message("name") ? fieldErrorId("name") : undefined
+                }
                 disabled={pending}
                 onChange={(event) => set("name", event.target.value)}
               />
-              {message("name") && <FieldError>{message("name")}</FieldError>}
+              <FieldError id={fieldErrorId("name")}>{message("name")}</FieldError>
             </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <FieldGroup className="grid gap-4 sm:grid-cols-2">
               <Field data-invalid={invalid("contactEmail") || undefined}>
                 <FieldLabel htmlFor={FIELD_IDS.contactEmail}>{t("contactEmail")}</FieldLabel>
                 <Input
@@ -202,11 +242,23 @@ export function OrganizationSettingsForm({ initial }: { initial: OrganizationSet
                   autoComplete="off"
                   value={values.contactEmail}
                   aria-invalid={invalid("contactEmail")}
+                  aria-describedby={[
+                    "organization-contact-email-hint",
+                    message("contactEmail")
+                      ? fieldErrorId("contactEmail")
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   disabled={pending}
                   onChange={(event) => set("contactEmail", event.target.value)}
                 />
-                <FieldDescription>{t("contactEmailHint")}</FieldDescription>
-                {message("contactEmail") && <FieldError>{message("contactEmail")}</FieldError>}
+                <FieldDescription id="organization-contact-email-hint">
+                  {t("contactEmailHint")}
+                </FieldDescription>
+                <FieldError id={fieldErrorId("contactEmail")}>
+                  {message("contactEmail")}
+                </FieldError>
               </Field>
               <Field data-invalid={invalid("contactPhone") || undefined}>
                 <FieldLabel htmlFor={FIELD_IDS.contactPhone}>{t("contactPhone")}</FieldLabel>
@@ -217,13 +269,25 @@ export function OrganizationSettingsForm({ initial }: { initial: OrganizationSet
                   autoComplete="off"
                   value={values.contactPhone}
                   aria-invalid={invalid("contactPhone")}
+                  aria-describedby={[
+                    "organization-contact-phone-hint",
+                    message("contactPhone")
+                      ? fieldErrorId("contactPhone")
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   disabled={pending}
                   onChange={(event) => set("contactPhone", event.target.value)}
                 />
-                <FieldDescription>{t("contactPhoneHint")}</FieldDescription>
-                {message("contactPhone") && <FieldError>{message("contactPhone")}</FieldError>}
+                <FieldDescription id="organization-contact-phone-hint">
+                  {t("contactPhoneHint")}
+                </FieldDescription>
+                <FieldError id={fieldErrorId("contactPhone")}>
+                  {message("contactPhone")}
+                </FieldError>
               </Field>
-            </div>
+            </FieldGroup>
           </FieldGroup>
         </CardContent>
       </Card>
@@ -234,12 +298,19 @@ export function OrganizationSettingsForm({ initial }: { initial: OrganizationSet
           <CardDescription>{t("regionalDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <FieldGroup className="grid gap-4 sm:grid-cols-2">
             <Field data-invalid={invalid("timezone") || undefined}>
               <FieldLabel htmlFor={FIELD_IDS.timezone}>{t("timezone")}</FieldLabel>
               <SearchableSelect
                 id={FIELD_IDS.timezone}
-                aria-label={t("timezone")}
+                aria-required
+                aria-invalid={invalid("timezone")}
+                aria-describedby={[
+                  "organization-timezone-hint",
+                  message("timezone") ? fieldErrorId("timezone") : null,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
                 options={timezones}
                 value={values.timezone}
                 onChange={(zone) => set("timezone", zone)}
@@ -247,8 +318,12 @@ export function OrganizationSettingsForm({ initial }: { initial: OrganizationSet
                 searchPlaceholder={t("timezoneSearch")}
                 emptyText={t("timezoneEmpty")}
               />
-              <FieldDescription>{t("timezoneHint")}</FieldDescription>
-              {message("timezone") && <FieldError>{message("timezone")}</FieldError>}
+              <FieldDescription id="organization-timezone-hint">
+                {t("timezoneHint")}
+              </FieldDescription>
+              <FieldError id={fieldErrorId("timezone")}>
+                {message("timezone")}
+              </FieldError>
             </Field>
             <Field data-invalid={invalid("locale") || undefined}>
               <FieldLabel htmlFor={FIELD_IDS.locale}>{t("locale")}</FieldLabel>
@@ -257,7 +332,18 @@ export function OrganizationSettingsForm({ initial }: { initial: OrganizationSet
                 disabled={pending}
                 onValueChange={(locale) => set("locale", locale as Values["locale"])}
               >
-                <SelectTrigger id={FIELD_IDS.locale} className="w-full" aria-invalid={invalid("locale")}>
+                <SelectTrigger
+                  id={FIELD_IDS.locale}
+                  className="w-full"
+                  aria-required="true"
+                  aria-invalid={invalid("locale")}
+                  aria-describedby={[
+                    "organization-locale-hint",
+                    message("locale") ? fieldErrorId("locale") : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -270,10 +356,14 @@ export function OrganizationSettingsForm({ initial }: { initial: OrganizationSet
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <FieldDescription>{t("localeHint")}</FieldDescription>
-              {message("locale") && <FieldError>{message("locale")}</FieldError>}
+              <FieldDescription id="organization-locale-hint">
+                {t("localeHint")}
+              </FieldDescription>
+              <FieldError id={fieldErrorId("locale")}>
+                {message("locale")}
+              </FieldError>
             </Field>
-          </div>
+          </FieldGroup>
         </CardContent>
       </Card>
 

@@ -1,10 +1,23 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useNow, useTranslations } from "next-intl";
 import { TaskType } from "../../../../prisma/generated/prisma/enums";
+import { Badge } from "@/components/ui/badge";
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemHeader,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
 import type { OnboardingProgress } from "@/features/organization/shared/onboarding";
 import { cn } from "@/lib/utils";
+import { CalendarDays } from "lucide-react";
+import { useRouter } from "@/i18n/routing";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect } from "react";
 import { useSchedulerStore } from "../store/scheduler-provider";
 import { GettingStarted } from "./getting-started";
 import { SchedulerToolbar } from "./scheduler-toolbar";
@@ -23,13 +36,30 @@ export function SchedulerDashboard({
 }: {
   onboarding?: OnboardingProgress | null;
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const openTaskId = searchParams.get("taskId");
   const entries = useSchedulerStore((state) => state.entries);
   const equipment = useSchedulerStore((state) => state.equipment);
   const timeZone = useSchedulerStore((state) => state.timeZone);
+  const setCurrentDate = useSchedulerStore((state) => state.setCurrentDate);
+  const setViewMode = useSchedulerStore((state) => state.setViewMode);
   const t = useTranslations("Dashboard");
   const format = useFormatter();
-  const nextMaintenance = getNextScheduledMaintenance(entries, Date.now());
-  const overdueCount = countOverdueScheduledMaintenance(entries, Date.now());
+  const targetTask = entries.find((entry) => entry.id === openTaskId);
+  const handleTaskLinkOpened = useCallback(() => {
+    router.replace("/");
+  }, [router]);
+
+  useEffect(() => {
+    if (!targetTask) return;
+    setCurrentDate(new Date(targetTask.startTime));
+    setViewMode("week");
+  }, [setCurrentDate, setViewMode, targetTask]);
+
+  const now = useNow().getTime();
+  const nextMaintenance = getNextScheduledMaintenance(entries, now);
+  const overdueCount = countOverdueScheduledMaintenance(entries, now);
 
   const stats = {
     scheduled: entries.filter((e) => e.status === "scheduled").length,
@@ -41,43 +71,53 @@ export function SchedulerDashboard({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-3 sm:p-4">
-      <h1 className="sr-only">{t("title")}</h1>
+      <h1 className="shrink-0 text-xl font-semibold tracking-tight">
+        {t("title")}
+      </h1>
       {onboarding && <GettingStarted progress={onboarding} />}
-      <section
+      <Item
         role="status"
         aria-label={t("nextMaintenance.title")}
-        className="flex shrink-0 flex-wrap items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3"
+        variant="outline"
+        size="sm"
+        className="w-full shrink-0"
       >
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("nextMaintenance.title")}
-          </p>
+        <ItemMedia variant="icon">
+          <CalendarDays aria-hidden="true" />
+        </ItemMedia>
+        <ItemContent className="min-w-0">
+          <ItemHeader className="flex-wrap">
+            <ItemTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("nextMaintenance.title")}
+            </ItemTitle>
+            {overdueCount > 0 && (
+              <Badge variant="destructive">
+                {t("nextMaintenance.overdue", { count: overdueCount })}
+              </Badge>
+            )}
+          </ItemHeader>
           {nextMaintenance ? (
             <>
-              <p className="truncate font-medium">{nextMaintenance.title}</p>
-              <p className="text-sm text-muted-foreground">
-                {equipment.find((item) => item.id === nextMaintenance.equipmentId)
-                  ?.name ?? ""}
+              <p className="truncate font-medium text-foreground">
+                {nextMaintenance.title}
+              </p>
+              <ItemDescription>
+                {equipment.find(
+                  (item) => item.id === nextMaintenance.equipmentId,
+                )?.name ?? ""}
                 {" · "}
                 {format.dateTime(new Date(nextMaintenance.startTime), {
                   dateStyle: "medium",
                   timeStyle: "short",
                   timeZone,
                 })}
-              </p>
+              </ItemDescription>
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {t("nextMaintenance.none")}
-            </p>
+            <ItemDescription>{t("nextMaintenance.none")}</ItemDescription>
           )}
-        </div>
-        {overdueCount > 0 && (
-          <p className="text-sm font-medium text-destructive">
-            {t("nextMaintenance.overdue", { count: overdueCount })}
-          </p>
-        )}
-      </section>
+        </ItemContent>
+      </Item>
       <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2 text-sm">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Stat
@@ -111,7 +151,10 @@ export function SchedulerDashboard({
       <SchedulerToolbar />
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <TimelineGrid />
+        <TimelineGrid
+          openTaskId={openTaskId}
+          onTaskLinkOpened={handleTaskLinkOpened}
+        />
       </div>
 
       <p className="shrink-0 text-xs text-muted-foreground">
@@ -134,15 +177,15 @@ function Stat({
   valueClassName?: string;
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-baseline gap-1.5">
       {marker && (
         <span
           aria-hidden="true"
-          className={cn("size-3 shrink-0 rounded-full border", marker)}
+          className={cn("mb-0.5 size-3 shrink-0 self-center rounded-full border", marker)}
         />
       )}
-      <span className="text-muted-foreground">{label}</span>
-      <span className={cn("font-medium tabular-nums", valueClassName)}>
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className={cn("text-base font-semibold tabular-nums", valueClassName)}>
         {value}
       </span>
     </div>

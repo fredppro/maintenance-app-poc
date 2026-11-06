@@ -2,8 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   findDueJobs: vi.fn(),
+  findUnattachedFiles: vi.fn(),
   forTenant: vi.fn(),
   processDeletion: vi.fn(),
+  deleteUnattachedFile: vi.fn(),
   logEvent: vi.fn(),
 }));
 
@@ -11,11 +13,13 @@ vi.mock("../../prisma/seed-env", () => ({}));
 vi.mock("../../src/lib/prisma", () => ({
   default: {
     storedFileDeletion: { findMany: mocks.findDueJobs },
+    storedFile: { findMany: mocks.findUnattachedFiles },
     $disconnect: vi.fn(),
   },
   forTenant: mocks.forTenant,
 }));
 vi.mock("../../src/features/files/server/files", () => ({
+  deleteExpiredUnattachedStoredFile: mocks.deleteUnattachedFile,
   processStoredFileDeletion: mocks.processDeletion,
 }));
 vi.mock("../../src/lib/logger", () => ({ logEvent: mocks.logEvent }));
@@ -25,6 +29,7 @@ import { runStorageCleanup, STORAGE_CLEANUP_BATCH_SIZE } from "./storage-cleanup
 describe("runStorageCleanup", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.findUnattachedFiles.mockResolvedValue([]);
     mocks.findDueJobs.mockResolvedValue([
       { id: "job-1", organizationId: "org-1" },
       { id: "job-2", organizationId: "org-2" },
@@ -35,6 +40,7 @@ describe("runStorageCleanup", () => {
       .mockResolvedValueOnce("deleted")
       .mockResolvedValueOnce("retry_scheduled")
       .mockResolvedValueOnce("not_due");
+    mocks.deleteUnattachedFile.mockResolvedValue("deleted");
   });
 
   it("processes due jobs in isolated tenant contexts and reports outcomes", async () => {
@@ -45,6 +51,9 @@ describe("runStorageCleanup", () => {
       retryScheduled: 1,
       failed: 0,
       morePending: false,
+      unattachedSelected: 0,
+      unattachedDeleted: 0,
+      moreUnattached: false,
     });
 
     expect(mocks.findDueJobs).toHaveBeenCalledWith({
@@ -79,6 +88,48 @@ describe("runStorageCleanup", () => {
       "error",
       "file.cleanup_job_failed",
       expect.objectContaining({ deletionId: "job-0" }),
+    );
+  });
+
+  it("cleans expired unattached files in tenant scope", async () => {
+    const now = new Date("2026-11-05T00:00:00.000Z");
+    mocks.findUnattachedFiles.mockResolvedValue([
+      { id: "file-1", organizationId: "org-4" },
+    ]);
+
+    await expect(runStorageCleanup(now)).resolves.toMatchObject({
+      unattachedSelected: 1,
+      unattachedDeleted: 1,
+      moreUnattached: false,
+    });
+    expect(mocks.deleteUnattachedFile).toHaveBeenCalledWith(
+      "db:org-4",
+      "file-1",
+      "org-4",
+      now,
+    );
+  });
+
+  it("logs orphan cleanup failures and reports an oversized backlog", async () => {
+    mocks.findUnattachedFiles.mockResolvedValue(
+      Array.from({ length: STORAGE_CLEANUP_BATCH_SIZE + 1 }, (_, index) => ({
+        id: `file-${index}`,
+        organizationId: "org-1",
+      })),
+    );
+    mocks.deleteUnattachedFile.mockReset().mockResolvedValue("deleted");
+    mocks.deleteUnattachedFile.mockRejectedValueOnce(new Error("storage unavailable"));
+
+    await expect(runStorageCleanup()).resolves.toMatchObject({
+      unattachedSelected: STORAGE_CLEANUP_BATCH_SIZE,
+      unattachedDeleted: STORAGE_CLEANUP_BATCH_SIZE - 1,
+      failed: 1,
+      moreUnattached: true,
+    });
+    expect(mocks.logEvent).toHaveBeenCalledWith(
+      "error",
+      "file.orphan_cleanup_failed",
+      expect.objectContaining({ fileId: "file-0", organizationId: "org-1" }),
     );
   });
 });

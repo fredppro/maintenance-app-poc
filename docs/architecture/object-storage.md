@@ -37,14 +37,26 @@ tenant purge does not erase the only record of an object that failed to delete.
 `pnpm ops:storage:cleanup` processes up to 100 due jobs using the migration
 owner connection and the configured storage provider. The
 `maintenance-jobs.yml` workflow invokes it as part of its daily maintenance
-run; that workflow is conditional on external credentials and its successful
-execution is not established by this document. The command exits unsuccessfully
-when provider errors remain or the batch limit leaves more due work. The first
-retry is scheduled one minute later, with exponential backoff capped at 24
-hours; a manual run processes jobs once their retry time is due. Persistent
-queueing does not reconcile objects whose upload failed before a deletion job
-could be written; that simultaneous database/storage failure still requires
-operator investigation.
+run. Image uploads that have not been linked to an equipment photo or
+organization logo are also deleted after a seven-day grace period. Linking a
+file clears its deadline in the same transaction that saves the record.
+
+**Automated orphan cleanup depends on the maintenance workflow being configured
+and running.** The workflow skips when `MIGRATION_DATABASE_URL` is missing; when
+`S3_BUCKET` is configured, it also skips unless both `S3_CLEANUP_*` credentials
+are present. The cleanup command needs the migration/owner database connection
+and the configured storage provider credentials. Verify the workflow's
+`production-maintenance` environment secrets and successful run history; the
+workflow definition alone does not prove cleanup is active. If it is not
+configured, run `pnpm ops:storage:cleanup` manually from an operator environment
+with the required credentials.
+
+The command exits unsuccessfully when provider errors remain or either batch
+limit leaves more work. The first retry is scheduled one minute later, with
+exponential backoff capped at 24 hours; a manual run processes jobs once their
+retry time is due. Persistent queueing does not reconcile objects whose upload
+failed before a deletion job could be written; that simultaneous
+database/storage failure still requires operator investigation.
 
 The manual `pnpm ops:storage:inventory -- --older-than-hours <hours>` command
 compares aged bucket objects with file/export metadata and pending deletion

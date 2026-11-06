@@ -38,6 +38,15 @@ export const MaintenanceReminderStatus = {
 export type MaintenanceReminderStatus = (typeof MaintenanceReminderStatus)[keyof typeof MaintenanceReminderStatus]
 
 
+export const MaintenanceTaskNotificationType = {
+  ASSIGNMENT: 'ASSIGNMENT',
+  REMINDER: 'REMINDER',
+  MANUAL: 'MANUAL'
+} as const
+
+export type MaintenanceTaskNotificationType = (typeof MaintenanceTaskNotificationType)[keyof typeof MaintenanceTaskNotificationType]
+
+
 export const WorkerType = {
   INTERNAL: 'INTERNAL',
   EXTERNAL: 'EXTERNAL'

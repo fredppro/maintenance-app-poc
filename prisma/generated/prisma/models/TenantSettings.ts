@@ -906,7 +906,7 @@ export type $TenantSettingsPayload<ExtArgs extends runtime.Types.Extensions.Inte
 export type TenantSettingsGetPayload<S extends boolean | null | undefined | TenantSettingsDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$TenantSettingsPayload, S>
 
 export type TenantSettingsCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<TenantSettingsFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<TenantSettingsFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: TenantSettingsCountAggregateInputType | true
   }
 
@@ -1361,6 +1361,7 @@ export type TenantSettingsFindUniqueArgs<ExtArgs extends runtime.Types.Extension
    * Filter, which TenantSettings to fetch.
    */
   where: Prisma.TenantSettingsWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1383,6 +1384,7 @@ export type TenantSettingsFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Ex
    * Filter, which TenantSettings to fetch.
    */
   where: Prisma.TenantSettingsWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1435,6 +1437,7 @@ export type TenantSettingsFindFirstArgs<ExtArgs extends runtime.Types.Extensions
    * Filter by unique combinations of TenantSettings.
    */
   distinct?: Prisma.TenantSettingsScalarFieldEnum | Prisma.TenantSettingsScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1487,6 +1490,7 @@ export type TenantSettingsFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Ext
    * Filter by unique combinations of TenantSettings.
    */
   distinct?: Prisma.TenantSettingsScalarFieldEnum | Prisma.TenantSettingsScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1539,6 +1543,7 @@ export type TenantSettingsFindManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Filter by unique combinations of TenantSettings.
    */
   distinct?: Prisma.TenantSettingsScalarFieldEnum | Prisma.TenantSettingsScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1561,6 +1566,7 @@ export type TenantSettingsCreateArgs<ExtArgs extends runtime.Types.Extensions.In
    * The data needed to create a TenantSettings.
    */
   data: Prisma.XOR<Prisma.TenantSettingsCreateInput, Prisma.TenantSettingsUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1621,6 +1627,7 @@ export type TenantSettingsUpdateArgs<ExtArgs extends runtime.Types.Extensions.In
    * Choose, which TenantSettings to update.
    */
   where: Prisma.TenantSettingsWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1699,6 +1706,7 @@ export type TenantSettingsUpsertArgs<ExtArgs extends runtime.Types.Extensions.In
    * In case the TenantSettings was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.TenantSettingsUpdateInput, Prisma.TenantSettingsUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1721,6 +1729,7 @@ export type TenantSettingsDeleteArgs<ExtArgs extends runtime.Types.Extensions.In
    * Filter which TenantSettings to delete.
    */
   where: Prisma.TenantSettingsWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

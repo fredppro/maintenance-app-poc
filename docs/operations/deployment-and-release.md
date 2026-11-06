@@ -47,8 +47,19 @@ Complete the external network and credential setup before enabling the job:
 3. In the GitHub repository's `staging` Environment, add these secrets:
    - `STAGING_WIREGUARD_CONFIG`: the dedicated peer's client configuration.
    - `COOLIFY_API_TOKEN`: the least-privilege token described above.
-4. Restrict the `staging` Environment to the `develop` branch. Then set the
-   repository Actions variable `STAGING_AUTODEPLOY_ENABLED` to `true`.
+4. Restrict the `staging` Environment to the `develop` branch and configure
+   required reviewers so a trusted human must approve each deployment. Protect
+   `develop` with pull-request review requirements and enable required
+   Code Owner review for workflow, script, and Dockerfile changes. The checked-in
+   [CODEOWNERS](../../.github/CODEOWNERS) file routes those changes to `@fredppro`.
+   Keep both deployment secrets environment-scoped; do not create repository-level
+   copies. Only then set the repository Actions variable
+   `STAGING_AUTODEPLOY_ENABLED` to `true`.
+
+The workflow's `staging` environment is an approval boundary only when required
+reviewers are configured in GitHub repository settings. A branch restriction
+alone does not require approval. Do not enable automated deployment until those
+protections are in place.
 
 The workflow targets the existing staging application UUID in
 `.github/workflows/tests.yml` and the private Coolify URL `http://10.242.0.1:8000`.

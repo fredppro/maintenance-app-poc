@@ -7,13 +7,10 @@ import {
   ReportTaskNotFoundError,
 } from "./report.service";
 
-const { settingsFind } = vi.hoisted(() => ({ settingsFind: vi.fn() }));
-
-vi.mock("@/lib/prisma", () => ({
-  default: { tenantSettings: { findUnique: settingsFind } },
-}));
-
-const db = {} as never;
+const settingsFind = vi.fn();
+const db = {
+  tenantSettings: { findUnique: settingsFind },
+} as never;
 
 describe("report service", () => {
   beforeEach(() => {
@@ -69,6 +66,7 @@ describe("report service", () => {
         where: { organizationId: "org-1" },
         select: { timezone: true },
       });
+      expect(settingsFind).toHaveBeenCalledTimes(1);
       expect(streamMock).toHaveBeenLastCalledWith(mockTask, "en", "America/Sao_Paulo");
 
       settingsFind.mockResolvedValue(null);

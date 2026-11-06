@@ -388,7 +388,7 @@ export type $RateLimitPayload<ExtArgs extends runtime.Types.Extensions.InternalA
 export type RateLimitGetPayload<S extends boolean | null | undefined | RateLimitDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$RateLimitPayload, S>
 
 export type RateLimitCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<RateLimitFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<RateLimitFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: RateLimitCountAggregateInputType | true
   }
 
@@ -828,6 +828,7 @@ export type RateLimitFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Filter, which RateLimit to fetch.
    */
   where: Prisma.RateLimitWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -846,6 +847,7 @@ export type RateLimitFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensi
    * Filter, which RateLimit to fetch.
    */
   where: Prisma.RateLimitWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -894,6 +896,7 @@ export type RateLimitFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Filter by unique combinations of RateLimits.
    */
   distinct?: Prisma.RateLimitScalarFieldEnum | Prisma.RateLimitScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -942,6 +945,7 @@ export type RateLimitFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensio
    * Filter by unique combinations of RateLimits.
    */
   distinct?: Prisma.RateLimitScalarFieldEnum | Prisma.RateLimitScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -990,6 +994,7 @@ export type RateLimitFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Filter by unique combinations of RateLimits.
    */
   distinct?: Prisma.RateLimitScalarFieldEnum | Prisma.RateLimitScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1008,6 +1013,7 @@ export type RateLimitCreateArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * The data needed to create a RateLimit.
    */
   data: Prisma.XOR<Prisma.RateLimitCreateInput, Prisma.RateLimitUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1060,6 +1066,7 @@ export type RateLimitUpdateArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Choose, which RateLimit to update.
    */
   where: Prisma.RateLimitWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1130,6 +1137,7 @@ export type RateLimitUpsertArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * In case the RateLimit was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.RateLimitUpdateInput, Prisma.RateLimitUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1148,6 +1156,7 @@ export type RateLimitDeleteArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Filter which RateLimit to delete.
    */
   where: Prisma.RateLimitWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

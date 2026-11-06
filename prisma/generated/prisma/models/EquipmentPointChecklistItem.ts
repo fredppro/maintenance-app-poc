@@ -638,7 +638,7 @@ export type $EquipmentPointChecklistItemPayload<ExtArgs extends runtime.Types.Ex
 export type EquipmentPointChecklistItemGetPayload<S extends boolean | null | undefined | EquipmentPointChecklistItemDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$EquipmentPointChecklistItemPayload, S>
 
 export type EquipmentPointChecklistItemCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<EquipmentPointChecklistItemFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<EquipmentPointChecklistItemFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: EquipmentPointChecklistItemCountAggregateInputType | true
   }
 
@@ -1087,6 +1087,7 @@ export type EquipmentPointChecklistItemFindUniqueArgs<ExtArgs extends runtime.Ty
    * Filter, which EquipmentPointChecklistItem to fetch.
    */
   where: Prisma.EquipmentPointChecklistItemWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1109,6 +1110,7 @@ export type EquipmentPointChecklistItemFindUniqueOrThrowArgs<ExtArgs extends run
    * Filter, which EquipmentPointChecklistItem to fetch.
    */
   where: Prisma.EquipmentPointChecklistItemWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1161,6 +1163,7 @@ export type EquipmentPointChecklistItemFindFirstArgs<ExtArgs extends runtime.Typ
    * Filter by unique combinations of EquipmentPointChecklistItems.
    */
   distinct?: Prisma.EquipmentPointChecklistItemScalarFieldEnum | Prisma.EquipmentPointChecklistItemScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1213,6 +1216,7 @@ export type EquipmentPointChecklistItemFindFirstOrThrowArgs<ExtArgs extends runt
    * Filter by unique combinations of EquipmentPointChecklistItems.
    */
   distinct?: Prisma.EquipmentPointChecklistItemScalarFieldEnum | Prisma.EquipmentPointChecklistItemScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1265,6 +1269,7 @@ export type EquipmentPointChecklistItemFindManyArgs<ExtArgs extends runtime.Type
    * Filter by unique combinations of EquipmentPointChecklistItems.
    */
   distinct?: Prisma.EquipmentPointChecklistItemScalarFieldEnum | Prisma.EquipmentPointChecklistItemScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1287,6 +1292,7 @@ export type EquipmentPointChecklistItemCreateArgs<ExtArgs extends runtime.Types.
    * The data needed to create a EquipmentPointChecklistItem.
    */
   data: Prisma.XOR<Prisma.EquipmentPointChecklistItemCreateInput, Prisma.EquipmentPointChecklistItemUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1347,6 +1353,7 @@ export type EquipmentPointChecklistItemUpdateArgs<ExtArgs extends runtime.Types.
    * Choose, which EquipmentPointChecklistItem to update.
    */
   where: Prisma.EquipmentPointChecklistItemWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1425,6 +1432,7 @@ export type EquipmentPointChecklistItemUpsertArgs<ExtArgs extends runtime.Types.
    * In case the EquipmentPointChecklistItem was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.EquipmentPointChecklistItemUpdateInput, Prisma.EquipmentPointChecklistItemUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1447,6 +1455,7 @@ export type EquipmentPointChecklistItemDeleteArgs<ExtArgs extends runtime.Types.
    * Filter which EquipmentPointChecklistItem to delete.
    */
   where: Prisma.EquipmentPointChecklistItemWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

@@ -655,7 +655,7 @@ export type $EquipmentOperatingHourReadingPayload<ExtArgs extends runtime.Types.
 export type EquipmentOperatingHourReadingGetPayload<S extends boolean | null | undefined | EquipmentOperatingHourReadingDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$EquipmentOperatingHourReadingPayload, S>
 
 export type EquipmentOperatingHourReadingCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<EquipmentOperatingHourReadingFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<EquipmentOperatingHourReadingFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: EquipmentOperatingHourReadingCountAggregateInputType | true
   }
 
@@ -1104,6 +1104,7 @@ export type EquipmentOperatingHourReadingFindUniqueArgs<ExtArgs extends runtime.
    * Filter, which EquipmentOperatingHourReading to fetch.
    */
   where: Prisma.EquipmentOperatingHourReadingWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1126,6 +1127,7 @@ export type EquipmentOperatingHourReadingFindUniqueOrThrowArgs<ExtArgs extends r
    * Filter, which EquipmentOperatingHourReading to fetch.
    */
   where: Prisma.EquipmentOperatingHourReadingWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1178,6 +1180,7 @@ export type EquipmentOperatingHourReadingFindFirstArgs<ExtArgs extends runtime.T
    * Filter by unique combinations of EquipmentOperatingHourReadings.
    */
   distinct?: Prisma.EquipmentOperatingHourReadingScalarFieldEnum | Prisma.EquipmentOperatingHourReadingScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1230,6 +1233,7 @@ export type EquipmentOperatingHourReadingFindFirstOrThrowArgs<ExtArgs extends ru
    * Filter by unique combinations of EquipmentOperatingHourReadings.
    */
   distinct?: Prisma.EquipmentOperatingHourReadingScalarFieldEnum | Prisma.EquipmentOperatingHourReadingScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1282,6 +1286,7 @@ export type EquipmentOperatingHourReadingFindManyArgs<ExtArgs extends runtime.Ty
    * Filter by unique combinations of EquipmentOperatingHourReadings.
    */
   distinct?: Prisma.EquipmentOperatingHourReadingScalarFieldEnum | Prisma.EquipmentOperatingHourReadingScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1304,6 +1309,7 @@ export type EquipmentOperatingHourReadingCreateArgs<ExtArgs extends runtime.Type
    * The data needed to create a EquipmentOperatingHourReading.
    */
   data: Prisma.XOR<Prisma.EquipmentOperatingHourReadingCreateInput, Prisma.EquipmentOperatingHourReadingUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1364,6 +1370,7 @@ export type EquipmentOperatingHourReadingUpdateArgs<ExtArgs extends runtime.Type
    * Choose, which EquipmentOperatingHourReading to update.
    */
   where: Prisma.EquipmentOperatingHourReadingWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1442,6 +1449,7 @@ export type EquipmentOperatingHourReadingUpsertArgs<ExtArgs extends runtime.Type
    * In case the EquipmentOperatingHourReading was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.EquipmentOperatingHourReadingUpdateInput, Prisma.EquipmentOperatingHourReadingUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1464,6 +1472,7 @@ export type EquipmentOperatingHourReadingDeleteArgs<ExtArgs extends runtime.Type
    * Filter which EquipmentOperatingHourReading to delete.
    */
   where: Prisma.EquipmentOperatingHourReadingWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
