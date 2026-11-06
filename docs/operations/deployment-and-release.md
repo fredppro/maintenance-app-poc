@@ -72,6 +72,10 @@ build embeds its commit SHA in the successful `/api/health` response header
 container from an older container that may still serve during a rolling
 update.
 
+The runtime image also declares a Docker health check that calls
+`http://127.0.0.1:3000/api/health`; Coolify can report the container as healthy
+only after a new image containing this check is deployed.
+
 The workflow confirms Coolify returned a deployment UUID, then waits for a
 healthy response carrying the expected commit SHA. It does not read deployment
 logs or automatically roll back. If a deployment fails or times out, inspect
