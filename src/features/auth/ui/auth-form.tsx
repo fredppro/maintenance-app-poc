@@ -153,12 +153,12 @@ export function AuthForm({
         </Link>
         <Card variant="elevated" className="w-full">
           <CardHeader className="gap-3">
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-primary">
-              {t("signUpEyebrow")}
-            </p>
-            <CardTitle className="text-2xl tracking-tight sm:text-3xl">
+            <h1
+              data-slot="card-title"
+              className="leading-none font-semibold text-2xl tracking-tight sm:text-3xl"
+            >
               {t("signUpTitle")}
-            </CardTitle>
+            </h1>
             <CardDescription className="text-base">
               {t("signUpDescription")}
             </CardDescription>
@@ -322,7 +322,7 @@ export function AuthForm({
                 <p className="text-center text-sm text-muted-foreground">
                   {t("signInPrompt")}{" "}
                   <Link
-                    className="font-medium text-primary underline underline-offset-4"
+                    className="font-medium text-link underline underline-offset-4"
                     href={
                       invitationId
                         ? `/login?invitationId=${encodeURIComponent(invitationId)}`
@@ -342,7 +342,9 @@ export function AuthForm({
   ) : (
     <Card variant="elevated" className="mx-auto w-full max-w-md">
       <CardHeader>
-        <CardTitle>{t("signInTitle")}</CardTitle>
+        <h1 data-slot="card-title" className="leading-none font-semibold">
+          {t("signInTitle")}
+        </h1>
         <CardDescription>{t("signInDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -388,7 +390,7 @@ export function AuthForm({
             <p className="text-center text-sm text-muted-foreground">
               {t("createAccountPrompt")}{" "}
               <Link
-                className="text-primary underline underline-offset-4"
+                className="text-link underline underline-offset-4"
                 href={
                   invitationId
                     ? `/signup?invitationId=${encodeURIComponent(invitationId)}`
@@ -400,7 +402,7 @@ export function AuthForm({
             </p>
             <p className="text-center text-sm">
               <Link
-                className="text-primary underline underline-offset-4"
+                className="text-link underline underline-offset-4"
                 href="/reset-password"
               >
                 {t("forgotPassword")}

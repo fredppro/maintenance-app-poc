@@ -13,6 +13,7 @@
     "footer": {
       "clickHint": "Click on a cell to schedule maintenance",
       "dragHint": "Drag entries to reschedule",
+      "tapHint": "Tap a cell to schedule; tap a task to edit its schedule; swipe the timeline for more dates",
       "zoomHint": "Use zoom controls to change view"
     },
     "nextMaintenance": {

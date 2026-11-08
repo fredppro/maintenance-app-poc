@@ -11,7 +11,7 @@ import { notFound } from "next/navigation";
 
 // Registers the "Geist" and "Geist Mono" @font-face rules that --font-sans/--font-mono in globals.css name.
 export const geist = Geist({ subsets: ["latin"] });
-export const geistMono = Geist_Mono({ subsets: ["latin"] });
+export const geistMono = Geist_Mono({ subsets: ["latin"], preload: false });
 
 export const metadata: Metadata = {
   title: "Maintenance Scheduler - Equipment Service Planning",

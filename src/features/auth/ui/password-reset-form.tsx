@@ -9,7 +9,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Field,
@@ -65,7 +64,9 @@ export function PasswordResetForm({
   return (
     <Card variant="elevated" className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>{t(token ? "resetPasswordTitle" : "forgotPassword")}</CardTitle>
+        <h1 data-slot="card-title" className="leading-none font-semibold">
+          {t(token ? "resetPasswordTitle" : "forgotPassword")}
+        </h1>
         <CardDescription>
           {t(complete ? "resetPasswordComplete" : "resetPasswordDescription")}
         </CardDescription>
@@ -109,7 +110,7 @@ export function PasswordResetForm({
       )}
       {complete && (
         <CardContent>
-          <Link className="text-primary underline underline-offset-4" href="/login">
+          <Link className="text-link underline underline-offset-4" href="/login">
             {t("signInLink")}
           </Link>
         </CardContent>

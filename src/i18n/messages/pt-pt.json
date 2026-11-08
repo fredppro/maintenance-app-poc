@@ -13,6 +13,7 @@
     "footer": {
       "clickHint": "Clique numa célula para agendar manutenção",
       "dragHint": "Arraste entradas para reagendar",
+      "tapHint": "Toque numa célula para agendar; toque numa tarefa para editar o agendamento; deslize a linha temporal para ver mais datas",
       "zoomHint": "Use controlos de zoom para mudar a vista"
     },
     "nextMaintenance": {

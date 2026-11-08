@@ -158,8 +158,13 @@ export function SchedulerDashboard({
       </div>
 
       <p className="shrink-0 text-xs text-muted-foreground">
-        {t("footer.clickHint")} • {t("footer.dragHint")} •{" "}
-        {t("footer.zoomHint")}
+        <span className="pointer-coarse:hidden">
+          {t("footer.clickHint")} • {t("footer.dragHint")} •{" "}
+          {t("footer.zoomHint")}
+        </span>
+        <span className="hidden pointer-coarse:inline">
+          {t("footer.tapHint")}
+        </span>
       </p>
     </div>
   );

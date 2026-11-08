@@ -2,7 +2,7 @@
 
 import { MaintenanceEntry } from "../types";
 import { cn } from "@/lib/utils";
-import { GripVertical, Wrench } from "lucide-react";
+import { GripVertical, Pencil, Wrench } from "lucide-react";
 import { useState } from "react";
 import { EditEntryDialog } from "./edit-entry-dialog";
 import { TaskType } from "../../../../prisma/generated/prisma/enums";
@@ -61,21 +61,31 @@ export function MaintenanceEntryBlock({
 
   return (
     <>
-      <div
+      <button
+        type="button"
+        aria-label={entry.title}
         draggable
         onDragStart={handleDragStart}
         onClick={handleClick}
         style={style}
         className={cn(
-          "rounded-md border px-2 py-1 cursor-grab active:cursor-grabbing group select-none",
+          "rounded-md border px-2 py-1 text-left cursor-grab active:cursor-grabbing pointer-coarse:cursor-pointer group select-none",
           "flex items-center gap-1 overflow-hidden transition-[background-color,border-color,ring]",
           "hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:ring-offset-background",
+          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           getTypeStyles(),
           isDragging && "opacity-50 scale-95",
         )}
       >
-        <GripVertical className="w-3 h-3 flex-shrink-0 opacity-50" />
-        <Wrench className="w-3 h-3 flex-shrink-0" />
+        <GripVertical
+          aria-hidden="true"
+          className="w-3 h-3 flex-shrink-0 opacity-50 pointer-coarse:hidden"
+        />
+        <Pencil
+          aria-hidden="true"
+          className="hidden size-3 shrink-0 opacity-70 pointer-coarse:block"
+        />
+        <Wrench className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
         <span className="text-xs font-medium truncate flex-1">
           {entry.title}
         </span>
@@ -98,7 +108,7 @@ export function MaintenanceEntryBlock({
           )}
         </div>
 
-      </div>
+      </button>
 
       <EditEntryDialog
         entry={entry}
