@@ -1,4 +1,10 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -9,6 +15,7 @@ import {
   useSchedulerStore,
 } from "../store/scheduler-provider";
 import { EditEntryDialog } from "./edit-entry-dialog";
+import { notifyTaskUpdated } from "../events";
 import { toast } from "sonner";
 
 const {
@@ -17,12 +24,14 @@ const {
   previewMaintenanceTaskEmailMock,
   sendMaintenanceTaskEmailMock,
   updateTaskMock,
+  fetchMock,
 } = vi.hoisted(() => ({
   deleteTaskMock: vi.fn(),
   getMaintenancePointsMock: vi.fn().mockResolvedValue([]),
   previewMaintenanceTaskEmailMock: vi.fn(),
   sendMaintenanceTaskEmailMock: vi.fn(),
   updateTaskMock: vi.fn(),
+  fetchMock: vi.fn(),
 }));
 
 const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
@@ -190,12 +199,18 @@ describe("EditEntryDialog", () => {
     getMaintenancePointsMock.mockReset().mockResolvedValue([]);
     previewMaintenanceTaskEmailMock.mockReset();
     sendMaintenanceTaskEmailMock.mockReset();
+    fetchMock.mockReset().mockResolvedValue({
+      ok: true,
+      json: async () => ({ items: [], hasMore: false, nextCursor: null }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
     vi.mocked(toast.error).mockClear();
     vi.mocked(toast.success).mockClear();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     Reflect.deleteProperty(HTMLElement.prototype, "hasPointerCapture");
     Reflect.deleteProperty(HTMLElement.prototype, "setPointerCapture");
     Reflect.deleteProperty(HTMLElement.prototype, "releasePointerCapture");
@@ -221,7 +236,41 @@ describe("EditEntryDialog", () => {
     );
   });
 
-  it("explains automatic notifications and distinguishes manual history", () => {
+  it("explains automatic notifications and distinguishes manual history", async () => {
+    const historyReminders = [
+      {
+        id: "assignment-notice-1",
+        workerId: notificationWorker.id,
+        notificationType: "ASSIGNMENT",
+        status: "SENT",
+        scheduledFor: startTime.toISOString(),
+        sentAt: startTime.toISOString(),
+        attempts: 1,
+        lastError: null,
+        createdAt: startTime.toISOString(),
+        worker: { name: notificationWorker.name },
+      },
+      {
+        id: "manual-notice-1",
+        workerId: notificationWorker.id,
+        notificationType: "MANUAL",
+        status: "PENDING",
+        scheduledFor: startTime.toISOString(),
+        sentAt: null,
+        attempts: 0,
+        lastError: null,
+        createdAt: new Date(startTime.getTime() - 1).toISOString(),
+        worker: { name: notificationWorker.name },
+      },
+    ];
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        items: historyReminders,
+        hasMore: false,
+        nextCursor: null,
+      }),
+    });
     const taskWithNotificationHistory: MaintenanceEntry = {
       ...taskWithNotificationAssignment,
       reminders: [
@@ -233,6 +282,8 @@ describe("EditEntryDialog", () => {
           scheduledFor: startTime,
           sentAt: startTime,
           attempts: 1,
+          lastError: null,
+          createdAt: startTime,
           worker: { name: notificationWorker.name },
         },
         {
@@ -243,6 +294,8 @@ describe("EditEntryDialog", () => {
           scheduledFor: startTime,
           sentAt: null,
           attempts: 0,
+          lastError: null,
+          createdAt: startTime,
           worker: { name: notificationWorker.name },
         },
       ],
@@ -259,10 +312,488 @@ describe("EditEntryDialog", () => {
         name: "Automatic notifications",
       }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("Automatic")).toHaveLength(2);
+    await waitFor(() => {
+      expect(screen.getAllByText("Automatic")).toHaveLength(2);
+    });
     expect(screen.getByText("Manual", { exact: true })).toBeInTheDocument();
     expect(screen.getByText(/Assignment notice/)).toBeInTheDocument();
     expect(screen.getByText(/Manual email/)).toBeInTheDocument();
+  });
+
+  it("loads older notification pages on demand and keeps them available when collapsed", async () => {
+    const user = userEvent.setup();
+    const makeReminder = (id: string, createdAt: string) => ({
+      id,
+      workerId: notificationWorker.id,
+      notificationType: "ASSIGNMENT",
+      status: "SENT",
+      scheduledFor: createdAt,
+      sentAt: createdAt,
+      attempts: 1,
+      lastError: null,
+      createdAt,
+      worker: { name: `Worker ${id}` },
+    });
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: Array.from({ length: 5 }, (_, index) =>
+            makeReminder(
+              `notice-${index + 1}`,
+              new Date(startTime.getTime() - index).toISOString(),
+            ),
+          ),
+          hasMore: true,
+          nextCursor: `${new Date(startTime.getTime() - 4).toISOString()}|notice-5`,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [
+            makeReminder(
+              "older-notice",
+              new Date(startTime.getTime() - 10).toISOString(),
+            ),
+          ],
+          hasMore: true,
+          nextCursor: `${new Date(startTime.getTime() - 10).toISOString()}|older-notice`,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [
+            makeReminder(
+              "oldest-notice",
+              new Date(startTime.getTime() - 20).toISOString(),
+            ),
+          ],
+          hasMore: false,
+          nextCursor: null,
+        }),
+      });
+
+    renderDialog(taskWithNotificationAssignment);
+
+    await screen.findByText("Worker notice-1");
+    expect(screen.queryByText("Worker older-notice")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "See more" }));
+    expect(await screen.findByText("Worker older-notice")).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Notification history" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Show less" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "See more" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Show less" }));
+    expect(screen.queryByText("Worker older-notice")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "See more" }));
+    expect(screen.getByText("Worker older-notice")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    await user.click(
+      screen.getByRole("button", { name: "Load older notifications" }),
+    );
+    expect(await screen.findByText("Worker oldest-notice")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("refreshes the newest page after a task update without dropping loaded entries", async () => {
+    const firstCreatedAt = new Date(startTime.getTime() - 10).toISOString();
+    const newestCreatedAt = new Date(startTime.getTime()).toISOString();
+    const makeReminder = (id: string, createdAt: string) => ({
+      id,
+      workerId: notificationWorker.id,
+      notificationType: "ASSIGNMENT",
+      status: "SENT",
+      scheduledFor: createdAt,
+      sentAt: createdAt,
+      attempts: 1,
+      lastError: null,
+      createdAt,
+      worker: { name: `Worker ${id}` },
+    });
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [makeReminder("existing-notice", firstCreatedAt)],
+          hasMore: false,
+          nextCursor: null,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [
+            makeReminder("new-notice", newestCreatedAt),
+            makeReminder("existing-notice", firstCreatedAt),
+          ],
+          hasMore: false,
+          nextCursor: null,
+        }),
+      });
+
+    renderDialog(taskWithNotificationAssignment);
+    await screen.findByText("Worker existing-notice");
+
+    act(() => notifyTaskUpdated(entry.id));
+
+    expect(await screen.findByText("Worker new-notice")).toBeInTheDocument();
+    expect(screen.getByText("Worker existing-notice")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses a stable cursor after refreshing the latest page", async () => {
+    const user = userEvent.setup();
+    const makeReminder = (id: string, createdAt: string) => ({
+      id,
+      workerId: notificationWorker.id,
+      notificationType: "ASSIGNMENT",
+      status: "SENT",
+      scheduledFor: createdAt,
+      sentAt: createdAt,
+      attempts: 1,
+      lastError: null,
+      createdAt,
+      worker: { name: `Worker ${id}` },
+    });
+    const initialItems = Array.from({ length: 5 }, (_, index) =>
+      makeReminder(
+        `notice-${index + 1}`,
+        new Date(startTime.getTime() - index).toISOString(),
+      ),
+    );
+    const refreshedCursor = `${new Date(startTime.getTime() - 3).toISOString()}|notice-4`;
+    const olderPageItems = Array.from({ length: 5 }, (_, index) =>
+      makeReminder(
+        `notice-${index + 5}`,
+        new Date(startTime.getTime() - 4 - index * 10).toISOString(),
+      ),
+    );
+    const olderPageCursor = `${new Date(startTime.getTime() - 44).toISOString()}|notice-9`;
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: initialItems,
+          hasMore: true,
+          nextCursor: `${new Date(startTime.getTime() - 4).toISOString()}|notice-5`,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [
+            makeReminder(
+              "new-notice",
+              new Date(startTime.getTime() + 1).toISOString(),
+            ),
+            ...initialItems.slice(0, 4),
+          ],
+          hasMore: true,
+          nextCursor: refreshedCursor,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: olderPageItems,
+          hasMore: true,
+          nextCursor: olderPageCursor,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [
+            makeReminder(
+              "newest-notice",
+              new Date(startTime.getTime() + 2).toISOString(),
+            ),
+            makeReminder(
+              "new-notice",
+              new Date(startTime.getTime() + 1).toISOString(),
+            ),
+            ...initialItems.slice(0, 3),
+          ],
+          hasMore: true,
+          nextCursor: `${new Date(startTime.getTime() - 2).toISOString()}|notice-3`,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [
+            makeReminder(
+              "notice-10",
+              new Date(startTime.getTime() - 54).toISOString(),
+            ),
+          ],
+          hasMore: false,
+          nextCursor: null,
+        }),
+      });
+
+    renderDialog(taskWithNotificationAssignment);
+    await screen.findByText("Worker notice-1");
+
+    act(() => notifyTaskUpdated(entry.id));
+    await screen.findByText("Worker new-notice");
+
+    await user.click(screen.getByRole("button", { name: "See more" }));
+    expect(await screen.findByText("Worker notice-9")).toBeInTheDocument();
+    expect(fetchMock.mock.calls[2]?.[0]).toBe(
+      `/api/tasks/${entry.id}/notifications?cursor=${encodeURIComponent(refreshedCursor)}`,
+    );
+
+    act(() => notifyTaskUpdated(entry.id));
+    expect(await screen.findByText("Worker newest-notice")).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Load older notifications" }),
+    );
+    expect(await screen.findByText("Worker notice-10")).toBeInTheDocument();
+    expect(fetchMock.mock.calls[4]?.[0]).toBe(
+      `/api/tasks/${entry.id}/notifications?cursor=${encodeURIComponent(olderPageCursor)}`,
+    );
+  });
+
+  it("keeps the history keyboard reachable and updates scroll fades at each boundary", async () => {
+    const user = userEvent.setup();
+    const makeReminder = (id: string, createdAt: string) => ({
+      id,
+      workerId: notificationWorker.id,
+      notificationType: "ASSIGNMENT",
+      status: "SENT",
+      scheduledFor: createdAt,
+      sentAt: createdAt,
+      attempts: 1,
+      lastError: null,
+      createdAt,
+      worker: { name: `Worker ${id}` },
+    });
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: Array.from({ length: 5 }, (_, index) =>
+            makeReminder(
+              `notice-${index + 1}`,
+              new Date(startTime.getTime() - index).toISOString(),
+            ),
+          ),
+          hasMore: true,
+          nextCursor: `${new Date(startTime.getTime() - 4).toISOString()}|notice-5`,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [
+            makeReminder(
+              "older-notice",
+              new Date(startTime.getTime() - 10).toISOString(),
+            ),
+          ],
+          hasMore: true,
+          nextCursor: `${new Date(startTime.getTime() - 10).toISOString()}|older-notice`,
+        }),
+      });
+
+    renderDialog(taskWithNotificationAssignment);
+    await screen.findByText("Worker notice-1");
+    await user.click(screen.getByRole("button", { name: "See more" }));
+    await screen.findByText("Worker older-notice");
+    expect(
+      screen.getByRole("button", { name: "Load older notifications" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Show less" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "See more" }),
+    ).not.toBeInTheDocument();
+
+    const region = screen.getByRole("region", {
+      name: "Notification history",
+    });
+    const viewport = region.querySelector<HTMLElement>(
+      '[data-slot="scroll-area-viewport"]',
+    );
+    const wrapper = region.parentElement;
+    expect(viewport).not.toBeNull();
+    expect(wrapper).not.toBeNull();
+    expect(viewport).toHaveAttribute("tabindex", "0");
+
+    Object.defineProperties(viewport, {
+      scrollHeight: { configurable: true, get: () => 300 },
+      clientHeight: { configurable: true, get: () => 200 },
+      scrollTop: { configurable: true, writable: true, value: 0 },
+    });
+    const hasFade = (edge: "top" | "bottom") =>
+      Array.from(wrapper!.children).some(
+        (child) =>
+          child.getAttribute("aria-hidden") === "true" &&
+          child.classList.contains(`${edge}-0`),
+      );
+
+    fireEvent.scroll(viewport!);
+    await waitFor(() => {
+      expect(hasFade("top")).toBe(false);
+      expect(hasFade("bottom")).toBe(true);
+    });
+
+    viewport!.scrollTop = 50;
+    fireEvent.scroll(viewport!);
+    await waitFor(() => {
+      expect(hasFade("top")).toBe(true);
+      expect(hasFade("bottom")).toBe(true);
+    });
+
+    viewport!.scrollTop = 100;
+    fireEvent.scroll(viewport!);
+    await waitFor(() => {
+      expect(hasFade("top")).toBe(true);
+      expect(hasFade("bottom")).toBe(false);
+    });
+  });
+
+  it("keeps the history section in view while toggling in a narrow task sheet", async () => {
+    const user = userEvent.setup();
+    const makeReminder = (id: string, createdAt: string) => ({
+      id,
+      workerId: notificationWorker.id,
+      notificationType: "ASSIGNMENT",
+      status: "SENT",
+      scheduledFor: createdAt,
+      sentAt: createdAt,
+      attempts: 1,
+      lastError: null,
+      createdAt,
+      worker: { name: `Worker ${id}` },
+    });
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: Array.from({ length: 5 }, (_, index) =>
+            makeReminder(
+              `notice-${index + 1}`,
+              new Date(startTime.getTime() - index).toISOString(),
+            ),
+          ),
+          hasMore: true,
+          nextCursor: `${new Date(startTime.getTime() - 4).toISOString()}|notice-5`,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [
+            makeReminder(
+              "older-notice",
+              new Date(startTime.getTime() - 10).toISOString(),
+            ),
+          ],
+          hasMore: false,
+          nextCursor: null,
+        }),
+      });
+
+    renderDialog(taskWithNotificationAssignment);
+    await screen.findByText("Worker notice-1");
+
+    const historyRegion = document.getElementById(
+      `notification-history-${entry.id}`,
+    );
+    const form = historyRegion?.closest("form");
+    const section = historyRegion?.closest(
+      "[data-notification-history-section]",
+    );
+    if (!historyRegion || !form || !(section instanceof HTMLElement)) {
+      throw new Error("Notification history must be rendered inside its form");
+    }
+
+    Object.defineProperty(form, "scrollTop", {
+      configurable: true,
+      writable: true,
+      value: 800,
+    });
+    vi.spyOn(section, "getBoundingClientRect").mockImplementation(() => {
+      const top = 200 - (form.scrollTop - 500);
+      return {
+        x: 0,
+        y: top,
+        top,
+        right: 100,
+        bottom: top + 100,
+        left: 0,
+        width: 100,
+        height: 100,
+        toJSON: () => ({}),
+      } as DOMRect;
+    });
+
+    await user.click(screen.getByRole("button", { name: "See more" }));
+    await screen.findByText("Worker older-notice");
+    expect(section.getBoundingClientRect().top).toBe(0);
+    expect(form.scrollTop).toBe(700);
+    expect(document.activeElement).toBe(section);
+
+    form.scrollTop = 900;
+    await user.click(screen.getByRole("button", { name: "Show less" }));
+    expect(screen.queryByText("Worker older-notice")).not.toBeInTheDocument();
+    expect(section.getBoundingClientRect().top).toBe(0);
+    expect(form.scrollTop).toBe(700);
+    expect(document.activeElement).toBe(section);
+  });
+
+  it("allows retrying notification history after an initial request fails", async () => {
+    const user = userEvent.setup();
+    fetchMock
+      .mockRejectedValueOnce(new Error("temporary network failure"))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [
+            {
+              id: "notice-1",
+              workerId: notificationWorker.id,
+              notificationType: "ASSIGNMENT",
+              status: "SENT",
+              scheduledFor: startTime.toISOString(),
+              sentAt: startTime.toISOString(),
+              attempts: 1,
+              lastError: null,
+              createdAt: startTime.toISOString(),
+              worker: { name: "Worker notice-1" },
+            },
+          ],
+          hasMore: false,
+          nextCursor: null,
+        }),
+      });
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    renderDialog(taskWithNotificationAssignment);
+
+    expect(
+      await screen.findByText("Could not load notification history."),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Worker notice-1")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("shows recipient loading, previews recipients, and sends manually", async () => {

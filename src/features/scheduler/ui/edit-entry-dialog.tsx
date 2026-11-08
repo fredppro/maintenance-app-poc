@@ -36,6 +36,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { notifyTaskUpdated } from "@/features/scheduler/events";
+import { NotificationHistory } from "./notification-history";
 import { getValidLocale } from "src/i18n/locale";
 import {
   deleteTask,
@@ -934,143 +935,80 @@ export function EditEntryDialog({
             onChange={handleChecklistChange}
           />
 
-          {(entry.assignments?.length ?? 0) > 0 ||
-          (entry.reminders?.length ?? 0) > 0 ? (
-            <FormSection title={t("notifications.title")} showSeparator>
-              <Card className="gap-0 overflow-hidden py-0">
-                <CardHeader className="gap-3 border-b bg-muted/30 px-4 py-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <CardTitle
-                        role="heading"
-                        aria-level={4}
-                        className="text-sm"
-                      >
-                        {t("notifications.automaticTitle")}
-                      </CardTitle>
-                      <CardDescription className="leading-relaxed">
-                        {t("notifications.automaticDescription")}
-                      </CardDescription>
-                    </div>
-                    <Badge variant="outline" className="w-fit shrink-0">
-                      {t("notifications.automaticBadge")}
-                    </Badge>
+          <FormSection title={t("notifications.title")} showSeparator>
+            <Card className="gap-0 overflow-hidden py-0">
+              <CardHeader className="gap-3 border-b bg-muted/30 px-4 py-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <CardTitle
+                      role="heading"
+                      aria-level={4}
+                      className="text-sm"
+                    >
+                      {t("notifications.automaticTitle")}
+                    </CardTitle>
+                    <CardDescription className="leading-relaxed">
+                      {t("notifications.automaticDescription")}
+                    </CardDescription>
                   </div>
-                </CardHeader>
+                  <Badge variant="outline" className="w-fit shrink-0">
+                    {t("notifications.automaticBadge")}
+                  </Badge>
+                </div>
+              </CardHeader>
 
-                <CardContent className="flex flex-col gap-3 px-4 py-4">
+              <CardContent className="flex flex-col gap-3 px-4 py-4">
+                <div
+                  data-notification-history-section
+                  tabIndex={-1}
+                  className="flex flex-col gap-3"
+                >
                   <h5 className="text-sm font-medium">
                     {t("notifications.historyTitle")}
                   </h5>
-                  {entry.reminders?.length ? (
-                    <ul
-                      aria-label={t("notifications.historyTitle")}
-                      className="flex flex-col gap-2"
+                  <NotificationHistory
+                    taskId={entry.id}
+                    open={open}
+                    timeZone={timeZone}
+                  />
+                </div>
+              </CardContent>
+
+              {(entry.assignments?.length ?? 0) > 0 ? (
+                <>
+                  <Separator />
+                  <CardFooter className="flex-col items-stretch gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-1">
+                      <h5 className="text-sm font-medium">
+                        {t("notifications.manualTitle")}
+                      </h5>
+                      <p className="text-sm text-muted-foreground">
+                        {t("notifications.manualDescription")}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handlePreviewTaskEmail}
+                      disabled={isLoadingTaskEmailPreview}
+                      aria-busy={isLoadingTaskEmailPreview}
+                      className="w-full shrink-0 sm:w-auto"
                     >
-                      {entry.reminders.map((reminder) => {
-                        const statusLabel = {
-                          PENDING: t("reminders.statusPending"),
-                          SENDING: t("reminders.statusSending"),
-                          SENT: t("reminders.statusSent"),
-                          FAILED: t("reminders.statusFailed"),
-                          CANCELLED: t("reminders.statusCancelled"),
-                        }[reminder.status];
-                        const scheduledDate = new Intl.DateTimeFormat(locale, {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                          timeZone,
-                        }).format(new Date(reminder.scheduledFor));
-                        const notificationTypeLabel = {
-                          ASSIGNMENT: t("notifications.assignment"),
-                          REMINDER: t("notifications.reminder"),
-                          MANUAL: t("notifications.manual"),
-                        }[reminder.notificationType];
-                        const isManual =
-                          reminder.notificationType === "MANUAL";
-
-                        return (
-                          <li
-                            key={reminder.id}
-                            className="flex flex-col gap-2 rounded-md border p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-                          >
-                            <div className="flex min-w-0 flex-col gap-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="font-medium">
-                                  {reminder.worker.name}
-                                </p>
-                                <Badge
-                                  variant={isManual ? "secondary" : "outline"}
-                                >
-                                  {t(
-                                    isManual
-                                      ? "notifications.manualBadge"
-                                      : "notifications.automaticBadge",
-                                  )}
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                {notificationTypeLabel} ·{" "}
-                                {t("reminders.scheduledFor", {
-                                  date: scheduledDate,
-                                })}
-                              </p>
-                            </div>
-                            <Badge
-                              variant={
-                                reminder.status === "FAILED"
-                                  ? "destructive"
-                                  : reminder.status === "SENT"
-                                    ? "secondary"
-                                    : "outline"
-                              }
-                              className="w-fit shrink-0"
-                            >
-                              {statusLabel}
-                            </Badge>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      {t("notifications.historyEmpty")}
-                    </p>
-                  )}
-                </CardContent>
-
-                <Separator />
-
-                <CardFooter className="flex-col items-stretch gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-col gap-1">
-                    <h5 className="text-sm font-medium">
-                      {t("notifications.manualTitle")}
-                    </h5>
-                    <p className="text-sm text-muted-foreground">
-                      {t("notifications.manualDescription")}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={handlePreviewTaskEmail}
-                    disabled={isLoadingTaskEmailPreview}
-                    aria-busy={isLoadingTaskEmailPreview}
-                    className="w-full shrink-0 sm:w-auto"
-                  >
-                    {isLoadingTaskEmailPreview ? (
-                      <Spinner aria-hidden="true" data-icon="inline-start" />
-                    ) : (
-                      <Mail data-icon="inline-start" />
-                    )}
-                    {t(
-                      isLoadingTaskEmailPreview
-                        ? "notifications.loadingRecipients"
-                        : "notifications.send",
-                    )}
-                  </Button>
-                </CardFooter>
-              </Card>
-            </FormSection>
-          ) : null}
+                      {isLoadingTaskEmailPreview ? (
+                        <Spinner aria-hidden="true" data-icon="inline-start" />
+                      ) : (
+                        <Mail data-icon="inline-start" />
+                      )}
+                      {t(
+                        isLoadingTaskEmailPreview
+                          ? "notifications.loadingRecipients"
+                          : "notifications.send",
+                      )}
+                    </Button>
+                  </CardFooter>
+                </>
+              ) : null}
+            </Card>
+          </FormSection>
 
           <MaterialsEditor form={form} locale={locale} />
         </FieldGroup>

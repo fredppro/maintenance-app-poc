@@ -43,6 +43,8 @@ export type TaskReminder = {
   scheduledFor: Date | string;
   sentAt: Date | string | null;
   attempts: number;
+  lastError: string | null;
+  createdAt: Date | string;
   worker: { name: string };
 };
 

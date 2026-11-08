@@ -9,6 +9,8 @@ Automatic notifications are scoped to the task's current assignments. Cancelled,
 
 Task managers can also send a manual email from the task editor. The confirmation lists the current assigned workers with valid email addresses and identifies workers who will be excluded because they have no usable address. Manual sends are recorded separately and do not consume either automatic notification.
 
+The task editor loads the five most recent notification records first and fetches older records on demand. History pages are tenant- and site-scoped and ordered newest first.
+
 ## Configure delivery
 
 1. Configure `RESEND_API_KEY` and a verified `AUTH_EMAIL_FROM`.
