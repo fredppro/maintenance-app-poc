@@ -28,6 +28,9 @@ describe("MetricsPageClient", () => {
       { id: "2", type: "CORRECTIVE", status: "scheduled", equipmentId: "e", endTime: new Date("2999-01-01") },
     ] as MaintenanceEntry[];
     renderPage({ entries });
+    expect(
+      screen.getByRole("heading", { level: 2, name: "At a glance" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Total tasks").parentElement).toHaveTextContent("2");
     expect(screen.getByText("Completion rate").parentElement).toHaveTextContent("50%");
   });

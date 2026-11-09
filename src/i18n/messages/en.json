@@ -5,7 +5,7 @@
     "stats": {
       "preventive": "Preventive",
       "corrective": "Corrective",
-      "inspection": "Predictive",
+      "predictive": "Predictive",
       "equipment": "Equipment",
       "scheduled": "Scheduled",
       "inProgress": "In Progress"
@@ -17,7 +17,11 @@
       "zoomHint": "Use zoom controls to change view"
     },
     "nextMaintenance": {
+      "summary": "Maintenance summary",
       "title": "Next maintenance",
+      "overdueTitle": "Overdue maintenance",
+      "reviewTask": "Review task",
+      "openTask": "Review task: {title}",
       "none": "No upcoming scheduled maintenance",
       "overdue": "{count, plural, one {# scheduled task is overdue} other {# scheduled tasks are overdue}}"
     },
@@ -195,6 +199,7 @@
   "Form": {
     "schedule": "Schedule Maintenance",
     "scheduleDescription": "Enter the equipment, dates, workers, and materials for the maintenance task.",
+    "additionalDetails": "Additional details",
     "edit": "Edit: {title}",
     "status": "Status",
     "equipment": "Equipment",
@@ -279,7 +284,7 @@
     "taskType": "Task Type",
     "selectType": "Select type",
     "preventive": "Preventive",
-    "inspection": "Predictive",
+    "predictive": "Predictive",
     "corrective": "Corrective",
     "title": "Title",
     "titlePlaceholder": "e.g., Monthly Inspection",
@@ -603,7 +608,7 @@
       "sites": "Sites",
       "inventory": "Inventory",
       "workers": "Workers",
-      "members": "Collaborators",
+      "members": "Organization members",
       "organization": "Organization"
     },
     "noContext": "No site",
@@ -691,6 +696,8 @@
     "columnsSupplier": "Supplier",
     "columnsActions": "Actions",
     "dialogDescription": "Manage inventory stock",
+    "itemDetails": "Item details",
+    "stockSettings": "Stock settings",
     "columns": {
       "name": "Material",
       "reference": "Reference",
@@ -707,6 +714,7 @@
   "MetricsPage": {
     "title": "Metrics",
     "description": "Maintenance activity at the current site.",
+    "summary": "At a glance",
     "total": "Total tasks",
     "completion": "Completion rate",
     "overdue": "Overdue",
@@ -716,7 +724,7 @@
     "topEquipment": "Most maintained equipment",
     "preventive": "Preventive",
     "corrective": "Corrective",
-    "inspection": "Inspection",
+    "predictive": "Predictive",
     "scheduled": "Scheduled",
     "inProgress": "In progress",
     "completed": "Completed",

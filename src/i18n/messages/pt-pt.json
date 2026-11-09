@@ -5,7 +5,7 @@
     "stats": {
       "preventive": "Preventiva",
       "corrective": "Corretiva",
-      "inspection": "Preditiva",
+      "predictive": "Preditiva",
       "equipment": "Equipamento",
       "scheduled": "Agendado",
       "inProgress": "Em Curso"
@@ -17,7 +17,11 @@
       "zoomHint": "Use controlos de zoom para mudar a vista"
     },
     "nextMaintenance": {
+      "summary": "Resumo de manutenção",
       "title": "Próxima manutenção",
+      "overdueTitle": "Manutenção em atraso",
+      "reviewTask": "Ver tarefa",
+      "openTask": "Ver tarefa: {title}",
       "none": "Não existem manutenções agendadas",
       "overdue": "{count, plural, one {# tarefa agendada está atrasada} other {# tarefas agendadas estão atrasadas}}"
     },
@@ -195,6 +199,7 @@
   "Form": {
     "schedule": "Agendar Manutenção",
     "scheduleDescription": "Indique o equipamento, as datas, os trabalhadores e os materiais da tarefa de manutenção.",
+    "additionalDetails": "Detalhes adicionais",
     "edit": "Editar: {title}",
     "status": "Estado",
     "equipment": "Equipamento",
@@ -279,7 +284,7 @@
     "taskType": "Tipo de Tarefa",
     "selectType": "Selecione o tipo",
     "preventive": "Preventiva",
-    "inspection": "Preditiva",
+    "predictive": "Preditiva",
     "corrective": "Corretiva",
     "title": "Título",
     "titlePlaceholder": "ex: Inspeção Mensal",
@@ -603,7 +608,7 @@
       "sites": "Locais",
       "inventory": "Inventário",
       "workers": "Técnicos",
-      "members": "Colaboradores",
+      "members": "Membros da organização",
       "organization": "Organização"
     },
     "noContext": "Sem local",
@@ -691,6 +696,8 @@
     "columnsSupplier": "Fornecedor",
     "columnsActions": "Ações",
     "dialogDescription": "Gerir o stock do inventário",
+    "itemDetails": "Detalhes do artigo",
+    "stockSettings": "Configuração do stock",
     "columns": {
       "name": "Material",
       "reference": "Referência",
@@ -707,6 +714,7 @@
   "MetricsPage": {
     "title": "Métricas",
     "description": "Atividade de manutenção do local atual.",
+    "summary": "Resumo geral",
     "total": "Total de tarefas",
     "completion": "Taxa de conclusão",
     "overdue": "Em atraso",
@@ -716,7 +724,7 @@
     "topEquipment": "Equipamentos com mais manutenção",
     "preventive": "Preventiva",
     "corrective": "Corretiva",
-    "inspection": "Inspeção",
+    "predictive": "Preditiva",
     "scheduled": "Agendada",
     "inProgress": "Em curso",
     "completed": "Concluída",

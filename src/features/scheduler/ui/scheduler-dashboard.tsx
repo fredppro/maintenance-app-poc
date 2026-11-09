@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import type { OnboardingProgress } from "@/features/organization/shared/onboarding";
 import { cn } from "@/lib/utils";
 import { CalendarDays } from "lucide-react";
-import { useRouter } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import { useSchedulerStore } from "../store/scheduler-provider";
@@ -23,7 +23,7 @@ import { GettingStarted } from "./getting-started";
 import { SchedulerToolbar } from "./scheduler-toolbar";
 import { TimelineGrid } from "./timeline-grid";
 import {
-  countOverdueScheduledMaintenance,
+  getOverdueScheduledMaintenance,
   getNextScheduledMaintenance,
 } from "../utils/insights";
 
@@ -59,25 +59,26 @@ export function SchedulerDashboard({
 
   const now = useNow().getTime();
   const nextMaintenance = getNextScheduledMaintenance(entries, now);
-  const overdueCount = countOverdueScheduledMaintenance(entries, now);
+  const overdueTasks = getOverdueScheduledMaintenance(entries, now);
+  const overdueTask = overdueTasks[0];
 
   const stats = {
     scheduled: entries.filter((e) => e.status === "scheduled").length,
     inProgress: entries.filter((e) => e.status === "in-progress").length,
     preventive: entries.filter((e) => e.type === TaskType.PREVENTIVE).length,
     corrective: entries.filter((e) => e.type === TaskType.CORRECTIVE).length,
-    inspection: entries.filter((e) => e.type === TaskType.PREDICTIVE).length,
+    predictive: entries.filter((e) => e.type === TaskType.PREDICTIVE).length,
   };
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-3 sm:p-4">
-      <h1 className="shrink-0 text-xl font-semibold tracking-tight">
+      <h1 className="shrink-0 text-xl font-semibold tracking-tight text-balance sm:text-2xl">
         {t("title")}
       </h1>
       {onboarding && <GettingStarted progress={onboarding} />}
       <Item
-        role="status"
-        aria-label={t("nextMaintenance.title")}
+        role="region"
+        aria-label={t("nextMaintenance.summary")}
         variant="outline"
         size="sm"
         className="w-full shrink-0"
@@ -86,36 +87,74 @@ export function SchedulerDashboard({
           <CalendarDays aria-hidden="true" />
         </ItemMedia>
         <ItemContent className="min-w-0">
-          <ItemHeader className="flex-wrap">
-            <ItemTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("nextMaintenance.title")}
-            </ItemTitle>
-            {overdueCount > 0 && (
-              <Badge variant="destructive">
-                {t("nextMaintenance.overdue", { count: overdueCount })}
-              </Badge>
+          <div
+            className={cn(
+              "grid min-w-0 gap-3",
+              overdueTask && "sm:grid-cols-2",
             )}
-          </ItemHeader>
-          {nextMaintenance ? (
-            <>
-              <p className="truncate font-medium text-foreground">
-                {nextMaintenance.title}
-              </p>
-              <ItemDescription>
-                {equipment.find(
-                  (item) => item.id === nextMaintenance.equipmentId,
-                )?.name ?? ""}
-                {" · "}
-                {format.dateTime(new Date(nextMaintenance.startTime), {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                  timeZone,
-                })}
-              </ItemDescription>
-            </>
-          ) : (
-            <ItemDescription>{t("nextMaintenance.none")}</ItemDescription>
-          )}
+          >
+            {overdueTask && (
+              <section className="flex min-w-0 flex-col gap-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-sm font-semibold text-destructive">
+                    {t("nextMaintenance.overdueTitle")}
+                  </h2>
+                  <Badge variant="destructive">
+                    {t("nextMaintenance.overdue", {
+                      count: overdueTasks.length,
+                    })}
+                  </Badge>
+                </div>
+                <Link
+                  href={`/?taskId=${encodeURIComponent(overdueTask.id)}`}
+                  aria-label={t("nextMaintenance.openTask", {
+                    title: overdueTask.title,
+                  })}
+                  className="block truncate font-medium text-link underline underline-offset-4"
+                >
+                  {overdueTask.title}
+                </Link>
+                <ItemDescription>
+                  {equipment.find(
+                    (item) => item.id === overdueTask.equipmentId,
+                  )?.name ?? ""}
+                  {" · "}
+                  {format.dateTime(new Date(overdueTask.startTime), {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                    timeZone,
+                  })}
+                </ItemDescription>
+              </section>
+            )}
+            <section className="flex min-w-0 flex-col gap-1">
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                {t("nextMaintenance.title")}
+              </h2>
+              {nextMaintenance ? (
+                <>
+                  <p className="truncate font-medium text-foreground">
+                    {nextMaintenance.title}
+                  </p>
+                  <ItemDescription>
+                    {equipment.find(
+                      (item) => item.id === nextMaintenance.equipmentId,
+                    )?.name ?? ""}
+                    {" · "}
+                    {format.dateTime(new Date(nextMaintenance.startTime), {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                      timeZone,
+                    })}
+                  </ItemDescription>
+                </>
+              ) : (
+                <ItemDescription>
+                  {t("nextMaintenance.none")}
+                </ItemDescription>
+              )}
+            </section>
+          </div>
         </ItemContent>
       </Item>
       <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2 text-sm">
@@ -131,8 +170,8 @@ export function SchedulerDashboard({
             marker="border-destructive/40 bg-destructive/20"
           />
           <Stat
-            label={t("stats.inspection")}
-            value={stats.inspection}
+            label={t("stats.predictive")}
+            value={stats.predictive}
             marker="border-warning/40 bg-warning/20"
           />
         </div>

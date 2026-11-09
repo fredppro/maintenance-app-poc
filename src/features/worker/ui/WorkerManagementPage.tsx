@@ -16,6 +16,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PageHeader } from "@/components/app-shell/page-header";
 import {
   Drawer,
   DrawerContent,
@@ -66,7 +67,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { GripVertical, MoreVertical } from "lucide-react";
+import { GripVertical, MoreVertical, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -109,7 +110,7 @@ function DragHandle({
       {...listeners}
       variant="ghost"
       size="icon"
-      className="size-7 text-muted-foreground hover:bg-transparent"
+      className="size-7 cursor-grab text-muted-foreground hover:bg-transparent active:cursor-grabbing"
     >
       <GripVertical className="size-4" />
       <span className="sr-only">{label}</span>
@@ -441,22 +442,23 @@ export default function WorkerManagementPage({
 
   return (
     <div className="flex min-h-full w-full flex-col gap-4 overflow-hidden rounded-lg border border-border bg-card p-4">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold sm:text-2xl">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("description")}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {onBack && (
-            <Button variant="secondary" size="default" onClick={onBack}>
-              {t("backToSchedule")}
+      <PageHeader
+        title={t("title")}
+        description={t("description")}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {onBack && (
+              <Button variant="secondary" onClick={onBack}>
+                {t("backToSchedule")}
+              </Button>
+            )}
+            <Button onClick={() => handleOpenDrawer(undefined)}>
+              <Plus data-icon="inline-start" />
+              {t("createWorker")}
             </Button>
-          )}
-          <Button size="default" onClick={() => handleOpenDrawer(undefined)}>
-            {t("createWorker")}
-          </Button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       <div className="flex-1 overflow-hidden rounded-md border border-border bg-background">
         {loading ? (
@@ -495,6 +497,7 @@ export default function WorkerManagementPage({
               {t("noWorkersDescription")}
             </p>
             <Button onClick={() => handleOpenDrawer(undefined)}>
+              <Plus data-icon="inline-start" />
               {t("createWorker")}
             </Button>
           </div>

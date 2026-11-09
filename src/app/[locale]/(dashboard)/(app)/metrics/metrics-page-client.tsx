@@ -7,7 +7,6 @@ import { PageBody, PageHeader } from "@/components/app-shell/page-header";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -21,6 +20,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { summarizeMetrics } from "@/features/scheduler/utils/insights";
 import { useSchedulerStore } from "@/features/scheduler/store/scheduler-provider";
+import { cn } from "@/lib/utils";
 
 function Bars({ items }: { items: { label: string; value: number }[] }) {
   const max = Math.max(1, ...items.map((i) => i.value));
@@ -52,7 +52,7 @@ export function MetricsPageClient() {
   const types = [
     { label: t("preventive"), value: m.byType.preventive },
     { label: t("corrective"), value: m.byType.corrective },
-    { label: t("inspection"), value: m.byType.inspection },
+    { label: t("predictive"), value: m.byType.predictive },
   ];
   const statuses = [
     { label: t("scheduled"), value: m.byStatus.scheduled },
@@ -60,11 +60,19 @@ export function MetricsPageClient() {
     { label: t("completed"), value: m.byStatus.completed },
   ];
 
-  const kpis = [
+  const kpis: {
+    label: string;
+    value: string | number;
+    valueClassName?: string;
+  }[] = [
     { label: t("total"), value: m.total },
     { label: t("completion"), value: `${m.completionRate}%` },
     { label: t("upcoming"), value: m.upcoming },
-    { label: t("overdue"), value: m.overdue },
+    {
+      label: t("overdue"),
+      value: m.overdue,
+      valueClassName: m.overdue > 0 ? "text-destructive" : undefined,
+    },
   ];
 
   return (
@@ -82,18 +90,38 @@ export function MetricsPageClient() {
         </Empty>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {kpis.map((k) => (
-              <Card key={k.label}>
-                <CardHeader>
-                  <CardDescription>{k.label}</CardDescription>
-                  <CardTitle className="text-2xl tabular-nums">
-                    {k.value}
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
+          <Card
+            variant="technical"
+            role="region"
+            aria-labelledby="metrics-summary-title"
+            className="gap-4 p-4"
+          >
+            <CardHeader className="flex flex-row items-center gap-0 px-0 py-0">
+              <h2
+                id="metrics-summary-title"
+                className="text-base font-semibold tracking-tight"
+              >
+                {t("summary")}
+              </h2>
+            </CardHeader>
+            <CardContent className="px-0">
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+                {kpis.map((k) => (
+                  <div key={k.label} className="flex min-w-0 flex-col gap-1">
+                    <dt className="text-xs text-muted-foreground">{k.label}</dt>
+                    <dd
+                      className={cn(
+                        "text-2xl font-semibold tabular-nums tracking-tight",
+                        k.valueClassName,
+                      )}
+                    >
+                      {k.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </CardContent>
+          </Card>
           <div className="grid gap-3 md:grid-cols-2">
             <Card>
               <CardHeader>

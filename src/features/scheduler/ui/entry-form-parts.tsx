@@ -294,7 +294,7 @@ export function ChecklistEditor({
         <Accordion
           type="single"
           collapsible
-          defaultValue="checklist-items"
+          defaultValue={readOnly ? undefined : "checklist-items"}
           className="rounded-md border px-3"
         >
           <AccordionItem value="checklist-items" className="border-b-0">

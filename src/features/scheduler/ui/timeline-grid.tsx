@@ -320,7 +320,7 @@ export function TimelineGrid({
                     (viewMode === "week" || viewMode === "month") &&
                       "cursor-pointer hover:bg-accent hover:text-foreground active:bg-accent/80",
                     isToday(slot) &&
-                      "bg-primary-muted/50 text-primary after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary",
+                      "bg-primary-muted/50 text-primary-text after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary",
                   )}
                 >
                   {formatHeader(slot)}

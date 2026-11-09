@@ -814,7 +814,7 @@ export function EditEntryDialog({
                       {t("preventive")}
                     </SelectItem>
                     <SelectItem value={TaskType.PREDICTIVE}>
-                      {t("inspection")}
+                      {t("predictive")}
                     </SelectItem>
                     <SelectItem value={TaskType.CORRECTIVE}>
                       {t("corrective")}

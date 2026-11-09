@@ -64,7 +64,7 @@ export function PasswordResetForm({
   return (
     <Card variant="elevated" className="w-full max-w-md">
       <CardHeader>
-        <h1 data-slot="card-title" className="leading-none font-semibold">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground text-balance sm:text-2xl">
           {t(token ? "resetPasswordTitle" : "forgotPassword")}
         </h1>
         <CardDescription>

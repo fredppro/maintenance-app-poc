@@ -155,7 +155,7 @@ export function AuthForm({
           <CardHeader className="gap-3">
             <h1
               data-slot="card-title"
-              className="leading-none font-semibold text-2xl tracking-tight sm:text-3xl"
+              className="text-xl font-semibold tracking-tight text-foreground text-balance sm:text-2xl"
             >
               {t("signUpTitle")}
             </h1>
@@ -342,7 +342,7 @@ export function AuthForm({
   ) : (
     <Card variant="elevated" className="mx-auto w-full max-w-md">
       <CardHeader>
-        <h1 data-slot="card-title" className="leading-none font-semibold">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground text-balance sm:text-2xl">
           {t("signInTitle")}
         </h1>
         <CardDescription>{t("signInDescription")}</CardDescription>
@@ -481,7 +481,7 @@ function SignupProductPreview() {
                 {t("previewDescription")}
               </CardDescription>
             </div>
-            <span className="flex size-9 items-center justify-center rounded-lg bg-primary-muted text-primary">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-primary-muted text-primary-text">
               <CalendarDays aria-hidden="true" className="size-5" />
             </span>
           </div>
@@ -526,7 +526,7 @@ function SignupProductPreview() {
             {[
               { label: t("previewAssetOne"), start: "col-start-1", span: "col-span-2", tone: "bg-info/10 text-info border-info/20" },
               { label: t("previewAssetTwo"), start: "col-start-3", span: "col-span-2", tone: "bg-warning/10 text-warning border-warning/20" },
-              { label: t("previewAssetThree"), start: "col-start-2", span: "col-span-3", tone: "bg-primary-muted text-primary border-primary/20" },
+              { label: t("previewAssetThree"), start: "col-start-2", span: "col-span-3", tone: "bg-primary-muted text-primary-text border-primary/20" },
             ].map((task) => (
               <div
                 key={task.label}

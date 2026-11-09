@@ -59,7 +59,7 @@ export function EquipmentRowLabel({
           <div className="max-w-[9rem] truncate text-sm font-medium text-foreground">
             {equipment.name}
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             {locationLabel && (
               <span className="max-w-[7rem] truncate" title={locationLabel}>
                 {locationLabel}
@@ -67,7 +67,7 @@ export function EquipmentRowLabel({
             )}
             {locationLabel && pendingCount > 0 && <span>•</span>}
             {pendingCount > 0 && (
-              <span className="font-medium text-primary">
+              <span className="font-medium text-primary-text">
                 {pendingCount} {pendingCount !== 1 ? t("tasks") : t("task")}
               </span>
             )}

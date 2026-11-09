@@ -255,7 +255,7 @@ export function DateTimePicker({
               />
               <span
                 className={cn(
-                  "text-xs font-semibold uppercase tracking-wider text-muted-foreground",
+                  "text-sm font-semibold text-muted-foreground",
                   displayError && "text-destructive",
                 )}
               >
@@ -269,7 +269,7 @@ export function DateTimePicker({
               <div className="flex flex-col items-start gap-1">
                 <span
                   className={cn(
-                    "px-1 text-[9px] font-medium uppercase text-muted-foreground",
+                    "px-1 text-xs font-medium text-muted-foreground",
                     displayError && "text-destructive",
                   )}
                 >
@@ -298,7 +298,7 @@ export function DateTimePicker({
               <div className="flex flex-col items-start gap-1">
                 <span
                   className={cn(
-                    "px-1 text-[9px] font-medium uppercase text-muted-foreground",
+                    "px-1 text-xs font-medium text-muted-foreground",
                     displayError && "text-destructive",
                   )}
                 >

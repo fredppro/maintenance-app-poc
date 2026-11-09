@@ -37,7 +37,7 @@ export function MaintenanceEntryBlock({
       case TaskType.CORRECTIVE:
         return "bg-destructive/10 border-destructive/20 text-destructive";
       default:
-        return "bg-primary/10 border-primary/20 text-primary";
+        return "bg-primary/10 border-primary/20 text-primary-text";
     }
   };
 
@@ -70,7 +70,7 @@ export function MaintenanceEntryBlock({
         style={style}
         className={cn(
           "rounded-md border px-2 py-1 text-left cursor-grab active:cursor-grabbing pointer-coarse:cursor-pointer group select-none",
-          "flex items-center gap-1 overflow-hidden transition-[background-color,border-color,ring]",
+          "flex items-center gap-1 overflow-hidden transition-[background-color,border-color,ring,opacity,transform] duration-150 ease-motion-out",
           "hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:ring-offset-background",
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           getTypeStyles(),

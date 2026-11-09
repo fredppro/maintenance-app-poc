@@ -141,6 +141,8 @@ describe("AddEntryDialog", () => {
     const user = userEvent.setup();
     renderDialog();
 
+    expect(screen.queryByRole("button", { name: "Log work" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Additional details" }));
     await user.click(screen.getByRole("button", { name: "Log work" }));
     expect(
       screen.getByRole("heading", { level: 4, name: "#1" }),

@@ -2,6 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { MultiSelect } from "@/components/ui/multi-select";
@@ -129,6 +135,7 @@ export function AddEntryDialog({
   const watchType = useWatch({ control: form.control, name: "type" });
   const watchWorkerIds = useWatch({ control: form.control, name: "workerIds" });
   const watchDailyHours = useWatch({ control: form.control, name: "dailyHours" });
+  const [additionalDetailsOpen, setAdditionalDetailsOpen] = useState(false);
   const [checklistPreviewState, setChecklistPreviewState] = useState<{
     key: string;
     items: ChecklistFormValue[];
@@ -178,6 +185,7 @@ export function AddEntryDialog({
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setChecklistPreviewState({ key: "", items: [] });
+      setAdditionalDetailsOpen(false);
       form.clearErrors();
     }
     onOpenChange(nextOpen);
@@ -195,6 +203,7 @@ export function AddEntryDialog({
         !row.id && Boolean(row.workerId) && !row.startTime && !inferredStarts[index],
     );
     if (unresolvedStartIndex !== -1) {
+      setAdditionalDetailsOpen(true);
       form.setError(`dailyHours.${unresolvedStartIndex}.startTime`, {
         type: "validate",
         message: t("dailyHours.startTimeRequired"),
@@ -227,6 +236,12 @@ export function AddEntryDialog({
     }
   };
 
+  const handleSubmit = form.handleSubmit(onSubmit, (errors) => {
+    if (errors.dailyHours || errors.materials) {
+      setAdditionalDetailsOpen(true);
+    }
+  });
+
   const workerOptions = workers.map((w) => ({
     label: `${w.name} (${w.email})`,
     value: w.id,
@@ -237,7 +252,7 @@ export function AddEntryDialog({
       open={open}
       onOpenChange={handleOpenChange}
       formId="add-entry-form"
-      onSubmit={form.handleSubmit(onSubmit)}
+      onSubmit={handleSubmit}
       title={t("schedule")}
       description={t("scheduleDescription")}
       footer={
@@ -366,7 +381,7 @@ export function AddEntryDialog({
                     {t("preventive")}
                   </SelectItem>
                   <SelectItem value={TaskType.PREDICTIVE}>
-                    {t("inspection")}
+                    {t("predictive")}
                   </SelectItem>
                   <SelectItem value={TaskType.CORRECTIVE}>
                     {t("corrective")}
@@ -448,20 +463,41 @@ export function AddEntryDialog({
           </Field>
         </FormSection>
 
-        <DailyHoursEditor
-          value={watchDailyHours ?? []}
-          workers={workers}
-          assignedWorkerIds={watchWorkerIds}
-          startTime={watchStartTime}
-          locale={locale}
-          timeZone={timeZone}
-          showValidationErrors={form.formState.submitCount > 0}
-          onChange={(dailyHours) =>
-            form.setValue("dailyHours", dailyHours, { shouldValidate: true })
+        <Accordion
+          type="single"
+          collapsible
+          value={additionalDetailsOpen ? "optional-details" : ""}
+          onValueChange={(value) =>
+            setAdditionalDetailsOpen(value === "optional-details")
           }
-        />
-
-        <MaterialsEditor form={form} locale={locale} />
+          className="rounded-md border px-3"
+        >
+          <AccordionItem
+            value="optional-details"
+            className="border-b-0"
+          >
+            <AccordionTrigger className="py-3 hover:no-underline">
+              {t("additionalDetails")}
+            </AccordionTrigger>
+            <AccordionContent className="flex flex-col gap-6">
+              <DailyHoursEditor
+                value={watchDailyHours ?? []}
+                workers={workers}
+                assignedWorkerIds={watchWorkerIds}
+                startTime={watchStartTime}
+                locale={locale}
+                timeZone={timeZone}
+                showValidationErrors={form.formState.submitCount > 0}
+                onChange={(dailyHours) =>
+                  form.setValue("dailyHours", dailyHours, {
+                    shouldValidate: true,
+                  })
+                }
+              />
+              <MaterialsEditor form={form} locale={locale} />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </FieldGroup>
     </EntrySheet>
   );

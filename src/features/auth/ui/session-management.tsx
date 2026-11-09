@@ -186,8 +186,12 @@ export function SessionManagement() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 sm:p-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="text-muted-foreground">{t("description")}</p>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground text-balance sm:text-2xl">
+          {t("title")}
+        </h1>
+        <p className="max-w-prose text-pretty text-muted-foreground">
+          {t("description")}
+        </p>
       </header>
 
       <Card>

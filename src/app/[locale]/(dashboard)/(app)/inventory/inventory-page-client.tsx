@@ -2,7 +2,14 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Empty, EmptyMedia } from "@/components/ui/empty";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
 import {
   InputGroup,
   InputGroupAddon,
@@ -200,7 +207,9 @@ export function InventoryPageClient() {
       />
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">{t("stockTitle")}</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground text-balance">
+          {t("stockTitle")}
+        </h2>
         <section
           aria-labelledby="purchase-reminders-heading"
           className="flex flex-col gap-2"
@@ -221,7 +230,14 @@ export function InventoryPageClient() {
           )}
         </section>
         {items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("noStockItems")}</p>
+          <Empty className="min-h-0 flex-none flex-row items-center justify-start gap-3 border bg-card p-3 text-left md:p-3">
+            <EmptyMedia variant="icon" className="mb-0 size-8">
+              <Package />
+            </EmptyMedia>
+            <p className="text-sm font-medium text-foreground">
+              {t("noStockItems")}
+            </p>
+          </Empty>
         ) : (
           <div className="rounded-lg border bg-card">
             <Table>
@@ -259,7 +275,7 @@ export function InventoryPageClient() {
                       {item.vendor?.name ?? t("none")}
                     </TableCell>
                     <TableCell>
-                      <div className="flex justify-end gap-1">
+                      <div className="flex flex-wrap justify-end gap-1">
                         <Button
                           size="sm"
                           variant="outline"
@@ -289,7 +305,9 @@ export function InventoryPageClient() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <PageHeader title={t("plannedMaterialsTitle")} />
+        <h2 className="text-lg font-semibold tracking-tight text-foreground text-balance">
+          {t("plannedMaterialsTitle")}
+        </h2>
         {rows.length === 0 ? (
           <div className="rounded-lg border p-6 text-center">
             <Package className="mx-auto mb-2 text-muted-foreground" />
@@ -378,94 +396,124 @@ export function InventoryPageClient() {
             <SheetDescription>{t("dialogDescription")}</SheetDescription>
           </SheetHeader>
           <form onSubmit={handleCreate} className="flex flex-col gap-4 p-4">
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="inventory-name">{t("name")}</FieldLabel>
-                <Input
-                  id="inventory-name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  required
-                  maxLength={160}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="inventory-reference">
-                  {t("referenceInput")}
-                </FieldLabel>
-                <Input
-                  id="inventory-reference"
-                  value={reference}
-                  onChange={(event) => setReference(event.target.value)}
-                  maxLength={120}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="inventory-unit">{t("unitInput")}</FieldLabel>
-                <Select
-                  value={unit}
-                  onValueChange={(value) => setUnit(value as MaterialUnit)}
+            <FieldGroup className="gap-5">
+              <FieldSet className="gap-3">
+                <FieldLegend
+                  variant="label"
+                  className="mb-0 font-semibold text-foreground"
                 >
-                  <SelectTrigger id="inventory-unit">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {Object.values(MaterialUnit).map((value) => (
-                        <SelectItem key={value} value={value}>
-                          {tForm(`materialUnits.${value}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="inventory-opening">
-                  {t("openingStock")}
-                </FieldLabel>
-                <Input
-                  id="inventory-opening"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={openingStock}
-                  onChange={(event) => setOpeningStock(event.target.value)}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="inventory-reorder">
-                  {t("reorderPoint")}
-                </FieldLabel>
-                <Input
-                  id="inventory-reorder"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={reorderPoint}
-                  onChange={(event) => setReorderPoint(event.target.value)}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="inventory-supplier">
-                  {t("supplier")}
-                </FieldLabel>
-                <Select value={supplierId} onValueChange={setSupplierId}>
-                  <SelectTrigger id="inventory-supplier">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="__none__">{t("noSupplier")}</SelectItem>
-                      {suppliers.map((supplier) => (
-                        <SelectItem key={supplier.id} value={supplier.id}>
-                          {supplier.name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
+                  {t("itemDetails")}
+                </FieldLegend>
+                <FieldGroup className="grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <Field>
+                      <FieldLabel htmlFor="inventory-name">
+                        {t("name")}
+                      </FieldLabel>
+                      <Input
+                        id="inventory-name"
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                        required
+                        maxLength={160}
+                      />
+                    </Field>
+                  </div>
+                  <Field>
+                    <FieldLabel htmlFor="inventory-reference">
+                      {t("referenceInput")}
+                    </FieldLabel>
+                    <Input
+                      id="inventory-reference"
+                      value={reference}
+                      onChange={(event) => setReference(event.target.value)}
+                      maxLength={120}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="inventory-unit">
+                      {t("unitInput")}
+                    </FieldLabel>
+                    <Select
+                      value={unit}
+                      onValueChange={(value) => setUnit(value as MaterialUnit)}
+                    >
+                      <SelectTrigger id="inventory-unit">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {Object.values(MaterialUnit).map((value) => (
+                            <SelectItem key={value} value={value}>
+                              {tForm(`materialUnits.${value}`)}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </FieldGroup>
+              </FieldSet>
+              <FieldSet className="gap-3">
+                <FieldLegend
+                  variant="label"
+                  className="mb-0 font-semibold text-foreground"
+                >
+                  {t("stockSettings")}
+                </FieldLegend>
+                <FieldGroup className="grid gap-4 sm:grid-cols-2">
+                  <Field>
+                    <FieldLabel htmlFor="inventory-opening">
+                      {t("openingStock")}
+                    </FieldLabel>
+                    <Input
+                      id="inventory-opening"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={openingStock}
+                      onChange={(event) => setOpeningStock(event.target.value)}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="inventory-reorder">
+                      {t("reorderPoint")}
+                    </FieldLabel>
+                    <Input
+                      id="inventory-reorder"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={reorderPoint}
+                      onChange={(event) => setReorderPoint(event.target.value)}
+                    />
+                  </Field>
+                  <div className="sm:col-span-2">
+                    <Field>
+                      <FieldLabel htmlFor="inventory-supplier">
+                        {t("supplier")}
+                      </FieldLabel>
+                      <Select value={supplierId} onValueChange={setSupplierId}>
+                        <SelectTrigger id="inventory-supplier">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="__none__">
+                              {t("noSupplier")}
+                            </SelectItem>
+                            {suppliers.map((supplier) => (
+                              <SelectItem key={supplier.id} value={supplier.id}>
+                                {supplier.name}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  </div>
+                </FieldGroup>
+              </FieldSet>
             </FieldGroup>
             <SheetFooter className="px-0 pb-0">
               <Button
@@ -476,9 +524,13 @@ export function InventoryPageClient() {
               >
                 {tForm("cancel")}
               </Button>
-              <Button type="submit" disabled={!name.trim() || saving}>
+              <Button
+                type="submit"
+                disabled={!name.trim() || saving}
+                aria-busy={saving}
+              >
                 {saving && <Spinner data-icon="inline-start" />}
-                {t("saveItem")}
+                {saving ? tForm("saving") : t("saveItem")}
               </Button>
             </SheetFooter>
           </form>
@@ -563,6 +615,7 @@ export function InventoryPageClient() {
               </Button>
               <Button
                 type="submit"
+                aria-busy={saving}
                 disabled={
                   !movementQuantity ||
                   !Number.isFinite(Number(movementQuantity)) ||
@@ -571,9 +624,11 @@ export function InventoryPageClient() {
                 }
               >
                 {saving && <Spinner data-icon="inline-start" />}
-                {stockAction?.kind === "receipt"
-                  ? t("recordReceipt")
-                  : t("recordConsumption")}
+                {saving
+                  ? tForm("saving")
+                  : stockAction?.kind === "receipt"
+                    ? t("recordReceipt")
+                    : t("recordConsumption")}
               </Button>
             </SheetFooter>
           </form>
