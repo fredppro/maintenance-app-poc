@@ -267,6 +267,9 @@ describe("AddEntryDialog", () => {
     await waitFor(() => expect(pointSelect).toBeEnabled());
     await user.click(pointSelect);
     await user.click(await screen.findByRole("option", { name: "Spindle" }));
+    await user.click(
+      screen.getByRole("button", { name: /Checklist items/i }),
+    );
 
     expect(
       screen.getByRole("checkbox", { name: "Check spindle lubrication" }),
@@ -322,6 +325,7 @@ describe("AddEntryDialog", () => {
     );
     await user.click(screen.getByText("Taylor Worker (taylor@example.test)"));
     await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "Additional details" }));
     await user.click(screen.getByRole("button", { name: "Log work" }));
     await user.click(screen.getByRole("combobox", { name: "Worker" }));
     await user.click(

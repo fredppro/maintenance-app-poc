@@ -86,7 +86,16 @@ async function fetchNotificationPage(
   return page;
 }
 
-export function NotificationHistory({
+export function NotificationHistory(props: NotificationHistoryProps) {
+  return (
+    <NotificationHistoryContent
+      key={`${props.open}:${props.taskId}`}
+      {...props}
+    />
+  );
+}
+
+function NotificationHistoryContent({
   taskId,
   open,
   timeZone,
@@ -94,13 +103,14 @@ export function NotificationHistory({
   const t = useTranslations("Form");
   const locale = useLocale();
   const [items, setItems] = useState<TaskReminder[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(open);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [initialError, setInitialError] = useState(false);
   const [olderError, setOlderError] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [refreshRequestSequence, setRefreshRequestSequence] = useState(0);
+  const [initialRetrySequence, setInitialRetrySequence] = useState(0);
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
   const itemsRef = useRef<TaskReminder[]>([]);
@@ -140,41 +150,6 @@ export function NotificationHistory({
     anchor.section.focus({ preventScroll: true });
     pendingDisclosureScrollAnchorRef.current = null;
   }, [expanded]);
-
-  const loadInitialPage = useCallback(async () => {
-    if (initialLoadingRef.current) return;
-
-    initialLoadingRef.current = true;
-    lastRefreshAtRef.current = Date.now();
-    const generation = requestGenerationRef.current;
-    const controller = new AbortController();
-    activeControllersRef.current.add(controller);
-    setIsLoading(true);
-    setInitialError(false);
-
-    try {
-      const page = await fetchNotificationPage(taskId, null, controller.signal);
-      if (generation !== requestGenerationRef.current) return;
-
-      const firstPage = mergeHistoryItems([], page.items);
-      itemsRef.current = firstPage;
-      cursorRef.current = page.nextCursor;
-      hasMoreRef.current = page.hasMore;
-      setItems(firstPage);
-      setHasMore(page.hasMore);
-      setOlderError(false);
-    } catch (error) {
-      if (controller.signal.aborted) return;
-      console.error("Failed to load maintenance task notification history:", error);
-      setInitialError(true);
-    } finally {
-      activeControllersRef.current.delete(controller);
-      if (generation === requestGenerationRef.current) {
-        initialLoadingRef.current = false;
-        setIsLoading(false);
-      }
-    }
-  }, [taskId]);
 
   const refreshLatestPage = useCallback(async () => {
     if (!open) return;
@@ -296,20 +271,38 @@ export function NotificationHistory({
     if (!open) return;
 
     requestGenerationRef.current += 1;
-    itemsRef.current = [];
-    cursorRef.current = null;
-    hasMoreRef.current = false;
-    hasLoadedOlderPagesRef.current = false;
-    refreshPendingRef.current = false;
-    pendingDisclosureScrollAnchorRef.current = null;
-    setItems([]);
-    setHasMore(false);
-    setExpanded(false);
-    setShowTopFade(false);
-    setShowBottomFade(false);
-    setInitialError(false);
-    setOlderError(false);
-    void loadInitialPage();
+    const generation = requestGenerationRef.current;
+    initialLoadingRef.current = true;
+    lastRefreshAtRef.current = Date.now();
+    const controller = new AbortController();
+    activeControllersRef.current.add(controller);
+    void fetchNotificationPage(taskId, null, controller.signal)
+      .then((page) => {
+        if (generation !== requestGenerationRef.current) return;
+
+        const firstPage = mergeHistoryItems([], page.items);
+        itemsRef.current = firstPage;
+        cursorRef.current = page.nextCursor;
+        hasMoreRef.current = page.hasMore;
+        setItems(firstPage);
+        setHasMore(page.hasMore);
+        setOlderError(false);
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        console.error(
+          "Failed to load maintenance task notification history:",
+          error,
+        );
+        setInitialError(true);
+      })
+      .finally(() => {
+        activeControllersRef.current.delete(controller);
+        if (generation === requestGenerationRef.current) {
+          initialLoadingRef.current = false;
+          setIsLoading(false);
+        }
+      });
     const activeControllers = activeControllersRef.current;
 
     return () => {
@@ -320,7 +313,7 @@ export function NotificationHistory({
       olderLoadingRef.current = false;
       refreshInProgressRef.current = false;
     };
-  }, [loadInitialPage, open, taskId]);
+  }, [initialRetrySequence, open, taskId]);
 
   useEffect(() => {
     if (!open) return;
@@ -546,7 +539,11 @@ export function NotificationHistory({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => void loadInitialPage()}
+              onClick={() => {
+                setIsLoading(true);
+                setInitialError(false);
+                setInitialRetrySequence((sequence) => sequence + 1);
+              }}
               disabled={isLoading}
             >
               {t("notifications.tryAgain")}

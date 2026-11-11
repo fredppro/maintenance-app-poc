@@ -2,19 +2,16 @@
 
 import { useFormatter, useNow, useTranslations } from "next-intl";
 import { TaskType } from "../../../../prisma/generated/prisma/enums";
-import { Badge } from "@/components/ui/badge";
 import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemHeader,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item";
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { OnboardingProgress } from "@/features/organization/shared/onboarding";
 import { cn } from "@/lib/utils";
-import { CalendarDays } from "lucide-react";
+import { ArrowRight, CalendarDays, CircleAlert } from "lucide-react";
 import { Link, useRouter } from "@/i18n/routing";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
@@ -61,6 +58,10 @@ export function SchedulerDashboard({
   const nextMaintenance = getNextScheduledMaintenance(entries, now);
   const overdueTasks = getOverdueScheduledMaintenance(entries, now);
   const overdueTask = overdueTasks[0];
+  const overdueEquipment = equipment.find(
+    (item) => item.id === overdueTask?.equipmentId,
+  );
+  const nextEquipment = equipment.find((item) => item.id === nextMaintenance?.equipmentId);
 
   const stats = {
     scheduled: entries.filter((e) => e.status === "scheduled").length,
@@ -76,87 +77,103 @@ export function SchedulerDashboard({
         {t("title")}
       </h1>
       {onboarding && <GettingStarted progress={onboarding} />}
-      <Item
+      <div
         role="region"
         aria-label={t("nextMaintenance.summary")}
-        variant="outline"
-        size="sm"
-        className="w-full shrink-0"
+        className="flex shrink-0 flex-col gap-3"
       >
-        <ItemMedia variant="icon">
-          <CalendarDays aria-hidden="true" />
-        </ItemMedia>
-        <ItemContent className="min-w-0">
-          <div
-            className={cn(
-              "grid min-w-0 gap-3",
-              overdueTask && "sm:grid-cols-2",
-            )}
+        {overdueTask && (
+          <Alert
+            variant="destructive"
+            className="min-w-0 items-center py-2.5 [&>svg]:translate-y-0"
           >
-            {overdueTask && (
-              <section className="flex min-w-0 flex-col gap-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-sm font-semibold text-destructive">
-                    {t("nextMaintenance.overdueTitle")}
-                  </h2>
-                  <Badge variant="destructive">
-                    {t("nextMaintenance.overdue", {
-                      count: overdueTasks.length,
-                    })}
-                  </Badge>
-                </div>
+            <CircleAlert aria-hidden="true" />
+            <AlertTitle
+              role="heading"
+              aria-level={2}
+              className="line-clamp-none break-words text-sm"
+            >
+              {t("nextMaintenance.overdueTitle")}
+            </AlertTitle>
+            <AlertDescription className="!flex min-w-0 flex-wrap items-center justify-between gap-2 !text-foreground">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="font-medium text-destructive">
+                  {t("nextMaintenance.overdue", {
+                    count: overdueTasks.length,
+                  })}
+                </span>
+                {overdueEquipment && (
+                  <span className="break-words text-muted-foreground">
+                    {overdueEquipment.name}
+                  </span>
+                )}
+                <span className="text-muted-foreground">
+                  {format.dateTime(
+                    new Date(overdueTask.startTime),
+                    {
+                      dateStyle: "medium",
+                      timeZone,
+                    },
+                  )}
+                </span>
+              </div>
+              <Button asChild size="sm" variant="outline">
                 <Link
                   href={`/?taskId=${encodeURIComponent(overdueTask.id)}`}
-                  aria-label={t("nextMaintenance.openTask", {
-                    title: overdueTask.title,
-                  })}
-                  className="block truncate font-medium text-link underline underline-offset-4"
                 >
-                  {overdueTask.title}
+                  {t("nextMaintenance.reviewTask")}
+                  <ArrowRight data-icon="inline-end" />
                 </Link>
-                <ItemDescription>
-                  {equipment.find(
-                    (item) => item.id === overdueTask.equipmentId,
-                  )?.name ?? ""}
-                  {" · "}
-                  {format.dateTime(new Date(overdueTask.startTime), {
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        {nextMaintenance && (
+          <section
+            aria-labelledby="next-maintenance-title"
+            className="flex min-w-0 flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-4 py-3"
+          >
+            <CalendarDays
+              className="size-4 shrink-0 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <div className="min-w-0 flex-1">
+              <h2
+                id="next-maintenance-title"
+                className="text-sm font-medium"
+              >
+                {t("nextMaintenance.title")}
+              </h2>
+              <p className="break-words text-sm font-medium text-foreground">
+                {nextMaintenance.title}
+              </p>
+              <p className="break-words text-sm text-muted-foreground">
+                {[nextEquipment?.name, format.dateTime(
+                  new Date(nextMaintenance.startTime),
+                  {
                     dateStyle: "medium",
                     timeStyle: "short",
                     timeZone,
-                  })}
-                </ItemDescription>
-              </section>
-            )}
-            <section className="flex min-w-0 flex-col gap-1">
-              <h2 className="text-sm font-semibold text-muted-foreground">
-                {t("nextMaintenance.title")}
-              </h2>
-              {nextMaintenance ? (
-                <>
-                  <p className="truncate font-medium text-foreground">
-                    {nextMaintenance.title}
-                  </p>
-                  <ItemDescription>
-                    {equipment.find(
-                      (item) => item.id === nextMaintenance.equipmentId,
-                    )?.name ?? ""}
-                    {" · "}
-                    {format.dateTime(new Date(nextMaintenance.startTime), {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                      timeZone,
-                    })}
-                  </ItemDescription>
-                </>
-              ) : (
-                <ItemDescription>
-                  {t("nextMaintenance.none")}
-                </ItemDescription>
-              )}
-            </section>
-          </div>
-        </ItemContent>
-      </Item>
+                  },
+                )]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            </div>
+            <Button asChild size="sm" variant="outline">
+              <Link
+                href={`/?taskId=${encodeURIComponent(nextMaintenance.id)}`}
+                aria-label={t("nextMaintenance.openTask", {
+                  title: nextMaintenance.title,
+                })}
+              >
+                {t("nextMaintenance.reviewTask")}
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            </Button>
+          </section>
+        )}
+      </div>
       <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2 text-sm">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Stat
