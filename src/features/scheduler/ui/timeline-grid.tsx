@@ -42,13 +42,12 @@ import { EquipmentRowLabel } from "./equipment-row-label";
 import { EquipmentDialog } from "./equipment-dialog";
 import { MaintenanceEntryBlock } from "./maintenance-entry-block";
 import { getTaskDisplayEnd } from "../utils/schedule";
+import { searchSchedule } from "../utils/search-schedule";
 
 export function TimelineGrid({
-  openTaskId,
-  onTaskLinkOpened,
+  searchQuery = "",
 }: {
-  openTaskId?: string | null;
-  onTaskLinkOpened?: () => void;
+  searchQuery?: string;
 }) {
   const locale = getValidLocale(useLocale());
   const dateFnsLocale = LOCALE_MAP[locale];
@@ -112,18 +111,23 @@ export function TimelineGrid({
     () => getViewRange(timeSlots, viewMode, timeZone),
     [timeSlots, viewMode, timeZone],
   );
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const { equipment: visibleEquipment, entries: visibleEntries } = useMemo(
+    () => searchSchedule(entries, equipment, searchQuery),
+    [entries, equipment, searchQuery],
+  );
 
   const getEntriesForEquipment = useCallback(
     (equipmentId: string) => {
       if (!viewRange) return [];
-      return entries.filter(
+      return visibleEntries.filter(
         (entry) =>
           entry.equipmentId === equipmentId &&
           new Date(entry.startTime) <= viewRange.end &&
           getTaskDisplayEnd(entry.startTime, entry.endTime) >= viewRange.start,
       );
     },
-    [entries, viewRange],
+    [viewRange, visibleEntries],
   );
 
   const handleCellClick = (date: Date, equipmentId: string) => {
@@ -211,7 +215,7 @@ export function TimelineGrid({
       .join(" · ");
 
   const getPendingMaintenanceCount = (equipmentId: string) => {
-    return entries.filter(
+    return visibleEntries.filter(
       (e) => e.equipmentId === equipmentId && e.status !== "completed",
     ).length;
   };
@@ -227,11 +231,11 @@ export function TimelineGrid({
   const yAxisWidth = "w-44 min-w-44 md:w-48 md:min-w-48 xl:w-52 xl:min-w-52";
 
   const totalTasksInView = useMemo(() => {
-    return equipment.reduce(
+    return visibleEquipment.reduce(
       (acc, equip) => acc + getEntriesForEquipment(equip.id).length,
       0,
     );
-  }, [equipment, getEntriesForEquipment]);
+  }, [getEntriesForEquipment, visibleEquipment]);
   const periodLabel = {
     day: t("periodDay"),
     week: t("periodWeek"),
@@ -251,7 +255,7 @@ export function TimelineGrid({
       <div
         ref={gridRef}
         aria-busy={isLoading}
-        className="relative flex-1 overflow-auto rounded-lg border border-border bg-card"
+        className="relative min-h-0 flex-1 overflow-auto bg-transparent"
       >
         <div className="relative flex h-full min-w-full w-fit flex-col">
           {isLoading && (
@@ -259,7 +263,7 @@ export function TimelineGrid({
               boundaryClasses={timeSlots.map((_, index) =>
                 getTimelineBoundaryClass(timeSlots, viewMode, index, timeZone),
               )}
-              rowCount={Math.min(Math.max(equipment.length, 3), 6)}
+              rowCount={Math.min(Math.max(visibleEquipment.length, 3), 6)}
               yAxisWidth={yAxisWidth}
               cellWidth={cellWidth}
               label={t("loading")}
@@ -279,9 +283,9 @@ export function TimelineGrid({
               </span>
 
               <Button
-                size="icon"
+                size="icon-xs"
                 variant="ghost"
-                className="size-8 -mr-2"
+                className="-mr-2"
                 aria-label={t("addEquipment")}
                 onClick={() => {
                   setEditingEquipment(null);
@@ -318,9 +322,9 @@ export function TimelineGrid({
                     viewMode === "day" ? "px-0.5 leading-none tracking-tight" : "sm:text-sm",
                     getTimelineBoundaryClass(timeSlots, viewMode, idx, timeZone),
                     (viewMode === "week" || viewMode === "month") &&
-                      "cursor-pointer hover:bg-accent hover:text-foreground active:bg-accent/80",
+                    "cursor-pointer hover:bg-accent hover:text-foreground active:bg-accent/80",
                     isToday(slot) &&
-                      "bg-primary-muted/50 text-primary-text after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary",
+                    "bg-primary-muted/50 text-primary-text after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary",
                   )}
                 >
                   {formatHeader(slot)}
@@ -331,8 +335,8 @@ export function TimelineGrid({
 
           {/* Equipment rows */}
           <div className="flex min-w-full w-fit flex-1 flex-col">
-            {equipment.length > 0 ? (
-              equipment.map((equip) => {
+            {visibleEquipment.length > 0 ? (
+              visibleEquipment.map((equip) => {
                 const equipEntries = getEntriesForEquipment(equip.id);
                 const pendingCount = getPendingMaintenanceCount(equip.id);
 
@@ -399,12 +403,12 @@ export function TimelineGrid({
                               "hover:bg-accent/50 active:bg-accent/80",
                               isDragOver && "bg-primary-muted",
                               isToday(slot) &&
-                                !processedEntries.some(
-                                  ({ startIdx, effectiveSpan }) =>
-                                    slotIdx >= startIdx &&
-                                    slotIdx < startIdx + effectiveSpan,
-                                ) &&
-                                "bg-primary-muted/30",
+                              !processedEntries.some(
+                                ({ startIdx, effectiveSpan }) =>
+                                  slotIdx >= startIdx &&
+                                  slotIdx < startIdx + effectiveSpan,
+                              ) &&
+                              "bg-primary-muted/30",
                             )}
                             style={{ height: `${rowHeight}px` }}
                             onClick={() => handleCellClick(slot, equip.id)}
@@ -451,18 +455,16 @@ export function TimelineGrid({
                                 (other) =>
                                   other.entry.id !== entry.id &&
                                   Math.max(startIdx, other.startIdx) <
-                                    Math.min(
-                                      startIdx + effectiveSpan,
-                                      other.startIdx + other.effectiveSpan,
-                                    ),
+                                  Math.min(
+                                    startIdx + effectiveSpan,
+                                    other.startIdx + other.effectiveSpan,
+                                  ),
                               );
 
                             return (
                               <MaintenanceEntryBlock
                                 key={entry.id}
                                 entry={entry}
-                                autoOpen={entry.id === openTaskId}
-                                onAutoOpenClose={onTaskLinkOpened}
                                 style={{
                                   position: "absolute",
                                   left: `calc(${startPercent}% + 2px)`,
@@ -498,22 +500,26 @@ export function TimelineGrid({
                         <Box aria-hidden="true" />
                       </EmptyMedia>
                       <EmptyTitle className="text-xs">
-                        {t("noEquipment")}
+                        {normalizedSearch
+                          ? t("noSearchResults")
+                          : t("noEquipment")}
                       </EmptyTitle>
                     </EmptyHeader>
-                    <EmptyContent>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-auto w-full whitespace-normal px-2 py-1.5 text-center text-xs leading-tight"
-                        onClick={() => {
-                          setEditingEquipment(null);
-                          setAddEquipDialogOpen(true);
-                        }}
-                      >
-                        {t("addEquipment")}
-                      </Button>
-                    </EmptyContent>
+                    {!normalizedSearch && (
+                      <EmptyContent>
+                        <Button
+                          variant="outline"
+                          size="row"
+                          className="w-full justify-center text-center"
+                          onClick={() => {
+                            setEditingEquipment(null);
+                            setAddEquipDialogOpen(true);
+                          }}
+                        >
+                          {t("addEquipment")}
+                        </Button>
+                      </EmptyContent>
+                    )}
                   </Empty>
                 </div>
                 <div className="flex min-h-64 flex-1" aria-hidden="true">
@@ -530,27 +536,33 @@ export function TimelineGrid({
                 </div>
               </div>
             )}
-            {equipment.length > 0 && !isLoading && totalTasksInView === 0 && (
-              <div className="flex flex-1 justify-center py-10 pl-44 md:pl-48 xl:pl-52">
-                <Empty
-                  role="status"
-                  aria-live="polite"
-                  className="min-h-0 flex-none gap-2 border-0 p-4"
-                >
-                  <EmptyHeader className="gap-1">
-                    <EmptyMedia variant="icon" className="mb-0 size-8">
-                      <CalendarDays aria-hidden="true" />
-                    </EmptyMedia>
-                    <EmptyTitle className="text-sm">
-                      {t("noTasksInPeriod", { period: periodLabel })}
-                    </EmptyTitle>
-                    <EmptyDescription className="text-xs">
-                      {t("emptyPeriodHint")}
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              </div>
-            )}
+            {visibleEquipment.length > 0 &&
+              !isLoading &&
+              totalTasksInView === 0 && (
+                <div className="flex flex-1 justify-center py-10 pl-44 md:pl-48 xl:pl-52">
+                  <Empty
+                    role="status"
+                    aria-live="polite"
+                    className="min-h-0 flex-none gap-2 border-0 p-4"
+                  >
+                    <EmptyHeader className="gap-1">
+                      <EmptyMedia variant="icon" className="mb-0 size-8">
+                        <CalendarDays aria-hidden="true" />
+                      </EmptyMedia>
+                      <EmptyTitle className="text-sm">
+                        {normalizedSearch
+                          ? t("noSearchResults")
+                          : t("noTasksInPeriod", { period: periodLabel })}
+                      </EmptyTitle>
+                      <EmptyDescription className="text-xs">
+                        {normalizedSearch
+                          ? t("clearSearchHint")
+                          : t("emptyPeriodHint")}
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                </div>
+              )}
           </div>
         </div>
       </div>

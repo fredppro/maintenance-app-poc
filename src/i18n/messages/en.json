@@ -3,12 +3,17 @@
     "title": "Maintenance Scheduler",
     "description": "Equipment service and maintenance planning",
     "stats": {
+      "taskTypes": "All task types",
+      "workStatus": "Work status",
+      "assets": "Assets",
       "preventive": "Preventive",
       "corrective": "Corrective",
       "predictive": "Predictive",
       "equipment": "Equipment",
       "scheduled": "Scheduled",
-      "inProgress": "In Progress"
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
     },
     "footer": {
       "clickHint": "Click on a cell to schedule maintenance",
@@ -21,6 +26,7 @@
       "title": "Next maintenance",
       "overdueTitle": "Overdue maintenance",
       "reviewTask": "Review task",
+      "reviewOldestTask": "Open oldest task",
       "openTask": "Review task: {title}",
       "none": "No upcoming scheduled maintenance",
       "overdue": "{count, plural, one {# scheduled task is overdue} other {# scheduled tasks are overdue}}"
@@ -96,6 +102,14 @@
     "categoryPlaceholder": "e.g., Manufacturing",
     "noEquipment": "No equipment registered.",
     "noTasksInPeriod": "No tasks are scheduled for the {period}.",
+    "noSearchResults": "No maintenance matches this search.",
+    "searchTasks": "Search tasks, equipment or workers…",
+    "clearSearch": "Clear search",
+    "clearSearchHint": "Try another name or clear the search to see all equipment.",
+    "searchResults": "Maintenance search results",
+    "searchResultCount": "{count, plural, one {# result} other {# results}}",
+    "openTask": "Open {title}, status: {status}",
+    "unknownStatus": "Unknown status",
     "periodDay": "selected day",
     "periodWeek": "selected week",
     "periodMonth": "selected month",
@@ -183,6 +197,14 @@
     "temporarilyUnavailable": "Uploads are temporarily unavailable. Try again shortly.",
     "uploadFailed": "The upload could not be completed. Please try again."
   },
+  "Search": {
+    "title": "Search maintenance",
+    "placeholder": "Search maintenance…",
+    "description": "Find maintenance by task title, equipment, category, worker name or email. Search also filters the schedule.",
+    "results": "Maintenance tasks",
+    "keyboardHint": "Use arrow keys to navigate, Enter to open",
+    "close": "to close"
+  },
   "Toolbar": {
     "previous": "Previous period",
     "next": "Next period",
@@ -193,12 +215,24 @@
     "month": "Month",
     "year": "Year",
     "viewSelector": "Timeline view",
+    "navigation": "Schedule navigation",
+    "zoom": "Timeline zoom",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out"
   },
   "Form": {
     "schedule": "Schedule Maintenance",
-    "scheduleDescription": "Enter the equipment, dates, workers, and materials for the maintenance task.",
+    "scheduleDescription": "Set the schedule and team. Execution details are optional.",
+    "sectionNavigation": "Maintenance form sections",
+    "tabs": {
+      "details": "Details",
+      "execution": "Execution",
+      "notifications": "Notifications"
+    },
+    "worksheet": "Worksheet",
+    "savedWorksheet": "Saved task data",
+    "previewWorkSheetNewTab": "Preview work sheet (opens in a new tab)",
+    "saveChanges": "Save changes",
     "additionalDetails": "Additional details",
     "edit": "Edit: {title}",
     "status": "Status",
@@ -342,6 +376,7 @@
     "save": "Save",
     "saving": "Saving...",
     "cancel": "Cancel",
+    "previewWorkSheet": "Preview work sheet",
     "downloadWorkSheet": "Download Work Sheet",
     "delete": "Delete Entry",
     "statusTypes": {
@@ -384,12 +419,23 @@
     "statusGroup": "Status options"
   },
   "Common": {
+    "close": "Close",
     "save": "Save Changes",
     "cancel": "Cancel",
     "add": "Add",
     "remove": "Remove",
     "edit": "Edit",
     "settings": "Settings"
+  },
+  "Reordering": {
+    "handle": "Reorder {name}",
+    "sortableItem": "sortable item",
+    "instructions": "To reorder, press Space or Enter to pick up an item. Use the up and down arrow keys to move it. Press Space or Enter again to drop it, or Escape to cancel.",
+    "pickedUp": "Picked up {name}.",
+    "moved": "{name} moved to position {position} of {count}.",
+    "dropped": "{name} dropped at position {position} of {count}.",
+    "outside": "{name} is outside the list. Drop to cancel.",
+    "cancelled": "Reordering {name} cancelled."
   },
   "Workers": {
     "title": "Workers",
@@ -418,6 +464,7 @@
     "columnReorder": "Reorder",
     "columnActions": "Actions",
     "dragToReorder": "Drag to reorder",
+    "temporaryOrder": "Order applies to this view only and resets when workers reload.",
     "openActions": "Actions for {name}",
     "fieldName": "Name",
     "fieldEmail": "Email",
@@ -432,6 +479,9 @@
   },
   "PDF": {
     "title": "Maintenance Report",
+    "previewDescription": "Live preview of this task's work sheet.",
+    "backToSchedule": "Back to schedule",
+    "downloadReport": "Download PDF",
     "subject": "Maintenance Report",
     "tagline": "Maintenance Systems",
     "headerTitle": "WORK SHEET / MAINTENANCE REPORT",
@@ -569,6 +619,8 @@
     "invitationsTitle": "Pending invitations",
     "noInvitations": "There are no pending invitations.",
     "managementError": "The requested member or invitation change could not be completed.",
+    "confirmActionTitle": "Confirm organization change",
+    "confirmAction": "Confirm",
     "roleFor": "Role for {name}",
     "confirmRoleChange": "Change {name}'s organization role?",
     "confirmRemove": "Remove {name} from this organization?",
@@ -642,6 +694,7 @@
     "description": "Sites and the sections inside them. Equipment is assigned to a section.",
     "sections": "Sections",
     "noSections": "No sections yet.",
+    "sectionCount": "{count, plural, one {# section} other {# sections}}",
     "equipmentCount": "{count} equipment",
     "current": "Current",
     "newSection": "New section name",
@@ -664,10 +717,15 @@
     "title": "Inventory",
     "description": "Manage stock, suppliers, consumption, and materials planned for maintenance.",
     "search": "Search materials…",
+    "viewOptions": "Inventory view",
     "stockTitle": "Stock catalog",
     "plannedMaterialsTitle": "Planned materials",
     "lowStockTitle": "Purchase reminders",
     "noLowStock": "No items are at or below their reorder point.",
+    "loadingStock": "Loading inventory stock",
+    "stockLoadFailure": "Stock and supplier data could not be loaded.",
+    "stockLoadFailureTitle": "Inventory unavailable",
+    "retry": "Try again",
     "addInventoryItem": "Add stock item",
     "name": "Item name",
     "referenceInput": "Reference",
@@ -714,6 +772,7 @@
   "MetricsPage": {
     "title": "Metrics",
     "description": "Maintenance activity at the current site.",
+    "allActivity": "Counts cover all recorded tasks for this site.",
     "summary": "At a glance",
     "total": "Total tasks",
     "completion": "Completion rate",

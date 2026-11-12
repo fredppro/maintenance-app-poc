@@ -35,6 +35,7 @@ export interface SchedulerState {
   timeZone: string;
   selectedEntry: MaintenanceEntry | null;
   isLoading: boolean;
+  searchQuery: string;
 
   setEquipment: (equipment: Equipment[]) => void;
   setEntries: (entries: MaintenanceEntry[]) => void;
@@ -60,6 +61,7 @@ export interface SchedulerState {
     newEquipmentId?: string,
   ) => void;
   setLoading: (isLoading: boolean) => void;
+  setSearchQuery: (query: string) => void;
 }
 
 export type SchedulerStore = ReturnType<typeof createSchedulerStore>;
@@ -77,6 +79,7 @@ export type SchedulerInitialState = Partial<
     | "timeZone"
     | "selectedEntry"
     | "isLoading"
+    | "searchQuery"
   >
 >;
 
@@ -138,6 +141,7 @@ const defaultSchedulerState = (): Pick<
   | "timeZone"
   | "selectedEntry"
   | "isLoading"
+  | "searchQuery"
 > => ({
   equipment: [],
   entries: [],
@@ -149,6 +153,7 @@ const defaultSchedulerState = (): Pick<
   timeZone: DEFAULT_ORGANIZATION_TIMEZONE,
   selectedEntry: null,
   isLoading: false,
+  searchQuery: "",
 });
 
 export function createSchedulerStore(initialState: SchedulerInitialState = {}) {
@@ -162,6 +167,7 @@ export function createSchedulerStore(initialState: SchedulerInitialState = {}) {
     setEntries: (entries) => set({ entries }),
     setWorkers: (workers) => set({ workers }),
     setLoading: (isLoading) => set({ isLoading }),
+    setSearchQuery: (searchQuery) => set({ searchQuery }),
 
     addEquipment: (equipment) =>
       set((state) => ({

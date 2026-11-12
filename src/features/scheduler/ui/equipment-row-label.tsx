@@ -79,8 +79,8 @@ export function EquipmentRowLabel({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            size="icon"
-            className="size-7 opacity-0 transition-opacity group-hover/equipment-label:opacity-100 group-focus-within/equipment-label:opacity-100"
+            size="icon-xs"
+            className="opacity-0 transition-opacity group-hover/equipment-label:opacity-100 group-focus-within/equipment-label:opacity-100"
             aria-label={t("equipmentActions", { equipment: equipment.name })}
           >
             <MoreVertical />
@@ -92,7 +92,7 @@ export function EquipmentRowLabel({
             {tCommon("edit")}
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="gap-2 text-destructive focus:text-destructive"
+            variant="destructive"
             onClick={onRemove}
           >
             <Trash2 />

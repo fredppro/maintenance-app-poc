@@ -14,9 +14,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { PageHeader } from "@/components/app-shell/page-header";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { PageBody, PageHeader } from "@/components/app-shell/page-header";
 import {
   Drawer,
   DrawerContent,
@@ -30,10 +38,14 @@ import {
   TableBody,
   TableCaption,
   TableCell,
+  TableDragHandle,
   TableHead,
   TableHeader,
   TableRow,
+  TableSurface,
+  type ReorderingOptions,
 } from "@/components/ui/table";
+import { Reorderable, ReorderableHandle, ReorderableItem } from "@/components/ui/reorderable";
 import {
   Tooltip,
   TooltipContent,
@@ -42,32 +54,12 @@ import {
 import { deleteWorker, getWorkers } from "../server/actions";
 import type { Worker as WorkerEntity } from "../types";
 import {
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type UniqueIdentifier,
-} from "@dnd-kit/core";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import {
-  SortableContext,
-  arrayMove,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
   ColumnDef,
-  Row,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { GripVertical, MoreVertical, Plus } from "lucide-react";
+import { MoreVertical, Plus, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -93,103 +85,81 @@ type WorkerRow = {
 type WorkerManagementPageProps = {
   onBack?: () => void;
   onWorkersChange: (workers: WorkerEntity[]) => void;
+  locale?: string;
+  timeZone?: string;
 };
 
-function DragHandle({
-  attributes,
-  listeners,
+function WorkerActions({
   label,
+  editLabel,
+  removeLabel,
+  onEdit,
+  onDelete,
 }: {
-  attributes: ReturnType<typeof useSortable>["attributes"];
-  listeners: ReturnType<typeof useSortable>["listeners"];
   label: string;
+  editLabel: string;
+  removeLabel: string;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   return (
-    <Button
-      {...attributes}
-      {...listeners}
-      variant="ghost"
-      size="icon"
-      className="size-7 cursor-grab text-muted-foreground hover:bg-transparent active:cursor-grabbing"
-    >
-      <GripVertical className="size-4" />
-      <span className="sr-only">{label}</span>
-    </Button>
-  );
-}
-
-function DraggableRow({
-  row,
-  onOpenDrawer,
-  reorderLabel,
-}: {
-  row: Row<WorkerRow>;
-  onOpenDrawer: (worker: WorkerRow) => void;
-  reorderLabel: string;
-}) {
-  const {
-    transform,
-    transition,
-    setNodeRef,
-    attributes,
-    listeners,
-    isDragging,
-  } = useSortable({ id: row.id });
-
-  return (
-    <TableRow
-      data-state={row.getIsSelected() && "selected"}
-      data-dragging={isDragging}
-      ref={setNodeRef}
-      onClick={() => onOpenDrawer(row.original)}
-      className="relative z-0 cursor-pointer data-[dragging=true]:z-10 data-[dragging=true]:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-      }}
-      tabIndex={0}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget) return;
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onOpenDrawer(row.original);
-        }
-      }}
-    >
-      {row.getVisibleCells().map((cell) => (
-        <TableCell
-          key={cell.id}
+    <DropdownMenu>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={label}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <MoreVertical />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent align="end" className="w-36">
+        <DropdownMenuItem
           onClick={(event) => {
-            if (
-              cell.column.id === "select" ||
-              cell.column.id === "actions" ||
-              cell.column.id === "drag"
-            ) {
-              event.stopPropagation();
-            }
+            event.stopPropagation();
+            onEdit();
           }}
         >
-          {cell.column.id === "drag" ? (
-            <DragHandle
-              attributes={attributes}
-              listeners={listeners}
-              label={reorderLabel}
-            />
-          ) : (
-            flexRender(cell.column.columnDef.cell, cell.getContext())
-          )}
-        </TableCell>
-      ))}
-    </TableRow>
+          {editLabel}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDelete();
+          }}
+        >
+          {removeLabel}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
 export default function WorkerManagementPage({
   onBack,
   onWorkersChange,
+  locale = "en",
+  timeZone,
 }: WorkerManagementPageProps) {
   const t = useTranslations("Workers");
   const tCommon = useTranslations("Common");
+  const createdAtFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: "medium",
+        timeStyle: "short",
+        ...(timeZone ? { timeZone } : {}),
+      }),
+    [locale, timeZone],
+  );
 
   const [workers, setWorkers] = useState<WorkerRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -202,7 +172,6 @@ export default function WorkerManagementPage({
   const [pendingDeleteWorker, setPendingDeleteWorker] = useState<
     WorkerRow | undefined
   >(undefined);
-  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const fetchWorkers = useCallback(async () => {
     setLoading(true);
     setFetchFailed(false);
@@ -258,48 +227,28 @@ export default function WorkerManagementPage({
     await fetchWorkers();
   };
 
+  const reordering = useMemo<ReorderingOptions>(() => ({
+    enabled: true,
+    items: workers.map((worker) => worker.id),
+    getItemLabel: (id) => workers.find((worker) => worker.id === id)?.name ?? id,
+    onReorder: (ids) => {
+      setWorkers((current) => {
+        const byId = new Map(current.map((worker) => [worker.id, worker]));
+        return ids.map((id) => {
+          const worker = byId.get(id);
+          if (!worker) throw new Error("Cannot reorder a worker that is no longer in the list.");
+          return worker;
+        });
+      });
+    },
+  }), [workers]);
+
   const columns = useMemo<ColumnDef<WorkerRow>[]>(
     () => [
       {
         id: "drag",
-        header: () => (
-          <span className="sr-only">{t("columnReorder")}</span>
-        ),
-        cell: () => null,
-        enableSorting: false,
-        enableHiding: false,
-      },
-      {
-        id: "select",
-        header: ({ table }) => (
-          <div className="flex items-center justify-center">
-            <Checkbox
-              className="
-                border-border bg-secondary
-                data-[state=checked]:border-secondary
-                "
-              checked={
-                table.getIsAllRowsSelected() ||
-                (table.getIsSomeRowsSelected() && "indeterminate")
-              }
-              onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-              aria-label={t("selectAll")}
-            />
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="flex items-center justify-center">
-            <Checkbox
-              className="
-                border-border bg-secondary
-                data-[state=checked]:border-secondary
-                "
-              checked={row.getIsSelected()}
-              onCheckedChange={(value) => row.toggleSelected(!!value)}
-              aria-label={t("selectRow")}
-            />
-          </div>
-        ),
+        header: () => <span className="sr-only">{t("columnReorder")}</span>,
+        cell: () => <TableDragHandle title={t("temporaryOrder")} />,
         enableSorting: false,
         enableHiding: false,
       },
@@ -337,67 +286,42 @@ export default function WorkerManagementPage({
         accessorKey: "type",
         header: t("columnType"),
         cell: ({ row }) => (
-          <span className="rounded-full border border-border px-2 py-1 text-xs text-muted-foreground">
+          <Badge variant="outline">
             {t(row.original.type.toLowerCase())}
-          </span>
+          </Badge>
         ),
       },
       {
         accessorKey: "createdAt",
         header: t("columnCreated"),
-        cell: ({ row }) => new Date(row.original.createdAt).toLocaleString(),
+        cell: ({ row }) => (
+          <time
+            dateTime={new Date(row.original.createdAt).toISOString()}
+            className="whitespace-nowrap text-muted-foreground"
+          >
+            {createdAtFormatter.format(new Date(row.original.createdAt))}
+          </time>
+        ),
       },
       {
         id: "actions",
         header: () => <span className="sr-only">{t("columnActions")}</span>,
         cell: ({ row }) => {
-          const label = t("openActions", { name: row.original.name });
           return (
-            <DropdownMenu>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
-                      size="icon"
-                      aria-label={label}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreVertical />
-                    </Button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent>{label}</TooltipContent>
-              </Tooltip>
-              <DropdownMenuContent align="end" className="w-32">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleOpenDrawer(row.original);
-                  }}
-                >
-                  {tCommon("edit")}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRequestDelete(row.original);
-                  }}
-                >
-                  {tCommon("remove")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <WorkerActions
+              label={t("openActions", { name: row.original.name })}
+              editLabel={tCommon("edit")}
+              removeLabel={tCommon("remove")}
+              onEdit={() => handleOpenDrawer(row.original)}
+              onDelete={() => handleRequestDelete(row.original)}
+            />
           );
         },
         enableSorting: false,
         enableHiding: false,
       },
     ],
-    [t, tCommon],
+    [createdAtFormatter, t, tCommon],
   );
 
   // TanStack Table returns unmemoizable functions; React Compiler skips this component.
@@ -405,43 +329,12 @@ export default function WorkerManagementPage({
   const table = useReactTable({
     data: workers,
     columns,
-    state: {
-      rowSelection,
-    },
     getRowId: (row) => row.id,
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const sensors = useSensors(
-    useSensor(MouseSensor),
-    useSensor(TouchSensor),
-    useSensor(KeyboardSensor),
-  );
-
-  const dataIds = useMemo<UniqueIdentifier[]>(
-    () => workers.map((worker) => worker.id),
-    [workers],
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (active?.id && over?.id && active.id !== over.id) {
-      setWorkers((currentWorkers) => {
-        const oldIndex = currentWorkers.findIndex(
-          (item) => item.id === active.id,
-        );
-        const newIndex = currentWorkers.findIndex(
-          (item) => item.id === over.id,
-        );
-        return arrayMove(currentWorkers, oldIndex, newIndex);
-      });
-    }
-  };
-
   return (
-    <div className="flex min-h-full w-full flex-col gap-4 overflow-hidden rounded-lg border border-border bg-card p-4">
+    <PageBody>
       <PageHeader
         title={t("title")}
         description={t("description")}
@@ -460,108 +353,165 @@ export default function WorkerManagementPage({
         }
       />
 
-      <div className="flex-1 overflow-hidden rounded-md border border-border bg-background">
-        {loading ? (
-          <div
-            role="status"
-            aria-label={t("loading")}
-            className="flex flex-col gap-4 p-4"
-          >
-            <Skeleton className="h-5 w-36" />
-            {Array.from({ length: 5 }, (_, row) => (
-              <div
-                key={row}
-                className="grid grid-cols-2 items-center gap-4 border-b border-border-subtle py-3 sm:grid-cols-4"
-              >
-                <Skeleton className="h-4 w-32 max-w-full" />
-                <Skeleton className="h-4 w-40 max-w-full" />
-                <Skeleton className="hidden h-4 w-24 sm:block" />
-                <Skeleton className="hidden h-4 w-20 sm:block" />
-              </div>
-            ))}
-            <span className="sr-only">{t("loading")}</span>
-          </div>
-        ) : fetchFailed ? (
-          <Alert className="m-4" variant="destructive" role="alert">
-            <AlertDescription className="flex items-center justify-between gap-4">
-              <span>{t("failedLoad")}</span>
-              <Button variant="outline" size="sm" onClick={fetchWorkers}>
-                {t("retry")}
-              </Button>
-            </AlertDescription>
-          </Alert>
-        ) : workers.length === 0 ? (
-          <div className="flex min-h-64 flex-col items-center justify-center gap-3 p-8 text-center">
-            <h3 className="font-medium">{t("noWorkers")}</h3>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              {t("noWorkersDescription")}
-            </p>
+      {loading ? (
+        <div
+          role="status"
+          aria-label={t("loading")}
+          className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4"
+        >
+          <Skeleton className="h-5 w-36" />
+          {Array.from({ length: 5 }, (_, row) => (
+            <div
+              key={row}
+              className="grid grid-cols-2 items-center gap-4 border-b border-border-subtle py-3 lg:grid-cols-5"
+            >
+              <Skeleton className="h-4 w-32 max-w-full" />
+              <Skeleton className="h-4 w-40 max-w-full" />
+              <Skeleton className="hidden h-4 w-24 lg:block" />
+              <Skeleton className="hidden h-4 w-20 lg:block" />
+              <Skeleton className="hidden h-4 w-20 lg:block" />
+            </div>
+          ))}
+          <span className="sr-only">{t("loading")}</span>
+        </div>
+      ) : fetchFailed ? (
+        <Alert variant="destructive">
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+            <span>{t("failedLoad")}</span>
+            <Button variant="outline" size="sm" onClick={fetchWorkers}>
+              {t("retry")}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : workers.length === 0 ? (
+        <Empty variant="surface">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <UsersRound />
+            </EmptyMedia>
+            <EmptyTitle>{t("noWorkers")}</EmptyTitle>
+            <EmptyDescription>{t("noWorkersDescription")}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
             <Button onClick={() => handleOpenDrawer(undefined)}>
               <Plus data-icon="inline-start" />
               {t("createWorker")}
             </Button>
-          </div>
-        ) : (
-          <div className="h-full min-w-full overflow-auto">
-            <div className="w-full overflow-x-auto">
-              <DndContext
-                collisionDetection={closestCenter}
-                modifiers={[restrictToVerticalAxis]}
-                onDragEnd={handleDragEnd}
-                sensors={sensors}
-              >
-                <Table>
-                  <TableCaption className="sr-only">
-                    {t("title")}
-                  </TableCaption>
-                  <TableHeader className="sticky top-0 z-10">
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
-                          <TableHead key={header.id} colSpan={header.colSpan}>
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext(),
-                                )}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody>
-                    {table.getRowModel().rows.length ? (
-                      <SortableContext
-                        items={dataIds}
-                        strategy={verticalListSortingStrategy}
+          </EmptyContent>
+        </Empty>
+      ) : (
+        <TableSurface>
+          <Reorderable {...reordering}>
+            <ul className="flex flex-col divide-y divide-border-subtle lg:hidden">
+              {workers.map((worker) => {
+                const label = t("openActions", { name: worker.name });
+                return (
+                  <ReorderableItem id={worker.id} key={worker.id}>
+                    <li className="flex min-w-0 items-center gap-1 px-2 py-1.5">
+                      <ReorderableHandle title={t("temporaryOrder")} />
+                      <Button
+                        variant="ghost"
+                        size="row"
+                        className="min-w-0 flex-1"
+                        onClick={() => handleOpenDrawer(worker)}
                       >
-                        {table.getRowModel().rows.map((row) => (
-                          <DraggableRow
-                            key={row.id}
-                            row={row}
-                            onOpenDrawer={handleOpenDrawer}
-                            reorderLabel={t("dragToReorder")}
-                          />
-                        ))}
-                      </SortableContext>
-                    ) : (
-                      <TableRow>
-                        <TableCell
-                          colSpan={columns.length}
-                          className="h-24 text-center"
-                        >
-                          {t("noResults")}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </DndContext>
-            </div>
+                        <Avatar className="size-9 shrink-0">
+                          <AvatarFallback>
+                            {worker.name
+                              .split(/\s+/)
+                              .filter(Boolean)
+                              .slice(0, 2)
+                              .map((part) => part[0]?.toUpperCase())
+                              .join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="grid min-w-0 flex-1 gap-0.5">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="truncate font-medium">
+                              {worker.name}
+                            </span>
+                            <Badge variant="outline">
+                              {t(worker.type.toLowerCase())}
+                            </Badge>
+                          </span>
+                          <span className="truncate text-sm text-muted-foreground">
+                            {worker.email}
+                          </span>
+                          {worker.phone && (
+                            <span className="text-xs text-muted-foreground">
+                              {worker.phone}
+                            </span>
+                          )}
+                        </span>
+                      </Button>
+                      <WorkerActions
+                        label={label}
+                        editLabel={tCommon("edit")}
+                        removeLabel={tCommon("remove")}
+                        onEdit={() => handleOpenDrawer(worker)}
+                        onDelete={() => handleRequestDelete(worker)}
+                      />
+                    </li>
+                  </ReorderableItem>
+                );
+              })}
+            </ul>
+          </Reorderable>
+          <div className="hidden overflow-x-auto lg:block">
+            <Table reordering={reordering}>
+              <TableCaption className="sr-only">{t("title")}</TableCaption>
+              <TableHeader className="sticky top-0 z-10">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id} colSpan={header.colSpan} className={header.column.id === "drag" ? "w-px" : header.column.id === "actions" ? "text-right" : undefined}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    reorderId={row.id}
+                    tabIndex={0}
+                    className="cursor-pointer"
+                    onClick={() => handleOpenDrawer(row.original)}
+                    onKeyDown={(event) => {
+                      if (event.target !== event.currentTarget) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleOpenDrawer(row.original);
+                      }
+                    }}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className={cell.column.id === "actions" ? "text-right" : undefined}
+                        onClick={(event) => {
+                          if (cell.column.id === "actions" || cell.column.id === "drag") {
+                            event.stopPropagation();
+                          }
+                        }}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-        )}
-      </div>
+        </TableSurface>
+      )}
 
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="right">
         <DrawerContent className="w-full sm:max-w-md">
@@ -608,12 +558,12 @@ export default function WorkerManagementPage({
           </AlertDialogHeader>
           <div className="flex gap-2 justify-end">
             <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>
+            <AlertDialogAction variant="destructive" onClick={handleDelete}>
               {t("delete")}
             </AlertDialogAction>
           </div>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageBody>
   );
 }

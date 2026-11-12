@@ -36,6 +36,7 @@ interface SearchableSelectProps {
   'aria-invalid'?: boolean
   'aria-describedby'?: string
   className?: string
+  size?: 'default' | 'sm'
   /** Shown centered when there are no options, and as a footer row otherwise. */
   action?: { label: string; onClick: () => void }
 }
@@ -54,6 +55,7 @@ export function SearchableSelect({
   'aria-invalid': ariaInvalid,
   'aria-describedby': ariaDescribedBy,
   className,
+  size = 'default',
   action,
 }: SearchableSelectProps) {
   const [open, setOpen] = React.useState(false)
@@ -66,6 +68,7 @@ export function SearchableSelect({
           id={id}
           type="button"
           variant="outline"
+          size={size}
           role="combobox"
           aria-label={ariaLabel}
           aria-required={ariaRequired}
@@ -73,7 +76,7 @@ export function SearchableSelect({
           aria-describedby={ariaDescribedBy}
           aria-expanded={open}
           className={cn(
-            'w-full justify-between px-3 font-normal',
+            'min-w-0 w-full justify-between px-control-padding font-normal',
             !selected && 'text-muted-foreground',
             className,
           )}

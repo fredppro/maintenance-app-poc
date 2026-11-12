@@ -3,12 +3,17 @@
     "title": "Gestor de Manutenção",
     "description": "Planeamento de serviço e manutenção de equipamentos",
     "stats": {
+      "taskTypes": "Todos os tipos",
+      "workStatus": "Estado do trabalho",
+      "assets": "Ativos",
       "preventive": "Preventiva",
       "corrective": "Corretiva",
       "predictive": "Preditiva",
       "equipment": "Equipamento",
       "scheduled": "Agendado",
-      "inProgress": "Em Curso"
+      "inProgress": "Em Curso",
+      "completed": "Concluído",
+      "cancelled": "Cancelado"
     },
     "footer": {
       "clickHint": "Clique numa célula para agendar manutenção",
@@ -21,6 +26,7 @@
       "title": "Próxima manutenção",
       "overdueTitle": "Manutenção em atraso",
       "reviewTask": "Ver tarefa",
+      "reviewOldestTask": "Abrir tarefa mais antiga",
       "openTask": "Ver tarefa: {title}",
       "none": "Não existem manutenções agendadas",
       "overdue": "{count, plural, one {# tarefa agendada está atrasada} other {# tarefas agendadas estão atrasadas}}"
@@ -96,6 +102,14 @@
     "categoryPlaceholder": "Ex.: Produção",
     "noEquipment": "Nenhum equipamento registado.",
     "noTasksInPeriod": "Não existem tarefas agendadas para {period}.",
+    "noSearchResults": "Nenhuma tarefa de manutenção corresponde à pesquisa.",
+    "searchTasks": "Pesquisar tarefas, equipamentos ou trabalhadores…",
+    "clearSearch": "Limpar pesquisa",
+    "clearSearchHint": "Experimente outro nome ou limpe a pesquisa para ver todos os equipamentos.",
+    "searchResults": "Resultados da pesquisa de manutenção",
+    "searchResultCount": "{count, plural, one {# resultado} other {# resultados}}",
+    "openTask": "Abrir {title}, estado: {status}",
+    "unknownStatus": "Estado desconhecido",
     "periodDay": "o dia selecionado",
     "periodWeek": "a semana selecionada",
     "periodMonth": "o mês selecionado",
@@ -183,6 +197,14 @@
     "temporarilyUnavailable": "Os carregamentos estão temporariamente indisponíveis. Tente novamente em breve.",
     "uploadFailed": "Não foi possível concluir o carregamento. Tente novamente."
   },
+  "Search": {
+    "title": "Pesquisar manutenções",
+    "placeholder": "Pesquisar manutenções…",
+    "description": "Encontre manutenções pelo título, equipamento, categoria, nome ou email do trabalhador. A pesquisa também filtra o calendário.",
+    "results": "Tarefas de manutenção",
+    "keyboardHint": "Use as setas para navegar e Enter para abrir",
+    "close": "para fechar"
+  },
   "Toolbar": {
     "previous": "Período anterior",
     "next": "Período seguinte",
@@ -193,12 +215,24 @@
     "month": "Mês",
     "year": "Ano",
     "viewSelector": "Vista do calendário",
+    "navigation": "Navegação do calendário",
+    "zoom": "Zoom da linha temporal",
     "zoomIn": "Aumentar zoom",
     "zoomOut": "Diminuir zoom"
   },
   "Form": {
     "schedule": "Agendar Manutenção",
-    "scheduleDescription": "Indique o equipamento, as datas, os trabalhadores e os materiais da tarefa de manutenção.",
+    "scheduleDescription": "Defina as datas e a equipa. Os detalhes de execução são opcionais.",
+    "sectionNavigation": "Secções do formulário de manutenção",
+    "tabs": {
+      "details": "Detalhes",
+      "execution": "Execução",
+      "notifications": "Notificações"
+    },
+    "worksheet": "Folha de obra",
+    "savedWorksheet": "Dados guardados da tarefa",
+    "previewWorkSheetNewTab": "Pré-visualizar folha de obra (abre num novo separador)",
+    "saveChanges": "Guardar alterações",
     "additionalDetails": "Detalhes adicionais",
     "edit": "Editar: {title}",
     "status": "Estado",
@@ -342,6 +376,7 @@
     "save": "Guardar",
     "saving": "A guardar...",
     "cancel": "Cancelar",
+    "previewWorkSheet": "Pré-visualizar folha de obra",
     "downloadWorkSheet": "Descarregar Folha de Obra",
     "delete": "Apagar Entrada",
     "statusTypes": {
@@ -384,12 +419,23 @@
     "statusGroup": "Opções de estado"
   },
   "Common": {
+    "close": "Fechar",
     "save": "Guardar Alterações",
     "cancel": "Cancelar",
     "add": "Adicionar",
     "remove": "Remover",
     "edit": "Editar",
     "settings": "Definições"
+  },
+  "Reordering": {
+    "handle": "Reordenar {name}",
+    "sortableItem": "item reordenável",
+    "instructions": "Para reordenar, prima Espaço ou Enter para selecionar um item. Use as setas para cima e para baixo para o mover. Prima novamente Espaço ou Enter para o largar, ou Escape para cancelar.",
+    "pickedUp": "{name} selecionado para reordenar.",
+    "moved": "{name} movido para a posição {position} de {count}.",
+    "dropped": "{name} colocado na posição {position} de {count}.",
+    "outside": "{name} está fora da lista. Largue para cancelar.",
+    "cancelled": "Reordenação de {name} cancelada."
   },
   "Workers": {
     "title": "Trabalhadores",
@@ -418,6 +464,7 @@
     "columnReorder": "Reordenar",
     "columnActions": "Ações",
     "dragToReorder": "Arraste para reordenar",
+    "temporaryOrder": "A ordem aplica-se apenas a esta vista e é reposta quando os trabalhadores são recarregados.",
     "openActions": "Ações de {name}",
     "fieldName": "Nome",
     "fieldEmail": "Email",
@@ -432,6 +479,9 @@
   },
   "PDF": {
     "title": "Folha de Obra",
+    "previewDescription": "Pré-visualização em direto da folha de obra desta tarefa.",
+    "backToSchedule": "Voltar ao calendário",
+    "downloadReport": "Transferir PDF",
     "subject": "Relatório de Manutenção",
     "tagline": "Sistemas de Manutenção",
     "headerTitle": "FOLHA DE OBRA / RELATÓRIO DE MANUTENÇÃO",
@@ -569,6 +619,8 @@
     "invitationsTitle": "Convites pendentes",
     "noInvitations": "Não existem convites pendentes.",
     "managementError": "Não foi possível concluir a alteração do membro ou convite.",
+    "confirmActionTitle": "Confirmar alteração da organização",
+    "confirmAction": "Confirmar",
     "roleFor": "Função de {name}",
     "confirmRoleChange": "Alterar a função de {name} nesta organização?",
     "confirmRemove": "Remover {name} desta organização?",
@@ -642,6 +694,7 @@
     "description": "Locais e as secções que contêm. Os equipamentos são atribuídos a uma secção.",
     "sections": "Secções",
     "noSections": "Ainda sem secções.",
+    "sectionCount": "{count, plural, one {# secção} other {# secções}}",
     "equipmentCount": "{count} equipamentos",
     "current": "Atual",
     "newSection": "Nome da nova secção",
@@ -664,10 +717,15 @@
     "title": "Inventário",
     "description": "Gira o stock, fornecedores, consumo e materiais planeados para manutenção.",
     "search": "Pesquisar materiais…",
+    "viewOptions": "Vista do inventário",
     "stockTitle": "Catálogo de stock",
     "plannedMaterialsTitle": "Materiais planeados",
     "lowStockTitle": "Lembretes de compra",
     "noLowStock": "Nenhum artigo está no ponto de reposição ou abaixo dele.",
+    "loadingStock": "A carregar stock",
+    "stockLoadFailure": "Não foi possível carregar o stock e os fornecedores.",
+    "stockLoadFailureTitle": "Inventário indisponível",
+    "retry": "Tentar novamente",
     "addInventoryItem": "Adicionar artigo ao stock",
     "name": "Nome do artigo",
     "referenceInput": "Referência",
@@ -714,6 +772,7 @@
   "MetricsPage": {
     "title": "Métricas",
     "description": "Atividade de manutenção do local atual.",
+    "allActivity": "As contagens incluem todas as tarefas registadas neste local.",
     "summary": "Resumo geral",
     "total": "Total de tarefas",
     "completion": "Taxa de conclusão",

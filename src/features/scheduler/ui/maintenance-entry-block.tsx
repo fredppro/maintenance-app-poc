@@ -2,18 +2,19 @@
 
 import { MaintenanceEntry } from "../types";
 import { cn } from "@/lib/utils";
-import { GripVertical, Pencil, Wrench } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { GripVertical } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { EditEntryDialog } from "./edit-entry-dialog";
-import { TaskType } from "../../../../prisma/generated/prisma/enums";
+import { getTaskStatusPresentation } from "./task-status-presentation";
 
 interface MaintenanceEntryBlockProps {
   entry: MaintenanceEntry;
   style?: React.CSSProperties;
   onDragStart: () => void;
   isDragging?: boolean;
-  autoOpen?: boolean;
-  onAutoOpenClose?: () => void;
 }
 
 export function MaintenanceEntryBlock({
@@ -21,25 +22,20 @@ export function MaintenanceEntryBlock({
   style,
   onDragStart,
   isDragging,
-  autoOpen = false,
-  onAutoOpenClose,
 }: MaintenanceEntryBlockProps) {
+  const t = useTranslations("Grid");
+  const tForm = useTranslations("Form");
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const assignedWorkers = entry.assignments?.map((a) => a.worker) || [];
-
-  const getTypeStyles = () => {
-    switch (entry.type) {
-      case TaskType.PREVENTIVE:
-        return "bg-info/10 border-info/20 text-info";
-      case TaskType.PREDICTIVE:
-        return "bg-warning/10 border-warning/20 text-warning";
-      case TaskType.CORRECTIVE:
-        return "bg-destructive/10 border-destructive/20 text-destructive";
-      default:
-        return "bg-primary/10 border-primary/20 text-primary-text";
-    }
+  const statusLabels: Record<string, string> = {
+    scheduled: tForm("statusTypes.scheduled"),
+    "in-progress": tForm("statusTypes.in-progress"),
+    completed: tForm("statusTypes.completed"),
+    cancelled: tForm("statusTypes.cancelled"),
   };
+  const statusLabel = statusLabels[entry.status] ?? t("unknownStatus");
+  const status = getTaskStatusPresentation(entry.status);
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = "move";
@@ -61,62 +57,60 @@ export function MaintenanceEntryBlock({
 
   return (
     <>
-      <button
+      <Button
         type="button"
-        aria-label={entry.title}
+        variant="outline"
+        data-maintenance-status={entry.status}
+        aria-label={t("openTask", {
+          title: entry.title,
+          status: statusLabel,
+        })}
         draggable
         onDragStart={handleDragStart}
         onClick={handleClick}
         style={style}
         className={cn(
-          "rounded-md border px-2 py-1 text-left cursor-grab active:cursor-grabbing pointer-coarse:cursor-pointer group select-none",
-          "flex items-center gap-1 overflow-hidden transition-[background-color,border-color,ring,opacity,transform] duration-150 ease-motion-out",
-          "hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:ring-offset-background",
-          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          getTypeStyles(),
-          isDragging && "opacity-50 scale-95",
+          "group h-auto min-w-0 justify-start gap-1.5 overflow-hidden rounded-md border px-2 py-1 text-left whitespace-nowrap shadow-none select-none",
+          "cursor-grab active:cursor-grabbing pointer-coarse:cursor-pointer",
+          status.surface,
+          isDragging && "opacity-50",
         )}
       >
         <GripVertical
           aria-hidden="true"
-          className="w-3 h-3 flex-shrink-0 opacity-50 pointer-coarse:hidden"
+          className="size-3 shrink-0 opacity-60 pointer-coarse:hidden"
         />
-        <Pencil
+        <span
           aria-hidden="true"
-          className="hidden size-3 shrink-0 opacity-70 pointer-coarse:block"
+          title={statusLabel}
+          className={cn("size-2 shrink-0 rounded-full", status.marker)}
         />
-        <Wrench className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
         <span className="text-xs font-medium truncate flex-1">
           {entry.title}
         </span>
 
-        {/* Initials stack */}
-        <div className="flex -space-x-2 overflow-hidden">
+        <span className="flex -space-x-1.5 overflow-hidden" aria-hidden="true">
           {assignedWorkers.slice(0, 2).map((worker) => (
-            <div
+            <Avatar
               key={worker.id}
-              className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-background bg-primary text-[8px] font-bold text-primary-foreground"
+              className="size-5 border-2 border-background"
               title={worker.name}
             >
-              {getInitials(worker.name)}
-            </div>
+              <AvatarFallback className="text-[8px] font-medium">{getInitials(worker.name)}</AvatarFallback>
+            </Avatar>
           ))}
           {assignedWorkers.length > 2 && (
-            <div className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-background bg-muted text-[8px] font-bold text-muted-foreground">
-              +{assignedWorkers.length - 2}
-            </div>
+            <Avatar className="size-5 border-2 border-background">
+              <AvatarFallback className="text-[8px] font-medium">+{assignedWorkers.length - 2}</AvatarFallback>
+            </Avatar>
           )}
-        </div>
-
-      </button>
+        </span>
+      </Button>
 
       <EditEntryDialog
         entry={entry}
-        open={detailsOpen || autoOpen}
-        onOpenChange={(open) => {
-          setDetailsOpen(open);
-          if (!open && autoOpen) onAutoOpenClose?.();
-        }}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
       />
     </>
   );

@@ -1,19 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { MaintenanceStatusBadge } from "./maintenance-status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -39,6 +35,8 @@ import {
 import { inferWorkLogStartTimes } from "../utils/worker-hours";
 import {
   EntrySheet,
+  EntryTabPanel,
+  type EntryFormTab,
   FieldError,
   FormSection,
   ChecklistEditor,
@@ -106,6 +104,7 @@ export function AddEntryDialog({
 
   const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(formSchema),
+    shouldFocusError: false,
     defaultValues: {
       title: "",
       description: "",
@@ -135,7 +134,7 @@ export function AddEntryDialog({
   const watchType = useWatch({ control: form.control, name: "type" });
   const watchWorkerIds = useWatch({ control: form.control, name: "workerIds" });
   const watchDailyHours = useWatch({ control: form.control, name: "dailyHours" });
-  const [additionalDetailsOpen, setAdditionalDetailsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<EntryFormTab>("details");
   const [checklistPreviewState, setChecklistPreviewState] = useState<{
     key: string;
     items: ChecklistFormValue[];
@@ -185,7 +184,7 @@ export function AddEntryDialog({
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setChecklistPreviewState({ key: "", items: [] });
-      setAdditionalDetailsOpen(false);
+      setActiveTab("details");
       form.clearErrors();
     }
     onOpenChange(nextOpen);
@@ -203,7 +202,7 @@ export function AddEntryDialog({
         !row.id && Boolean(row.workerId) && !row.startTime && !inferredStarts[index],
     );
     if (unresolvedStartIndex !== -1) {
-      setAdditionalDetailsOpen(true);
+      setActiveTab("execution");
       form.setError(`dailyHours.${unresolvedStartIndex}.startTime`, {
         type: "validate",
         message: t("dailyHours.startTimeRequired"),
@@ -236,11 +235,7 @@ export function AddEntryDialog({
     }
   };
 
-  const handleSubmit = form.handleSubmit(onSubmit, (errors) => {
-    if (errors.dailyHours || errors.materials) {
-      setAdditionalDetailsOpen(true);
-    }
-  });
+  const handleSubmit = form.handleSubmit(onSubmit);
 
   const workerOptions = workers.map((w) => ({
     label: `${w.name} (${w.email})`,
@@ -255,12 +250,17 @@ export function AddEntryDialog({
       onSubmit={handleSubmit}
       title={t("schedule")}
       description={t("scheduleDescription")}
+      meta={<MaintenanceStatusBadge status="scheduled" />}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      tabs={["details", "execution"]}
+      validationAttempt={form.formState.submitCount}
       footer={
         <>
           <Button
             type="button"
             variant="ghost"
-            className="w-full sm:w-auto"
+            className="ml-auto"
             onClick={() => handleOpenChange(false)}
           >
             {tCommon("cancel")}
@@ -268,7 +268,6 @@ export function AddEntryDialog({
           <Button
             type="submit"
             form="add-entry-form"
-            className="w-full sm:w-auto"
             disabled={form.formState.isSubmitting || hasConflict}
             aria-busy={form.formState.isSubmitting}
           >
@@ -279,133 +278,126 @@ export function AddEntryDialog({
       }
       onChange={() => form.clearErrors("root.server")}
     >
-      <FieldGroup>
-        {form.formState.errors.root?.server?.message && (
-          <Alert variant="destructive" role="alert">
-            <AlertDescription>
-              {form.formState.errors.root.server.message}
-            </AlertDescription>
-          </Alert>
-        )}
-        <FormSection title={t("sectionDetails")} showSeparator>
-          <Field data-invalid={!!form.formState.errors.title || undefined}>
-            <FieldLabel htmlFor="task-title">{t("title")}</FieldLabel>
-            <Input
-              id="task-title"
-              autoFocus
-              aria-required="true"
-              aria-invalid={!!form.formState.errors.title || undefined}
-              aria-describedby={
-                form.formState.errors.title ? "task-title-error" : undefined
-              }
-              {...form.register("title")}
-              placeholder={t("titlePlaceholder")}
-            />
-            <FieldError
-              id="task-title-error"
-              message={form.formState.errors.title?.message}
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="task-description">
-              {t("description")}
-            </FieldLabel>
-            <Textarea
-              id="task-description"
-              {...form.register("description")}
-              placeholder={t("descriptionPlaceholder")}
-              rows={3}
-            />
-          </Field>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field
-              data-invalid={
-                !!form.formState.errors.equipmentId || hasConflict || undefined
-              }
-            >
-              <FieldLabel htmlFor="task-equipment">{t("equipment")}</FieldLabel>
-              <Select
-                value={watchEquipmentId}
-                onValueChange={(v) => {
-                  form.setValue("equipmentId", v, { shouldValidate: true })
-                  form.setValue("maintenancePointId", null, {
-                    shouldDirty: true,
-                  });
-                }}
-              >
-                <SelectTrigger
-                  id="task-equipment"
-                  className="w-full"
-                  aria-required="true"
-                  aria-invalid={
-                    !!form.formState.errors.equipmentId || hasConflict || undefined
-                  }
-                  aria-describedby={
-                    form.formState.errors.equipmentId
-                      ? "task-equipment-error"
-                      : undefined
-                  }
-                >
-                  <SelectValue placeholder={t("selectEquipment")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {equipment.map((equip) => (
-                    <SelectItem key={equip.id} value={equip.id}>
-                      {equip.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {form.formState.errors.root?.server?.message && (
+        <Alert variant="destructive" role="alert">
+          <AlertDescription>
+            {form.formState.errors.root.server.message}
+          </AlertDescription>
+        </Alert>
+      )}
+      <EntryTabPanel value="details" activeTab={activeTab}>
+        <FieldGroup>
+          <FormSection
+            id="new-task-details"
+            title={t("sectionDetails")}
+            showSeparator
+          >
+            <Field data-invalid={!!form.formState.errors.title || undefined}>
+              <FieldLabel htmlFor="task-title">{t("title")}</FieldLabel>
+              <Input
+                id="task-title"
+                autoFocus
+                aria-required="true"
+                aria-invalid={!!form.formState.errors.title || undefined}
+                aria-describedby={
+                  form.formState.errors.title ? "task-title-error" : undefined
+                }
+                {...form.register("title")}
+                placeholder={t("titlePlaceholder")}
+              />
               <FieldError
-                id="task-equipment-error"
-                message={form.formState.errors.equipmentId?.message}
+                id="task-title-error"
+                message={form.formState.errors.title?.message}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="task-description">
+                {t("description")}
+              </FieldLabel>
+              <Textarea
+                id="task-description"
+                {...form.register("description")}
+                placeholder={t("descriptionPlaceholder")}
+                rows={3}
               />
             </Field>
 
-            <Field>
-              <FieldLabel htmlFor="task-type">{t("taskType")}</FieldLabel>
-              <Select
-                value={watchType}
-                onValueChange={(v) => form.setValue("type", v as TaskType)}
+            <FieldGroup className="grid grid-cols-1 gap-form sm:grid-cols-2">
+              <Field
+                data-invalid={
+                  !!form.formState.errors.equipmentId || hasConflict || undefined
+                }
               >
-                <SelectTrigger
-                  id="task-type"
-                  className="w-full"
-                  aria-required="true"
+                <FieldLabel htmlFor="task-equipment">{t("equipment")}</FieldLabel>
+                <Select
+                  value={watchEquipmentId}
+                  onValueChange={(v) => {
+                    form.setValue("equipmentId", v, { shouldValidate: true })
+                    form.setValue("maintenancePointId", null, {
+                      shouldDirty: true,
+                    });
+                  }}
                 >
-                  <SelectValue placeholder={t("selectType")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={TaskType.PREVENTIVE}>
-                    {t("preventive")}
-                  </SelectItem>
-                  <SelectItem value={TaskType.PREDICTIVE}>
-                    {t("predictive")}
-                  </SelectItem>
-                  <SelectItem value={TaskType.CORRECTIVE}>
-                    {t("corrective")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
-        </FormSection>
+                  <SelectTrigger
+                    id="task-equipment"
+                    className="w-full"
+                    aria-required="true"
+                    aria-invalid={
+                      !!form.formState.errors.equipmentId || hasConflict || undefined
+                    }
+                    aria-describedby={
+                      form.formState.errors.equipmentId
+                        ? "task-equipment-error"
+                        : undefined
+                    }
+                  >
+                    <SelectValue placeholder={t("selectEquipment")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {equipment.map((equip) => (
+                        <SelectItem key={equip.id} value={equip.id}>
+                          {equip.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <FieldError
+                  id="task-equipment-error"
+                  message={form.formState.errors.equipmentId?.message}
+                />
+              </Field>
 
-        <FormSection title={t("sectionSchedule")} showSeparator>
-          <ScheduleFields
-            form={form}
-            locale={locale}
-            timeZone={timeZone}
-            hasConflict={hasConflict}
-            endError={form.formState.errors.endTime?.message}
-          />
-        </FormSection>
-
-        <ChecklistEditor
-          value={checklistPreview}
-          readOnly
-          maintenancePointField={
+              <Field>
+                <FieldLabel htmlFor="task-type">{t("taskType")}</FieldLabel>
+                <Select
+                  value={watchType}
+                  onValueChange={(v) => form.setValue("type", v as TaskType)}
+                >
+                  <SelectTrigger
+                    id="task-type"
+                    className="w-full"
+                    aria-required="true"
+                  >
+                    <SelectValue placeholder={t("selectType")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value={TaskType.PREVENTIVE}>
+                        {t("preventive")}
+                      </SelectItem>
+                      <SelectItem value={TaskType.PREDICTIVE}>
+                        {t("predictive")}
+                      </SelectItem>
+                      <SelectItem value={TaskType.CORRECTIVE}>
+                        {t("corrective")}
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </FieldGroup>
             <MaintenancePointField
               key={`${watchEquipmentId}-${open}`}
               equipmentId={watchEquipmentId}
@@ -422,83 +414,90 @@ export function AddEntryDialog({
                 });
               }}
             />
-          }
-        />
+          </FormSection>
 
-        <FormSection title={t("sectionTeam")} showSeparator>
-          <Field data-invalid={!!form.formState.errors.workerIds || undefined}>
-            <FieldLabel htmlFor="task-workers">{t("assignedWorkers")}</FieldLabel>
-            <MultiSelect
-              id="task-workers"
-              aria-label={t("assignedWorkers")}
-              aria-required
-              aria-invalid={!!form.formState.errors.workerIds || undefined}
-              aria-describedby={
-                form.formState.errors.workerIds ? "task-workers-error" : undefined
-              }
-              options={workerOptions}
-              selected={watchWorkerIds}
-              onChange={(v) =>
-                form.setValue("workerIds", v, { shouldValidate: true })
-              }
-              placeholder={t("selectWorkers")}
-              searchPlaceholder={t("searchWorkers")}
-              emptyText={
-                workerOptions.length === 0
-                  ? t("noWorkersAvailable")
-                  : t("noWorkerFound")
-              }
-              action={{
-                label: t("addWorker"),
-                onClick: () => {
-                  handleOpenChange(false);
-                  router.push("/workers");
-                },
-              }}
-            />
-            <FieldError
-              id="task-workers-error"
-              message={form.formState.errors.workerIds?.message}
-            />
-          </Field>
-        </FormSection>
-
-        <Accordion
-          type="single"
-          collapsible
-          value={additionalDetailsOpen ? "optional-details" : ""}
-          onValueChange={(value) =>
-            setAdditionalDetailsOpen(value === "optional-details")
-          }
-          className="rounded-md border px-3"
-        >
-          <AccordionItem
-            value="optional-details"
-            className="border-b-0"
+          <FormSection
+            id="new-task-schedule"
+            title={t("sectionSchedule")}
+            showSeparator
           >
-            <AccordionTrigger className="py-3 hover:no-underline">
-              {t("additionalDetails")}
-            </AccordionTrigger>
-            <AccordionContent className="flex flex-col gap-6">
-              <DailyHoursEditor
-                value={watchDailyHours ?? []}
-                workers={workers}
-                assignedWorkerIds={watchWorkerIds}
-                startTime={watchStartTime}
-                locale={locale}
-                timeZone={timeZone}
-                showValidationErrors={form.formState.submitCount > 0}
-                onChange={(dailyHours) =>
-                  form.setValue("dailyHours", dailyHours, {
-                    shouldValidate: true,
-                  })
+            <ScheduleFields
+              form={form}
+              locale={locale}
+              timeZone={timeZone}
+              hasConflict={hasConflict}
+              endError={form.formState.errors.endTime?.message}
+            />
+          </FormSection>
+
+          <FormSection
+            id="new-task-team"
+            title={t("sectionTeam")}
+            showSeparator
+          >
+            <Field data-invalid={!!form.formState.errors.workerIds || undefined}>
+              <FieldLabel htmlFor="task-workers">{t("assignedWorkers")}</FieldLabel>
+              <MultiSelect
+                id="task-workers"
+                aria-label={t("assignedWorkers")}
+                aria-required
+                aria-invalid={!!form.formState.errors.workerIds || undefined}
+                aria-describedby={
+                  form.formState.errors.workerIds ? "task-workers-error" : undefined
                 }
+                options={workerOptions}
+                selected={watchWorkerIds}
+                onChange={(v) =>
+                  form.setValue("workerIds", v, { shouldValidate: true })
+                }
+                placeholder={t("selectWorkers")}
+                searchPlaceholder={t("searchWorkers")}
+                emptyText={
+                  workerOptions.length === 0
+                    ? t("noWorkersAvailable")
+                    : t("noWorkerFound")
+                }
+                action={{
+                  label: t("addWorker"),
+                  onClick: () => {
+                    handleOpenChange(false);
+                    router.push("/workers");
+                  },
+                }}
               />
-              <MaterialsEditor form={form} locale={locale} />
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </FieldGroup>
+              <FieldError
+                id="task-workers-error"
+                message={form.formState.errors.workerIds?.message}
+              />
+            </Field>
+          </FormSection>
+
+        </FieldGroup>
+      </EntryTabPanel>
+      <EntryTabPanel value="execution" activeTab={activeTab}>
+        <FieldGroup>
+          <ChecklistEditor
+            sectionId="new-task-checklist"
+            value={checklistPreview}
+            readOnly
+          />
+          <DailyHoursEditor
+            value={watchDailyHours ?? []}
+            workers={workers}
+            assignedWorkerIds={watchWorkerIds}
+            startTime={watchStartTime}
+            locale={locale}
+            timeZone={timeZone}
+            showValidationErrors={form.formState.submitCount > 0}
+            onChange={(dailyHours) =>
+              form.setValue("dailyHours", dailyHours, {
+                shouldValidate: true,
+              })
+            }
+          />
+          <MaterialsEditor form={form} locale={locale} />
+        </FieldGroup>
+      </EntryTabPanel>
     </EntrySheet>
   );
 }

@@ -51,6 +51,13 @@ type ScrollSnapshot = {
 };
 
 const FOCUS_REFRESH_MIN_INTERVAL_MS = 15_000;
+const STATUS_BADGE_VARIANTS = {
+  PENDING: "info",
+  SENDING: "warning",
+  SENT: "success",
+  FAILED: "danger",
+  CANCELLED: "neutral",
+} as const;
 
 function mergeHistoryItems(
   existing: TaskReminder[],
@@ -489,15 +496,7 @@ function NotificationHistoryContent({
               ) : null}
             </ItemContent>
             <ItemActions className="self-start">
-              <Badge
-                variant={
-                  reminder.status === "FAILED"
-                    ? "destructive"
-                    : reminder.status === "SENT"
-                      ? "secondary"
-                      : "outline"
-                }
-              >
+              <Badge variant={STATUS_BADGE_VARIANTS[reminder.status]}>
                 {statusLabel}
               </Badge>
             </ItemActions>
@@ -551,9 +550,9 @@ function NotificationHistoryContent({
           </AlertDescription>
         </Alert>
       ) : items.length === 0 ? (
-        <Empty className="flex-none gap-1 rounded-md border-0 p-4">
+        <Empty size="sm">
           <EmptyHeader>
-            <EmptyTitle className="text-sm">
+            <EmptyTitle>
               {t("notifications.historyEmpty")}
             </EmptyTitle>
           </EmptyHeader>

@@ -21,6 +21,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { MultiSelect } from "@/components/ui/multi-select";
@@ -29,6 +37,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -37,6 +46,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { notifyTaskUpdated } from "@/features/scheduler/events";
 import { NotificationHistory } from "./notification-history";
+import { MaintenanceStatusBadge } from "./maintenance-status-badge";
+import { getTaskStatusPresentation } from "./task-status-presentation";
 import { getValidLocale } from "src/i18n/locale";
 import {
   deleteTask,
@@ -51,12 +62,13 @@ import {
 } from "../utils/schedule";
 import { inferWorkLogStartTimes } from "../utils/worker-hours";
 import { useSchedulerStore } from "../store/scheduler-provider";
-import { useRouter } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import { formatTimeInTimeZone } from "@/lib/time-zone";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { areIntervalsOverlapping } from "date-fns";
-import { Download, Mail, Trash2 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { ChevronDown, Download, Eye, Mail, Trash2 } from "lucide-react";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -67,6 +79,8 @@ import {
   ChecklistEditor,
   type ChecklistFormValue,
   EntrySheet,
+  EntryTabPanel,
+  type EntryFormTab,
   FieldError,
   FieldInfoTooltip,
   FormSection,
@@ -76,17 +90,6 @@ import {
   materialSchema,
   ScheduleFields,
 } from "./entry-form-parts";
-
-const statusToggleClasses: Record<(typeof TASK_STATUSES)[number], string> = {
-  scheduled:
-    "px-1 text-xs text-chart-1 hover:bg-chart-1/10 data-[state=on]:bg-chart-1/15 data-[state=on]:text-chart-1",
-  "in-progress":
-    "px-1 text-xs text-chart-3 hover:bg-chart-3/10 data-[state=on]:bg-chart-3/15 data-[state=on]:text-chart-3",
-  completed:
-    "px-1 text-xs text-chart-5 hover:bg-chart-5/10 data-[state=on]:bg-chart-5/15 data-[state=on]:text-chart-5",
-  cancelled:
-    "px-1 text-xs text-foreground hover:bg-foreground/10 data-[state=on]:bg-foreground data-[state=on]:text-background",
-};
 
 const editFormSchema = z
   .object({
@@ -215,6 +218,8 @@ export function EditEntryDialog({
 
   const locale = getValidLocale(useLocale());
   const t = useTranslations("Form");
+  const format = useFormatter();
+  const [activeTab, setActiveTab] = useState<EntryFormTab>("details");
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -325,6 +330,7 @@ export function EditEntryDialog({
 
   const form = useForm<EditFormInput, unknown, EditFormValues>({
     resolver: zodResolver(editFormSchema),
+    shouldFocusError: false,
     defaultValues: getEditFormDefaults(entry, timeZone),
   });
   const initializedEntryId = useRef<string | null>(null);
@@ -458,35 +464,6 @@ export function EditEntryDialog({
     initializedEntryId.current = entry.id;
   }, [open, entry, form, timeZone]);
 
-  const getStatusBadge = () => {
-    switch (entry.status) {
-      case "scheduled":
-        return (
-          <Badge variant="secondary" className="text-xs">
-            {t("statusTypes.scheduled")}
-          </Badge>
-        );
-      case "in-progress":
-        return (
-          <Badge className="bg-chart-3/20 text-chart-3 border-chart-3/40 text-xs">
-            {t("statusTypes.in-progress")}
-          </Badge>
-        );
-      case "completed":
-        return (
-          <Badge className="bg-chart-1/20 text-chart-1 border-chart-1/40 text-xs">
-            {t("statusTypes.completed")}
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="text-xs">
-            {entry.status}
-          </Badge>
-        );
-    }
-  };
-
   const handleDelete = async () => {
     const previousEntries = entries;
     const previousSelectedEntry = selectedEntry;
@@ -497,7 +474,7 @@ export function EditEntryDialog({
     try {
       await deleteTask(entry.id);
       setConfirmDeleteOpen(false);
-      onOpenChange(false);
+      handleOpenChange(false);
       toast.success(t("errors.deleteSuccess"));
     } catch {
       setEntries(previousEntries);
@@ -520,6 +497,7 @@ export function EditEntryDialog({
         !row.id && Boolean(row.workerId) && !row.startTime && !inferredStarts[index],
     );
     if (unresolvedStartIndex !== -1) {
+      setActiveTab("execution");
       form.setError(`dailyHours.${unresolvedStartIndex}.startTime`, {
         type: "validate",
         message: t("dailyHours.startTimeRequired"),
@@ -592,7 +570,7 @@ export function EditEntryDialog({
       replaceEntry(entry.id, updatedTask);
       notifyTaskUpdated(entry.id);
       toast.success(t("errors.updateSuccess"));
-      onOpenChange(false);
+      handleOpenChange(false);
     } catch (error) {
       console.error("Failed to update maintenance task:", error);
       setEntries(previousEntries);
@@ -614,316 +592,258 @@ export function EditEntryDialog({
   const equipSubtitle = [equip?.name, equip?.category]
     .filter(Boolean)
     .join(" - ");
+  const sectionPrefix = `maintenance-${entry.id}`;
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) setActiveTab("details");
+    onOpenChange(nextOpen);
+  };
 
   return (
     <>
       <EntrySheet
         open={open}
-        onOpenChange={onOpenChange}
+        onOpenChange={handleOpenChange}
         formId="maintenance-form"
         onSubmit={form.handleSubmit(onSave)}
         onChange={() => form.clearErrors("root.server")}
-        title={t("edit", { title: entry.title })}
-        meta={getStatusBadge()}
-        description={equipSubtitle}
+        title={entry.title}
+        meta={<><MaintenanceStatusBadge status={watchStatus} /><Badge variant="outline">{t(watchType.toLowerCase())}</Badge></>}
+        description={[equipSubtitle, format.dateTime(watchStartTime, {
+          dateStyle: "medium",
+          timeStyle: "short",
+          timeZone,
+        })].filter(Boolean).join(" · ")}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        tabs={["details", "execution", "notifications"]}
+        validationAttempt={form.formState.submitCount}
+        headerActions={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="sm" aria-busy={isDownloading}>
+                {isDownloading && <Spinner data-icon="inline-start" />}
+                {t("worksheet")}
+                <ChevronDown data-icon="inline-end" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>{t("savedWorksheet")}</DropdownMenuLabel>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/reports/preview/${encodeURIComponent(entry.id)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={t("previewWorkSheetNewTab")}
+                  >
+                    <Eye />
+                    {t("previewWorkSheet")}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={isDownloading}
+                  onSelect={() => void handleDownloadPDF()}
+                >
+                  <Download />
+                  {t("downloadWorkSheet")}
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
         footer={
           <>
-            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-              <Button
-                type="button"
-                variant="destructive-outline"
-                className="flex-1 sm:flex-none"
-                onClick={() => setConfirmDeleteOpen(true)}
-              >
-                <Trash2 data-icon="inline-start" />
-                {t("delete")}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="flex-1 sm:flex-none"
-                onClick={handleDownloadPDF}
-                disabled={isDownloading}
-                aria-busy={isDownloading}
-              >
-                {isDownloading ? (
-                  <Spinner data-icon="inline-start" />
-                ) : (
-                  <Download data-icon="inline-start" />
-                )}
-                {t("downloadWorkSheet")}
-              </Button>
-            </div>
-            <div className="flex w-full gap-2 sm:w-auto">
+            <Button
+              type="button"
+              variant="destructive-outline"
+              size="sm"
+              onClick={() => setConfirmDeleteOpen(true)}
+            >
+              <Trash2 data-icon="inline-start" />
+              {t("delete")}
+            </Button>
+            <div className="ml-auto flex gap-2">
               <Button
                 type="button"
                 variant="outline"
-                className="flex-1 sm:flex-none"
-                onClick={() => onOpenChange(false)}
+                size="sm"
+                onClick={() => handleOpenChange(false)}
               >
                 {t("cancel")}
               </Button>
               <Button
                 type="submit"
                 form="maintenance-form"
-                className="flex-1 sm:flex-none"
+                size="sm"
                 disabled={form.formState.isSubmitting || hasConflict}
                 aria-busy={form.formState.isSubmitting}
               >
                 {form.formState.isSubmitting && (
                   <Spinner data-icon="inline-start" />
                 )}
-                {form.formState.isSubmitting ? t("saving") : t("save")}
+                {form.formState.isSubmitting ? t("saving") : t("saveChanges")}
               </Button>
             </div>
           </>
         }
       >
-        <FieldGroup>
-          {form.formState.errors.root?.server?.message && (
-            <Alert variant="destructive" role="alert">
-              <AlertDescription>
-                {form.formState.errors.root.server.message}
-              </AlertDescription>
-            </Alert>
-          )}
-          <FormSection title={t("status")} showSeparator>
-            <ToggleGroup
-              type="single"
-              variant="outline"
-              size="sm"
-              value={watchStatus}
-              aria-label={t("statusGroup")}
-              className="grid w-full grid-cols-4"
-              onValueChange={(status) => {
-                if (!status) return;
-                const previousStatus = form.getValues("status");
-                form.setValue("status", status, { shouldDirty: true });
-                if (
-                  status === "completed" &&
-                  previousStatus !== "completed" &&
-                  !form.getValues("completedAt")
-                ) {
-                  form.setValue("completedAt", new Date(), {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  });
-                }
-              }}
+        {form.formState.errors.root?.server?.message && (
+          <Alert variant="destructive" role="alert">
+            <AlertDescription>
+              {form.formState.errors.root.server.message}
+            </AlertDescription>
+          </Alert>
+        )}
+        <EntryTabPanel value="details" activeTab={activeTab}>
+          <FieldGroup>
+            <FormSection
+              id={`${sectionPrefix}-status`}
+              title={t("status")}
+              showSeparator
             >
-              {statusOptions.map((status) => (
-                <ToggleGroupItem
-                  key={status}
-                  value={status}
-                  aria-label={t(`statusTypes.${status}`)}
-                  className={statusToggleClasses[status]}
-                >
-                  {t(`statusTypes.${status}`)}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          </FormSection>
-
-          <FormSection title={t("sectionDetails")} showSeparator>
-            <Field data-invalid={!!form.formState.errors.title || undefined}>
-              <FieldLabel htmlFor="task-title">{t("title")}</FieldLabel>
-              <Input
-                id="task-title"
-                aria-required="true"
-                aria-invalid={!!form.formState.errors.title || undefined}
-                aria-describedby={
-                  form.formState.errors.title ? "task-title-error" : undefined
-                }
-                {...form.register("title")}
-                placeholder={t("titlePlaceholder")}
-              />
-              <FieldError
-                id="task-title-error"
-                message={form.formState.errors.title?.message}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="task-description">
-                {t("description")}
-              </FieldLabel>
-              <Textarea
-                id="task-description"
-                rows={3}
-                {...form.register("description")}
-                placeholder={t("descriptionPlaceholder")}
-              />
-            </Field>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field
-                data-invalid={
-                  !!form.formState.errors.equipmentId || undefined
-                }
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                size="sm"
+                value={watchStatus}
+                aria-label={t("statusGroup")}
+                className="grid w-full grid-cols-4"
+                onValueChange={(status) => {
+                  if (!status) return;
+                  const previousStatus = form.getValues("status");
+                  form.setValue("status", status, { shouldDirty: true });
+                  if (
+                    status === "completed" &&
+                    previousStatus !== "completed" &&
+                    !form.getValues("completedAt")
+                  ) {
+                    form.setValue("completedAt", new Date(), {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                  }
+                }}
               >
-                <FieldLabel htmlFor="task-equipment">
-                  {t("equipment")}
-                </FieldLabel>
-                <Select
-                  value={watchEquipmentId}
-                  onValueChange={handleEquipmentChange}
-                >
-                  <SelectTrigger
-                    id="task-equipment"
-                    className="w-full"
-                    aria-required="true"
-                    aria-invalid={
-                      !!form.formState.errors.equipmentId || undefined
-                    }
-                    aria-describedby={
-                      form.formState.errors.equipmentId
-                        ? "task-equipment-error"
-                        : undefined
-                    }
+                {statusOptions.map((status) => (
+                  <ToggleGroupItem
+                    key={status}
+                    value={status}
+                    aria-label={t(`statusTypes.${status}`)}
+                    className={cn("px-2 text-xs", getTaskStatusPresentation(status).toggle)}
                   >
-                    <SelectValue placeholder={t("selectEquipment")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {equipment.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    {t(`statusTypes.${status}`)}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </FormSection>
+
+            <FormSection
+              id={`${sectionPrefix}-details`}
+              title={t("sectionDetails")}
+              showSeparator
+            >
+              <Field data-invalid={!!form.formState.errors.title || undefined}>
+                <FieldLabel htmlFor="task-title">{t("title")}</FieldLabel>
+                <Input
+                  id="task-title"
+                  aria-required="true"
+                  aria-invalid={!!form.formState.errors.title || undefined}
+                  aria-describedby={
+                    form.formState.errors.title ? "task-title-error" : undefined
+                  }
+                  {...form.register("title")}
+                  placeholder={t("titlePlaceholder")}
+                />
                 <FieldError
-                  id="task-equipment-error"
-                  message={form.formState.errors.equipmentId?.message}
+                  id="task-title-error"
+                  message={form.formState.errors.title?.message}
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="task-type">{t("taskType")}</FieldLabel>
-                <Select
-                  value={watchType}
-                  onValueChange={(v) =>
-                    form.setValue("type", v as TaskType, { shouldDirty: true })
+                <FieldLabel htmlFor="task-description">
+                  {t("description")}
+                </FieldLabel>
+                <Textarea
+                  id="task-description"
+                  rows={3}
+                  {...form.register("description")}
+                  placeholder={t("descriptionPlaceholder")}
+                />
+              </Field>
+              <FieldGroup className="grid grid-cols-1 gap-form sm:grid-cols-2">
+                <Field
+                  data-invalid={
+                    !!form.formState.errors.equipmentId || undefined
                   }
                 >
-                  <SelectTrigger
-                    id="task-type"
-                    className="w-full"
-                    aria-required="true"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={TaskType.PREVENTIVE}>
-                      {t("preventive")}
-                    </SelectItem>
-                    <SelectItem value={TaskType.PREDICTIVE}>
-                      {t("predictive")}
-                    </SelectItem>
-                    <SelectItem value={TaskType.CORRECTIVE}>
-                      {t("corrective")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-            </div>
-          </FormSection>
-
-          <FormSection title={t("sectionSchedule")} showSeparator>
-            <ScheduleFields
-              form={form}
-              locale={locale}
-              timeZone={timeZone}
-              hasConflict={hasConflict}
-              endError={form.formState.errors.endTime?.message}
-              startError={form.formState.errors.startTime?.message}
-            />
-          </FormSection>
-
-          {(watchStatus === "completed" || watchCompletedAt) && (
-            <FormSection title={t("completion")} showSeparator>
-              <Field>
-                <div className="flex items-center gap-1">
-                  <FieldLabel htmlFor="task-completed-at">
-                    {t("completionDateTime")}
+                  <FieldLabel htmlFor="task-equipment">
+                    {t("equipment")}
                   </FieldLabel>
-                  <FieldInfoTooltip label={t("completionInfoLabel")}>
-                    <p>{t("completionDateTimeHint")}</p>
-                    <p>{t("timesUseOrganizationTimezone", { timeZone })}</p>
-                  </FieldInfoTooltip>
-                </div>
-                <Controller
-                  control={form.control}
-                  name="completedAt"
-                  render={({ field }) => (
-                    <DateTimePicker
-                      date={field.value ?? undefined}
-                      setDate={(date) => field.onChange(date ?? null)}
-                      locale={locale}
-                      timeZone={timeZone}
-                      id="task-completed-at"
-                      ariaLabel={t("completionDateTime")}
-                      placeholder={t("pickDate")}
-                    />
-                  )}
-                />
-              </Field>
-            </FormSection>
-          )}
-
-          <FormSection title={t("sectionTeam")} showSeparator>
-            <Field
-              data-invalid={!!form.formState.errors.workerIds || undefined}
-            >
-              <FieldLabel htmlFor="task-workers">
-                {t("assignedWorkers")}
-              </FieldLabel>
-              <MultiSelect
-                id="task-workers"
-                aria-label={t("assignedWorkers")}
-                aria-invalid={!!form.formState.errors.workerIds || undefined}
-                aria-describedby={
-                  form.formState.errors.workerIds ? "task-workers-error" : undefined
-                }
-                options={workerOptions}
-                selected={watchWorkerIds || []}
-                onChange={(v) =>
-                  form.setValue("workerIds", v, { shouldDirty: true })
-                }
-                placeholder={t("selectWorkers")}
-              searchPlaceholder={t("searchWorkers")}
-              emptyText={
-                workerOptions.length === 0
-                  ? t("noWorkersAvailable")
-                  : t("noWorkerFound")
-              }
-              action={{
-                label: t("addWorker"),
-                onClick: () => {
-                  onOpenChange(false);
-                  router.push("/workers");
-                },
-              }}
-              />
-              <FieldError
-                id="task-workers-error"
-                message={form.formState.errors.workerIds?.message}
-              />
-            </Field>
-          </FormSection>
-
-          <DailyHoursEditor
-            value={watchDailyHours ?? []}
-            workers={workers}
-            assignedWorkerIds={watchWorkerIds ?? []}
-            startTime={watchStartTime ?? initialStartTime}
-            locale={locale}
-            timeZone={timeZone}
-            showValidationErrors={form.formState.submitCount > 0}
-            onChange={(dailyHours) =>
-              form.setValue("dailyHours", dailyHours, { shouldValidate: true })
-            }
-          />
-
-          <ChecklistEditor
-            value={watchChecklistItems ?? []}
-            maintenancePointField={
+                  <Select
+                    value={watchEquipmentId}
+                    onValueChange={handleEquipmentChange}
+                  >
+                    <SelectTrigger
+                      id="task-equipment"
+                      className="w-full"
+                      aria-required="true"
+                      aria-invalid={
+                        !!form.formState.errors.equipmentId || undefined
+                      }
+                      aria-describedby={
+                        form.formState.errors.equipmentId
+                          ? "task-equipment-error"
+                          : undefined
+                      }
+                    >
+                      <SelectValue placeholder={t("selectEquipment")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {equipment.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FieldError
+                    id="task-equipment-error"
+                    message={form.formState.errors.equipmentId?.message}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="task-type">{t("taskType")}</FieldLabel>
+                  <Select
+                    value={watchType}
+                    onValueChange={(v) =>
+                      form.setValue("type", v as TaskType, { shouldDirty: true })
+                    }
+                  >
+                    <SelectTrigger
+                      id="task-type"
+                      className="w-full"
+                      aria-required="true"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value={TaskType.PREVENTIVE}>
+                          {t("preventive")}
+                        </SelectItem>
+                        <SelectItem value={TaskType.PREDICTIVE}>
+                          {t("predictive")}
+                        </SelectItem>
+                        <SelectItem value={TaskType.CORRECTIVE}>
+                          {t("corrective")}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </FieldGroup>
               <MaintenancePointField
                 key={`${watchEquipmentId}-${open}`}
                 equipmentId={watchEquipmentId}
@@ -931,87 +851,215 @@ export function EditEntryDialog({
                 value={watchMaintenancePointId}
                 onChange={handleMaintenancePointChange}
               />
-            }
-            onChange={handleChecklistChange}
-          />
+            </FormSection>
 
-          <FormSection title={t("notifications.title")} showSeparator>
-            <Card className="gap-0 overflow-hidden py-0">
-              <CardHeader className="gap-3 border-b bg-muted/30 px-4 py-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <CardTitle
-                      role="heading"
-                      aria-level={4}
-                      className="text-sm"
-                    >
-                      {t("notifications.automaticTitle")}
-                    </CardTitle>
-                    <CardDescription className="leading-relaxed">
-                      {t("notifications.automaticDescription")}
-                    </CardDescription>
+            <FormSection
+              id={`${sectionPrefix}-schedule`}
+              title={t("sectionSchedule")}
+              showSeparator
+            >
+              <ScheduleFields
+                form={form}
+                locale={locale}
+                timeZone={timeZone}
+                hasConflict={hasConflict}
+                endError={form.formState.errors.endTime?.message}
+                startError={form.formState.errors.startTime?.message}
+              />
+            </FormSection>
+
+            {(watchStatus === "completed" || watchCompletedAt) && (
+              <FormSection
+                id={`${sectionPrefix}-completion`}
+                title={t("completion")}
+                showSeparator
+              >
+                <Field>
+                  <div className="flex items-center gap-1">
+                    <FieldLabel htmlFor="task-completed-at">
+                      {t("completionDateTime")}
+                    </FieldLabel>
+                    <FieldInfoTooltip label={t("completionInfoLabel")}>
+                      <p>{t("completionDateTimeHint")}</p>
+                      <p>{t("timesUseOrganizationTimezone", { timeZone })}</p>
+                    </FieldInfoTooltip>
                   </div>
-                  <Badge variant="outline" className="w-fit shrink-0">
-                    {t("notifications.automaticBadge")}
-                  </Badge>
-                </div>
-              </CardHeader>
-
-              <CardContent className="flex flex-col gap-3 px-4 py-4">
-                <div
-                  data-notification-history-section
-                  tabIndex={-1}
-                  className="flex flex-col gap-3"
-                >
-                  <h5 className="text-sm font-medium">
-                    {t("notifications.historyTitle")}
-                  </h5>
-                  <NotificationHistory
-                    taskId={entry.id}
-                    open={open}
-                    timeZone={timeZone}
+                  <Controller
+                    control={form.control}
+                    name="completedAt"
+                    render={({ field }) => (
+                      <DateTimePicker
+                        date={field.value ?? undefined}
+                        setDate={(date) => field.onChange(date ?? null)}
+                        locale={locale}
+                        timeZone={timeZone}
+                        id="task-completed-at"
+                        ariaLabel={t("completionDateTime")}
+                        placeholder={t("pickDate")}
+                      />
+                    )}
                   />
-                </div>
-              </CardContent>
+                </Field>
+              </FormSection>
+            )}
 
-              {(entry.assignments?.length ?? 0) > 0 ? (
-                <>
-                  <Separator />
-                  <CardFooter className="flex-col items-stretch gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-col gap-1">
-                      <h5 className="text-sm font-medium">
-                        {t("notifications.manualTitle")}
-                      </h5>
-                      <p className="text-sm text-muted-foreground">
-                        {t("notifications.manualDescription")}
-                      </p>
+            <FormSection
+              id={`${sectionPrefix}-team`}
+              title={t("sectionTeam")}
+              showSeparator
+            >
+              <Field
+                data-invalid={!!form.formState.errors.workerIds || undefined}
+              >
+                <FieldLabel htmlFor="task-workers">
+                  {t("assignedWorkers")}
+                </FieldLabel>
+                <MultiSelect
+                  id="task-workers"
+                  aria-label={t("assignedWorkers")}
+                  aria-invalid={!!form.formState.errors.workerIds || undefined}
+                  aria-describedby={
+                    form.formState.errors.workerIds ? "task-workers-error" : undefined
+                  }
+                  options={workerOptions}
+                  selected={watchWorkerIds || []}
+                  onChange={(v) =>
+                    form.setValue("workerIds", v, { shouldDirty: true })
+                  }
+                  placeholder={t("selectWorkers")}
+                  searchPlaceholder={t("searchWorkers")}
+                  emptyText={
+                    workerOptions.length === 0
+                      ? t("noWorkersAvailable")
+                      : t("noWorkerFound")
+                  }
+                  action={{
+                    label: t("addWorker"),
+                    onClick: () => {
+                      handleOpenChange(false);
+                      router.push("/workers");
+                    },
+                  }}
+                />
+                <FieldError
+                  id="task-workers-error"
+                  message={form.formState.errors.workerIds?.message}
+                />
+              </Field>
+            </FormSection>
+
+          </FieldGroup>
+        </EntryTabPanel>
+        <EntryTabPanel value="execution" activeTab={activeTab}>
+          <FieldGroup>
+            <ChecklistEditor
+              sectionId={`${sectionPrefix}-checklist`}
+              value={watchChecklistItems ?? []}
+              onChange={handleChecklistChange}
+            />
+
+            <DailyHoursEditor
+              sectionId={`${sectionPrefix}-worklogs`}
+              value={watchDailyHours ?? []}
+              workers={workers}
+              assignedWorkerIds={watchWorkerIds ?? []}
+              startTime={watchStartTime ?? initialStartTime}
+              locale={locale}
+              timeZone={timeZone}
+              showValidationErrors={form.formState.submitCount > 0}
+              onChange={(dailyHours) =>
+                form.setValue("dailyHours", dailyHours, { shouldValidate: true })
+              }
+            />
+
+            <MaterialsEditor
+              sectionId={`${sectionPrefix}-materials`}
+              form={form}
+              locale={locale}
+            />
+          </FieldGroup>
+        </EntryTabPanel>
+        <EntryTabPanel value="notifications" activeTab={activeTab}>
+          <FieldGroup>
+            <FormSection
+              id={`${sectionPrefix}-notifications`}
+              title={t("notifications.title")}
+              showSeparator
+            >
+              <Card layout="sectioned">
+                <CardHeader>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <CardTitle
+                        role="heading"
+                        aria-level={4}
+                      >
+                        {t("notifications.automaticTitle")}
+                      </CardTitle>
+                      <CardDescription>
+                        {t("notifications.automaticDescription")}
+                      </CardDescription>
                     </div>
-                    <Button
-                      type="button"
-                      onClick={handlePreviewTaskEmail}
-                      disabled={isLoadingTaskEmailPreview}
-                      aria-busy={isLoadingTaskEmailPreview}
-                      className="w-full shrink-0 sm:w-auto"
-                    >
-                      {isLoadingTaskEmailPreview ? (
-                        <Spinner aria-hidden="true" data-icon="inline-start" />
-                      ) : (
-                        <Mail data-icon="inline-start" />
-                      )}
-                      {t(
-                        isLoadingTaskEmailPreview
-                          ? "notifications.loadingRecipients"
-                          : "notifications.send",
-                      )}
-                    </Button>
-                  </CardFooter>
-                </>
-              ) : null}
-            </Card>
-          </FormSection>
+                    <Badge variant="outline">
+                      {t("notifications.automaticBadge")}
+                    </Badge>
+                  </div>
+                </CardHeader>
 
-          <MaterialsEditor form={form} locale={locale} />
-        </FieldGroup>
+                <CardContent className="flex flex-col gap-3">
+                  <div
+                    data-notification-history-section
+                    tabIndex={-1}
+                    className="flex flex-col gap-3"
+                  >
+                    <h5 className="text-sm font-medium">
+                      {t("notifications.historyTitle")}
+                    </h5>
+                    <NotificationHistory
+                      taskId={entry.id}
+                      open={open}
+                      timeZone={timeZone}
+                    />
+                  </div>
+                </CardContent>
+
+                {(entry.assignments?.length ?? 0) > 0 ? (
+                  <>
+                    <Separator />
+                    <CardFooter className="flex-col items-stretch gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-col gap-1">
+                        <h5 className="text-sm font-medium">
+                          {t("notifications.manualTitle")}
+                        </h5>
+                        <p className="text-sm text-muted-foreground">
+                          {t("notifications.manualDescription")}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handlePreviewTaskEmail}
+                        disabled={isLoadingTaskEmailPreview}
+                        aria-busy={isLoadingTaskEmailPreview}
+                        className="w-full shrink-0 sm:w-auto"
+                      >
+                        {isLoadingTaskEmailPreview ? (
+                          <Spinner aria-hidden="true" data-icon="inline-start" />
+                        ) : (
+                          <Mail data-icon="inline-start" />
+                        )}
+                        {t(
+                          isLoadingTaskEmailPreview
+                            ? "notifications.loadingRecipients"
+                            : "notifications.send",
+                        )}
+                      </Button>
+                    </CardFooter>
+                  </>
+                ) : null}
+              </Card>
+            </FormSection>
+          </FieldGroup>
+        </EntryTabPanel>
       </EntrySheet>
 
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>

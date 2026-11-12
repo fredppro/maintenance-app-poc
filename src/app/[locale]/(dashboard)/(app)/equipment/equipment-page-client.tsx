@@ -1,8 +1,7 @@
 "use client";
 
-import { format } from "date-fns";
 import { Box, CalendarDays, Pencil, Plus, Search } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { PageBody, PageHeader } from "@/components/app-shell/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +26,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableSurface,
+  TableEmptyRow,
 } from "@/components/ui/table";
 import {
   Tooltip,
@@ -43,9 +44,11 @@ import { Link } from "@/i18n/routing";
 export function EquipmentPageClient() {
   const t = useTranslations("EquipmentPage");
   const tCommon = useTranslations("Common");
+  const format = useFormatter();
   const equipment = useSchedulerStore((s) => s.equipment);
   const entries = useSchedulerStore((s) => s.entries);
   const sections = useSchedulerStore((s) => s.sections);
+  const timeZone = useSchedulerStore((s) => s.timeZone);
   const [query, setQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Equipment | null>(null);
@@ -75,7 +78,9 @@ export function EquipmentPageClient() {
   }, [equipment, entries, sections, query, now]);
 
   const fmt = (d?: Date | string) =>
-    d ? format(new Date(d), "dd/MM/yyyy") : t("none");
+    d
+      ? format.dateTime(new Date(d), { dateStyle: "medium", timeZone })
+      : t("none");
 
   return (
     <PageBody>
@@ -96,7 +101,7 @@ export function EquipmentPageClient() {
       />
 
       {equipment.length === 0 ? (
-        <Empty className="border">
+        <Empty variant="surface">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Box />
@@ -118,7 +123,7 @@ export function EquipmentPageClient() {
               aria-label={t("search")}
             />
           </InputGroup>
-          <div className="rounded-lg border bg-card">
+          <TableSurface>
             <Table>
               <TableCaption className="sr-only">
                 {t("title")}
@@ -132,7 +137,7 @@ export function EquipmentPageClient() {
                   <TableHead className="hidden sm:table-cell">
                     {t("columns.section")}
                   </TableHead>
-                  <TableHead>{t("columns.upcoming")}</TableHead>
+                  <TableHead numeric>{t("columns.upcoming")}</TableHead>
                   <TableHead className="hidden lg:table-cell">
                     {t("columns.next")}
                   </TableHead>
@@ -146,23 +151,34 @@ export function EquipmentPageClient() {
               </TableHeader>
               <TableBody>
                 {rows.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      {t("noResults")}
-                    </TableCell>
-                  </TableRow>
+                  <TableEmptyRow colSpan={7}>{t("noResults")}</TableEmptyRow>
                 )}
                 {rows.map((row) => (
                   <TableRow key={row.equipment.id}>
                     <TableCell>
                       <div className="flex min-w-0 items-center gap-3">
                         <EquipmentThumbnail imageFileId={row.equipment.imageFileId} size="md" />
-                        <span className="truncate font-medium">
-                          {row.equipment.name}
-                        </span>
+                        <div className="grid min-w-0 gap-0.5">
+                          <span className="truncate font-medium">
+                            {row.equipment.name}
+                          </span>
+                          <span className="truncate text-xs text-muted-foreground sm:hidden">
+                            {[
+                              row.equipment.category,
+                              row.section ?? t("unassigned"),
+                              row.next
+                                ? `${t("columns.next")}: ${fmt(row.next)}`
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </span>
+                          <span className="hidden truncate text-xs text-muted-foreground sm:block md:hidden">
+                            {row.next
+                              ? `${t("columns.next")}: ${fmt(row.next)}`
+                              : t("none")}
+                          </span>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
@@ -175,7 +191,7 @@ export function EquipmentPageClient() {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell numeric>
                       <Badge
                         variant={row.upcomingCount > 0 ? "secondary" : "outline"}
                       >
@@ -229,7 +245,7 @@ export function EquipmentPageClient() {
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </TableSurface>
         </>
       )}
       <EquipmentDialog

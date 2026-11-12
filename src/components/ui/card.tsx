@@ -4,7 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const cardVariants = cva(
-  'text-card-foreground flex flex-col gap-6 rounded-xl border py-6',
+  'text-card-foreground flex flex-col rounded-xl border',
   {
     variants: {
       variant: {
@@ -12,9 +12,19 @@ const cardVariants = cva(
         elevated: 'border-border-strong bg-surface-elevated shadow-md',
         technical: 'border-border-strong bg-surface-muted shadow-none',
       },
+      density: {
+        default: 'gap-section py-6',
+        compact: 'gap-form py-4 [&>[data-slot=card-header]]:px-4 [&>[data-slot=card-content]]:px-4 [&>[data-slot=card-footer]]:px-4',
+      },
+      layout: {
+        default: '',
+        sectioned: 'gap-0 overflow-hidden py-0 [&>[data-slot=card-header]]:border-b [&>[data-slot=card-header]]:bg-muted/30 [&>[data-slot=card-header]]:p-4 [&>[data-slot=card-content]]:p-4 [&>[data-slot=card-header]_[data-slot=card-title]]:text-sm [&>[data-slot=card-header]_[data-slot=card-title]]:leading-5',
+      },
     },
     defaultVariants: {
       variant: 'default',
+      density: 'default',
+      layout: 'default',
     },
   },
 )
@@ -22,13 +32,17 @@ const cardVariants = cva(
 function Card({
   className,
   variant,
+  density,
+  layout,
   ...props
 }: React.ComponentProps<'div'> & VariantProps<typeof cardVariants>) {
   return (
     <div
       data-slot="card"
       data-variant={variant ?? 'default'}
-      className={cn(cardVariants({ variant }), className)}
+      data-density={density ?? 'default'}
+      data-layout={layout ?? 'default'}
+      className={cn(cardVariants({ variant, density, layout }), className)}
       {...props}
     />
   )
@@ -51,7 +65,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-title"
-      className={cn('text-base leading-none font-semibold tracking-tight', className)}
+      className={cn('text-base leading-6 font-semibold tracking-tight', className)}
       {...props}
     />
   )
@@ -61,7 +75,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-description"
-      className={cn('text-muted-foreground text-sm text-pretty', className)}
+      className={cn('text-muted-foreground text-sm leading-relaxed text-pretty', className)}
       {...props}
     />
   )

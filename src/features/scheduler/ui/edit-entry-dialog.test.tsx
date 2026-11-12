@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
@@ -37,6 +38,15 @@ const {
 const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
 
 vi.mock("@/i18n/routing", () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
   useRouter: () => ({ push: pushMock }),
 }));
 
@@ -216,24 +226,77 @@ describe("EditEntryDialog", () => {
     Reflect.deleteProperty(HTMLElement.prototype, "releasePointerCapture");
   });
 
+  it("offers a localized preview before downloading a task work sheet", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    const sectionNavigation = screen.getByRole("tablist", {
+      name: "Maintenance form sections",
+    });
+    expect(
+      within(sectionNavigation).getByRole("tab", { name: "Details" }),
+    ).toHaveAttribute("aria-selected", "true");
+    expect(
+      within(sectionNavigation).getByRole("tab", { name: "Execution" }),
+    ).toHaveAttribute("aria-selected", "false");
+    await user.type(screen.getByRole("textbox", { name: "Title" }), " draft");
+    await user.click(screen.getByRole("button", { name: "Worksheet" }));
+    const preview = screen.getByRole("menuitem", {
+      name: "Preview work sheet (opens in a new tab)",
+    });
+    expect(preview).toHaveAttribute("href", "/reports/preview/task-1");
+    expect(preview).toHaveAttribute("target", "_blank");
+    expect(preview).toHaveAttribute("rel", "noopener noreferrer");
+    expect(
+      screen.getByRole("menuitem", { name: "Download Work Sheet" }),
+    ).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue(`${entry.title} draft`);
+  });
+
   it("uses the established colors for each task status", async () => {
     renderDialog();
 
     await waitFor(() => {
       expect(screen.getByRole("radio", { name: "Scheduled" })).toHaveClass(
-        "data-[state=on]:bg-chart-1/15",
+        "data-[state=on]:bg-status-scheduled/15",
         "data-[variant=outline]:data-[state=on]:border-input",
       );
     });
     expect(screen.getByRole("radio", { name: "In Progress" })).toHaveClass(
-      "data-[state=on]:bg-chart-3/15",
+      "data-[state=on]:bg-status-in-progress/15",
     );
     expect(screen.getByRole("radio", { name: "Completed" })).toHaveClass(
-      "data-[state=on]:bg-chart-5/15",
+      "data-[state=on]:bg-status-completed/15",
     );
     expect(screen.getByRole("radio", { name: "Cancelled" })).toHaveClass(
-      "data-[state=on]:bg-foreground",
+      "data-[state=on]:bg-status-cancelled/15",
     );
+  });
+
+  it("allows footer action groups to wrap on narrow screens", () => {
+    renderDialog();
+
+    expect(
+      screen.getByRole("button", { name: "Save changes" }).closest('[data-slot="sheet-footer"]'),
+    ).toHaveClass("flex-wrap");
+  });
+
+  it("opens and focuses execution errors when saving from another tab", async () => {
+    const user = userEvent.setup();
+    renderDialog(taskWithNotificationAssignment, [notificationWorker]);
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
+    await user.click(screen.getByRole("button", { name: "Log work" }));
+    await user.type(screen.getByLabelText("Duration (hours)"), "2");
+    await user.click(screen.getByRole("tab", { name: "Notifications" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: "Execution" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("combobox", { name: "Worker" })).toHaveFocus();
+    });
+    expect(screen.getByLabelText("Duration (hours)")).toHaveValue(2);
+    expect(updateTaskMock).not.toHaveBeenCalled();
   });
 
   it("explains automatic notifications and distinguishes manual history", async () => {
@@ -301,6 +364,7 @@ describe("EditEntryDialog", () => {
       ],
     };
     renderDialog(taskWithNotificationHistory, [notificationWorker]);
+    await userEvent.click(screen.getByRole("tab", { name: "Notifications" }));
 
     expect(
       screen.getByText(/When a scheduled task is saved, an assignment notice/),
@@ -376,6 +440,7 @@ describe("EditEntryDialog", () => {
       });
 
     renderDialog(taskWithNotificationAssignment);
+    await user.click(screen.getByRole("tab", { name: "Notifications" }));
 
     await screen.findByText("Worker notice-1");
     expect(screen.queryByText("Worker older-notice")).not.toBeInTheDocument();
@@ -443,6 +508,7 @@ describe("EditEntryDialog", () => {
       });
 
     renderDialog(taskWithNotificationAssignment);
+    await userEvent.click(screen.getByRole("tab", { name: "Notifications" }));
     await screen.findByText("Worker existing-notice");
 
     act(() => notifyTaskUpdated(entry.id));
@@ -545,6 +611,7 @@ describe("EditEntryDialog", () => {
       });
 
     renderDialog(taskWithNotificationAssignment);
+    await user.click(screen.getByRole("tab", { name: "Notifications" }));
     await screen.findByText("Worker notice-1");
 
     act(() => notifyTaskUpdated(entry.id));
@@ -611,6 +678,7 @@ describe("EditEntryDialog", () => {
       });
 
     renderDialog(taskWithNotificationAssignment);
+    await user.click(screen.getByRole("tab", { name: "Notifications" }));
     await screen.findByText("Worker notice-1");
     await user.click(screen.getByRole("button", { name: "See more" }));
     await screen.findByText("Worker older-notice");
@@ -712,6 +780,7 @@ describe("EditEntryDialog", () => {
       });
 
     renderDialog(taskWithNotificationAssignment);
+    await user.click(screen.getByRole("tab", { name: "Notifications" }));
     await screen.findByText("Worker notice-1");
 
     const historyRegion = document.getElementById(
@@ -787,6 +856,7 @@ describe("EditEntryDialog", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
 
     renderDialog(taskWithNotificationAssignment);
+    await user.click(screen.getByRole("tab", { name: "Notifications" }));
 
     expect(
       await screen.findByText("Could not load notification history."),
@@ -802,16 +872,16 @@ describe("EditEntryDialog", () => {
     vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(requestId);
     let resolvePreview:
       | ((result: {
-          taskId: string;
-          title: string;
-          startTime: Date;
-          recipients: {
-            workerId: string;
-            name: string;
-            email: string;
-          }[];
-          excludedRecipients: { workerId: string; name: string }[];
-        }) => void)
+        taskId: string;
+        title: string;
+        startTime: Date;
+        recipients: {
+          workerId: string;
+          name: string;
+          email: string;
+        }[];
+        excludedRecipients: { workerId: string; name: string }[];
+      }) => void)
       | undefined;
     previewMaintenanceTaskEmailMock.mockImplementation(
       () =>
@@ -842,6 +912,7 @@ describe("EditEntryDialog", () => {
       excludedRecipients: [],
     };
     renderDialog(taskWithNotificationAssignment, [notificationWorker]);
+    await user.click(screen.getByRole("tab", { name: "Notifications" }));
 
     await user.click(
       screen.getByRole("button", { name: "Review recipients & send" }),
@@ -892,6 +963,7 @@ describe("EditEntryDialog", () => {
       ],
     });
     renderDialog(taskWithNotificationAssignment, [notificationWorker]);
+    await user.click(screen.getByRole("tab", { name: "Notifications" }));
 
     await user.click(
       screen.getByRole("button", { name: "Review recipients & send" }),
@@ -911,9 +983,10 @@ describe("EditEntryDialog", () => {
 
   it("shows a clear error when the manual email recipient preview fails", async () => {
     const user = userEvent.setup();
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => { });
     previewMaintenanceTaskEmailMock.mockRejectedValue(new Error("preview failed"));
     renderDialog(taskWithNotificationAssignment, [notificationWorker]);
+    await user.click(screen.getByRole("tab", { name: "Notifications" }));
 
     await user.click(
       screen.getByRole("button", { name: "Review recipients & send" }),
@@ -932,7 +1005,7 @@ describe("EditEntryDialog", () => {
     vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(
       "00000000-0000-4000-8000-000000000001",
     );
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => { });
     previewMaintenanceTaskEmailMock.mockResolvedValue({
       taskId: entry.id,
       title: entry.title,
@@ -948,6 +1021,7 @@ describe("EditEntryDialog", () => {
     });
     sendMaintenanceTaskEmailMock.mockRejectedValue(new Error("send failed"));
     renderDialog(taskWithNotificationAssignment, [notificationWorker]);
+    await user.click(screen.getByRole("tab", { name: "Notifications" }));
 
     await user.click(
       screen.getByRole("button", { name: "Review recipients & send" }),
@@ -984,7 +1058,7 @@ describe("EditEntryDialog", () => {
     });
     expect(inProgressRadio).toHaveFocus();
     await user.click(inProgressRadio);
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => {
       expect(updateTaskMock).toHaveBeenCalledWith(
@@ -1091,7 +1165,7 @@ describe("EditEntryDialog", () => {
       ),
     ).not.toHaveLength(0);
 
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => {
       expect(updateTaskMock).toHaveBeenCalledWith(
@@ -1120,7 +1194,7 @@ describe("EditEntryDialog", () => {
       screen.getByRole("button", { name: "Actual completion date & time" }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole("radio", { name: "Scheduled" }));
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => {
       expect(updateTaskMock).toHaveBeenCalledWith(
@@ -1139,7 +1213,7 @@ describe("EditEntryDialog", () => {
 
     const title = screen.getByRole("textbox", { name: "Title" });
     await user.clear(title);
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(await screen.findByText("Title is required")).toBeInTheDocument();
     expect(title).toHaveAttribute("aria-invalid", "true");
@@ -1162,7 +1236,7 @@ describe("EditEntryDialog", () => {
       "Updated spindle inspection",
     );
     await user.click(screen.getByRole("radio", { name: "In Progress" }));
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Failed to update task");
@@ -1228,32 +1302,38 @@ describe("EditEntryDialog", () => {
     await waitFor(() => expect(
       screen.getByRole("combobox", { name: "Maintenance point" }),
     ).toBeEnabled());
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
     const existingChecklistItem = screen.getByRole("checkbox", {
       name: "Inspect existing bearing",
     });
     expect(existingChecklistItem).toBeChecked();
     await user.click(existingChecklistItem);
 
+    await user.click(screen.getByRole("tab", { name: "Details" }));
     const pointSelect = screen.getByRole("combobox", {
       name: "Maintenance point",
     });
     await user.click(pointSelect);
     await user.click(await screen.findByRole("option", { name: "Hydraulics" }));
 
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
     const newChecklistItem = screen.getByRole("checkbox", {
       name: "Check hydraulic pressure",
     });
     expect(newChecklistItem).not.toBeChecked();
 
+    await user.click(screen.getByRole("tab", { name: "Details" }));
     await user.click(pointSelect);
     await user.click(await screen.findByRole("option", { name: "Bearing" }));
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
     expect(
       screen.getByRole("checkbox", { name: "Inspect existing bearing" }),
     ).not.toBeChecked();
 
+    await user.click(screen.getByRole("tab", { name: "Details" }));
     await user.click(pointSelect);
     await user.click(await screen.findByRole("option", { name: "Hydraulics" }));
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => {
       expect(updateTaskMock).toHaveBeenCalledWith(
@@ -1288,7 +1368,7 @@ describe("EditEntryDialog", () => {
       screen.queryByLabelText("Planned End Date & Time"),
     ).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => {
       expect(updateTaskMock).toHaveBeenCalledWith(
@@ -1327,6 +1407,7 @@ describe("EditEntryDialog", () => {
     };
     renderDialog(taskWithChecklist);
 
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
     const checklistTrigger = screen.getByRole("button", {
       name: /Checklist items.*1 of 2 complete/,
     });
@@ -1362,6 +1443,7 @@ describe("EditEntryDialog", () => {
     };
     updateTaskMock.mockResolvedValue(taskWithWorker);
     renderDialog(taskWithWorker, [assignedWorker]);
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
 
     expect(screen.getByRole("heading", { name: "Work logs" })).toBeInTheDocument();
     const logWorkButton = screen.getByRole("button", { name: "Log work" });
@@ -1402,7 +1484,7 @@ describe("EditEntryDialog", () => {
     expect(calculatedEnd).toHaveAttribute("aria-live", "polite");
     expect(calculatedEnd).not.toHaveClass("border");
 
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => {
       expect(updateTaskMock).toHaveBeenCalled();
@@ -1479,6 +1561,7 @@ describe("EditEntryDialog", () => {
     };
     updateTaskMock.mockResolvedValue(taskWithLogs);
     renderDialog(taskWithLogs, [assignedWorker]);
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
 
     const durations = screen.getAllByLabelText("Duration (hours)");
     await user.clear(durations[0]);
@@ -1486,7 +1569,9 @@ describe("EditEntryDialog", () => {
     await user.click(
       screen.getAllByRole("button", { name: "Remove work log" })[1],
     );
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("tab", { name: "Notifications" }));
+    await user.click(screen.getByRole("tab", { name: "Details" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => {
       expect(updateTaskMock).toHaveBeenCalledWith(
@@ -1507,150 +1592,151 @@ describe("EditEntryDialog", () => {
   });
 
   it("preserves existing work logs when adding another entry for a worker", async () => {
-      const user = userEvent.setup();
-      const paulo: Worker = {
-        id: "worker-paulo",
-        name: "Paulo",
-        email: "paulo@example.test",
-        phone: null,
-        type: "INTERNAL",
-        vendorId: null,
-        createdAt: startTime,
-      };
-      const fabio: Worker = {
-        id: "worker-fabio",
-        name: "Fabio",
-        email: "fabio@example.test",
-        phone: null,
-        type: "INTERNAL",
-        vendorId: null,
-        createdAt: startTime,
-      };
-      const existingWorkLogs = [
+    const user = userEvent.setup();
+    const paulo: Worker = {
+      id: "worker-paulo",
+      name: "Paulo",
+      email: "paulo@example.test",
+      phone: null,
+      type: "INTERNAL",
+      vendorId: null,
+      createdAt: startTime,
+    };
+    const fabio: Worker = {
+      id: "worker-fabio",
+      name: "Fabio",
+      email: "fabio@example.test",
+      phone: null,
+      type: "INTERNAL",
+      vendorId: null,
+      createdAt: startTime,
+    };
+    const existingWorkLogs = [
+      {
+        id: "work-log-paulo",
+        workerId: paulo.id,
+        workDate: "2026-06-01",
+        startTime: new Date("2026-06-01T07:00:00.000Z"),
+        hours: 1,
+      },
+      {
+        id: "work-log-fabio",
+        workerId: fabio.id,
+        workDate: "2026-06-01",
+        startTime: new Date("2026-06-01T08:00:00.000Z"),
+        hours: 1,
+      },
+    ];
+    const taskWithWorkLogs = {
+      ...entry,
+      assignments: [
         {
-          id: "work-log-paulo",
+          id: "assignment-paulo",
+          taskId: entry.id,
           workerId: paulo.id,
-          workDate: "2026-06-01",
-          startTime: new Date("2026-06-01T07:00:00.000Z"),
-          hours: 1,
+          startTime: null,
+          endTime: null,
+          worker: paulo,
         },
         {
-          id: "work-log-fabio",
+          id: "assignment-fabio",
+          taskId: entry.id,
           workerId: fabio.id,
-          workDate: "2026-06-01",
-          startTime: new Date("2026-06-01T08:00:00.000Z"),
-          hours: 1,
+          startTime: null,
+          endTime: null,
+          worker: fabio,
         },
-      ];
-      const taskWithWorkLogs = {
-        ...entry,
-        assignments: [
-          {
-            id: "assignment-paulo",
-            taskId: entry.id,
-            workerId: paulo.id,
-            startTime: null,
-            endTime: null,
-            worker: paulo,
-          },
-          {
-            id: "assignment-fabio",
-            taskId: entry.id,
-            workerId: fabio.id,
-            startTime: null,
-            endTime: null,
-            worker: fabio,
-          },
-        ],
-        dailyHours: existingWorkLogs,
-      };
-      const savedTask = {
-        ...taskWithWorkLogs,
-        dailyHours: [
-          ...existingWorkLogs,
-          {
-            id: "work-log-fabio-new",
-            workerId: fabio.id,
-            workDate: new Date("2026-06-01T00:00:00.000Z"),
-            startTime: new Date("2026-06-01T09:00:00.000Z"),
-            hours: 2,
-          },
-        ],
-      };
-      let resolveUpdateTask!: (value: typeof savedTask) => void;
-      const updateTaskPromise = new Promise<typeof savedTask>((resolve) => {
-        resolveUpdateTask = resolve;
-      });
-      updateTaskMock.mockReturnValue(updateTaskPromise);
-      renderDialog(taskWithWorkLogs, [paulo, fabio]);
+      ],
+      dailyHours: existingWorkLogs,
+    };
+    const savedTask = {
+      ...taskWithWorkLogs,
+      dailyHours: [
+        ...existingWorkLogs,
+        {
+          id: "work-log-fabio-new",
+          workerId: fabio.id,
+          workDate: new Date("2026-06-01T00:00:00.000Z"),
+          startTime: new Date("2026-06-01T09:00:00.000Z"),
+          hours: 2,
+        },
+      ],
+    };
+    let resolveUpdateTask!: (value: typeof savedTask) => void;
+    const updateTaskPromise = new Promise<typeof savedTask>((resolve) => {
+      resolveUpdateTask = resolve;
+    });
+    updateTaskMock.mockReturnValue(updateTaskPromise);
+    renderDialog(taskWithWorkLogs, [paulo, fabio]);
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
 
-      await user.click(screen.getByRole("button", { name: "Log work" }));
-      const workerSelectors = screen.getAllByRole("combobox", {
-        name: "Worker",
-      });
-      await user.click(workerSelectors[2]);
-      await user.click(await screen.findByRole("option", { name: "Fabio" }));
+    await user.click(screen.getByRole("button", { name: "Log work" }));
+    const workerSelectors = screen.getAllByRole("combobox", {
+      name: "Worker",
+    });
+    await user.click(workerSelectors[2]);
+    await user.click(await screen.findByRole("option", { name: "Fabio" }));
 
-      const startPickers = screen.getAllByRole("button", {
-        name: "Work date & start time",
-      });
-      await user.click(startPickers[2]);
-      const newStartHour = screen.getByRole("textbox", { name: "Hours" });
-      await user.clear(newStartHour);
-      await user.type(newStartHour, "10");
-      await user.keyboard("{Escape}");
+    const startPickers = screen.getAllByRole("button", {
+      name: "Work date & start time",
+    });
+    await user.click(startPickers[2]);
+    const newStartHour = screen.getByRole("textbox", { name: "Hours" });
+    await user.clear(newStartHour);
+    await user.type(newStartHour, "10");
+    await user.keyboard("{Escape}");
 
-      const durations = screen.getAllByLabelText("Duration (hours)");
-      await user.type(durations[2], "2");
-      await user.click(screen.getByRole("button", { name: "Save" }));
+    const durations = screen.getAllByLabelText("Duration (hours)");
+    await user.type(durations[2], "2");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
-      await waitFor(() => {
-        expect(updateTaskMock).toHaveBeenCalled();
-      });
+    await waitFor(() => {
+      expect(updateTaskMock).toHaveBeenCalled();
+    });
+    expect(screen.getByLabelText("Saved work log count")).toHaveTextContent(
+      "2",
+    );
+    expect(screen.getByLabelText("Time-only work log count")).toHaveTextContent(
+      "0",
+    );
+
+    await act(async () => {
+      resolveUpdateTask(savedTask);
+      await updateTaskPromise;
+    });
+
+    await waitFor(() => {
+      expect(updateTaskMock).toHaveBeenCalledWith(
+        entry.id,
+        expect.objectContaining({
+          dailyHours: [
+            {
+              id: "work-log-paulo",
+              workerId: paulo.id,
+              workDate: "2026-06-01",
+              startTime: "08:00",
+              hours: 1,
+            },
+            {
+              id: "work-log-fabio",
+              workerId: fabio.id,
+              workDate: "2026-06-01",
+              startTime: "09:00",
+              hours: 1,
+            },
+            {
+              workerId: fabio.id,
+              workDate: "2026-06-01",
+              startTime: "10:00",
+              hours: 2,
+            },
+          ],
+        }),
+      );
       expect(screen.getByLabelText("Saved work log count")).toHaveTextContent(
-        "2",
+        "3",
       );
-      expect(screen.getByLabelText("Time-only work log count")).toHaveTextContent(
-        "0",
-      );
-
-      await act(async () => {
-        resolveUpdateTask(savedTask);
-        await updateTaskPromise;
-      });
-
-      await waitFor(() => {
-        expect(updateTaskMock).toHaveBeenCalledWith(
-          entry.id,
-          expect.objectContaining({
-            dailyHours: [
-              {
-                id: "work-log-paulo",
-                workerId: paulo.id,
-                workDate: "2026-06-01",
-                startTime: "08:00",
-                hours: 1,
-              },
-              {
-                id: "work-log-fabio",
-                workerId: fabio.id,
-                workDate: "2026-06-01",
-                startTime: "09:00",
-                hours: 1,
-              },
-              {
-                workerId: fabio.id,
-                workDate: "2026-06-01",
-                startTime: "10:00",
-                hours: 2,
-              },
-            ],
-          }),
-        );
-        expect(screen.getByLabelText("Saved work log count")).toHaveTextContent(
-          "3",
-        );
-      });
+    });
   });
 
   it("allows duration-only logs and infers independent times for each worker", async () => {
@@ -1706,6 +1792,7 @@ describe("EditEntryDialog", () => {
     };
     updateTaskMock.mockResolvedValue(taskWithWorkLog);
     renderDialog(taskWithWorkLog, [paulo, fabio]);
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
 
     await user.click(screen.getByRole("button", { name: "Log work" }));
     const workerSelectors = () =>
@@ -1740,7 +1827,7 @@ describe("EditEntryDialog", () => {
       ),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => {
       expect(updateTaskMock).toHaveBeenCalledWith(
@@ -1779,60 +1866,60 @@ describe("EditEntryDialog", () => {
   });
 
   it("preserves an unknown historical start time when another field changes", async () => {
-      const user = userEvent.setup();
-      const assignedWorker: Worker = {
-        id: "worker-1",
-        name: "Taylor Worker",
-        email: "taylor@example.test",
-        phone: null,
-        type: "INTERNAL",
-        vendorId: null,
-        createdAt: startTime,
-      };
-      const taskWithHistoricalLog = {
-        ...entry,
-        assignments: [
-          {
-            id: "assignment-1",
-            taskId: entry.id,
-            workerId: assignedWorker.id,
-            startTime: null,
-            endTime: null,
-            worker: assignedWorker,
-          },
-        ],
-        dailyHours: [
-          {
-            id: "work-log-legacy",
-            workerId: assignedWorker.id,
-            workDate: "2026-06-01",
-            startTime: null,
-            hours: 2,
-          },
-        ],
-      };
-      updateTaskMock.mockResolvedValue(taskWithHistoricalLog);
-      renderDialog(taskWithHistoricalLog, [assignedWorker]);
+    const user = userEvent.setup();
+    const assignedWorker: Worker = {
+      id: "worker-1",
+      name: "Taylor Worker",
+      email: "taylor@example.test",
+      phone: null,
+      type: "INTERNAL",
+      vendorId: null,
+      createdAt: startTime,
+    };
+    const taskWithHistoricalLog = {
+      ...entry,
+      assignments: [
+        {
+          id: "assignment-1",
+          taskId: entry.id,
+          workerId: assignedWorker.id,
+          startTime: null,
+          endTime: null,
+          worker: assignedWorker,
+        },
+      ],
+      dailyHours: [
+        {
+          id: "work-log-legacy",
+          workerId: assignedWorker.id,
+          workDate: "2026-06-01",
+          startTime: null,
+          hours: 2,
+        },
+      ],
+    };
+    updateTaskMock.mockResolvedValue(taskWithHistoricalLog);
+    renderDialog(taskWithHistoricalLog, [assignedWorker]);
 
-      await user.clear(screen.getByLabelText("Duration (hours)"));
-      await user.type(screen.getByLabelText("Duration (hours)"), "3");
-      await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.clear(screen.getByLabelText("Duration (hours)"));
+    await user.type(screen.getByLabelText("Duration (hours)"), "3");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
-      await waitFor(() => {
-        expect(updateTaskMock).toHaveBeenCalledWith(
-          entry.id,
-          expect.objectContaining({
-            dailyHours: [
-              {
-                id: "work-log-legacy",
-                workerId: assignedWorker.id,
-                workDate: "2026-06-01",
-                startTime: "",
-                hours: 3,
-              },
-            ],
-          }),
-        );
+    await waitFor(() => {
+      expect(updateTaskMock).toHaveBeenCalledWith(
+        entry.id,
+        expect.objectContaining({
+          dailyHours: [
+            {
+              id: "work-log-legacy",
+              workerId: assignedWorker.id,
+              workDate: "2026-06-01",
+              startTime: "",
+              hours: 3,
+            },
+          ],
+        }),
+      );
     });
   });
 });

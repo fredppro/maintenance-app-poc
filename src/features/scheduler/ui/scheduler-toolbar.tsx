@@ -18,7 +18,6 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  RotateCcw,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
@@ -82,10 +81,9 @@ export function SchedulerToolbar() {
 
   return (
     <TooltipProvider>
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-border bg-card p-2 sm:gap-3 sm:p-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-        {/* Left side: Navigation */}
-        <div className="flex min-w-0 items-center gap-2">
-          <ButtonGroup>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 p-3 sm:px-4">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+          <ButtonGroup aria-label={t("navigation")}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -94,7 +92,7 @@ export function SchedulerToolbar() {
                   aria-label={t("previous")}
                   onClick={navigateBackward}
                 >
-                  <ChevronLeft  />
+                  <ChevronLeft />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t("previous")}</TooltipContent>
@@ -104,11 +102,11 @@ export function SchedulerToolbar() {
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
-                  size="icon-sm"
+                  size="sm"
                   aria-label={t("today")}
                   onClick={handleToday}
                 >
-                  <RotateCcw  />
+                  {t("today")}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t("today")}</TooltipContent>
@@ -122,48 +120,46 @@ export function SchedulerToolbar() {
                   aria-label={t("next")}
                   onClick={navigateForward}
                 >
-                  <ChevronRight  />
+                  <ChevronRight />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t("next")}</TooltipContent>
             </Tooltip>
           </ButtonGroup>
 
-          <div className="flex min-w-0 items-center gap-2 px-1">
+          <div className="flex min-w-0 items-center gap-2 text-sm">
             <Calendar className="size-4 shrink-0 text-muted-foreground" />
-            <span className="min-w-0 truncate font-medium text-foreground">
+            <span className="min-w-0 truncate font-medium text-foreground" aria-live="polite">
               {formatDateRange()}
             </span>
           </div>
         </div>
 
-        {/* Center: View Mode Buttons */}
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
-          value={viewMode}
-          aria-label={t("viewSelector")}
-          className="col-span-2 row-start-2 grid w-full grid-cols-4 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:flex lg:w-fit lg:justify-self-center"
-          onValueChange={(value) => {
-            const selectedMode = viewModeOrder.find((mode) => mode === value);
-            if (selectedMode) setViewMode(selectedMode);
-          }}
-        >
-          {viewModeOrder.map((mode) => (
-            <ToggleGroupItem
-              key={mode}
-              value={mode}
-              className="h-9 px-2 text-sm capitalize pointer-coarse:h-10 lg:flex-none lg:px-3"
-            >
-              {t(mode)}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        <div className="flex w-full flex-wrap items-center justify-between gap-3 xl:w-auto">
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={viewMode}
+            aria-label={t("viewSelector")}
+            className="flex flex-1 sm:flex-none"
+            onValueChange={(value) => {
+              const selectedMode = viewModeOrder.find((mode) => mode === value);
+              if (selectedMode) setViewMode(selectedMode);
+            }}
+          >
+            {viewModeOrder.map((mode) => (
+              <ToggleGroupItem
+                key={mode}
+                value={mode}
+                className="flex-1 px-2 text-sm sm:flex-none sm:px-3"
+              >
+                {t(mode)}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
 
-        {/* Right side: Zoom Controls */}
-        <div className="col-start-2 row-start-1 flex items-center gap-2 lg:col-start-3 lg:justify-self-end">
-          <ButtonGroup>
+          <ButtonGroup aria-label={t("zoom")}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -173,7 +169,7 @@ export function SchedulerToolbar() {
                   onClick={handleZoomIn}
                   disabled={!canZoomIn}
                 >
-                  <ZoomIn  />
+                  <ZoomIn />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t("zoomIn")}</TooltipContent>
@@ -188,7 +184,7 @@ export function SchedulerToolbar() {
                   onClick={handleZoomOut}
                   disabled={!canZoomOut}
                 >
-                  <ZoomOut  />
+                  <ZoomOut />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t("zoomOut")}</TooltipContent>

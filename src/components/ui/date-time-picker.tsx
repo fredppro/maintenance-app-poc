@@ -201,15 +201,16 @@ export function DateTimePicker({
           aria-describedby={ariaDescribedBy}
           variant="outline"
           className={cn(
-            "w-full justify-start text-left font-normal h-9 px-3",
+            "w-full justify-start px-control-padding text-left font-normal tabular-nums",
             !date && "text-muted-foreground",
             displayError &&
               "border-destructive text-destructive focus-visible:ring-destructive",
           )}
         >
           <CalendarIcon
+            data-icon="inline-start"
             className={cn(
-              "mr-2 opacity-50",
+              "opacity-50",
               displayError && "text-destructive opacity-100",
             )}
           />
@@ -229,21 +230,19 @@ export function DateTimePicker({
         sideOffset={4}
         collisionPadding={20}
       >
-        <div className="p-3">
-          <Calendar
-            mode="single"
-            selected={calendarDate}
-            onSelect={handleDateSelect}
-            autoFocus
-            disabled={disabled}
-            locale={dateFnsLocale}
-            captionLayout="dropdown"
-            startMonth={new Date(2020, 0)}
-            endMonth={new Date(2035, 11)}
-            month={currentMonth}
-            onMonthChange={setCurrentMonth}
-          />
-        </div>
+        <Calendar
+          mode="single"
+          selected={calendarDate}
+          onSelect={handleDateSelect}
+          autoFocus
+          disabled={disabled}
+          locale={dateFnsLocale}
+          captionLayout="dropdown"
+          startMonth={new Date(2020, 0)}
+          endMonth={new Date(2035, 11)}
+          month={currentMonth}
+          onMonthChange={setCurrentMonth}
+        />
         {showTime && (
           <div className="flex min-w-[120px] flex-col gap-4 border-t border-border bg-muted/20 p-3 md:border-l md:border-t-0">
             <div className="flex items-center gap-2">
@@ -276,6 +275,7 @@ export function DateTimePicker({
                   {t("hours")}
                 </span>
                 <Input
+                  controlSize="sm"
                   aria-label={t("hours")}
                   value={hours}
                   onChange={(e) => handleTimeChange("hours", e.target.value)}
@@ -288,7 +288,7 @@ export function DateTimePicker({
                     e.target.select();
                   }}
                   className={cn(
-                    "h-8 w-16 bg-background p-0 text-center text-xs focus-visible:ring-1",
+                    "w-16 bg-background p-0 text-center tabular-nums focus-visible:ring-1",
                     displayError &&
                       "border-destructive text-destructive focus-visible:ring-destructive",
                   )}
@@ -305,6 +305,7 @@ export function DateTimePicker({
                   {t("minutes")}
                 </span>
                 <Input
+                  controlSize="sm"
                   aria-label={t("minutes")}
                   value={minutes}
                   onChange={(e) => handleTimeChange("minutes", e.target.value)}
@@ -317,7 +318,7 @@ export function DateTimePicker({
                     e.target.select();
                   }}
                   className={cn(
-                    "h-8 w-16 bg-background p-0 text-center text-xs focus-visible:ring-1",
+                    "w-16 bg-background p-0 text-center tabular-nums focus-visible:ring-1",
                     displayError &&
                       "border-destructive text-destructive focus-visible:ring-destructive",
                   )}

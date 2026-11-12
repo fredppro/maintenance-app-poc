@@ -2,6 +2,21 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin();
 
+function contentSecurityPolicy(isDev, frameAncestors = "'none'") {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    "font-src 'self' data:",
+    `connect-src 'self'${isDev ? ' ws:' : ''}`,
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    `frame-ancestors ${frameAncestors}`,
+  ].join('; ');
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: process.env.CONTAINER_BUILD === 'true' ? 'standalone' : undefined,
@@ -26,18 +41,7 @@ const nextConfig = {
     const isDev = process.env.NODE_ENV !== 'production';
     securityHeaders.push({
       key: 'Content-Security-Policy',
-      value: [
-        "default-src 'self'",
-        `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
-        "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: blob:",
-        "font-src 'self' data:",
-        `connect-src 'self'${isDev ? ' ws:' : ''}`,
-        "object-src 'none'",
-        "base-uri 'self'",
-        "form-action 'self'",
-        "frame-ancestors 'none'",
-      ].join('; '),
+      value: contentSecurityPolicy(isDev),
     });
 
     if (process.env.NODE_ENV === 'production') {
@@ -47,7 +51,19 @@ const nextConfig = {
       });
     }
 
-    return [{ source: '/:path*', headers: securityHeaders }];
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      {
+        source: '/api/tasks/:id/report',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          {
+            key: 'Content-Security-Policy',
+            value: contentSecurityPolicy(isDev, "'self'"),
+          },
+        ],
+      },
+    ];
   },
 }
 

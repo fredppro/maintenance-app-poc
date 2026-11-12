@@ -2,7 +2,18 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyMedia } from "@/components/ui/empty";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import {
   Field,
   FieldGroup,
@@ -33,6 +44,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -41,7 +53,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableSurface,
+  TableEmptyRow,
 } from "@/components/ui/table";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { PageBody, PageHeader } from "@/components/app-shell/page-header";
 import {
   consumeInventory,
@@ -74,7 +94,11 @@ export function InventoryPageClient() {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<InventoryItems>([]);
   const [suppliers, setSuppliers] = useState<Suppliers>([]);
+  const [stockLoading, setStockLoading] = useState(true);
+  const [stockLoadFailed, setStockLoadFailed] = useState(false);
+  const [inventoryRequest, setInventoryRequest] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+  const [inventoryView, setInventoryView] = useState<"stock" | "planned">("stock");
   const [stockAction, setStockAction] = useState<StockAction | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -118,12 +142,17 @@ export function InventoryPageClient() {
         setSuppliers(availableSuppliers);
       })
       .catch(() => {
-        if (active) toast.error(t("stockError"));
+        if (!active) return;
+        setStockLoadFailed(true);
+        toast.error(t("stockError"));
+      })
+      .finally(() => {
+        if (active) setStockLoading(false);
       });
     return () => {
       active = false;
     };
-  }, [t]);
+  }, [inventoryRequest, t]);
 
   function resetCreateForm() {
     setName("");
@@ -199,47 +228,99 @@ export function InventoryPageClient() {
         title={t("title")}
         description={t("description")}
         actions={
-          <Button onClick={() => setCreateOpen(true)}>
+          inventoryView === "stock" ? (
+            <Button onClick={() => setCreateOpen(true)}>
             <Plus data-icon="inline-start" />
             {t("addInventoryItem")}
-          </Button>
+            </Button>
+          ) : undefined
         }
       />
 
+      <Tabs
+        value={inventoryView}
+        onValueChange={(value) => {
+          if (value === "stock" || value === "planned") {
+            setInventoryView(value);
+          }
+        }}
+        className="flex flex-col gap-section"
+      >
+        <TabsList aria-label={t("viewOptions")} className="w-full sm:w-fit">
+          <TabsTrigger value="stock">{t("stockTitle")}</TabsTrigger>
+          <TabsTrigger value="planned">{t("plannedMaterialsTitle")}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="stock" className="flex flex-col gap-4">
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold tracking-tight text-foreground text-balance">
           {t("stockTitle")}
         </h2>
-        <section
-          aria-labelledby="purchase-reminders-heading"
-          className="flex flex-col gap-2"
-        >
-          <h3 id="purchase-reminders-heading" className="font-medium">
-            {t("lowStockTitle")}
-          </h3>
-          {lowStock.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {lowStock.map((item) => (
-                <Badge key={item.id} variant="destructive">
-                  {item.name}: {t("belowReorderPoint")}
-                </Badge>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t("noLowStock")}</p>
-          )}
-        </section>
-        {items.length === 0 ? (
-          <Empty className="min-h-0 flex-none flex-row items-center justify-start gap-3 border bg-card p-3 text-left md:p-3">
-            <EmptyMedia variant="icon" className="mb-0 size-8">
-              <Package />
-            </EmptyMedia>
-            <p className="text-sm font-medium text-foreground">
-              {t("noStockItems")}
-            </p>
-          </Empty>
+        {stockLoading ? (
+          <div
+            role="status"
+            aria-label={t("loadingStock")}
+            className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
+          >
+            {[0, 1, 2].map((row) => (
+              <div key={row} className="flex items-center justify-between gap-4">
+                <Skeleton className="h-4 w-40 max-w-full" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            ))}
+          </div>
+        ) : stockLoadFailed ? (
+          <Alert variant="destructive">
+            <AlertTitle>{t("stockLoadFailureTitle")}</AlertTitle>
+            <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+              <span>{t("stockLoadFailure")}</span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setStockLoadFailed(false);
+                  setStockLoading(true);
+                  setInventoryRequest((request) => request + 1);
+                }}
+              >
+                {t("retry")}
+              </Button>
+            </AlertDescription>
+          </Alert>
         ) : (
-          <div className="rounded-lg border bg-card">
+          <>
+            {items.length > 0 && (
+              <section
+                aria-labelledby="purchase-reminders-heading"
+                className="flex flex-col gap-2"
+              >
+              <h3 id="purchase-reminders-heading" className="font-medium">
+                {t("lowStockTitle")}
+              </h3>
+              {lowStock.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {lowStock.map((item) => (
+                    <Badge key={item.id} variant="warning">
+                      <span className="truncate">{item.name}: {t("belowReorderPoint")}</span>
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("noLowStock")}</p>
+              )}
+              </section>
+            )}
+            {items.length === 0 ? (
+              <Empty variant="inline">
+                <EmptyMedia variant="icon">
+                  <Package />
+                </EmptyMedia>
+                <EmptyTitle>
+                  {t("noStockItems")}
+                </EmptyTitle>
+              </Empty>
+            ) : (
+              <TableSurface>
             <Table>
               <TableCaption className="sr-only">
                 {t("stockTitle")}
@@ -247,8 +328,8 @@ export function InventoryPageClient() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("columns.name")}</TableHead>
-                  <TableHead className="text-right">{t("columnsStock")}</TableHead>
-                  <TableHead className="text-right">{t("columnsReorder")}</TableHead>
+                  <TableHead numeric>{t("columnsStock")}</TableHead>
+                  <TableHead numeric>{t("columnsReorder")}</TableHead>
                   <TableHead className="hidden sm:table-cell">{t("columnsSupplier")}</TableHead>
                   <TableHead className="text-right">{t("columnsActions")}</TableHead>
                 </TableRow>
@@ -264,11 +345,11 @@ export function InventoryPageClient() {
                         </p>
                       )}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell numeric>
                       {Number(item.onHand).toLocaleString(locale)}{" "}
                       {tForm(`materialUnits.${item.unit}`)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell numeric>
                       {Number(item.reorderPoint).toLocaleString(locale)}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
@@ -300,22 +381,29 @@ export function InventoryPageClient() {
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </TableSurface>
+            )}
+          </>
         )}
       </section>
 
+        </TabsContent>
+
+        <TabsContent value="planned" className="flex flex-col gap-4">
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold tracking-tight text-foreground text-balance">
           {t("plannedMaterialsTitle")}
         </h2>
         {rows.length === 0 ? (
-          <div className="rounded-lg border p-6 text-center">
-            <Package className="mx-auto mb-2 text-muted-foreground" />
-            <h3 className="font-medium">{t("emptyTitle")}</h3>
-            <p className="text-sm text-muted-foreground">
-              {t("emptyDescription")}
-            </p>
-          </div>
+          <Empty variant="surface">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Package />
+              </EmptyMedia>
+              <EmptyTitle>{t("emptyTitle")}</EmptyTitle>
+              <EmptyDescription>{t("emptyDescription")}</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <>
             <InputGroup className="max-w-sm">
@@ -329,7 +417,7 @@ export function InventoryPageClient() {
                 aria-label={t("search")}
               />
             </InputGroup>
-            <div className="rounded-lg border bg-card">
+            <TableSurface>
               <Table>
                 <TableCaption className="sr-only">
                   {t("plannedMaterialsTitle")}
@@ -340,27 +428,20 @@ export function InventoryPageClient() {
                     <TableHead className="hidden sm:table-cell">
                       {t("columns.reference")}
                     </TableHead>
-                    <TableHead className="text-right">
+                    <TableHead numeric>
                       {t("columns.quantity")}
                     </TableHead>
-                    <TableHead className="hidden md:table-cell">
+                    <TableHead numeric className="hidden md:table-cell">
                       {t("columns.tasks")}
                     </TableHead>
-                    <TableHead className="hidden text-right sm:table-cell">
+                    <TableHead numeric className="hidden sm:table-cell">
                       {t("columns.cost")}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {visible.length === 0 && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="h-24 text-center text-muted-foreground"
-                      >
-                        {t("noResults")}
-                      </TableCell>
-                    </TableRow>
+                    <TableEmptyRow colSpan={5}>{t("noResults")}</TableEmptyRow>
                   )}
                   {visible.map((row) => (
                     <TableRow key={row.key}>
@@ -368,26 +449,28 @@ export function InventoryPageClient() {
                       <TableCell className="hidden sm:table-cell">
                         {row.reference ?? t("none")}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
+                      <TableCell numeric>
                         {row.quantity.toLocaleString(locale)}{" "}
                         <span className="text-muted-foreground">
                           {tForm(`materialUnits.${row.unit}`)}
                         </span>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell numeric className="hidden md:table-cell">
                         {row.taskCount}
                       </TableCell>
-                      <TableCell className="hidden text-right tabular-nums sm:table-cell">
+                      <TableCell numeric className="hidden sm:table-cell">
                         {row.cost > 0 ? money.format(row.cost) : t("none")}
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </div>
+            </TableSurface>
           </>
         )}
       </section>
+        </TabsContent>
+      </Tabs>
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
         <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
@@ -396,7 +479,7 @@ export function InventoryPageClient() {
             <SheetDescription>{t("dialogDescription")}</SheetDescription>
           </SheetHeader>
           <form onSubmit={handleCreate} className="flex flex-col gap-4 p-4">
-            <FieldGroup className="gap-5">
+            <FieldGroup>
               <FieldSet className="gap-3">
                 <FieldLegend
                   variant="label"

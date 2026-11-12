@@ -49,9 +49,13 @@ function SheetContent({
   className,
   children,
   side = 'right',
+  variant = 'default',
+  closeLabel = 'Close',
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: 'top' | 'right' | 'bottom' | 'left'
+  variant?: 'default' | 'inset'
+  closeLabel?: string
 }) {
   return (
     <SheetPortal>
@@ -61,13 +65,16 @@ function SheetContent({
         className={cn(
           'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition-transform duration-150 ease-motion-out data-[state=closed]:duration-150 data-[state=closed]:ease-motion-in data-[state=open]:duration-250',
           side === 'right' &&
-            'data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm',
+          'data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm',
           side === 'left' &&
-            'data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm',
+          'data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm',
           side === 'top' &&
-            'data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b',
+          'data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b',
           side === 'bottom' &&
-            'data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t',
+          'data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t',
+          variant === 'inset' &&
+          side === 'right' &&
+          'sm:inset-y-3 sm:right-3 sm:h-auto sm:overflow-hidden sm:rounded-3xl sm:border',
           className,
         )}
         {...props}
@@ -75,7 +82,7 @@ function SheetContent({
         {children}
         <SheetPrimitive.Close asChild>
           <IconButton
-            label="Close"
+            label={closeLabel}
             variant="ghost"
             size="sm"
             className="absolute top-3 right-3"

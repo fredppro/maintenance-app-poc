@@ -25,13 +25,17 @@ function renderPage(state: object) {
 }
 
 describe("InventoryPageClient", () => {
-  it("shows an empty state when no task uses materials", () => {
+  it("shows the planned-materials empty state on its own tab", async () => {
+    const user = userEvent.setup();
     renderPage({ entries: [] });
+    await user.click(screen.getByRole("tab", { name: "Planned materials" }));
     expect(screen.getByText("No materials yet")).toBeInTheDocument();
   });
 
-  it("totals the same material across tasks", () => {
+  it("totals the same material across tasks", async () => {
+    const user = userEvent.setup();
     renderPage({ entries });
+    await user.click(screen.getByRole("tab", { name: "Planned materials" }));
     const table = screen.getByRole("table", { name: "Planned materials" });
     expect(table.querySelector("tbody")).toHaveClass("bg-background");
     const oil = screen.getByRole("row", { name: /Oil/ });
@@ -42,6 +46,7 @@ describe("InventoryPageClient", () => {
   it("filters materials by name", async () => {
     const user = userEvent.setup();
     renderPage({ entries });
+    await user.click(screen.getByRole("tab", { name: "Planned materials" }));
     await user.type(screen.getByRole("textbox", { name: /search materials/i }), "grea");
     expect(screen.queryByText("Oil")).not.toBeInTheDocument();
     expect(screen.getByText("Grease")).toBeInTheDocument();

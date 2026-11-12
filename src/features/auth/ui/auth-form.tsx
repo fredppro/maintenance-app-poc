@@ -152,14 +152,14 @@ export function AuthForm({
           {t("productName")}
         </Link>
         <Card variant="elevated" className="w-full">
-          <CardHeader className="gap-3">
+          <CardHeader>
             <h1
               data-slot="card-title"
               className="text-xl font-semibold tracking-tight text-foreground text-balance sm:text-2xl"
             >
               {t("signUpTitle")}
             </h1>
-            <CardDescription className="text-base">
+            <CardDescription>
               {t("signUpDescription")}
             </CardDescription>
           </CardHeader>
@@ -472,11 +472,11 @@ function SignupProductPreview() {
         </div>
       </div>
 
-      <Card className="relative mx-auto w-full max-w-md gap-0 overflow-hidden rounded-xl py-0">
-        <CardHeader className="border-b border-border bg-card px-5 py-4">
+      <Card layout="sectioned" className="relative mx-auto w-full max-w-md">
+        <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-sm">{t("previewTitle")}</CardTitle>
+              <CardTitle>{t("previewTitle")}</CardTitle>
               <CardDescription className="mt-1">
                 {t("previewDescription")}
               </CardDescription>
@@ -486,7 +486,7 @@ function SignupProductPreview() {
             </span>
           </div>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 p-5">
+        <CardContent className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg border border-border bg-surface-muted p-3">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">

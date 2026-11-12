@@ -33,5 +33,8 @@ describe("MetricsPageClient", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Total tasks").parentElement).toHaveTextContent("2");
     expect(screen.getByText("Completion rate").parentElement).toHaveTextContent("50%");
+    expect(screen.getByRole("progressbar", { name: "Scheduled" })).toHaveAttribute("data-tone", "info");
+    expect(screen.getByRole("progressbar", { name: "In progress" })).toHaveAttribute("data-tone", "warning");
+    expect(screen.getByRole("progressbar", { name: "Completed" })).toHaveAttribute("data-tone", "success");
   });
 });
