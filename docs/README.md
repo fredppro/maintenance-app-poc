@@ -14,6 +14,15 @@ belong in the [environment status record](reference/environment-status.md).
 - [Browser test safety](../tests/e2e/README.md) — isolated database setup and
   fixture lifecycle.
 
+## Deployment strategies
+
+- [Deployment architecture and current operating guide](operations/deployment-architecture.md) —
+  recommended single-VPS/shared-database strategy and current evidence limits.
+- [Dedicated database per tenant](architecture/dedicated-database-per-tenant.md) —
+  future architecture, implementation gaps, and readiness gate.
+- [Vercel + Neon fallback](operations/vercel-neon-fallback.md) — retained
+  compatibility path; not the preferred deployment.
+
 ## Architecture
 
 - [Database and migrations](architecture/database-and-migrations.md) —
@@ -26,7 +35,7 @@ belong in the [environment status record](reference/environment-status.md).
 ## Operations
 
 - [Deployment and release](operations/deployment-and-release.md) — CI images,
-  release flow, and operational deployment gates.
+  staging automation, migration-image boundary, and release gates.
 - [Tenant lifecycle and recovery](operations/tenant-lifecycle-and-recovery.md)
   — tenant administration, exports, backups, and recovery guidance.
 - [Incident response](operations/incident-response.md) — draft response
@@ -65,8 +74,9 @@ belong in the [environment status record](reference/environment-status.md).
 
 - [Pilot readiness](planning/pilot-readiness.md) — application controls and
   deployment checklist; live environment unverified.
-- [Self-hosted platform plan](planning/self-hosted-platform-plan.md) — plan
-  and dated operator reports, not a live dashboard.
+- [Self-hosted platform plan](planning/self-hosted-platform-plan.md) —
+  historical plan and dated operator reports; use the deployment strategy
+  guides above for current guidance.
 - [Security and product readiness plan](planning/security-and-product-readiness-plan.md) —
   prioritized implementation and validation gaps from the 2026-10-29 review.
 - [Environment status](reference/environment-status.md) — authoritative

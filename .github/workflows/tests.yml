@@ -2,8 +2,12 @@ name: Tests
 
 on:
   pull_request:
-  push:
     branches: [main, develop]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   unit:
@@ -82,13 +86,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
     env:
-      IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
-      MIGRATOR_IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}-migrator
+      IMAGE: ghcr.io/${{ github.repository }}:${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.pull_request.number, github.event.pull_request.head.sha) || github.sha }}
+      MIGRATOR_IMAGE: ghcr.io/${{ github.repository }}:${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.pull_request.number, github.event.pull_request.head.sha) || github.sha }}-migrator
+      APP_BUILD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     outputs:
-      image_digest: ${{ steps.publish.outputs.image_digest }}
-      migrator_image_digest: ${{ steps.publish.outputs.migrator_image_digest }}
+      artifact_name: ${{ steps.save-images.outputs.artifact_name }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -100,7 +103,7 @@ jobs:
           platforms: linux/amd64
           tags: ${{ env.IMAGE }}
           build-args: |
-            APP_BUILD_SHA=${{ github.sha }}
+            APP_BUILD_SHA=${{ env.APP_BUILD_SHA }}
           load: true
           cache-from: type=gha,scope=app
           cache-to: type=gha,mode=max,scope=app
@@ -133,194 +136,72 @@ jobs:
           ignore-unfixed: false
           vuln-type: os,library
           severity: CRITICAL,HIGH
+      - name: Save validated images
+        id: save-images
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number || 0 }}
+          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          APP_IMAGE: ${{ env.IMAGE }}
+          MIGRATOR_IMAGE: ${{ env.MIGRATOR_IMAGE }}
+          APP_BUILD_SHA: ${{ env.APP_BUILD_SHA }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            artifact_name="validated-images-pr-${PR_NUMBER}-${HEAD_SHA}-${GITHUB_RUN_ATTEMPT}"
+          else
+            artifact_name="validated-images-main-${HEAD_SHA}-${GITHUB_RUN_ATTEMPT}"
+          fi
+
+          mkdir -p "$RUNNER_TEMP/validated-images"
+          docker save \
+            --output "$RUNNER_TEMP/validated-images/images.tar" \
+            "$APP_IMAGE" "$MIGRATOR_IMAGE"
+          jq -n \
+            --argjson pull_request "$PR_NUMBER" \
+            --arg head_sha "$HEAD_SHA" \
+            --arg tested_tree_sha "$(git rev-parse 'HEAD^{tree}')" \
+            --arg app_build_sha "$APP_BUILD_SHA" \
+            --arg app_image "$APP_IMAGE" \
+            --arg migrator_image "$MIGRATOR_IMAGE" \
+            '{schema_version: 1, pull_request: $pull_request, head_sha: $head_sha, tested_tree_sha: $tested_tree_sha, app_build_sha: $app_build_sha, app_image: $app_image, migrator_image: $migrator_image}' \
+            > "$RUNNER_TEMP/validated-images/manifest.json"
+          echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.save-images.outputs.artifact_name }}
+          path: ${{ runner.temp }}/validated-images/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+  publish-main:
+    needs: [container-image]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+      MIGRATOR_IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}-migrator
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.container-image.outputs.artifact_name }}
+          path: ${{ runner.temp }}/validated-images
+      - name: Load validated images
+        run: docker load --input "${{ runner.temp }}/validated-images/images.tar"
       - name: Log in to GitHub Container Registry
-        if: github.event_name == 'push'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Publish immutable commit image
-        if: github.event_name == 'push'
-        id: publish
-        run: |
-          push_with_retries() {
-            local image="$1"
-            local attempt
-            for attempt in 1 2 3; do
-              echo "Pushing $image (attempt $attempt/3)"
-              if docker push "$image"; then
-                return 0
-              fi
-              if [ "$attempt" -eq 3 ]; then
-                echo "::error::Failed to push $image after $attempt attempts."
-                return 1
-              fi
-              sleep $((attempt * 10))
-            done
-          }
-
-          push_with_retries "$IMAGE"
-          manifest_digest="$(docker buildx imagetools inspect "$IMAGE" | awk '$1 == "Digest:" { print $2; exit }')"
-          if ! printf '%s' "$manifest_digest" | grep -Eq '^sha256:[0-9a-f]{64}$'; then
-            echo "::error::Could not resolve the pushed image digest."
-            exit 1
-          fi
-          echo "image_digest=${IMAGE%:*}@$manifest_digest" >> "$GITHUB_OUTPUT"
-          push_with_retries "$MIGRATOR_IMAGE"
-          migrator_digest="$(docker buildx imagetools inspect "$MIGRATOR_IMAGE" | awk '$1 == "Digest:" { print $2; exit }')"
-          if ! printf '%s' "$migrator_digest" | grep -Eq '^sha256:[0-9a-f]{64}$'; then
-            echo "::error::Could not resolve the pushed migration image digest."
-            exit 1
-          fi
-          echo "migrator_image_digest=${MIGRATOR_IMAGE%:*}@$migrator_digest" >> "$GITHUB_OUTPUT"
-
-  deploy-staging:
-    needs: [container-image]
-    if: >-
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/develop' &&
-      vars.STAGING_AUTODEPLOY_ENABLED == 'true'
-    runs-on: ubuntu-latest
-    environment: staging
-    concurrency:
-      group: staging-deploy
-      cancel-in-progress: false
-    permissions:
-      contents: read
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy exact image to staging
-        shell: bash
-        env:
-          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
-          STAGING_WIREGUARD_CONFIG: ${{ secrets.STAGING_WIREGUARD_CONFIG }}
-          IMAGE_DIGEST: ${{ needs.container-image.outputs.image_digest }}
-          EXPECTED_REVISION: ${{ github.sha }}
+      - name: Publish immutable commit images
         run: |
           set -euo pipefail
-
-          if [[ -z "$COOLIFY_API_TOKEN" || -z "$STAGING_WIREGUARD_CONFIG" ]]; then
-            echo "::error::Configure COOLIFY_API_TOKEN and STAGING_WIREGUARD_CONFIG in the staging environment."
-            exit 1
-          fi
-
-          if [[ ! "$IMAGE_DIGEST" =~ ^ghcr\.io/fredppro/maintenance-app-poc@sha256:([a-f0-9]{64})$ ]]; then
-            echo "::error::The image digest output is missing or malformed."
-            exit 1
-          fi
-          image_hash="${BASH_REMATCH[1]}"
-          coolify_image_tag="sha256-${image_hash}"
-
-          current_head="$(git ls-remote --exit-code origin refs/heads/develop | awk 'NR == 1 { print $1 }')"
-          if [[ "$current_head" != "$EXPECTED_REVISION" ]]; then
-            echo "::notice::Skipping staging deployment because $EXPECTED_REVISION is no longer the develop branch head."
-            exit 0
-          fi
-
-          coolify_api_url="http://10.242.0.1:8000"
-          coolify_app_uuid="s3ykxyqc8bfryycpesrrib2p"
-          staging_health_url="https://staging.maintenance.isosist.com/api/health"
-          wg_config_path="/etc/wireguard/staging-deploy.conf"
-          response_headers="$(mktemp)"
-          deployment_response="$(mktemp)"
-
-          cleanup() {
-            if [[ -f "$wg_config_path" ]]; then
-              if ! sudo wg-quick down "$wg_config_path" >/dev/null 2>&1; then
-                echo "::warning::Could not tear down the temporary WireGuard interface."
-              fi
-              if ! sudo rm -f "$wg_config_path"; then
-                echo "::warning::Could not remove the temporary WireGuard config."
-              fi
-            fi
-            if ! rm -f "$response_headers"; then
-              echo "::warning::Could not remove temporary health response headers."
-            fi
-            if ! rm -f "$deployment_response"; then
-              echo "::warning::Could not remove the temporary deployment response."
-            fi
-          }
-          trap cleanup EXIT
-
-          if ! command -v wg-quick >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install --yes wireguard-tools
-          fi
-
-          sudo install -d -m 700 /etc/wireguard
-          printf '%s\n' "$STAGING_WIREGUARD_CONFIG" | sudo tee "$wg_config_path" >/dev/null
-          sudo chmod 600 "$wg_config_path"
-          if sudo grep -Eiq '^[[:space:]]*(PreUp|PostUp|PreDown|PostDown|SaveConfig|Table|DNS)[[:space:]]*=' "$wg_config_path"; then
-            echo "::error::The staging WireGuard config contains unsupported directives."
-            exit 1
-          fi
-          allowed_ips="$(sudo awk -F= '/^[[:space:]]*AllowedIPs[[:space:]]*=/ { gsub(/[[:space:]]/, "", $2); print $2 }' "$wg_config_path")"
-          if [[ "$allowed_ips" != "10.242.0.1/32" ]]; then
-            echo "::error::The staging WireGuard peer must route only 10.242.0.1/32."
-            exit 1
-          fi
-          sudo wg-quick up "$wg_config_path"
-
-          application_url="$coolify_api_url/api/v1/applications/$coolify_app_uuid"
-          payload="$(jq -cn \
-            --arg image_name 'ghcr.io/fredppro/maintenance-app-poc' \
-            --arg tag "$coolify_image_tag" \
-            '{docker_registry_image_name: $image_name, docker_registry_image_tag: $tag}')"
-          if ! patch_status="$(curl --silent --show-error --max-time 30 \
-            --output /dev/null --write-out '%{http_code}' \
-            --request PATCH \
-            --header "Authorization: Bearer $COOLIFY_API_TOKEN" \
-            --header 'Accept: application/json' \
-            --header 'Content-Type: application/json' \
-            --data "$payload" \
-            "$application_url")"; then
-            echo "::error::Could not update the staging image in Coolify."
-            exit 1
-          fi
-          if [[ ! "$patch_status" =~ ^2[0-9][0-9]$ ]]; then
-            echo "::error::Coolify rejected the staging image update (HTTP $patch_status)."
-            exit 1
-          fi
-
-          if ! deploy_status="$(curl --silent --show-error --max-time 30 \
-            --output "$deployment_response" --write-out '%{http_code}' \
-            --request POST \
-            --header "Authorization: Bearer $COOLIFY_API_TOKEN" \
-            --header 'Accept: application/json' \
-            "$coolify_api_url/api/v1/deploy?uuid=$coolify_app_uuid")"; then
-            echo "::error::Could not trigger the Coolify staging deployment."
-            exit 1
-          fi
-          if [[ ! "$deploy_status" =~ ^2[0-9][0-9]$ ]]; then
-            echo "::error::Coolify rejected the staging deployment request (HTTP $deploy_status)."
-            exit 1
-          fi
-          if ! deployment_uuid="$(jq -er --arg uuid "$coolify_app_uuid" \
-            '.deployments[] | select(.resource_uuid == $uuid) | .deployment_uuid' \
-            "$deployment_response")"; then
-            echo "::error::Coolify did not return a deployment UUID for the staging application."
-            exit 1
-          fi
-
-          echo "Coolify queued deployment $deployment_uuid. Waiting for staging to serve revision $EXPECTED_REVISION."
-          for attempt in $(seq 1 36); do
-            if http_status="$(curl --silent --max-time 5 \
-              --dump-header "$response_headers" \
-              --output /dev/null --write-out '%{http_code}' \
-              "$staging_health_url")"; then
-              deployed_revision="$(awk 'tolower($1) == "x-application-revision:" { gsub("\r", "", $2); print $2; exit }' "$response_headers")"
-              if [[ "$http_status" == "200" && "$deployed_revision" == "$EXPECTED_REVISION" ]]; then
-                echo "Staging is healthy and serves revision $deployed_revision using $IMAGE_DIGEST."
-                exit 0
-              fi
-              echo "Health probe $attempt/36: HTTP $http_status; revision=${deployed_revision:-not reported}."
-            else
-              echo "Health probe $attempt/36: staging is not reachable yet."
-            fi
-            sleep 10
-          done
-
-          echo "::error::Staging did not become healthy on revision $EXPECTED_REVISION before the timeout."
-          exit 1
+          docker push "$IMAGE"
+          docker push "$MIGRATOR_IMAGE"
