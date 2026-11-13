@@ -105,14 +105,7 @@ test("schedule a task from the dashboard with accessible form controls", async (
       name: "E2E - Playwright scheduled task",
     });
     await mobileTask.scrollIntoViewIfNeeded();
-    const taskBox = await mobileTask.boundingBox();
-    if (!taskBox) {
-      throw new Error("Scheduled task is not visible in the mobile timeline");
-    }
-    await mobilePage.touchscreen.tap(
-      taskBox.x + taskBox.width / 2,
-      taskBox.y + taskBox.height / 2,
-    );
+    await mobileTask.tap();
     const mobileDialog = mobilePage.getByRole("dialog");
     await expect(mobileDialog).toBeVisible();
     await mobilePage.keyboard.press("Escape");
