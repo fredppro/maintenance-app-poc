@@ -78,7 +78,9 @@ test("an operator-provisioned owner is guided through setup, and other organizat
     await page.getByLabel("Name").fill("E2E Checklist Technician");
     await page.getByLabel("Email").fill(`playwright-onboarding-technician-${runId}@example.test`);
     await page.getByRole("dialog").getByRole("button", { name: "Create worker" }).click();
-    await expect(page.getByText("E2E Checklist Technician")).toBeVisible(timeout);
+    await expect(
+      page.getByRole("table").getByText("E2E Checklist Technician"),
+    ).toBeVisible(timeout);
 
     await page.getByRole("link", { name: "Schedule", exact: true }).click();
     await page.waitForURL(/\/en$/);

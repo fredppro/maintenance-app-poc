@@ -66,6 +66,58 @@ Stop the local PostgreSQL service without deleting its data with
 `pnpm db:down`. The detailed setup and test instructions below cover other
 workflows and production configuration.
 
+## Scheduling maintenance
+
+Use **Schedule Maintenance** in the scheduler header, or select an empty timeline
+cell to prefill the equipment and date. The **Details** tab contains scheduling,
+equipment, status, and worker assignments. **Execution** groups the checklist,
+work logs, and materials; the edit sheet also has a **Notifications** tab.
+Switching tabs preserves the draft, and submitting an invalid form opens the
+first affected tab and focuses the field that needs attention.
+
+The edit sheet's **Worksheet** menu previews or downloads the saved task report.
+Preview opens in a separate tab so the editing session remains intact; save
+changes first if they should appear in the report.
+
+Maintenance search lives in the application header, immediately before the
+language switcher. Activate it or press **Cmd+K** on Apple platforms /
+**Ctrl+K** elsewhere to open the Command palette. Search by task title,
+equipment/category, or worker name/email; the same query filters the timeline.
+Use arrow keys and Enter to open a task, Escape to close, and **Clear search**
+to restore the unfiltered schedule.
+
+## Shared interface conventions
+
+The [design-system reference](./docs/design-system.md) documents the full
+component consistency matrix, implemented specifications, and exceptions.
+
+The existing Geist family and light/dark background colors are preserved.
+[Global tokens](./src/styles/globals.css) distinguish interactive controls from
+structural surfaces:
+
+- `--control-radius`: 20px; compact controls/textareas use
+  `--control-radius-sm` (16px). Tabs use a 20px outer radius and 16px inset
+  triggers. Cards, alerts, navigation, menus, and timeline containers retain
+  the restrained existing `--radius` scale.
+- `--control-height`: 40px; compact controls use `--control-height-sm`
+  (36px), large/touch controls use `--control-height-lg` (44px). Use
+  component size props (`size="sm"` or `controlSize="sm"`) instead of local
+  height overrides. Embedded input actions and calendar cells retain compact
+  proportions.
+- `--field-gap`: 8px; `--form-gap`: 16px; `--section-gap`: 24px.
+  Page padding is 16px, increasing to 24px on larger screens.
+- `--letter-spacing-ui`: -0.015em, paired with 14px/20px control text.
+  Text-entry fields retain 16px text on smaller screens to avoid mobile zoom.
+- `--status-scheduled`, `--status-in-progress`, `--status-completed`, and
+  `--status-cancelled` define blue, amber, green, and neutral maintenance
+  states. [Status presentation](./src/features/scheduler/ui/task-status-presentation.ts)
+  centralizes their use in task backgrounds, badges, selectors, and markers;
+  task type does not determine the status color.
+
+The shared [class merger](./src/lib/utils.ts) registers these custom Tailwind
+scales, so component variants and deliberate compact overrides resolve
+predictably instead of leaving conflicting utilities in the rendered markup.
+
 ## Documentation
 
 - [Documentation index](./docs/README.md)

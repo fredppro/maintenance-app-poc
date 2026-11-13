@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export type TenantContextOption = {
   organizationId: string;
@@ -26,11 +27,15 @@ export function TenantContextSelector({
   selectedSiteId,
   label,
   displayOrganizationName = true,
+  displaySelectedOrganizationName = displayOrganizationName,
+  className,
 }: {
   options: TenantContextOption[];
   selectedSiteId?: string;
   label: string;
   displayOrganizationName?: boolean;
+  displaySelectedOrganizationName?: boolean;
+  className?: string;
 }) {
   const t = useTranslations("OrganizationSelection");
   const router = useRouter();
@@ -63,7 +68,7 @@ export function TenantContextSelector({
   const selected = options.find((option) => option.siteId === selectedSiteId);
 
   return (
-    <label className="flex min-w-0 flex-col gap-1 text-sm">
+    <label className={cn("flex min-w-0 flex-col gap-1 text-sm", className)}>
       <span className="sr-only">{label}</span>
       <Select
         disabled={pending}
@@ -84,7 +89,11 @@ export function TenantContextSelector({
                 ? t("tenantContextPlaceholder")
                 : t("siteSelectionPlaceholder")
             }
-          />
+          >
+            {selected && !displaySelectedOrganizationName
+              ? selected.siteName
+              : undefined}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>

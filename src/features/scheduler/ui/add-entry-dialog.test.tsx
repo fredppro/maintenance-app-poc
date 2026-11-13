@@ -141,6 +141,8 @@ describe("AddEntryDialog", () => {
     const user = userEvent.setup();
     renderDialog();
 
+    expect(screen.queryByRole("button", { name: "Log work" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
     await user.click(screen.getByRole("button", { name: "Log work" }));
     expect(
       screen.getByRole("heading", { level: 4, name: "#1" }),
@@ -148,6 +150,8 @@ describe("AddEntryDialog", () => {
     await user.click(screen.getByRole("button", { name: "Schedule" }));
 
     expect(await screen.findByText("Title is required")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Details" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("textbox", { name: "Title" })).toHaveFocus();
     expect(screen.getByRole("textbox", { name: "Title" })).toHaveAttribute(
       "aria-invalid",
       "true",
@@ -171,6 +175,52 @@ describe("AddEntryDialog", () => {
         "Enter a duration from 0.25 to 24 hours in 0.25-hour increments.",
       ),
     ).toBeInTheDocument();
+    expect(createTaskMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps execution drafts mounted and focuses their first invalid field on submission", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    await user.type(screen.getByRole("textbox", { name: "Title" }), "Inspect bearing");
+    await user.click(screen.getByRole("combobox", { name: "Assigned Workers" }));
+    await user.click(screen.getByText("Taylor Worker (taylor@example.test)"));
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
+    await user.click(screen.getByRole("button", { name: "Log work" }));
+    await user.type(screen.getByLabelText("Duration (hours)"), "2");
+
+    await user.click(screen.getByRole("tab", { name: "Details" }));
+    expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue("Inspect bearing");
+    expect(screen.queryByRole("button", { name: "Log work" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Schedule" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: "Execution" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("combobox", { name: "Worker" })).toHaveFocus();
+    });
+    expect(screen.getByLabelText("Duration (hours)")).toHaveValue(2);
+    expect(screen.getByRole("combobox", { name: "Worker" })).toHaveAttribute("aria-invalid", "true");
+    expect(createTaskMock).not.toHaveBeenCalled();
+  });
+
+  it("validates materials in an inactive panel and focuses the invalid item", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+    await user.type(screen.getByRole("textbox", { name: "Title" }), "Inspect bearing");
+    await user.click(screen.getByRole("combobox", { name: "Assigned Workers" }));
+    await user.click(screen.getByText("Taylor Worker (taylor@example.test)"));
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
+    await user.click(screen.getByRole("button", { name: "Add Material" }));
+    await user.click(screen.getByRole("tab", { name: "Details" }));
+    await user.click(screen.getByRole("button", { name: "Schedule" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: "Execution" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("textbox", { name: "Item Name 1" })).toHaveFocus();
+    });
+    expect(screen.getByText("Name is required")).toBeVisible();
     expect(createTaskMock).not.toHaveBeenCalled();
   });
 
@@ -265,6 +315,10 @@ describe("AddEntryDialog", () => {
     await waitFor(() => expect(pointSelect).toBeEnabled());
     await user.click(pointSelect);
     await user.click(await screen.findByRole("option", { name: "Spindle" }));
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
+    await user.click(
+      screen.getByRole("button", { name: /Checklist items/i }),
+    );
 
     expect(
       screen.getByRole("checkbox", { name: "Check spindle lubrication" }),
@@ -320,6 +374,7 @@ describe("AddEntryDialog", () => {
     );
     await user.click(screen.getByText("Taylor Worker (taylor@example.test)"));
     await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
     await user.click(screen.getByRole("button", { name: "Log work" }));
     await user.click(screen.getByRole("combobox", { name: "Worker" }));
     await user.click(

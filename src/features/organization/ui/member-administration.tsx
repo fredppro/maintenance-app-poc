@@ -1,9 +1,19 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Field,
   FieldError,
@@ -12,13 +22,12 @@ import {
 } from "@/components/ui/field";
 import {
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { MailPlus, UserPlus } from "lucide-react";
+import { MailPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -51,6 +60,10 @@ type PendingInvitation = {
   role: string | null;
   expiresAt: Date;
 };
+type Confirmation = {
+  message: string;
+  action: () => Promise<void>;
+};
 
 export function MemberAdministration({
   members,
@@ -64,9 +77,12 @@ export function MemberAdministration({
   actorRole: string;
 }) {
   const t = useTranslations("Members");
+  const tCommon = useTranslations("Common");
   const router = useRouter();
+  const locale = useLocale();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
 
   async function perform(action: () => Promise<void>) {
     setPending(true);
@@ -112,7 +128,7 @@ export function MemberAdministration({
   }
 
   return (
-    <div className="flex w-full max-w-3xl flex-col gap-8">
+    <div className="flex w-full min-w-0 flex-col gap-section">
       {error && <FieldError role="alert">{error}</FieldError>}
       <Card variant="elevated">
         <CardHeader>
@@ -195,19 +211,16 @@ export function MemberAdministration({
                           disabled={pending}
                           onValueChange={(value) => {
                             const role = value as ManagedRole;
-                            if (
-                              !window.confirm(
-                                t("confirmRoleChange", { name: member.name }),
-                              )
-                            ) {
-                              return;
-                            }
-                            void perform(() =>
-                              updateOrganizationMemberRole({
+                            setConfirmation({
+                              message: t("confirmRoleChange", {
+                                name: member.name,
+                              }),
+                              action: () =>
+                                updateOrganizationMemberRole({
                                 memberId: member.id,
                                 role,
-                              }),
-                            );
+                                }),
+                            });
                           }}
                         >
                           <SelectTrigger
@@ -235,15 +248,11 @@ export function MemberAdministration({
                           variant="outline"
                           disabled={pending}
                           onClick={() => {
-                            if (
-                              window.confirm(
-                                t("confirmRemove", { name: member.name }),
-                              )
-                            ) {
-                              void perform(() =>
+                            setConfirmation({
+                              message: t("confirmRemove", { name: member.name }),
+                              action: () =>
                                 removeOrganizationMember({ memberId: member.id }),
-                              );
-                            }
+                            });
                           }}
                         >
                           {pending && <Spinner data-icon="inline-start" />}
@@ -269,7 +278,7 @@ export function MemberAdministration({
         </CardHeader>
         <CardContent>
           {invitations.length === 0 ? (
-            <Empty className="border-0 p-4">
+            <Empty size="sm">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <MailPlus />
@@ -277,17 +286,6 @@ export function MemberAdministration({
                 <EmptyTitle>{t("noInvitations")}</EmptyTitle>
                 <EmptyDescription>{t("noInvitationsHint")}</EmptyDescription>
               </EmptyHeader>
-              <EmptyContent>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => document.getElementById("member-email")?.focus()}
-                >
-                  <UserPlus data-icon="inline-start" />
-                  {t("inviteAction")}
-                </Button>
-              </EmptyContent>
             </Empty>
           ) : (
             <ul className="flex flex-col divide-y">
@@ -301,7 +299,7 @@ export function MemberAdministration({
                     <span className="text-sm text-muted-foreground">
                       {displayRole(invitation.role ?? "member")} ·{" "}
                       {t("expires", {
-                        date: new Intl.DateTimeFormat(undefined, {
+                        date: new Intl.DateTimeFormat(locale, {
                           dateStyle: "medium",
                         }).format(invitation.expiresAt),
                       })}
@@ -312,17 +310,15 @@ export function MemberAdministration({
                     variant="outline"
                     disabled={pending}
                     onClick={() => {
-                      if (
-                        window.confirm(
-                          t("confirmRevoke", { email: invitation.email }),
-                        )
-                      ) {
-                        void perform(() =>
+                      setConfirmation({
+                        message: t("confirmRevoke", {
+                          email: invitation.email,
+                        }),
+                        action: () =>
                           revokeOrganizationInvitation({
                             invitationId: invitation.id,
                           }),
-                        );
-                      }
+                      });
                     }}
                   >
                     {pending && <Spinner data-icon="inline-start" />}
@@ -334,6 +330,38 @@ export function MemberAdministration({
           )}
         </CardContent>
       </Card>
+      <AlertDialog
+        open={confirmation !== null}
+        onOpenChange={(open) => {
+          if (!open && !pending) setConfirmation(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("confirmActionTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmation?.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={pending}
+              onClick={() => {
+                if (!confirmation) return;
+                const action = confirmation.action;
+                setConfirmation(null);
+                void perform(action);
+              }}
+            >
+              {pending && <Spinner data-icon="inline-start" />}
+              {t("confirmAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

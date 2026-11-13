@@ -63,7 +63,6 @@ export function ChecklistTemplateEditor({
                 disabled
                 aria-hidden="true"
                 tabIndex={-1}
-                className="rounded-full"
               />
               <Input
                 ref={(element) => {
@@ -80,7 +79,8 @@ export function ChecklistTemplateEditor({
                 placeholder={t("checklistItemPlaceholder")}
                 aria-label={t("checklistItemLabel", { number: index + 1 })}
                 maxLength={300}
-                className="h-8 min-w-0 border-0 px-1 shadow-none focus-visible:ring-0"
+                controlSize="sm"
+                variant="inline"
               />
               <Button
                 type="button"

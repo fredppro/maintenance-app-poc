@@ -13,6 +13,8 @@ belong in the [environment status record](reference/environment-status.md).
   names and code-level behavior; never a place to record secret values.
 - [Browser test safety](../tests/e2e/README.md) — isolated database setup and
   fixture lifecycle.
+- [Application design system](design-system.md) — implemented tokens, component
+  specifications, composition rules, audit decisions, and intentional exceptions.
 
 ## Deployment strategies
 

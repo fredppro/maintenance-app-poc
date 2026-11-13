@@ -2,14 +2,32 @@ import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
 
-function Empty({ className, ...props }: React.ComponentProps<'div'>) {
+const emptyVariants = cva(
+  'flex min-w-0 items-center rounded-lg border-dashed text-balance',
+  {
+    variants: {
+      variant: {
+        default: 'flex-1 flex-col justify-center text-center',
+        surface: 'flex-1 flex-col justify-center border border-solid bg-card text-center',
+        inline: 'flex-none flex-row justify-start border border-solid bg-card text-left [&>[data-slot=empty-icon]]:mb-0 [&>[data-slot=empty-icon]]:size-8 [&>[data-slot=empty-title]]:text-sm',
+      },
+      size: {
+        default: 'gap-section p-6 md:p-12',
+        sm: 'flex-none gap-3 p-4 [&_[data-slot=empty-title]]:text-sm',
+      },
+    },
+    compoundVariants: [{ variant: 'inline', className: 'gap-3 p-3 md:p-3' }],
+    defaultVariants: { variant: 'default', size: 'default' },
+  },
+)
+
+function Empty({ className, variant, size, ...props }: React.ComponentProps<'div'> & VariantProps<typeof emptyVariants>) {
   return (
     <div
       data-slot="empty"
-      className={cn(
-        'flex min-w-0 flex-1 flex-col items-center justify-center gap-6 rounded-lg border-dashed p-6 text-center text-balance md:p-12',
-        className,
-      )}
+      data-variant={variant ?? 'default'}
+      data-size={size ?? 'default'}
+      className={cn(emptyVariants({ variant, size }), className)}
       {...props}
     />
   )
@@ -73,7 +91,7 @@ function EmptyDescription({ className, ...props }: React.ComponentProps<'p'>) {
     <div
       data-slot="empty-description"
       className={cn(
-        'text-muted-foreground [&>a:hover]:text-primary text-sm/relaxed [&>a]:underline [&>a]:underline-offset-4',
+        'text-muted-foreground [&>a:hover]:text-link-hover text-sm/relaxed [&>a]:underline [&>a]:underline-offset-4',
         className,
       )}
       {...props}

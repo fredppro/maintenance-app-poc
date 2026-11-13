@@ -790,19 +790,6 @@ export async function getTasks() {
       dailyHours: true,
       materials: true,
       checklistItems: { orderBy: { sortOrder: "asc" } },
-      reminders: {
-        select: {
-          id: true,
-          workerId: true,
-          notificationType: true,
-          status: true,
-          scheduledFor: true,
-          sentAt: true,
-          attempts: true,
-          worker: { select: { name: true } },
-        },
-        orderBy: { scheduledFor: "asc" },
-      },
     },
     orderBy: { startTime: "asc" },
   });

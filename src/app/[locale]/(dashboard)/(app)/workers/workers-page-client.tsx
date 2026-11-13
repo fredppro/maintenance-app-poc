@@ -2,12 +2,17 @@
 
 import { useSchedulerStore } from "@/features/scheduler/store/scheduler-provider";
 import WorkerManagementPage from "@/features/worker/ui/WorkerManagementPage";
+import { useLocale } from "next-intl";
 
 export function WorkersPageClient() {
   const setWorkers = useSchedulerStore((s) => s.setWorkers);
+  const timeZone = useSchedulerStore((s) => s.timeZone);
+  const locale = useLocale();
   return (
-    <div className="mx-auto w-full max-w-6xl p-3 sm:p-6">
-      <WorkerManagementPage onWorkersChange={setWorkers} />
-    </div>
+    <WorkerManagementPage
+      onWorkersChange={setWorkers}
+      locale={locale}
+      timeZone={timeZone}
+    />
   );
 }

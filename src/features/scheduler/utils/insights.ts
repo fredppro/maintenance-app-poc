@@ -80,7 +80,7 @@ export function summarizeMetrics(
     byType: {
       preventive: countNonCancelled((e) => e.type === "PREVENTIVE"),
       corrective: countNonCancelled((e) => e.type === "CORRECTIVE"),
-      inspection: countNonCancelled((e) => e.type === "PREDICTIVE"),
+      predictive: countNonCancelled((e) => e.type === "PREDICTIVE"),
     },
     byStatus: {
       scheduled: count((e) => e.status === "scheduled"),
@@ -141,12 +141,21 @@ export function getNextScheduledMaintenance(
     .sort((a, b) => +new Date(a.startTime) - +new Date(b.startTime))[0];
 }
 
+export function getOverdueScheduledMaintenance(
+  entries: MaintenanceEntry[],
+  now: number,
+): MaintenanceEntry[] {
+  return entries
+    .filter(
+      (entry) =>
+        entry.status === "scheduled" && +new Date(entry.startTime) < now,
+    )
+    .sort((a, b) => +new Date(a.startTime) - +new Date(b.startTime));
+}
+
 export function countOverdueScheduledMaintenance(
   entries: MaintenanceEntry[],
   now: number,
 ): number {
-  return entries.filter(
-    (entry) =>
-      entry.status === "scheduled" && +new Date(entry.startTime) < now,
-  ).length;
+  return getOverdueScheduledMaintenance(entries, now).length;
 }

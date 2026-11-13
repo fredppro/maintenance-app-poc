@@ -83,7 +83,7 @@ export function OrganizationExportCard({ exports }: { exports: ExportRow[] }) {
         {exports.map((row) => (
           <div key={row.id} className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Badge variant={row.status === "FAILED" ? "destructive" : "secondary"}>
+              <Badge variant={row.status === "FAILED" ? "danger" : row.status === "READY" ? "success" : "info"}>
                 {t(`status.${row.status}`)}
               </Badge>
               <span className="text-sm text-muted-foreground">
@@ -165,7 +165,7 @@ export function OrganizationDangerCard({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
-                <AlertDialogAction onClick={() => run(requestOrganizationDeletion)}>
+                <AlertDialogAction variant="destructive" onClick={() => run(requestOrganizationDeletion)}>
                   {t("confirmDeletion")}
                 </AlertDialogAction>
               </AlertDialogFooter>

@@ -1,6 +1,14 @@
 import { readStoredFile } from "@/features/files/server/files";
 import type { TenantDb } from "@/lib/prisma";
-import { getTenantContext } from "@/lib/tenant-context";
+import {
+  AuthenticationRequiredError,
+  getTenantContext,
+  OrganizationRequiredError,
+  PermissionDeniedError,
+  SiteSelectionRequiredError,
+  SiteSetupRequiredError,
+  TenantInactiveError,
+} from "@/lib/tenant-context";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +21,22 @@ export async function GET(
   let db: TenantDb;
   try {
     ({ organizationId, db } = await getTenantContext("viewMaintenance"));
-  } catch {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  } catch (error) {
+    if (error instanceof AuthenticationRequiredError) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+    if (error instanceof SiteSelectionRequiredError) {
+      return NextResponse.json({ error: "site_required" }, { status: 409 });
+    }
+    if (
+      error instanceof OrganizationRequiredError ||
+      error instanceof SiteSetupRequiredError ||
+      error instanceof PermissionDeniedError ||
+      error instanceof TenantInactiveError
+    ) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
+    throw error;
   }
 
   const { id } = await params;

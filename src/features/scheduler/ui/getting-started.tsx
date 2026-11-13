@@ -151,9 +151,9 @@ export function GettingStarted({ progress }: { progress: OnboardingProgress }) {
 
   return (
     <>
-      <Card role="region" aria-label={t("title")} className="shrink-0 gap-3 py-3">
-        <CardHeader className="gap-0.5 px-4">
-          <CardTitle className="text-base">
+      <Card role="region" aria-label={t("title")} density="compact" className="shrink-0">
+        <CardHeader>
+          <CardTitle>
             {summary.complete ? t("completeTitle") : t("title")}
           </CardTitle>
           <CardDescription>
@@ -186,7 +186,7 @@ export function GettingStarted({ progress }: { progress: OnboardingProgress }) {
         </CardHeader>
 
         {!summary.complete && !collapsed && (
-          <CardContent className="flex flex-col gap-3 px-4">
+          <CardContent className="flex flex-col gap-3">
             <Progress
               value={summary.percent}
               className="h-1.5"

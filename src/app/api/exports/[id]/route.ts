@@ -3,7 +3,15 @@ import { pipeline } from "node:stream/promises";
 import { NextResponse } from "next/server";
 import { recordAuditEvent } from "@/lib/audit";
 import { getStorage } from "@/lib/storage";
-import { getTenantContext } from "@/lib/tenant-context";
+import {
+  AuthenticationRequiredError,
+  getTenantContext,
+  OrganizationRequiredError,
+  PermissionDeniedError,
+  SiteSelectionRequiredError,
+  SiteSetupRequiredError,
+  TenantInactiveError,
+} from "@/lib/tenant-context";
 import { MAX_EXPORT_ARCHIVE_BYTES } from "@/features/export/export-policy";
 
 export const dynamic = "force-dynamic";
@@ -44,8 +52,22 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   let tenant;
   try {
     tenant = await getTenantContext("manageOrganization");
-  } catch {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  } catch (error) {
+    if (error instanceof AuthenticationRequiredError) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+    if (error instanceof SiteSelectionRequiredError) {
+      return NextResponse.json({ error: "site_required" }, { status: 409 });
+    }
+    if (
+      error instanceof OrganizationRequiredError ||
+      error instanceof SiteSetupRequiredError ||
+      error instanceof PermissionDeniedError ||
+      error instanceof TenantInactiveError
+    ) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
+    throw error;
   }
 
   const { id } = await params;

@@ -46,15 +46,118 @@ function addCalendarDays(
   };
 }
 
-const cellWidths: Record<ViewMode, string> = {
-  day: "min-w-16",
-  week: "min-w-[4.75rem]",
-  month: "min-w-10",
-  year: "min-w-16",
+const timelineDensity = {
+  day: { cellWidth: "min-w-20", columnMinWidth: 80, headerHeight: 56, minRowHeight: 72, trackHeight: 72, entryHeight: 64, padding: 4, columnInset: 4 },
+  week: { cellWidth: "min-w-24", columnMinWidth: 96, headerHeight: 64, minRowHeight: 80, trackHeight: 80, entryHeight: 72, padding: 4, columnInset: 4 },
+  month: { cellWidth: "min-w-20", columnMinWidth: 80, headerHeight: 56, minRowHeight: 72, trackHeight: 64, entryHeight: 56, padding: 4, columnInset: 4 },
+  year: { cellWidth: "min-w-24", columnMinWidth: 96, headerHeight: 56, minRowHeight: 72, trackHeight: 64, entryHeight: 56, padding: 4, columnInset: 4 },
 };
 
+export function getTimelineDensity(viewMode: ViewMode, zoom = 100) {
+  const base = timelineDensity[viewMode];
+  const scale = zoom / 100;
+  const padding = Math.round(base.padding * scale);
+  const entryHeight = Math.max(44, Math.round(base.entryHeight * scale));
+  const trackHeight = Math.max(Math.round(base.trackHeight * scale), entryHeight + padding * 2);
+  return {
+    ...base,
+    minRowHeight: Math.max(Math.round(base.minRowHeight * scale), trackHeight),
+    trackHeight,
+    entryHeight,
+    padding,
+    columnInset: Math.round(base.columnInset * scale),
+  };
+}
+
+function getTimelineBaselineWidth(
+  viewMode: ViewMode,
+  slotCount: number,
+  viewportWidth: number,
+  sidebarWidth: number,
+) {
+  if (slotCount < 1) throw new RangeError("A timeline requires at least one column");
+  return Math.max(timelineDensity[viewMode].columnMinWidth * slotCount, viewportWidth - sidebarWidth);
+}
+
+export function getTimelineColumnWidth(
+  viewMode: ViewMode,
+  slotCount: number,
+  viewportWidth: number,
+  sidebarWidth: number,
+  zoom: number,
+) {
+  const baseline = getTimelineBaselineWidth(viewMode, slotCount, viewportWidth, sidebarWidth) / slotCount;
+  const availableColumnWidth = Math.max(0, viewportWidth - sidebarWidth) / slotCount;
+  return Math.max(availableColumnWidth, baseline * zoom / 100);
+}
+
+export function getTimelineFitZoom(
+  viewMode: ViewMode,
+  slotCount: number,
+  viewportWidth: number,
+  sidebarWidth: number,
+) {
+  const baselineWidth = getTimelineBaselineWidth(viewMode, slotCount, viewportWidth, sidebarWidth);
+  return Math.min(100, Math.max(0, viewportWidth - sidebarWidth) / baselineWidth * 100);
+}
+
 export function getTimelineCellMinWidth(viewMode: ViewMode): string {
-  return cellWidths[viewMode];
+  return getTimelineDensity(viewMode).cellWidth;
+}
+
+export function getTimelineSlotState(
+  slot: Date,
+  viewMode: ViewMode,
+  now: Date,
+  timeZone: string,
+) {
+  const weekday = toZonedCalendarDate(slot, timeZone).getDay();
+  return {
+    current: isSameSlot(now, slot, viewMode, timeZone),
+    weekend: viewMode !== "year" && (weekday === 0 || weekday === 6),
+  };
+}
+
+/** Equal-width calendar columns can have different durations around DST. */
+export function getTimelineTimePosition(
+  date: Date,
+  timeSlots: Date[],
+  viewRange: ViewRange | null,
+): number | null {
+  const time = date.getTime();
+  if (!viewRange || time < viewRange.start.getTime() || time > viewRange.end.getTime()) {
+    return null;
+  }
+  const index = timeSlots.findLastIndex((slot) => slot.getTime() <= time);
+  const start = timeSlots[index].getTime();
+  const end = timeSlots[index + 1]?.getTime() ?? viewRange.end.getTime() + 1;
+  return ((index + (time - start) / (end - start)) / timeSlots.length) * 100;
+}
+
+export function getTimelineDatePosition(
+  date: Date,
+  timeSlots: Date[],
+  viewMode: Exclude<ViewMode, "day">,
+  timeZone: string,
+): number | null {
+  const index = timeSlots.findIndex((slot) => isSameSlot(date, slot, viewMode, timeZone));
+  return index < 0 ? null : ((index + 0.5) / timeSlots.length) * 100;
+}
+
+export function getTimelineScrollLeft(
+  position: number,
+  axisWidth: number,
+  viewportWidth: number,
+  stickyWidth: number,
+): number {
+  const availableWidth = Math.max(0, viewportWidth - stickyWidth);
+  return Math.max(
+    0,
+    Math.min(
+      axisWidth - availableWidth,
+      (position / 100) * axisWidth - availableWidth / 2,
+    ),
+  );
 }
 
 export function getTimelineBoundaryClass(
@@ -70,15 +173,15 @@ export function getTimelineBoundaryClass(
   const zonedNextSlot = toZonedCalendarDate(nextSlot, timeZone);
 
   if (viewMode === "year" && zonedNextSlot.getMonth() % 3 === 0) {
-    return "border-r-2 border-r-border-strong";
+    return "border-r border-r-border-strong";
   }
 
   if (viewMode === "month") {
     if (zonedNextSlot.getMonth() !== zonedDate.getMonth()) {
-      return "border-r-2 border-r-border-strong";
+      return "border-r border-r-border-strong";
     }
     if (zonedNextSlot.getDay() === 1) {
-      return "border-r-2 border-r-border-strong";
+      return "border-r border-r-border-strong";
     }
   }
 
@@ -273,9 +376,6 @@ export interface EquipmentRowLayout {
   height: number;
 }
 
-const MIN_ROW_HEIGHT = 56;
-const TRACK_HEIGHT = 36;
-
 /** Places entries on slots and packs overlapping ones onto separate tracks. */
 export function layoutEquipmentRow(
   entries: MaintenanceEntry[],
@@ -283,6 +383,7 @@ export function layoutEquipmentRow(
   viewRange: ViewRange | null,
   viewMode: ViewMode,
   timeZone = getDefaultTimeZone(),
+  zoom = 100,
 ): EquipmentRowLayout {
   const placed = entries
     .map((entry) => {
@@ -308,9 +409,13 @@ export function layoutEquipmentRow(
   });
 
   const trackCount = Math.max(1, trackEnds.length);
+  const density = getTimelineDensity(viewMode, zoom);
   return {
     items,
     trackCount,
-    height: trackCount > 1 ? Math.max(MIN_ROW_HEIGHT, trackCount * TRACK_HEIGHT) : MIN_ROW_HEIGHT,
+    height: Math.max(
+      density.minRowHeight,
+      trackCount * density.trackHeight,
+    ),
   };
 }

@@ -1,13 +1,35 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { File as NodeFile } from "node:buffer";
+import { PermissionDeniedError } from "@/lib/tenant-context";
 import { POST } from "./route";
 
-const { getTenantContext, saveImageFile, takeRateLimit } = vi.hoisted(() => ({
-  getTenantContext: vi.fn(),
-  takeRateLimit: vi.fn(),
-  saveImageFile: vi.fn(),
+const { getTenantContext, saveImageFile, takeRateLimit, tenantErrors } =
+  vi.hoisted(() => {
+    class AuthenticationRequiredError extends Error {}
+    class OrganizationRequiredError extends Error {}
+    class PermissionDeniedError extends Error {}
+    class SiteSelectionRequiredError extends Error {}
+    class SiteSetupRequiredError extends Error {}
+    class TenantInactiveError extends Error {}
+
+    return {
+      getTenantContext: vi.fn(),
+      takeRateLimit: vi.fn(),
+      saveImageFile: vi.fn(),
+      tenantErrors: {
+        AuthenticationRequiredError,
+        OrganizationRequiredError,
+        PermissionDeniedError,
+        SiteSelectionRequiredError,
+        SiteSetupRequiredError,
+        TenantInactiveError,
+      },
+    };
+  });
+vi.mock("@/lib/tenant-context", () => ({
+  getTenantContext,
+  ...tenantErrors,
 }));
-vi.mock("@/lib/tenant-context", () => ({ getTenantContext }));
 vi.mock("@/lib/rate-limit", () => ({ takeRateLimit }));
 vi.mock("@/features/files/server/files", async () => {
   class FileValidationError extends Error {}
@@ -52,11 +74,19 @@ describe("POST /api/files", () => {
   });
 
   it("requires maintenance write permission", async () => {
-    getTenantContext.mockRejectedValue(new Error("forbidden"));
+    getTenantContext.mockRejectedValue(
+      new PermissionDeniedError("manageMaintenance"),
+    );
     const response = await upload(formWith(new File(["x"], "a.png")));
     expect(response.status).toBe(403);
     expect(getTenantContext).toHaveBeenCalledWith("manageMaintenance");
     expect(saveImageFile).not.toHaveBeenCalled();
+  });
+
+  it("surfaces unexpected tenant context failures", async () => {
+    const error = new Error("database unavailable");
+    getTenantContext.mockRejectedValue(error);
+    await expect(upload(formWith(new File(["x"], "a.png")))).rejects.toBe(error);
   });
 
   it("rejects bodies declared larger than the limit", async () => {

@@ -3,9 +3,10 @@ import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
+import { semanticTones } from './semantic-tones'
 
 const badgeVariants = cva(
-  'inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden',
+  'inline-flex min-h-badge max-w-full items-center justify-center rounded-md border px-2 py-0.5 text-xs leading-4 font-medium tracking-ui w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 [&>svg]:shrink-0 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden',
   {
     variants: {
       variant: {
@@ -15,12 +16,11 @@ const badgeVariants = cva(
           'border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90',
         destructive:
           'border-transparent bg-destructive text-destructive-foreground [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20',
-        success:
-          'border-success/20 bg-success/10 text-success',
-        warning:
-          'border-warning/20 bg-warning/10 text-warning',
-        info:
-          'border-info/20 bg-info/10 text-info',
+        success: semanticTones.success.badge,
+        warning: semanticTones.warning.badge,
+        info: semanticTones.info.badge,
+        danger: semanticTones.danger.badge,
+        neutral: semanticTones.neutral.badge,
         outline:
           'text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
       },
@@ -43,6 +43,7 @@ function Badge({
   return (
     <Comp
       data-slot="badge"
+      data-variant={variant ?? 'default'}
       className={cn(badgeVariants({ variant }), className)}
       {...props}
     />

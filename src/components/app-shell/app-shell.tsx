@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { MapPin } from "lucide-react";
 import { toast } from "sonner";
 import LanguageSwitcher from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -26,6 +27,7 @@ import {
 import { usePathname, useRouter } from "@/i18n/routing";
 import { AppSidebar, type AppUser } from "./app-sidebar";
 import { findNavItem } from "./nav";
+import { MaintenanceSearch } from "./maintenance-search";
 
 export function AppShell({
   children,
@@ -73,25 +75,27 @@ export function AppShell({
             : undefined
         }
         onSignOut={signOut}
-        contextLabel={
-          selected
-            ? `${selected.organizationName} · ${selected.siteName}`
-            : t("noContext")
-        }
-        contextControl={
-          tenantContexts.length > 1 ? (
+      />
+      <SidebarInset className="min-h-0 min-w-0">
+        <header className="@container/shell flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-page sm:px-page-desktop">
+          <SidebarTrigger aria-label={t("toggleSidebar")} />
+          <Separator orientation="vertical" className="h-5" />
+          {tenantContexts.length > 1 ? (
             <TenantContextSelector
               options={tenantContexts}
               selectedSiteId={selectedSiteId}
               label={t("switchContext")}
+              displaySelectedOrganizationName={false}
+              className="w-28 shrink-0 sm:w-40"
             />
-          ) : undefined
-        }
-      />
-      <SidebarInset className="min-h-0 min-w-0">
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 sm:px-4">
-          <SidebarTrigger aria-label={t("toggleSidebar")} />
-          <Separator orientation="vertical" className="h-5" />
+          ) : (
+            <div className="flex h-control min-w-0 max-w-32 items-center gap-1.5 rounded-md border border-border-subtle bg-card px-2 text-sm font-medium sm:max-w-44">
+              <MapPin className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <span className="truncate">
+                {selected?.siteName ?? t("noContext")}
+              </span>
+            </div>
+          )}
           {current && (
             <Breadcrumb className="min-w-0 flex-1">
               <BreadcrumbList className="flex-nowrap">
@@ -107,7 +111,8 @@ export function AppShell({
               </BreadcrumbList>
             </Breadcrumb>
           )}
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+            <MaintenanceSearch />
             <LanguageSwitcher />
             <ThemeToggle />
           </div>

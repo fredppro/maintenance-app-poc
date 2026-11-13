@@ -59,7 +59,7 @@ export function EquipmentRowLabel({
           <div className="max-w-[9rem] truncate text-sm font-medium text-foreground">
             {equipment.name}
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             {locationLabel && (
               <span className="max-w-[7rem] truncate" title={locationLabel}>
                 {locationLabel}
@@ -67,7 +67,7 @@ export function EquipmentRowLabel({
             )}
             {locationLabel && pendingCount > 0 && <span>•</span>}
             {pendingCount > 0 && (
-              <span className="font-medium text-primary">
+              <span className="font-medium text-primary-text">
                 {pendingCount} {pendingCount !== 1 ? t("tasks") : t("task")}
               </span>
             )}
@@ -79,8 +79,8 @@ export function EquipmentRowLabel({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            size="icon"
-            className="size-7 opacity-0 transition-opacity group-hover/equipment-label:opacity-100 group-focus-within/equipment-label:opacity-100"
+            size="icon-xs"
+            className="opacity-0 transition-opacity group-hover/equipment-label:opacity-100 group-focus-within/equipment-label:opacity-100"
             aria-label={t("equipmentActions", { equipment: equipment.name })}
           >
             <MoreVertical />
@@ -92,7 +92,7 @@ export function EquipmentRowLabel({
             {tCommon("edit")}
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="gap-2 text-destructive focus:text-destructive"
+            variant="destructive"
             onClick={onRemove}
           >
             <Trash2 />

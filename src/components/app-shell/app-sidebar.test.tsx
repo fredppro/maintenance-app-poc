@@ -34,7 +34,6 @@ describe("AppSidebar account menu", () => {
           <AppSidebar
             user={{ name: "Alex Example", email: "alex@example.com" }}
             canManageMembers
-            contextLabel="Example organization"
             onAccount={onAccount}
             onSignOut={vi.fn()}
           />

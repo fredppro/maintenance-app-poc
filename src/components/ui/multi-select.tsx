@@ -83,9 +83,9 @@ export function MultiSelect({
             aria-invalid={ariaInvalid}
             aria-describedby={ariaDescribedBy}
             aria-expanded={open}
-            className="h-auto min-h-10 w-full justify-between py-1.5"
+            className="h-auto min-h-control w-full min-w-0 justify-between py-2 font-normal pointer-coarse:h-auto pointer-coarse:min-h-control-lg"
           >
-            <div className="flex flex-wrap items-center gap-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
               {selected.length > 0 ? (
                 options
                   .filter((option) => selected.includes(option.value))
@@ -93,23 +93,24 @@ export function MultiSelect({
                     <Badge
                       key={option.value}
                       variant="secondary"
+                      className="max-w-full"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleUnselect(option.value)
                       }}
                     >
-                      {option.label}
-                      <X className="ml-1 h-3 w-3 hover:text-destructive" />
+                      <span className="truncate">{option.label}</span>
+                      <X className="ml-1 shrink-0 hover:text-destructive" />
                     </Badge>
                   ))
               ) : (
-                <span className="text-muted-foreground">{placeholder}</span>
+                <span className="truncate text-muted-foreground">{placeholder}</span>
               )}
             </div>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown data-icon="inline-end" className="opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-(--radix-popover-trigger-width) min-w-40 p-0" align="start">
           <Command>
             {options.length > 0 && (
               <CommandInput placeholder={searchPlaceholder ?? placeholder} />

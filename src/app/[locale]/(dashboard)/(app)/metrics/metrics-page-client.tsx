@@ -3,7 +3,7 @@
 import { BarChart3 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { PageBody, PageHeader } from "@/components/app-shell/page-header";
+import { PageBody, PageGrid, PageHeader } from "@/components/app-shell/page-header";
 import {
   Card,
   CardContent,
@@ -21,8 +21,11 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { summarizeMetrics } from "@/features/scheduler/utils/insights";
 import { useSchedulerStore } from "@/features/scheduler/store/scheduler-provider";
+import { cn } from "@/lib/utils";
+import { getTaskStatusPresentation } from "@/features/scheduler/ui/task-status-presentation";
+import type { SemanticTone } from "@/components/ui/semantic-tones";
 
-function Bars({ items }: { items: { label: string; value: number }[] }) {
+function Bars({ items }: { items: { label: string; value: number; tone?: SemanticTone }[] }) {
   const max = Math.max(1, ...items.map((i) => i.value));
   return (
     <ul className="flex flex-col gap-3">
@@ -32,7 +35,7 @@ function Bars({ items }: { items: { label: string; value: number }[] }) {
             <span className="truncate">{i.label}</span>
             <span className="tabular-nums text-muted-foreground">{i.value}</span>
           </div>
-          <Progress aria-label={i.label} value={(i.value / max) * 100} />
+          <Progress aria-label={i.label} value={(i.value / max) * 100} tone={i.tone} />
         </li>
       ))}
     </ul>
@@ -52,26 +55,33 @@ export function MetricsPageClient() {
   const types = [
     { label: t("preventive"), value: m.byType.preventive },
     { label: t("corrective"), value: m.byType.corrective },
-    { label: t("inspection"), value: m.byType.inspection },
+    { label: t("predictive"), value: m.byType.predictive },
   ];
   const statuses = [
-    { label: t("scheduled"), value: m.byStatus.scheduled },
-    { label: t("inProgress"), value: m.byStatus.inProgress },
-    { label: t("completed"), value: m.byStatus.completed },
+    { label: t("scheduled"), value: m.byStatus.scheduled, tone: getTaskStatusPresentation("scheduled").tone },
+    { label: t("inProgress"), value: m.byStatus.inProgress, tone: getTaskStatusPresentation("in-progress").tone },
+    { label: t("completed"), value: m.byStatus.completed, tone: getTaskStatusPresentation("completed").tone },
   ];
-
-  const kpis = [
+  const kpis: {
+    label: string;
+    value: string | number;
+    valueClassName?: string;
+  }[] = [
     { label: t("total"), value: m.total },
     { label: t("completion"), value: `${m.completionRate}%` },
     { label: t("upcoming"), value: m.upcoming },
-    { label: t("overdue"), value: m.overdue },
+    {
+      label: t("overdue"),
+      value: m.overdue,
+      valueClassName: m.overdue > 0 ? "text-destructive" : undefined,
+    },
   ];
 
   return (
     <PageBody>
       <PageHeader title={t("title")} description={t("description")} />
       {entries.length === 0 ? (
-        <Empty className="border">
+        <Empty variant="surface">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <BarChart3 />
@@ -82,19 +92,43 @@ export function MetricsPageClient() {
         </Empty>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {kpis.map((k) => (
-              <Card key={k.label}>
-                <CardHeader>
-                  <CardDescription>{k.label}</CardDescription>
-                  <CardTitle className="text-2xl tabular-nums">
-                    {k.value}
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
+          <Card
+            variant="technical"
+            density="compact"
+            role="region"
+            aria-labelledby="metrics-summary-title"
+          >
+            <CardHeader>
+              <CardTitle
+                id="metrics-summary-title"
+                role="heading"
+                aria-level={2}
+              >
+                {t("summary")}
+              </CardTitle>
+              <CardDescription>{t("allActivity")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid grid-cols-2 gap-x-section gap-y-form @xl/page:grid-cols-4">
+                {kpis.map((k) => (
+                  <div key={k.label} className="flex min-w-0 flex-col gap-1">
+                    <dt className="text-xs font-medium text-muted-foreground">
+                      {k.label}
+                    </dt>
+                    <dd
+                      className={cn(
+                        "text-3xl font-semibold tabular-nums tracking-tight",
+                        k.valueClassName,
+                      )}
+                    >
+                      {k.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </CardContent>
+          </Card>
+          <PageGrid>
             <Card>
               <CardHeader>
                 <CardTitle>{t("byType")}</CardTitle>
@@ -112,7 +146,7 @@ export function MetricsPageClient() {
               </CardContent>
             </Card>
             {m.topEquipment.length > 0 && (
-              <Card className="md:col-span-2">
+              <Card className="@2xl/page:col-span-2 @6xl/page:col-span-1">
                 <CardHeader>
                   <CardTitle>{t("topEquipment")}</CardTitle>
                 </CardHeader>
@@ -121,7 +155,7 @@ export function MetricsPageClient() {
                 </CardContent>
               </Card>
             )}
-          </div>
+          </PageGrid>
         </>
       )}
     </PageBody>

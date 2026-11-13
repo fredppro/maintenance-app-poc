@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { PageBody, PageHeader } from "@/components/app-shell/page-header";
+import { PageBody, PageHeader, PageRegion } from "@/components/app-shell/page-header";
 import { getOrganizationSettings } from "@/features/organization/server/settings";
 import {
   OrganizationDangerCard,
@@ -27,8 +27,8 @@ export default async function OrganizationPage() {
 
   return (
     <PageBody>
-      <PageHeader title={t("title")} description={t("description")} />
-      <div className="flex max-w-2xl flex-col gap-6">
+      <PageRegion width="form">
+        <PageHeader title={t("title")} description={t("description")} />
         <OrganizationSettingsForm initial={settings} />
         <OrganizationExportCard
           exports={exports.map((row) => ({
@@ -45,7 +45,7 @@ export default async function OrganizationPage() {
           isOwner={tenant.role === "owner"}
           scheduledFor={tenantSettings?.deletionScheduledFor?.toISOString() ?? null}
         />
-      </div>
+      </PageRegion>
     </PageBody>
   );
 }

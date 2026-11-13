@@ -96,7 +96,7 @@ test("owners and admins manage the organization's profile and regional settings,
     await expect(preview).toBeVisible();
     logoFileId = (await preview.getAttribute("src"))?.replace("/api/files/", "") ?? "";
     expect(logoFileId).not.toBe("");
-    // The organization's logo also identifies it in the sidebar.
+    // The organization's name labels its logo in the sidebar.
     await expect(page.locator('[data-slot="sidebar"] img').first()).toHaveAttribute("src", `/api/files/${logoFileId}`);
     const stored = await page.request.get(`/api/files/${logoFileId}`);
     expect(stored.status()).toBe(200);
@@ -124,9 +124,9 @@ test("owners and admins manage the organization's profile and regional settings,
     });
     expect(after.audit).toHaveLength(1);
 
-    // The session keeps working and the new name is shown across the app.
+    // The session keeps working and the sidebar logo exposes the updated organization name.
     await page.goto("/en");
-    await expect(page.locator('[data-slot="sidebar"]').getByText(new RegExp(renamed))).toBeVisible(timeout);
+    await expect(page.locator('[data-slot="sidebar"] img').first()).toHaveAttribute("alt", renamed, timeout);
   });
 
   await test.step("another organization cannot see or influence these settings", async () => {

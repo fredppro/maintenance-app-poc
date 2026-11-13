@@ -89,7 +89,9 @@ export default async function OrganizationOnboardingPage({
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-muted/40 p-6">
-      <h1 className="text-xl font-semibold">{t("siteSelectionTitle")}</h1>
+      <h1 className="text-xl font-semibold tracking-tight text-foreground text-balance sm:text-2xl">
+        {t("siteSelectionTitle")}
+      </h1>
       <TenantContextSelector
         options={contexts}
         selectedSiteId={selectedSiteId}

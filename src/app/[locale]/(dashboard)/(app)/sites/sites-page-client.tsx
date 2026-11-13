@@ -18,13 +18,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -47,7 +40,7 @@ function SectionRow({
 }: {
   id: string;
   name: string;
-  count: number;
+  count: number | null;
 }) {
   const t = useTranslations("SitesPage");
   const tCommon = useTranslations("Common");
@@ -102,9 +95,11 @@ function SectionRow({
         <>
           <div className="flex min-w-0 items-center gap-2">
             <span className="truncate font-medium">{name}</span>
-            <Badge variant="outline">
-              {t("equipmentCount", { count })}
-            </Badge>
+            {count !== null && (
+              <Badge variant="outline">
+                {t("equipmentCount", { count })}
+              </Badge>
+            )}
           </div>
           <div className="flex gap-1">
             <Button
@@ -136,7 +131,7 @@ function SectionRow({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={remove}>{t("delete")}</AlertDialogAction>
+            <AlertDialogAction variant="destructive" onClick={remove}>{t("delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -227,7 +222,7 @@ export function SitesPageClient() {
       <PageHeader title={t("title")} description={t("description")} />
       <AddSite />
       {sites.length === 0 ? (
-        <Empty className="border">
+        <Empty variant="surface">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <MapPin />
@@ -237,44 +232,56 @@ export function SitesPageClient() {
           </EmptyHeader>
         </Empty>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
           {sites.map((site) => {
-            const own = sections.filter((s) => s.siteId === site.id);
+            const own = sections.filter((section) => section.siteId === site.id);
             return (
-              <Card key={site.id}>
-                <CardHeader>
-                  <CardTitle className="flex flex-wrap items-center gap-2">
-                    {site.name}
-                    {site.current && <Badge>{t("current")}</Badge>}
-                  </CardTitle>
-                  <CardDescription>
-                    {site.current
-                      ? t("equipmentCount", { count: equipment.length })
-                      : t("sections")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {own.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      {t("noSections")}
+              <section
+                key={site.id}
+                aria-labelledby={`site-${site.id}-title`}
+                className="flex flex-col gap-3 p-4 sm:p-5"
+              >
+                <header className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2
+                      id={`site-${site.id}-title`}
+                      className="flex flex-wrap items-center gap-2 text-base font-semibold"
+                    >
+                      {site.name}
+                      {site.current && <Badge>{t("current")}</Badge>}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {site.current
+                        ? t("equipmentCount", { count: equipment.length })
+                        : t("sectionCount", { count: own.length })}
                     </p>
-                  ) : (
-                    <ul className="divide-y">
-                      {own.map((s) => (
-                        <SectionRow
-                          key={s.id}
-                          id={s.id}
-                          name={s.name}
-                          count={
-                            equipment.filter((e) => e.sectionId === s.id).length
-                          }
-                        />
-                      ))}
-                    </ul>
-                  )}
-                  <AddSection siteId={site.id} />
-                </CardContent>
-              </Card>
+                  </div>
+                </header>
+                {own.length > 0 && (
+                  <ul className="flex flex-col divide-y divide-border-subtle border-t border-border-subtle">
+                    {own.map((section) => (
+                      <SectionRow
+                        key={section.id}
+                        id={section.id}
+                        name={section.name}
+                        count={
+                          site.current
+                            ? equipment.filter(
+                                (item) => item.sectionId === section.id,
+                              ).length
+                            : null
+                        }
+                      />
+                    ))}
+                  </ul>
+                )}
+                {own.length === 0 && (
+                  <p className="border-t border-border-subtle pt-3 text-sm text-muted-foreground">
+                    {t("noSections")}
+                  </p>
+                )}
+                <AddSection siteId={site.id} />
+              </section>
             );
           })}
         </div>
