@@ -20,6 +20,10 @@ async function signIn(page: Page, email: string, password: string) {
   expect((await signInResponse).ok()).toBeTruthy();
 }
 
+function appOrigin(page: Page) {
+  return new URL(page.url()).origin;
+}
+
 async function selectOrganization(
   page: Page,
   organizationName: string,
@@ -42,10 +46,18 @@ async function selectOrganization(
     "/api/auth/organization/set-active",
     {
       data: { organizationId: organization.id },
-      headers: { origin: "http://127.0.0.1:3000" },
+      headers: { origin: appOrigin(page) },
     },
   );
   expect(setActive.ok()).toBeTruthy();
+}
+
+async function confirmOrganizationChange(page: Page) {
+  const confirmation = page.getByRole("alertdialog");
+  await expect(confirmation).toBeVisible();
+  await confirmation
+    .getByRole("button", { name: "Confirm", exact: true })
+    .click();
 }
 
 test("organization owners can manage members and revoke pending invitations", async ({
@@ -66,6 +78,7 @@ test("organization owners can manage members and revoke pending invitations", as
   await expect(memberRole).toContainText("Read-only");
   await memberRole.click();
   await page.getByRole("option", { name: "Maintenance manager" }).click();
+  await confirmOrganizationChange(page);
   await expect(memberRole).toContainText("Maintenance manager");
 
   const pendingInvitation = page
@@ -75,6 +88,7 @@ test("organization owners can manage members and revoke pending invitations", as
   await pendingInvitation
     .getByRole("button", { name: "Revoke invitation" })
     .click();
+  await confirmOrganizationChange(page);
   await expect(pendingInvitation).toHaveCount(0);
 
   await page
@@ -82,6 +96,7 @@ test("organization owners can manage members and revoke pending invitations", as
     .filter({ hasText: TENANT_A_MEMBER_EMAIL })
     .getByRole("button", { name: "Remove", exact: true })
     .click();
+  await confirmOrganizationChange(page);
   await expect(page.getByText(TENANT_A_MEMBER_EMAIL)).toHaveCount(0);
 });
 
@@ -109,7 +124,7 @@ test("organization admins cannot bypass member-management role boundaries via Be
         role: "admin",
         organizationId,
       },
-      headers: { origin: "http://127.0.0.1:3000" },
+      headers: { origin: appOrigin(page) },
     },
   );
   expect(updateRole.status()).toBe(403);
@@ -121,7 +136,7 @@ test("organization admins cannot bypass member-management role boundaries via Be
         memberIdOrEmail: TENANT_A_ADMIN_ID,
         organizationId,
       },
-      headers: { origin: "http://127.0.0.1:3000" },
+      headers: { origin: appOrigin(page) },
     },
   );
   expect([401, 403]).toContain(removeMember.status());
@@ -134,7 +149,7 @@ test("organization admins cannot bypass member-management role boundaries via Be
         role: "admin",
         organizationId,
       },
-      headers: { origin: "http://127.0.0.1:3000" },
+      headers: { origin: appOrigin(page) },
     },
   );
   expect(inviteAdmin.status()).toBe(403);
@@ -148,7 +163,7 @@ test("organization admins cannot bypass member-management role boundaries via Be
         organizationId,
         resend: true,
       },
-      headers: { origin: "http://127.0.0.1:3000" },
+      headers: { origin: appOrigin(page) },
     },
   );
   expect(resendAdminInvitation.status()).toBe(403);
@@ -157,7 +172,7 @@ test("organization admins cannot bypass member-management role boundaries via Be
     "/api/auth/organization/cancel-invitation",
     {
       data: { invitationId: TENANT_A_ADMIN_INVITATION_ID },
-      headers: { origin: "http://127.0.0.1:3000" },
+      headers: { origin: appOrigin(page) },
     },
   );
   expect(revokeAdminInvitation.status()).toBe(403);

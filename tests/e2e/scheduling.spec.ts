@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { BASE_URL } from "./customer";
 import { chooseOrganizationIfAsked } from "./organization-selection";
 
 test("schedule a task from the dashboard with accessible form controls", async ({
@@ -91,7 +92,7 @@ test("schedule a task from the dashboard with accessible form controls", async (
   });
   try {
     const mobilePage = await mobileContext.newPage();
-    await mobilePage.goto("http://127.0.0.1:3000/en");
+    await mobilePage.goto(`${BASE_URL}/en`);
     await expect(
       mobilePage.getByText(
         "Tap a cell to schedule; tap a task to edit its schedule; swipe the timeline for more dates",

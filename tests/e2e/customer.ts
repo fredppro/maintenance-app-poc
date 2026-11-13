@@ -5,7 +5,7 @@ import type { Browser, Page } from "@playwright/test";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 import { chooseOrganizationIfAsked } from "./organization-selection";
 
-export const BASE_URL = "http://127.0.0.1:3000";
+export const BASE_URL = process.env.BETTER_AUTH_URL ?? "http://127.0.0.1:3000";
 
 /** Creates a customer the way an operator does, and returns the owner's invitation link. */
 export function provisionCustomer(name: string, ownerEmail: string) {
