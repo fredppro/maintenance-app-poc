@@ -23,12 +23,20 @@ import {
   TableBody,
   TableCaption,
   TableCell,
+  TableDragHandle,
   TableHead,
   TableHeader,
   TableRow,
   TableSurface,
   TableEmptyRow,
+  type ReorderingOptions,
 } from "@/components/ui/table";
+import {
+  Reorderable,
+  ReorderableHandle,
+  ReorderableItem,
+  mergeVisibleReorder,
+} from "@/components/ui/reorderable";
 import {
   Tooltip,
   TooltipContent,
@@ -50,6 +58,7 @@ export function EquipmentPageClient() {
   const sections = useSchedulerStore((s) => s.sections);
   const timeZone = useSchedulerStore((s) => s.timeZone);
   const [query, setQuery] = useState("");
+  const [equipmentOrder, setEquipmentOrder] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Equipment | null>(null);
 
@@ -76,6 +85,30 @@ export function EquipmentPageClient() {
         ...summarizeEquipmentMaintenance(e.id, entries, now),
       }));
   }, [equipment, entries, sections, query, now]);
+  const orderedRows = useMemo(() => {
+    const order = new Map(equipmentOrder.map((id, index) => [id, index]));
+    return [...rows].sort(
+      (a, b) =>
+        (order.get(a.equipment.id) ?? Number.MAX_SAFE_INTEGER)
+        - (order.get(b.equipment.id) ?? Number.MAX_SAFE_INTEGER),
+    );
+  }, [equipmentOrder, rows]);
+  const reordering = useMemo<ReorderingOptions>(() => ({
+    enabled: true,
+    items: orderedRows.map((row) => row.equipment.id),
+    getItemLabel: (id) =>
+      equipment.find((item) => item.id === id)?.name ?? id,
+    onReorder: (visibleOrder) => {
+      setEquipmentOrder((current) =>
+        mergeVisibleReorder(
+          equipment.map((item) => item.id),
+          current,
+          visibleOrder,
+        ),
+      );
+    },
+  }), [equipment, orderedRows]);
+  const tReordering = useTranslations("Reordering");
 
   const fmt = (d?: Date | string) =>
     d
@@ -124,12 +157,73 @@ export function EquipmentPageClient() {
             />
           </InputGroup>
           <TableSurface>
-            <Table>
+            <Reorderable {...reordering}>
+              <ul aria-label={t("title")} className="divide-y divide-border-subtle lg:hidden">
+                {orderedRows.length === 0 ? (
+                  <li className="p-4 text-sm text-muted-foreground">{t("noResults")}</li>
+                ) : orderedRows.map((row) => (
+                  <ReorderableItem id={row.equipment.id} key={row.equipment.id}>
+                    <li className="flex min-w-0 items-center gap-1 px-2 py-2">
+                      <ReorderableHandle title={tReordering("temporaryOrder")} />
+                      <Button
+                        variant="ghost"
+                        size="row"
+                        className="min-w-0 flex-1 items-start gap-3 py-2 text-left"
+                        aria-label={`${tCommon("edit")} ${row.equipment.name}`}
+                        onClick={() => {
+                          setEditing(row.equipment);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        <EquipmentThumbnail imageFileId={row.equipment.imageFileId} size="md" />
+                        <span className="grid min-w-0 flex-1 gap-1">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="truncate font-medium">{row.equipment.name}</span>
+                            <Badge
+                              aria-label={`${row.upcomingCount} ${t("columns.upcoming")}`}
+                              variant={row.upcomingCount > 0 ? "secondary" : "outline"}
+                            >
+                              {row.upcomingCount}
+                            </Badge>
+                          </span>
+                          <span className="truncate text-xs text-muted-foreground">
+                            {[row.equipment.category ?? t("none"), row.section ?? t("unassigned")]
+                              .join(" · ")}
+                          </span>
+                          <span className="flex min-w-0 flex-wrap gap-x-3 text-xs text-muted-foreground">
+                            <span>{t("columns.next")}: {fmt(row.next)}</span>
+                            {row.last && <span>{t("columns.last")}: {fmt(row.last)}</span>}
+                          </span>
+                        </span>
+                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            asChild
+                            aria-label={t("viewInSchedule")}
+                          >
+                            <Link href="/">
+                              <CalendarDays />
+                            </Link>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t("viewInSchedule")}</TooltipContent>
+                      </Tooltip>
+                    </li>
+                  </ReorderableItem>
+                ))}
+              </ul>
+            </Reorderable>
+            <div className="hidden lg:block">
+            <Table reordering={reordering}>
               <TableCaption className="sr-only">
                 {t("title")}
               </TableCaption>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-px"><span className="sr-only">{tReordering("column")}</span></TableHead>
                   <TableHead>{t("columns.name")}</TableHead>
                   <TableHead className="hidden md:table-cell">
                     {t("columns.category")}
@@ -151,10 +245,13 @@ export function EquipmentPageClient() {
               </TableHeader>
               <TableBody>
                 {rows.length === 0 && (
-                  <TableEmptyRow colSpan={7}>{t("noResults")}</TableEmptyRow>
+                  <TableEmptyRow colSpan={8}>{t("noResults")}</TableEmptyRow>
                 )}
-                {rows.map((row) => (
-                  <TableRow key={row.equipment.id}>
+                {orderedRows.map((row) => (
+                  <TableRow key={row.equipment.id} reorderId={row.equipment.id}>
+                    <TableCell className="w-px">
+                      <TableDragHandle title={tReordering("temporaryOrder")} />
+                    </TableCell>
                     <TableCell>
                       <div className="flex min-w-0 items-center gap-3">
                         <EquipmentThumbnail imageFileId={row.equipment.imageFileId} size="md" />
@@ -245,6 +342,7 @@ export function EquipmentPageClient() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </TableSurface>
         </>
       )}

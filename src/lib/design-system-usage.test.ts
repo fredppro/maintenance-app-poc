@@ -14,6 +14,7 @@ function runtimeFiles(directory: string): string[] {
 const canvasButtons = new Set([
   "src/components/app-shell/maintenance-search.tsx",
   "src/features/scheduler/ui/maintenance-entry-block.tsx",
+  "src/features/scheduler/ui/timeline-slot.tsx",
 ]);
 
 describe("application design-system usage", () => {
@@ -54,6 +55,13 @@ describe("application design-system usage", () => {
           const classes = attribute?.getText(source) ?? "";
           const geometry = /\b(?:rounded(?:-|["\s])|(?:min-h|h|size|p|px|py|pt|pb|pl|pr)-)/;
           const badgeStyle = /\b(?:rounded-|(?:min-h|h|size|p|px|py|gap|font|bg|border)-|text-(?!left|right|center)|leading-|tracking-)/;
+          if (tag === "SheetContent"
+            && (/\b(?:rounded-|overflow-|(?:p|px|py|pt|pb|pl|pr|inset|inset-x|inset-y|top|right|bottom|left)-)/.test(classes)
+              || node.attributes.properties.some((prop) => ts.isJsxAttribute(prop)
+                && prop.name.getText(source) === "variant"
+                && prop.initializer?.getText(source) === '"default"'))) {
+            violations.push(`${path}: SheetContent must inherit shared inset geometry and use SheetBody for scrolling`);
+          }
           if ((tag === "Badge" && badgeStyle.test(classes))
             || (["Input", "Textarea", "SelectTrigger", "Table", "TableCell", "TableHead", "TableRow", "TableHeader"].includes(tag) && geometry.test(classes))
             || (tag === "Button" && !canvasButtons.has(path) && geometry.test(classes))) {

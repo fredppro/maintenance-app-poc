@@ -19,7 +19,7 @@
       "clickHint": "Clique numa célula para agendar manutenção",
       "dragHint": "Arraste entradas para reagendar",
       "tapHint": "Toque numa célula para agendar; toque numa tarefa para editar o agendamento; deslize a linha temporal para ver mais datas",
-      "zoomHint": "Use controlos de zoom para mudar a vista"
+      "zoomHint": "Use os controlos de zoom para redimensionar as células"
     },
     "nextMaintenance": {
       "summary": "Resumo de manutenção",
@@ -110,6 +110,9 @@
     "searchResultCount": "{count, plural, one {# resultado} other {# resultados}}",
     "openTask": "Abrir {title}, estado: {status}",
     "unknownStatus": "Estado desconhecido",
+    "scheduledDuration": "Duração prevista: {duration}",
+    "startAt": "Às {time}",
+    "noAssignees": "Sem atribuições",
     "periodDay": "o dia selecionado",
     "periodWeek": "a semana selecionada",
     "periodMonth": "o mês selecionado",
@@ -218,7 +221,9 @@
     "navigation": "Navegação do calendário",
     "zoom": "Zoom da linha temporal",
     "zoomIn": "Aumentar zoom",
-    "zoomOut": "Diminuir zoom"
+    "zoomOut": "Diminuir zoom",
+    "fitWidth": "Ajustar",
+    "fitWidthDescription": "Ajustar a linha temporal à largura disponível ({zoom})"
   },
   "Form": {
     "schedule": "Agendar Manutenção",
@@ -429,6 +434,8 @@
   },
   "Reordering": {
     "handle": "Reordenar {name}",
+    "column": "Reordenar",
+    "temporaryOrder": "A ordem aplica-se apenas a esta vista e é reposta quando a lista é recarregada.",
     "sortableItem": "item reordenável",
     "instructions": "Para reordenar, prima Espaço ou Enter para selecionar um item. Use as setas para cima e para baixo para o mover. Prima novamente Espaço ou Enter para o largar, ou Escape para cancelar.",
     "pickedUp": "{name} selecionado para reordenar.",
@@ -766,7 +773,7 @@
     },
     "emptyTitle": "Ainda sem materiais",
     "emptyDescription": "Os materiais adicionados às tarefas de manutenção são resumidos aqui.",
-    "noResults": "Nenhum material corresponde à pesquisa.",
+    "noResults": "Nenhum resultado corresponde à pesquisa.",
     "none": "—"
   },
   "MetricsPage": {

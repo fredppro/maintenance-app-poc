@@ -5,7 +5,7 @@ import { createRef, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import messages from "@/i18n/messages/en.json";
 import portuguese from "@/i18n/messages/pt-pt.json";
-import { Reorderable, ReorderableHandle, ReorderableItem } from "./reorderable";
+import { mergeVisibleReorder, Reorderable, ReorderableHandle, ReorderableItem } from "./reorderable";
 import { Table, TableBody, TableCell, TableDragHandle, TableRow, TableSurface } from "./table";
 
 function Fixture({
@@ -68,6 +68,16 @@ function order() {
 }
 
 describe("optional shared row reordering", () => {
+  it("merges filtered reorders without moving hidden rows or retaining removed IDs", () => {
+    expect(
+      mergeVisibleReorder(
+        ["a", "b", "c", "d", "new"],
+        ["d", "a", "removed", "b", "c"],
+        ["c", "a"],
+      ),
+    ).toEqual(["d", "c", "b", "a", "new"]);
+  });
+
   beforeEach(() => {
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
       const item = this.closest<HTMLElement>("[data-reorder-id]");

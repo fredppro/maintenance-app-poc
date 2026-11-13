@@ -124,6 +124,19 @@ describe("EquipmentDialog maintenance-point editing", () => {
     vi.mocked(toast.success).mockClear();
   });
 
+  it("inherits inset geometry and keeps actions outside the scrolling body", async () => {
+    renderDialog();
+    await screen.findByText("No maintenance points have been added.");
+    const dialog = screen.getByRole("dialog", { name: "Edit Equipment" });
+    const body = dialog.querySelector("[data-slot=sheet-body]");
+    const save = screen.getByRole("button", { name: "Save Changes" });
+    expect(dialog).toHaveAttribute("data-variant", "inset");
+    expect(dialog).toHaveClass("sm:rounded-sheet", "overflow-hidden");
+    expect(body).toHaveClass("min-h-0", "overflow-y-auto");
+    expect(body).not.toContainElement(save);
+    expect(save.closest("form")).toBe(body?.closest("form"));
+  });
+
   it("saves a staged maintenance point only when the equipment form is saved", async () => {
     const user = userEvent.setup();
     const { onOpenChange } = renderDialog();

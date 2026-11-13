@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/select";
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -752,9 +753,8 @@ export function EntrySheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        variant="inset"
         closeLabel={tCommon("close")}
-        className="w-full gap-0 p-0 sm:w-[calc(100%-1.5rem)] sm:max-w-[37.5rem]"
+        className="sm:max-w-[37.5rem]"
         onOpenAutoFocus={() => {
           returnFocus.current = document.activeElement instanceof HTMLElement
             ? document.activeElement
@@ -767,7 +767,7 @@ export function EntrySheet({
           }
         }}
       >
-        <SheetHeader className="shrink-0 gap-2 px-4 pb-4 pt-5 sm:px-6">
+        <SheetHeader>
           <div className="flex min-h-8 flex-wrap items-center justify-between gap-2 pr-9">
             <div className="flex flex-wrap items-center gap-2">{meta}</div>
             {headerActions}
@@ -796,18 +796,19 @@ export function EntrySheet({
             ))}
           </TabsList>
           <Separator />
-          <form
-            ref={formRef}
-            id={formId}
-            onSubmit={onSubmit}
-            onChange={onChange}
-            className="flex min-h-0 flex-1 flex-col gap-section overflow-y-auto overscroll-contain px-page py-5 sm:px-page-desktop sm:py-6"
-          >
-            {children}
-          </form>
+          <SheetBody asChild>
+            <form
+              ref={formRef}
+              id={formId}
+              onSubmit={onSubmit}
+              onChange={onChange}
+            >
+              {children}
+            </form>
+          </SheetBody>
         </Tabs>
         <Separator />
-        <SheetFooter className="mt-0 shrink-0 flex-row flex-wrap items-center justify-between gap-2 px-4 py-4 sm:px-6">
+        <SheetFooter className="mt-0 justify-between">
           {footer}
         </SheetFooter>
       </SheetContent>

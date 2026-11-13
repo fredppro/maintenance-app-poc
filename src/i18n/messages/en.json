@@ -19,7 +19,7 @@
       "clickHint": "Click on a cell to schedule maintenance",
       "dragHint": "Drag entries to reschedule",
       "tapHint": "Tap a cell to schedule; tap a task to edit its schedule; swipe the timeline for more dates",
-      "zoomHint": "Use zoom controls to change view"
+      "zoomHint": "Use zoom controls to resize timeline cells"
     },
     "nextMaintenance": {
       "summary": "Maintenance summary",
@@ -110,6 +110,9 @@
     "searchResultCount": "{count, plural, one {# result} other {# results}}",
     "openTask": "Open {title}, status: {status}",
     "unknownStatus": "Unknown status",
+    "scheduledDuration": "Scheduled duration: {duration}",
+    "startAt": "At {time}",
+    "noAssignees": "Unassigned",
     "periodDay": "selected day",
     "periodWeek": "selected week",
     "periodMonth": "selected month",
@@ -218,7 +221,9 @@
     "navigation": "Schedule navigation",
     "zoom": "Timeline zoom",
     "zoomIn": "Zoom in",
-    "zoomOut": "Zoom out"
+    "zoomOut": "Zoom out",
+    "fitWidth": "Fit",
+    "fitWidthDescription": "Fit timeline to available width ({zoom})"
   },
   "Form": {
     "schedule": "Schedule Maintenance",
@@ -429,6 +434,8 @@
   },
   "Reordering": {
     "handle": "Reorder {name}",
+    "column": "Reorder",
+    "temporaryOrder": "Order applies to this view only and resets when the list reloads.",
     "sortableItem": "sortable item",
     "instructions": "To reorder, press Space or Enter to pick up an item. Use the up and down arrow keys to move it. Press Space or Enter again to drop it, or Escape to cancel.",
     "pickedUp": "Picked up {name}.",
@@ -766,7 +773,7 @@
     },
     "emptyTitle": "No materials yet",
     "emptyDescription": "Materials added to maintenance tasks are summarised here.",
-    "noResults": "No materials match your search.",
+    "noResults": "No results match your search.",
     "none": "—"
   },
   "MetricsPage": {

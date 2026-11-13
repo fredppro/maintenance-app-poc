@@ -33,6 +33,23 @@ export type ReorderingOptions = {
   getItemLabel: (id: string) => string;
 };
 
+export function mergeVisibleReorder(
+  allIds: string[],
+  currentOrder: string[],
+  visibleOrder: string[],
+): string[] {
+  const allIdSet = new Set(allIds);
+  const visibleIdSet = new Set(visibleOrder);
+  const orderedIds = [
+    ...currentOrder.filter((id) => allIdSet.has(id)),
+    ...allIds.filter((id) => !currentOrder.includes(id)),
+  ];
+  let visibleIndex = 0;
+  return orderedIds.map((id) =>
+    visibleIdSet.has(id) ? visibleOrder[visibleIndex++] : id,
+  );
+}
+
 const ReorderingContext = React.createContext<boolean | null>(null);
 const ItemContext = React.createContext<(
   Pick<ReturnType<typeof useSortable>, "attributes" | "listeners" | "setActivatorNodeRef">

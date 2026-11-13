@@ -5,10 +5,52 @@ import {
 } from "@/lib/time-zone";
 import { createSchedulerStore } from "./scheduler-store";
 import { Equipment, MaintenanceEntry, Worker } from "../types";
+import { resolveTimelineZoom } from "../utils/timeline-zoom";
 
 describe("scheduler store", () => {
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("keeps zoom independent of dates, view selection, records and loading", () => {
+    vi.useFakeTimers();
+    const store = createSchedulerStore();
+    const initial = store.getState();
+    expect(initial.zoomLevel).toBe(100);
+    store.getState().setZoomLevel(125);
+    expect(store.getState()).toMatchObject({
+      zoomLevel: 125, viewMode: "week", currentDate: initial.currentDate,
+      entries: initial.entries, equipment: initial.equipment, isLoading: false,
+    });
+    store.getState().setViewMode("year");
+    vi.runAllTimers();
+    expect(store.getState().zoomLevel).toBe(125);
+    expect(store.getState().viewMode).toBe("year");
+    expect(() => store.getState().setZoomLevel(110)).toThrow(RangeError);
+    expect(() => store.getState().setZoomLevel(Number.NaN)).toThrow(RangeError);
+    expect(store.getState().zoomLevel).toBe(125);
+    expect(createSchedulerStore().getState().zoomLevel).toBe(100);
+  });
+
+  it("clamps manual zoom below the fit limit and keeps explicit fit intent during resizing", () => {
+    const store = createSchedulerStore({ zoomLevel: 75 });
+    const initial = store.getState();
+    store.getState().setFitZoomLevel(80.4);
+    expect(store.getState().zoomLevel).toBe("fit");
+    expect(resolveTimelineZoom(store.getState().zoomLevel, store.getState().fitZoomLevel)).toBe(80.4);
+    store.getState().setFitZoomLevel(60);
+    expect(store.getState().zoomLevel).toBe("fit");
+    store.getState().setZoomLevel(50);
+    expect(store.getState().zoomLevel).toBe("fit");
+    store.getState().setZoomLevel(125);
+    store.getState().setFitZoomLevel(100);
+    expect(store.getState().zoomLevel).toBe(125);
+    expect(store.getState().currentDate).toBe(initial.currentDate);
+    expect(store.getState().entries).toBe(initial.entries);
+    expect(store.getState().isLoading).toBe(false);
+    expect(() => store.getState().setFitZoomLevel(Number.NaN)).toThrow(RangeError);
+    expect(() => store.getState().setFitZoomLevel(101)).toThrow(RangeError);
+    expect(createSchedulerStore().getState().fitZoomLevel).toBeNull();
   });
 
   const dummyEquipment: Equipment = {

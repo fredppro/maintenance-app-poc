@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
+import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Tooltip,
@@ -18,10 +18,11 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  ZoomIn,
-  ZoomOut,
+  Plus,
+  Minus,
 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
+import { getTimelineMinimumZoom, resolveTimelineZoom, stepTimelineZoom, TIMELINE_ZOOM_LEVELS, TIMELINE_ZOOM_TOLERANCE } from "../utils/timeline-zoom";
 
 const viewModeOrder: ViewMode[] = ["day", "week", "month", "year"];
 
@@ -30,8 +31,12 @@ export function SchedulerToolbar() {
   const dateFnsLocale = LOCALE_MAP[locale];
 
   const t = useTranslations("Toolbar");
+  const formatter = useFormatter();
 
   const viewMode = useSchedulerStore((state) => state.viewMode);
+  const zoomLevel = useSchedulerStore((state) => state.zoomLevel);
+  const fitZoomLevel = useSchedulerStore((state) => state.fitZoomLevel);
+  const setZoomLevel = useSchedulerStore((state) => state.setZoomLevel);
   const currentDate = useSchedulerStore((state) => state.currentDate);
   const timeZone = useSchedulerStore((state) => state.timeZone);
   const setViewMode = useSchedulerStore((state) => state.setViewMode);
@@ -59,25 +64,23 @@ export function SchedulerToolbar() {
   };
 
   const handleZoomIn = () => {
-    const currentIndex = viewModeOrder.indexOf(viewMode);
-    if (currentIndex > 0) {
-      setViewMode(viewModeOrder[currentIndex - 1]);
-    }
+    setZoomLevel(stepTimelineZoom(zoomLevel, 1, fitZoomLevel));
   };
 
   const handleZoomOut = () => {
-    const currentIndex = viewModeOrder.indexOf(viewMode);
-    if (currentIndex < viewModeOrder.length - 1) {
-      setViewMode(viewModeOrder[currentIndex + 1]);
-    }
+    setZoomLevel(stepTimelineZoom(zoomLevel, -1, fitZoomLevel));
   };
 
   const handleToday = () => {
     setCurrentDate(new Date());
   };
 
-  const canZoomIn = viewModeOrder.indexOf(viewMode) > 0;
-  const canZoomOut = viewModeOrder.indexOf(viewMode) < viewModeOrder.length - 1;
+  const zoomPercent = resolveTimelineZoom(zoomLevel, fitZoomLevel);
+  const atFit = fitZoomLevel !== null && Math.abs(zoomPercent - fitZoomLevel) <= TIMELINE_ZOOM_TOLERANCE;
+  const zoomLabel = formatter.number(zoomPercent / 100, { style: "percent", maximumFractionDigits: atFit ? 1 : 0 });
+  const fitDescription = t("fitWidthDescription", { zoom: zoomLabel });
+  const canZoomIn = fitZoomLevel !== null && zoomPercent < TIMELINE_ZOOM_LEVELS[TIMELINE_ZOOM_LEVELS.length - 1];
+  const canZoomOut = fitZoomLevel !== null && zoomPercent > getTimelineMinimumZoom(fitZoomLevel) + TIMELINE_ZOOM_TOLERANCE;
 
   return (
     <TooltipProvider>
@@ -165,29 +168,38 @@ export function SchedulerToolbar() {
                 <Button
                   variant="outline"
                   size="icon-sm"
-                  aria-label={t("zoomIn")}
-                  onClick={handleZoomIn}
-                  disabled={!canZoomIn}
+                  aria-label={t("zoomOut")}
+                  onClick={handleZoomOut}
+                  disabled={!canZoomOut}
                 >
-                  <ZoomIn />
+                  <Minus />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{t("zoomIn")}</TooltipContent>
+              <TooltipContent>{t("zoomOut")}</TooltipContent>
             </Tooltip>
+
+            <ButtonGroupText className="w-16 justify-center px-2 tabular-nums" aria-live="polite" aria-atomic="true" title={atFit ? fitDescription : zoomLabel}>
+              {atFit ? (
+                <>
+                  <span aria-hidden="true">{t("fitWidth")}</span>
+                  <span className="sr-only">{fitDescription}</span>
+                </>
+              ) : zoomLabel}
+            </ButtonGroupText>
 
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon-sm"
-                  aria-label={t("zoomOut")}
-                  onClick={handleZoomOut}
-                  disabled={!canZoomOut}
+                  aria-label={t("zoomIn")}
+                  onClick={handleZoomIn}
+                  disabled={!canZoomIn}
                 >
-                  <ZoomOut />
+                  <Plus />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{t("zoomOut")}</TooltipContent>
+              <TooltipContent>{t("zoomIn")}</TooltipContent>
             </Tooltip>
           </ButtonGroup>
         </div>

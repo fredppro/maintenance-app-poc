@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -31,6 +32,7 @@ import {
 import { Plus } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Spinner } from "@/components/ui/spinner";
+import { Separator } from "@/components/ui/separator";
 import { ChecklistTemplateEditor } from "./checklist-template-editor";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -282,8 +284,8 @@ export function EquipmentDialog({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full gap-0 overflow-y-auto sm:max-w-md">
-        <SheetHeader className="border-b border-border pr-14">
+      <SheetContent side="right" closeLabel={tCommon("close")} className="sm:max-w-md">
+        <SheetHeader>
           <SheetTitle>
             {equipment ? t("editEquipment") : t("addEquipment")}
           </SheetTitle>
@@ -291,279 +293,283 @@ export function EquipmentDialog({
             {t("equipmentDialogDescription")}
           </SheetDescription>
         </SheetHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4">
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="equipment-image">{t("equipmentImage")}</FieldLabel>
-              <FieldDescription>{t("imageHint")}</FieldDescription>
-              <EquipmentImageField
-                value={image}
-                onChange={(next) => {
-                  setImage(next);
-                  setUploadError(null);
-                }}
-                disabled={saving}
-                uploading={saving && image.pending !== null}
-                uploadProgress={uploadProgress}
-                uploadError={uploadError}
-                onUploadErrorClear={() => setUploadError(null)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="equipment-name">
-                {t("equipmentName")}
-              </FieldLabel>
-              <Input
-                id="equipment-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t("equipmentNamePlaceholder")}
-                required
-                autoFocus
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="equipment-category">
-                {t("category")}
-              </FieldLabel>
-              <Input
-                id="equipment-category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder={t("categoryPlaceholder")}
-                list="timeline-categories"
-              />
-              <datalist id="timeline-categories">
-                {categories.map((cat) => (
-                  <option key={cat} value={cat} />
-                ))}
-              </datalist>
-            </Field>
-            <FieldSet>
-              <FieldLegend variant="label">{t("location")}</FieldLegend>
-              {sites.length > 1 && equipment && (
-                <Field>
-                  <FieldLabel htmlFor="equipment-site">{t("site")}</FieldLabel>
-                  <Select value={siteId} onValueChange={setSiteId}>
-                    <SelectTrigger id="equipment-site" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {sites.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>
-                            {s.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FieldDescription>{t("moveSiteHint")}</FieldDescription>
-                </Field>
-              )}
+        <Separator />
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <SheetBody>
+            <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="equipment-section">
-                  {t("section")}
-                </FieldLabel>
-                <SearchableSelect
-                  id="equipment-section"
-                  value={effectiveSectionId}
-                  onChange={(v) => {
-                    setSectionId(v);
-                    setCreatingSection(false);
+                <FieldLabel htmlFor="equipment-image">{t("equipmentImage")}</FieldLabel>
+                <FieldDescription>{t("imageHint")}</FieldDescription>
+                <EquipmentImageField
+                  value={image}
+                  onChange={(next) => {
+                    setImage(next);
+                    setUploadError(null);
                   }}
-                  options={[
-                    { value: NO_SECTION, label: t("noSection") },
-                    ...siteSections.map((s) => ({ value: s.id, label: s.name })),
-                  ]}
-                  placeholder={t("noSection")}
-                  searchPlaceholder={t("searchSection")}
-                  emptyText={t("noSectionsYet")}
-                  action={{
-                    label: t("createSection"),
-                    onClick: () => setCreatingSection(true),
-                  }}
+                  disabled={saving}
+                  uploading={saving && image.pending !== null}
+                  uploadProgress={uploadProgress}
+                  uploadError={uploadError}
+                  onUploadErrorClear={() => setUploadError(null)}
                 />
               </Field>
-              {creatingSection && (
-                <Field orientation="horizontal">
-                  <Input
-                    autoFocus
-                    value={newSection}
-                    onChange={(e) => setNewSection(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        void handleAddSection();
-                      } else if (e.key === "Escape") {
-                        e.stopPropagation();
-                        setCreatingSection(false);
-                        setNewSection("");
-                      }
-                    }}
-                    placeholder={t("newSectionPlaceholder")}
-                    aria-label={t("newSection")}
-                    maxLength={80}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={!newSection.trim() || addingSection}
-                    aria-busy={addingSection}
-                    onClick={() => void handleAddSection()}
-                  >
-                    {addingSection ? (
-                      <Spinner data-icon="inline-start" />
-                    ) : (
-                      <Plus data-icon="inline-start" />
-                    )}
-                    {t("addSection")}
-                  </Button>
-                </Field>
-              )}
-            </FieldSet>
-            {equipment && history.length > 0 && (
-              <section
-                aria-labelledby="equipment-location-history-heading"
-                className="flex flex-col gap-3"
-              >
-                <h3
-                  id="equipment-location-history-heading"
-                  className="text-sm font-medium"
-                >
-                  {t("locationHistory")}
-                </h3>
-                <ol className="flex flex-col gap-1.5 text-xs text-muted-foreground">
-                  {history.slice(0, 5).map((entry) => (
-                    <li
-                      key={entry.id}
-                      className="flex flex-wrap items-baseline justify-between gap-x-3"
-                    >
-                      <span className="text-foreground">
-                        {entry.fromSiteName
-                          ? t("historyMoved", {
-                              from: describe(
-                                entry.fromSiteName,
-                                entry.fromSectionName,
-                              ),
-                              to: describe(
-                                entry.toSiteName,
-                                entry.toSectionName,
-                              ),
-                            })
-                          : t("historyPlaced", {
-                              to: describe(
-                                entry.toSiteName,
-                                entry.toSectionName,
-                              ),
-                            })}
-                      </span>
-                      <time dateTime={entry.movedAt.toISOString()}>
-                        {format.dateTime(entry.movedAt, {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                          timeZone,
-                        })}
-                      </time>
-                    </li>
+              <Field>
+                <FieldLabel htmlFor="equipment-name">
+                  {t("equipmentName")}
+                </FieldLabel>
+                <Input
+                  id="equipment-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t("equipmentNamePlaceholder")}
+                  required
+                  autoFocus
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="equipment-category">
+                  {t("category")}
+                </FieldLabel>
+                <Input
+                  id="equipment-category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder={t("categoryPlaceholder")}
+                  list="timeline-categories"
+                />
+                <datalist id="timeline-categories">
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat} />
                   ))}
-                </ol>
-              </section>
-            )}
-            {equipment && (
-              <>
-                <FieldSet>
-                  <FieldLegend variant="label">
-                    {t("maintenancePoints")}
-                  </FieldLegend>
-                  {maintenancePoints.length > 0 ? (
-                    <ul className="space-y-2">
-                      {maintenancePoints.map((point) => (
-                        <li
-                          key={point.id}
-                          className="flex items-start justify-between gap-3 rounded-md border p-3"
-                        >
-                          <div className="min-w-0">
-                            <p className="font-medium">{point.name}</p>
-                            {point.description && (
-                              <p className="text-sm text-muted-foreground">
-                                {point.description}
-                              </p>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                              {t("pointChecklistCount", {
-                                count: point.checklistItems.length,
-                              })}
-                            </p>
-                          </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => editMaintenancePoint(point)}
-                          >
-                            {t("editMaintenancePoint")}
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      {t("noMaintenancePoints")}
-                    </p>
-                  )}
+                </datalist>
+              </Field>
+              <FieldSet>
+                <FieldLegend variant="label">{t("location")}</FieldLegend>
+                {sites.length > 1 && equipment && (
                   <Field>
-                    <FieldLabel htmlFor="maintenance-point-name">
-                      {t("maintenancePointName")}
-                    </FieldLabel>
+                    <FieldLabel htmlFor="equipment-site">{t("site")}</FieldLabel>
+                    <Select value={siteId} onValueChange={setSiteId}>
+                      <SelectTrigger id="equipment-site" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {sites.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FieldDescription>{t("moveSiteHint")}</FieldDescription>
+                  </Field>
+                )}
+                <Field>
+                  <FieldLabel htmlFor="equipment-section">
+                    {t("section")}
+                  </FieldLabel>
+                  <SearchableSelect
+                    id="equipment-section"
+                    value={effectiveSectionId}
+                    onChange={(v) => {
+                      setSectionId(v);
+                      setCreatingSection(false);
+                    }}
+                    options={[
+                      { value: NO_SECTION, label: t("noSection") },
+                      ...siteSections.map((s) => ({ value: s.id, label: s.name })),
+                    ]}
+                    placeholder={t("noSection")}
+                    searchPlaceholder={t("searchSection")}
+                    emptyText={t("noSectionsYet")}
+                    action={{
+                      label: t("createSection"),
+                      onClick: () => setCreatingSection(true),
+                    }}
+                  />
+                </Field>
+                {creatingSection && (
+                  <Field orientation="horizontal">
                     <Input
-                      id="maintenance-point-name"
-                      value={pointName}
-                      onChange={(event) => {
-                        setPointName(event.target.value);
-                        setPointDraftDirty(true);
+                      autoFocus
+                      value={newSection}
+                      onChange={(e) => setNewSection(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void handleAddSection();
+                        } else if (e.key === "Escape") {
+                          e.stopPropagation();
+                          setCreatingSection(false);
+                          setNewSection("");
+                        }
                       }}
-                      maxLength={120}
+                      placeholder={t("newSectionPlaceholder")}
+                      aria-label={t("newSection")}
+                      maxLength={80}
                     />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!newSection.trim() || addingSection}
+                      aria-busy={addingSection}
+                      onClick={() => void handleAddSection()}
+                    >
+                      {addingSection ? (
+                        <Spinner data-icon="inline-start" />
+                      ) : (
+                        <Plus data-icon="inline-start" />
+                      )}
+                      {t("addSection")}
+                    </Button>
                   </Field>
-                  <Field>
-                    <FieldLabel htmlFor="maintenance-point-description">
-                      {t("maintenancePointDescription")}
-                    </FieldLabel>
-                    <Textarea
-                      id="maintenance-point-description"
-                      value={pointDescription}
-                      onChange={(event) => {
-                        setPointDescription(event.target.value);
-                        setPointDraftDirty(true);
-                      }}
-                      maxLength={1000}
-                    />
-                  </Field>
-                  <Field>
-                    <FieldTitle>{t("pointChecklist")}</FieldTitle>
-                    <ChecklistTemplateEditor
-                      value={pointChecklist}
-                      onChange={(value) => {
-                        setPointChecklist(value);
-                        setPointDraftDirty(true);
-                      }}
-                      canAdd={Boolean(pointName.trim())}
-                    />
-                    {!pointName.trim() && (
-                      <FieldDescription>
-                        {t("checklistRequiresPointName")}
-                      </FieldDescription>
+                )}
+              </FieldSet>
+              {equipment && history.length > 0 && (
+                <section
+                  aria-labelledby="equipment-location-history-heading"
+                  className="flex flex-col gap-3"
+                >
+                  <h3
+                    id="equipment-location-history-heading"
+                    className="text-sm font-medium"
+                  >
+                    {t("locationHistory")}
+                  </h3>
+                  <ol className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                    {history.slice(0, 5).map((entry) => (
+                      <li
+                        key={entry.id}
+                        className="flex flex-wrap items-baseline justify-between gap-x-3"
+                      >
+                        <span className="text-foreground">
+                          {entry.fromSiteName
+                            ? t("historyMoved", {
+                                from: describe(
+                                  entry.fromSiteName,
+                                  entry.fromSectionName,
+                                ),
+                                to: describe(
+                                  entry.toSiteName,
+                                  entry.toSectionName,
+                                ),
+                              })
+                            : t("historyPlaced", {
+                                to: describe(
+                                  entry.toSiteName,
+                                  entry.toSectionName,
+                                ),
+                              })}
+                        </span>
+                        <time dateTime={entry.movedAt.toISOString()}>
+                          {format.dateTime(entry.movedAt, {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                            timeZone,
+                          })}
+                        </time>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
+              {equipment && (
+                <>
+                  <FieldSet>
+                    <FieldLegend variant="label">
+                      {t("maintenancePoints")}
+                    </FieldLegend>
+                    {maintenancePoints.length > 0 ? (
+                      <ul className="space-y-2">
+                        {maintenancePoints.map((point) => (
+                          <li
+                            key={point.id}
+                            className="flex items-start justify-between gap-3 rounded-md border p-3"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-medium">{point.name}</p>
+                              {point.description && (
+                                <p className="text-sm text-muted-foreground">
+                                  {point.description}
+                                </p>
+                              )}
+                              <p className="text-xs text-muted-foreground">
+                                {t("pointChecklistCount", {
+                                  count: point.checklistItems.length,
+                                })}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => editMaintenancePoint(point)}
+                            >
+                              {t("editMaintenancePoint")}
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {t("noMaintenancePoints")}
+                      </p>
                     )}
-                  </Field>
-                  <FieldDescription>
-                    {t("maintenancePointSaveWithEquipment")}
-                  </FieldDescription>
-                </FieldSet>
-              </>
-            )}
-          </FieldGroup>
-          <SheetFooter className="px-0 pb-0">
+                    <Field>
+                      <FieldLabel htmlFor="maintenance-point-name">
+                        {t("maintenancePointName")}
+                      </FieldLabel>
+                      <Input
+                        id="maintenance-point-name"
+                        value={pointName}
+                        onChange={(event) => {
+                          setPointName(event.target.value);
+                          setPointDraftDirty(true);
+                        }}
+                        maxLength={120}
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="maintenance-point-description">
+                        {t("maintenancePointDescription")}
+                      </FieldLabel>
+                      <Textarea
+                        id="maintenance-point-description"
+                        value={pointDescription}
+                        onChange={(event) => {
+                          setPointDescription(event.target.value);
+                          setPointDraftDirty(true);
+                        }}
+                        maxLength={1000}
+                      />
+                    </Field>
+                    <Field>
+                      <FieldTitle>{t("pointChecklist")}</FieldTitle>
+                      <ChecklistTemplateEditor
+                        value={pointChecklist}
+                        onChange={(value) => {
+                          setPointChecklist(value);
+                          setPointDraftDirty(true);
+                        }}
+                        canAdd={Boolean(pointName.trim())}
+                      />
+                      {!pointName.trim() && (
+                        <FieldDescription>
+                          {t("checklistRequiresPointName")}
+                        </FieldDescription>
+                      )}
+                    </Field>
+                    <FieldDescription>
+                      {t("maintenancePointSaveWithEquipment")}
+                    </FieldDescription>
+                  </FieldSet>
+                </>
+              )}
+            </FieldGroup>
+          </SheetBody>
+          <Separator />
+          <SheetFooter>
             <Button
               type="button"
               variant="outline"

@@ -51,7 +51,7 @@ uploads, work logs, checklists, notifications, and reporting.
 | Alert | Dashboard overdue, loading failures, settings | Existing shadcn icon/title/description composition is correct | Keep restrained 8px surface and hierarchy | Retain; no duplicate alerts or test-only actions |
 | Empty | Lists, stock, notifications, upload field | Repeated border/padding/layout overrides | Default, surface, inline; compact size | Named variants; canvas and upload behavior documented below |
 | Loading | Inventory, workers, notification history | Skeleton and accessible status regions already exist | Keep Skeleton/Spinner and explicit errors/retry | Retain; do not silently substitute empty states |
-| Dialog/Sheet/Drawer | Forms, confirmations, worker details | Different placement serves different workflows | Keep accessible titles/focus; default edge panel vs inset maintenance panel | Retain actual primitives and inset Sheet variant |
+| Dialog/Sheet/Drawer | Forms, confirmations, worker details | Different placement serves different workflows | Keep accessible titles/focus; shared inset Sheet for all task panels | Retain actual primitives; mobile navigation stays edge-attached |
 | Popover/dropdown/tooltip | Selects, Command-based pickers, worksheet menu, row actions | Local destructive menu color bypassed its variant | Shared popover surfaces, semantic destructive menu item | Retain geometry; use existing variants |
 | Navigation/page headers | All application pages | Current shell and page width already consistent | Keep PageBody/PageHeader and header Command placement | Retain |
 | Attachments | Equipment/logo image upload | Shared attachment states already correct; removal styled locally | Keep Attachment composition; destructive-ghost removal | Retain upload/replace/progress/error behavior |
@@ -223,7 +223,7 @@ layouts, not independently centered application containers.
 | Dashboard / scheduler | Separate fluid outer wrapper | Shared workspace PageBody and compact PageHeader |
 | Equipment | Centered 1152px cap | Fluid PageBody; search width remains component-bounded |
 | Workers | Centered cap, custom loading/table/mobile layouts | Fluid PageBody; preserve table/mobile-list and drawer behavior |
-| Inventory | Centered cap | Fluid PageBody; retain aligned tabs, filters and both tables |
+| Inventory | Centered cap, search and add action lived in one tab only | Fluid PageBody; one shared search toolbar filters both tabs, and its stock-only action slot keeps geometry stable |
 | Sites | Centered cap | Fluid PageBody; short add-site/section forms keep useful field widths |
 | Metrics | Centered cap and viewport-only two-column cards | Fluid PageBody; container-responsive PageGrid and KPIs |
 | Organization settings | Centered page plus independent 672px form cap | Left-anchored form PageRegion, including heading |
@@ -264,7 +264,7 @@ limits; they must not move the enclosing page's left boundary.
 | Popovers, menus, badges, navigation, task entries | `rounded-md`, 6px where specified | Small structural/metadata surfaces |
 | Menu options, checkbox | `rounded-sm`, 4px | Nested indicators/items |
 | Radio/switch/avatar/progress | Fully rounded | Shape communicates function |
-| Inset maintenance Sheet | 24px at desktop, flush on mobile | Explicit `variant="inset"` exception |
+| Sheet | `rounded-sheet`, 24px from 640px; flush below 640px | Shared default, 12px viewport inset |
 
 Tables have one outer radius on TableSurface, not separately rounded rows or
 cells. Do not nest cards merely to add borders. Use dividers for related
@@ -333,6 +333,12 @@ pointers), with 4px inner corners and standard keyboard/disabled states.
 Tabs use a 40px/20px outer list with 4px inset and 16px triggers. Triggers must
 be inside TabsList. Maintenance panels remain mounted while inactive so draft
 fields survive tab changes; validation selects/focuses the affected panel.
+The selected trigger's background is a shared-layout Motion indicator, with a
+unique layout ID per tab list and the Forge UI spring (`stiffness: 500`,
+`damping: 30`). MotionConfig respects reduced-motion preferences. Set
+`<TabsList animated={false}>` to use the static active background immediately
+without transition, for exceptional screens or debugging. This presentation
+does not replace Radix selection, roving focus, keyboard handling, or panels.
 Checkboxes remain 16px squares, radios 16px circles, switches compact pill
 tracks; associate them with labels rather than restyling them per page.
 
@@ -349,22 +355,28 @@ border/radius/clipping, Table owns horizontal overflow.
   tabular figures. Action headers have accessible names; actions align right.
 - `TableEmptyRow colSpan={...}` shows a 96px empty row with localized text.
   Loading uses Skeleton and an accessible status label, not a fake data row.
-- Preserve responsive hidden columns and their useful mobile summaries.
-  Workers deliberately use actionable mobile list rows.
+- At tablet widths and below, prefer the Workers actionable-list pattern to
+  compressed tables: show a compact, labeled summary with every important
+  field and the row actions. At `lg` and above, use the semantic table.
+  Equipment and Inventory use this split; planned-material summaries stay
+  read-only and have no reorder affordance.
 - Hover is muted, selected rows use muted fill. Focusable actionable rows use
   an inset focus outline and explicit Enter/Space handling; ordinary rows do
   not become focusable automatically.
 - No table currently needs pagination; do not add it as decorative UI.
 
-#### Optional row reordering
+#### Row reordering
 
-Table remains a shadcn semantic table. Reordering is off unless a controlled
-`reordering` configuration is supplied with `enabled: true`, ordered string
-`items`, `getItemLabel(id)` and `onReorder(ids)`. Add `reorderId` to body
-TableRows and put TableDragHandle in a dedicated column. Header, empty and
-ordinary rows do not register as sortable items. Set `enabled: false` to
-disable dragging and remove the handles without changing the table markup.
-An unfinished drag cannot commit after disabling or unmounting the region.
+Table remains a shadcn semantic table. Reordering is a shared opt-in capability,
+enabled for editable entity lists (Workers, Equipment, Inventory stock). It is
+not enabled for aggregate/report tables such as Planned Materials, where changing
+display order is not a useful entity action. Supply a controlled `reordering`
+configuration with `enabled: true`, ordered string `items`, `getItemLabel(id)`
+and `onReorder(ids)`. Add `reorderId` to body TableRows and put TableDragHandle
+in a dedicated column. Header, empty and ordinary rows do not register as
+sortable items. Set `enabled: false` to disable dragging and remove the handles
+without changing the table markup. An unfinished drag cannot commit after
+disabling or unmounting the region.
 
 ```tsx
 <TableSurface>
@@ -392,12 +404,15 @@ the document-level sensor. Handles retain 44px coarse-pointer targets and own to
 scrollable and actionable. Instructions and live announcements are localized.
 Tracking has no transform transition or decorative settling animation.
 
-Workers enables this capability in both layouts. Its order is deliberately
-local to the mounted view and resets on refetch, as before; dragging does not
-write to the database or change scheduler worker data. Persisting order is a
-separate product/data decision. When adding filtering, sorting or pagination,
-define the reorder scope explicitly rather than reordering an unrelated full
-dataset from visible row indices.
+Workers, Equipment and Inventory stock share one ordered list between their
+mobile list and desktop table. Both renderings have their own DnD context so
+hidden duplicate rows cannot become drop targets. Reordering is temporary to
+the current view and never writes to the database. Equipment search preserves
+the relative order of filtered-out items when visible rows move. Inventory
+refresh resets its local order. Persisting order is a separate product/data
+decision. When adding filtering, sorting or pagination, define the reorder scope
+explicitly rather than reordering an unrelated full dataset from visible row
+indices.
 
 ### Cards and feedback surfaces
 
@@ -422,14 +437,31 @@ matches, and errors are different states.
 ### Overlays, navigation and special surfaces
 
 Dialog/AlertDialog, Sheet and Drawer retain their actual accessible primitives,
-titles, focus management and Escape/cancel behavior. Use the existing inset
-maintenance Sheet rather than independently styling each form. Popovers and
+titles, focus management and Escape/cancel behavior. SheetContent defaults to the
+inset treatment for maintenance, equipment and inventory panels: `--sheet-radius`
+is 24px and `--sheet-inset` is 12px, exposed as `rounded-sheet` and
+`sheet-inset` spacing utilities. From 640px, all four opening sides use the same
+viewport gap, full border and rounded corners. Below 640px, panels are flush and
+side panels use the full available width and dynamic viewport height.
+The mobile navigation Sidebar explicitly uses `variant="default"` to retain its
+edge-attached, navigation-width surface; it is not a task/form panel.
+
+Use SheetHeader, SheetBody and SheetFooter rather than local chrome overrides.
+SheetBody owns scrolling, overscroll containment and responsive page padding.
+Its positioned containing block keeps hidden native Select controls inside the
+scrolling region rather than extending the whole panel's scroll height.
+The `asChild` option supports a form inside maintenance tabs without adding a
+wrapper. Keep headers and wrapping footers outside the scrolling body so long
+forms and short viewports never hide their actions. A form enclosing body and
+footer must use `flex min-h-0 flex-1 flex-col`. Panels may choose a content-appropriate
+maximum width but must not override radius, inset, root padding or scrolling.
+Popovers and
 menus own their borders, elevation and collision behavior. Use a destructive
 menu item variant rather than a local text-color override. Tooltips explain
 controls, never replace an accessible control name.
 
-Maintenance Sheet footers wrap action groups on narrow screens; keep delete,
-cancel and save controls visible rather than shrinking or clipping them.
+Sheet footers wrap action groups on narrow screens; keep delete, cancel and save
+controls visible rather than shrinking or clipping them.
 
 Header maintenance search uses the installed Command and the same store query
 and matcher as the timeline. It precedes the locale switcher, adapts to an icon
@@ -440,6 +472,154 @@ Attachment/Media/Content/Title/Description/Actions retain explicit idle,
 processing, uploading, error and done states. Preserve upload/replace/remove
 behavior, file validation, progress and keyboard access. Notification items use
 Item composition; delivery-state labels use shared semantic Badge variants.
+
+## Scheduler calendar
+
+The scheduler is an equipment-by-time horizontal timeline, not a vertical
+agenda or a seven-column month grid. Equipment stays pinned while the time
+axis scrolls inside the shared workspace. Month contains only its actual
+dates; adjacent months are reached with the existing period controls.
+
+[Timeline density](../src/features/scheduler/utils/timeline-grid-layout.ts)
+owns the baseline (100%) per-view canvas dimensions on the existing 4px spacing scale:
+
+| View | Minimum column width | Minimum equipment row | Stacked task height / track pitch |
+| --- | --- | --- | --- |
+| Day | 80px per actual hour | 72px | 64 / 72px |
+| Week | 96px | 80px | 72 / 80px |
+| Month | 80px per date | 72px | 56 / 64px |
+| Year | 96px per month | 72px | 56 / 64px |
+
+[Timeline zoom](../src/features/scheduler/utils/timeline-zoom.ts) is independent
+of Day/Week/Month/Year navigation. The shared minus/percentage/plus ButtonGroup
+steps from 50% to 200% in 25-point increments and starts at 100%.
+The lower limit is the greater of 50% and the exact fit-to-width percentage,
+measured after the pinned equipment column and any reserved scrollbar gutter.
+If that limit falls between presets, zoom out lands exactly on it and disables
+the minus button. The localized Fit label exposes its actual percentage in
+the hover title and live announcement. Zoom in resumes at the next 25% preset.
+On small screens, the 50% readability floor may still require horizontal scrolling.
+Manual zoom is retained across view changes unless the new view requires a
+higher minimum; Fit mode follows viewport, period and view changes.
+Zoom changes column widths and row/track heights, not dates, period
+granularity, data, text size, icons, sidebar width, header height or toolbar
+controls. It does not reload records. The percentage is localized and announced.
+
+Horizontal zoom scales the actual baseline width: the greater of the per-view
+minimum and available viewport width divided by slot count. This matters for
+fluid weekly columns: every zoom step must have a visible effect, not merely
+change an unused minimum width. The axis must never become narrower than its
+usable viewport: the last column reaches its right edge at Fit, without
+inventing additional dates. A stable scrollbar gutter prevents the fit limit
+from oscillating when vertical zoom changes the need for a scrollbar.
+Vertical zoom scales row heights, track pitches and insets, with a 44px minimum
+task height and sufficient track padding to keep content readable and prevent
+overlaps. Typography stays fixed. Zoom preserves the visible time context and
+top equipment context; refreshes and clock ticks must not recenter the canvas.
+
+Overlapping entries always occupy separate tracks; rows grow rather than
+shrinking task cards. Task titles use regular-weight 14/20px text, with 1.5px
+icon strokes matching the lighter typography.
+Entry content responds to its own available width, not viewport breakpoints.
+Entries below 56px height prioritize a single-line title without caption or
+footer; they never shrink the font. Taller narrow entries prioritize a two-line
+title. A status icon appears beside
+the title from 64px of content width, leaving the full title width available
+on the smallest day/month cards. Icons come from the centralized status
+presentation: clock for scheduled, circle-dot for in progress, circle-check
+for completed and circle-X for cancelled, with circle-help for unknown states.
+They use the shared 16px Button icon scale and do not animate.
+
+Entries at least 72px tall (including Week at 100%) reveal their duration/time
+footer from 68px of content width. From 96px of content width they follow the rich reference's three-part
+hierarchy: maintenance-type caption and status icon, a regular-weight
+single-line title, and a duration/time and worker footer without a divider.
+At 90px height, the title may use two lines even on wider cards. Start time
+moves into the caption row from 160px; when no duration exists, the footer
+then shows the status label rather than repeating the time.
+Entries from 56px to 71px tall reveal a one-line title and footer from 80px of
+content width. At 100%, nonweekly tasks are 64px high when there is one track.
+Weekly rows fit their
+72px task and the same 4px top/bottom and horizontal insets as the other views,
+without a reserved empty creation area. Title and time stay grouped together
+rather than stretching apart on shorter titles.
+Their 4px vertical task padding and 2px content gaps fit the three-part
+weekly hierarchy without enlarging rows. Worker initials use circular 20px
+shadcn Avatars with a background-colored border and primary-colored fallback.
+Up to two workers overlap by 8px, restoring the original stacked treatment.
+Geist, global tracking, restrained `rounded-lg` task corners, existing
+status surfaces and worker associations are preserved. Titles use the neutral
+foreground; captions and state icons inherit the status color. The footer uses
+12/16px metadata: actual scheduled duration when an end exists, otherwise
+start time. Clock values are explicitly prefixed with localized `At` / `Às`;
+durations use `h` and `m` units, such as `2h` or `2h 30m`, never a bare `2:00`.
+Duration reuses the work-duration formatter, never the one-hour
+visual fallback used to draw an open-ended task.
+
+The footer progressively adds the first assignee from 96px of content width,
+the second overlapping avatar from 104px, and an additional-worker count
+(beyond those two) from 128px. The shorter layout's start time appears alongside
+duration from 192px, its type label from 256px, and the lead worker's name from
+320px. The additional-worker count never shrinks or truncates when a long
+lead name appears; the name yields its available space first.
+Below 96px, the rich footer prioritizes the full start time over the
+avatar. Worker text truncates before displacing task information. The drag grip
+appears from 192px and remains hidden on coarse pointers; the whole task stays
+draggable at every width. These container-query thresholds exclude padding
+and borders and only affect visible content, never row or task dimensions.
+Full type/status/date/time/duration/worker context remains in the accessible
+description and hover title at every width. Known empty assignments are shown
+as unassigned; omitted association data is not misrepresented as unassigned.
+
+[Timeline slots](../src/features/scheduler/ui/timeline-slot.tsx) compose the
+shared shadcn Button with canvas-owned dimensions. The full available cell
+opens the existing creation Sheet with its equipment and exact slot instant.
+The neutral dashed add affordance fills the available cell with an 8px inset
+and a centered plus, using the shared 8px `rounded-lg` surface radius. It appears on hover or
+keyboard focus; coarse pointers always see the plus without a permanent
+rectangle around every cell. Press/focus reveals its outline. Occupied cells do not
+show this empty-slot decoration; their uncovered area still supports creation.
+There is no separate creation rail or extra header band.
+
+Vertical time dividers use a single 1px right edge, shared by headers,
+equipment cells and loading placeholders. Week boundaries in Month and
+quarter boundaries in Year use `border-strong` for emphasis, not extra
+thickness or a matching left border. The current header's primary top border
+is a separate state indicator and does not change vertical divider width.
+
+Today/current-hour and weekend states are calculated once in the configured
+organization timezone and shared by headers and equipment cells.
+Weekend uses `muted/15` with muted header text. Today uses `primary-muted/10`
+in the column and `primary-muted/50` in the header, with a primary top border,
+blue weekday/date text and a small stacked Today label. The weekly header uses
+64px height, 12/16px weekday abbreviations and 14/20px medium date numbers.
+The stacked Today label uses sentence case and the shared 12/16px metadata scale.
+Other views use 56px headers with 14/20px time/date labels. On a
+weekend, the blue current-date treatment takes precedence while the weekday
+name still identifies the weekend. Tasks keep their separate status surfaces;
+weekend tasks are never dimmed or disabled.
+Header heights live in the same density map used by actual and loading headers.
+Only day view retains the existing primary-colored current-time line,
+updated every minute and pointer-transparent above tasks. Week/month/year
+have no time cursor or floating time label.
+Grid lines, column backgrounds and the daily cursor stop at the equipment
+rows. There is no decorative filler grid. Empty-period feedback follows the
+rows in normal flow, spans the visible viewport, and never contains a grid
+or cursor, including while the timeline is horizontally scrolled.
+[The intl request configuration](../src/i18n/request.ts) supplies one serialized
+clock snapshot to server/client rendering, avoiding hydration differences in
+indicator positions.
+
+Initial navigation centers the current instant in day view, or the whole
+date column in week/month/year, in the usable horizontal
+viewport, measuring the actual pinned axis rather than assuming sidebar
+dimensions. For another day, the first visible task is the starting
+perspective, falling back to the selected instant when empty. Month/year
+use the selected date when now is outside their period. Today deliberately
+refocuses even when already selected. Clock ticks, edits, searches, data
+refreshes and ordinary scrolling never recenter the user's view. The complete
+time axis remains reachable in both directions. Equal-width calendar-day
+columns interpolate time within each local day, including 23/25-hour DST days.
 
 ## Intentional exceptions
 
@@ -453,8 +633,10 @@ Button on a page:
    composes a responsive input-like Button, shortcut hint and unpadded Command
    dialog. Its responsive width/padding is intentional shell layout.
 3. [TimelineGrid](../src/features/scheduler/ui/timeline-grid.tsx) owns time-axis
-   cells, row heights and a borderless empty canvas. Do not force this into a
-   table/card grid or apply those dimensions to ordinary controls.
+   row heights and a borderless empty canvas.
+   [TimelineSlotHeader and TimelineSlotCell](../src/features/scheduler/ui/timeline-slot.tsx)
+   compose shadcn Buttons with these canvas-owned dimensions. Do not force
+   this into a table/card grid or apply those dimensions to ordinary controls.
 4. Calendar navigation/days stay 36px even on coarse pointers so seven columns
    and collision padding fit a 320px viewport. Date triggers/time fields still
    use shared control sizes.
