@@ -168,7 +168,7 @@ export function EquipmentPageClient() {
                       <Button
                         variant="ghost"
                         size="row"
-                        className="min-w-0 flex-1 items-start gap-3 py-2 text-left"
+                        className="min-w-0 flex-1 items-start"
                         aria-label={`${tCommon("edit")} ${row.equipment.name}`}
                         onClick={() => {
                           setEditing(row.equipment);
