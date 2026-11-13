@@ -109,19 +109,33 @@ when the PR is merged to `develop`.
 The [staging deployment workflow](../../.github/workflows/deploy-staging.yml)
 runs on a merged PR to `develop`. It requires successful test and security
 runs for the exact PR head, verifies that the uploaded artifact's source tree
-matches the merged commit, then promotes and deploys those already-tested
-images. It does not rerun tests, rebuild the images, or rescan them. Missing,
-expired, unsuccessful, or mismatched validation blocks deployment; a merge
-that is no longer the current `develop` head is skipped to avoid rolling
-staging back. Production deployment is not automated.
+matches the merged commit, then promotes those already-tested images. It does
+not rerun tests, rebuild the images, or rescan them. Missing, expired,
+unsuccessful, or mismatched validation blocks deployment; a merge that is no
+longer the current `develop` head is skipped to avoid rolling staging back.
 
-The workflow builds a separate `migrator` image. Its entrypoint applies
-committed migrations, provisions the restricted runtime role, and verifies
-that role. The checked-in staging deploy workflow promotes but does **not**
-invoke that migration image. Before a release containing schema changes, verify that
-the target environment has a reviewed, one-shot migration step and that it
-finishes before the application rollout. Do not assume migrations ran merely
-because the app deployment succeeded.
+Staging uses [docker-compose.staging.yml](../../docker-compose.staging.yml) as
+an image-only Compose deployment. The `migrator` service always runs the
+promoted migration image before the `app` service can start. Its
+`prisma migrate deploy` applies pending migrations from the database migration
+history and is a no-op when the database is already current; the workflow does
+not infer migration needs from changed files. The migrator also provisions and
+verifies the restricted runtime role. A migration failure prevents the app
+service from starting and causes the staging health/revision check to fail.
+
+Keep the owner `MIGRATION_DATABASE_URL` only in Coolify's staging environment
+and pass it only to the migrator service. The application receives only the
+restricted `DATABASE_URL`. Use backward-compatible expand/contract migrations:
+the existing app may continue serving while the migration service runs.
+Production deployment is not automated.
+
+The workflow builds and scans a separate `migrator` image. Its entrypoint
+applies committed migrations, provisions the restricted runtime role, and
+verifies that role. The staging Compose dependency runs this exact promoted
+image before the application rollout. Migrations are not automatically
+reversed if the app deployment later fails; database changes must remain
+compatible with the previous app version or have a separately reviewed
+recovery plan.
 
 Recommended operator-controlled release sequence (production automation is
 not present in the repository):
@@ -144,11 +158,13 @@ not present in the repository):
    independently reviewed restore plan.
 
 The staging deployment automation is gated by GitHub Environment configuration
-and `STAGING_AUTODEPLOY_ENABLED`; see
+and `STAGING_AUTODEPLOY_ENABLED`; the Compose migration gate additionally
+requires `STAGING_COMPOSE_MIGRATION_ENABLED=true` and
+`STAGING_COOLIFY_APP_UUID`. See
 [deployment and release](deployment-and-release.md). Production promotion is
 not encoded in that workflow. Confirm any Coolify pre-deploy or one-shot
-migrator configuration directly; repository code does not prove that the
-external migration resource is configured.
+Compose resource configuration directly; repository code does not prove that
+the external Coolify application has been converted or its environment set up.
 
 ### First deployment checklist
 
@@ -159,10 +175,12 @@ external migration resource is configured.
    expose its port publicly. Provision separate owner/migration and restricted
    runtime roles; configure `MIGRATION_DATABASE_URL` and `DATABASE_URL`
    separately.
-3. Configure the app as a Docker image application using the image published
-   by CI, not a local development Compose service. Keep the GHCR pull
-   credential read-only. Configure the Coolify proxy, hostname, HTTPS, and
-   production `BETTER_AUTH_URL`.
+3. Configure staging as a Docker Compose application using
+   [docker-compose.staging.yml](../../docker-compose.staging.yml), with the
+   staging domain routed to the `app` service. Keep the GHCR pull credential
+   read-only. Configure the Coolify proxy, hostname, HTTPS, and
+   `BETTER_AUTH_URL`. Production deployment remains operator-controlled and
+   must follow its separately reviewed release procedure.
 4. Configure the remaining required app variables using the
    [environment reference](../reference/configuration.md): Resend sender/key,
    bootstrap email only during first-owner setup, S3-compatible storage, and

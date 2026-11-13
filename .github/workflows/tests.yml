@@ -94,6 +94,30 @@ jobs:
       artifact_name: ${{ steps.save-images.outputs.artifact_name }}
     steps:
       - uses: actions/checkout@v4
+      - name: Validate staging migration gate
+        env:
+          APP_IMAGE_TAG: test-app
+          MIGRATOR_IMAGE_TAG: test-migrator
+          DATABASE_URL: postgresql://runtime:test@db.invalid/maintenance_app?schema=public
+          MIGRATION_DATABASE_URL: postgresql://owner:test@db.invalid/maintenance_app?schema=public
+          BETTER_AUTH_SECRET: test-only-secret-that-is-long-enough
+          BETTER_AUTH_URL: https://staging.invalid
+        run: |
+          set -euo pipefail
+
+          config="$(docker compose -f docker-compose.staging.yml config --format json)"
+          jq -e '
+            .services.app.depends_on.migrator.condition == "service_completed_successfully"
+            and .services.migrator.restart == "no"
+            and .services.migrator.environment.MIGRATION_DATABASE_URL != null
+            and .services.app.environment.MIGRATION_DATABASE_URL == null
+            and (.services.app.networks | has("coolify"))
+            and (.services.migrator.networks | has("coolify"))
+            and .networks.coolify.external == true
+            and .services.app.networks[0] == "coolify"
+            and .services.migrator.networks[0] == "coolify"
+            and .networks.coolify.external == true
+          ' <<< "$config" >/dev/null
       - uses: docker/setup-buildx-action@v3
       - name: Build production image
         uses: docker/build-push-action@v6

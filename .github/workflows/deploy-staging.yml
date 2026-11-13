@@ -59,18 +59,20 @@ jobs:
             const testedTreeSha = mergeCommit.commit.tree.sha;
 
             async function latestRun(workflowId) {
-              const { data } = await github.rest.actions.listWorkflowRuns({
-                owner,
-                repo,
-                workflow_id: workflowId,
-                event: 'pull_request',
-                branch: pullRequest.head.ref,
-                per_page: 100,
-              });
-              const matching = data.workflow_runs
-                .filter(run => run.pull_requests?.some(pr =>
-                  pr.number === pullNumber && pr.head?.sha === headSha
-                ))
+              const runs = await github.paginate(
+                github.rest.actions.listWorkflowRuns,
+                {
+                  owner,
+                  repo,
+                  workflow_id: workflowId,
+                  event: 'pull_request',
+                  branch: pullRequest.head.ref,
+                  per_page: 100,
+                }
+              );
+              // GitHub may omit pull_requests from workflow runs after the PR closes.
+              const matching = runs
+                .filter(run => run.head_sha === headSha)
                 .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
 
               if (matching.length === 0) {
@@ -157,12 +159,22 @@ jobs:
       - name: Check deployment configuration
         env:
           STAGING_AUTODEPLOY_ENABLED: ${{ vars.STAGING_AUTODEPLOY_ENABLED }}
+          STAGING_COOLIFY_APP_UUID: ${{ vars.STAGING_COOLIFY_APP_UUID }}
+          STAGING_COMPOSE_MIGRATION_ENABLED: ${{ vars.STAGING_COMPOSE_MIGRATION_ENABLED }}
           COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
           STAGING_WIREGUARD_CONFIG: ${{ secrets.STAGING_WIREGUARD_CONFIG }}
         run: |
           set -euo pipefail
           if [[ "$STAGING_AUTODEPLOY_ENABLED" != "true" ]]; then
             echo "::error::Set the STAGING_AUTODEPLOY_ENABLED repository variable to true to deploy staging."
+            exit 1
+          fi
+          if [[ -z "$STAGING_COOLIFY_APP_UUID" ]]; then
+            echo "::error::Set the STAGING_COOLIFY_APP_UUID repository variable to the staging Compose application UUID."
+            exit 1
+          fi
+          if [[ "$STAGING_COMPOSE_MIGRATION_ENABLED" != "true" ]]; then
+            echo "::error::Set STAGING_COMPOSE_MIGRATION_ENABLED to true only after Coolify is configured with docker-compose.staging.yml and its migration secrets."
             exit 1
           fi
           if [[ -z "$COOLIFY_API_TOKEN" || -z "$STAGING_WIREGUARD_CONFIG" ]]; then
@@ -235,14 +247,17 @@ jobs:
           echo "app_digest=${IMAGE_NAME}@${app_digest}" >> "$GITHUB_OUTPUT"
           echo "migrator_digest=${IMAGE_NAME}@${migrator_digest}" >> "$GITHUB_OUTPUT"
           echo "coolify_image_tag=${app_digest_tag##*:}" >> "$GITHUB_OUTPUT"
+          echo "coolify_migrator_image_tag=${migrator_digest_tag##*:}" >> "$GITHUB_OUTPUT"
           echo "should_deploy=true" >> "$GITHUB_OUTPUT"
       - name: Deploy exact image to staging
         if: steps.promote.outputs.should_deploy == 'true'
         shell: bash
         env:
+          STAGING_COOLIFY_APP_UUID: ${{ vars.STAGING_COOLIFY_APP_UUID }}
           COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
           STAGING_WIREGUARD_CONFIG: ${{ secrets.STAGING_WIREGUARD_CONFIG }}
           COOLIFY_IMAGE_TAG: ${{ steps.promote.outputs.coolify_image_tag }}
+          COOLIFY_MIGRATOR_IMAGE_TAG: ${{ steps.promote.outputs.coolify_migrator_image_tag }}
           EXPECTED_REVISION: ${{ needs.locate-validation.outputs.app_build_sha }}
           EXPECTED_MERGE_SHA: ${{ needs.locate-validation.outputs.merge_commit_sha }}
         run: |
@@ -255,7 +270,7 @@ jobs:
           fi
 
           coolify_api_url="http://10.242.0.1:8000"
-          coolify_app_uuid="s3ykxyqc8bfryycpesrrib2p"
+          coolify_app_uuid="$STAGING_COOLIFY_APP_UUID"
           staging_health_url="https://staging.maintenance.isosist.com/api/health"
           wg_config_path="/etc/wireguard/staging-deploy.conf"
           response_headers="$(mktemp)"
@@ -299,10 +314,7 @@ jobs:
           sudo wg-quick up "$wg_config_path"
 
           application_url="$coolify_api_url/api/v1/applications/$coolify_app_uuid"
-          payload="$(jq -cn \
-            --arg image_name 'ghcr.io/fredppro/maintenance-app-poc' \
-            --arg tag "$COOLIFY_IMAGE_TAG" \
-            '{docker_registry_image_name: $image_name, docker_registry_image_tag: $tag}')"
+          payload="$(jq -cn --arg commit "$EXPECTED_MERGE_SHA" '{git_branch: "develop", git_commit_sha: $commit}')"
           if ! patch_status="$(curl --silent --show-error --max-time 30 \
             --output /dev/null --write-out '%{http_code}' \
             --request PATCH \
@@ -315,7 +327,30 @@ jobs:
             exit 1
           fi
           if [[ ! "$patch_status" =~ ^2[0-9][0-9]$ ]]; then
-            echo "::error::Coolify rejected the staging image update (HTTP $patch_status)."
+            echo "::error::Coolify rejected the staging source-revision update (HTTP $patch_status)."
+            exit 1
+          fi
+
+          environment_payload="$(jq -cn \
+            --arg app_tag "$COOLIFY_IMAGE_TAG" \
+            --arg migrator_tag "$COOLIFY_MIGRATOR_IMAGE_TAG" \
+            '{data: [
+              {key: "APP_IMAGE_TAG", value: $app_tag, is_literal: true, is_runtime: true, is_buildtime: true, comment: "Validated staging application image"},
+              {key: "MIGRATOR_IMAGE_TAG", value: $migrator_tag, is_literal: true, is_runtime: true, is_buildtime: true, comment: "Validated staging migrator image"}
+            ]}')"
+          if ! env_status="$(curl --silent --show-error --max-time 30 \
+            --output /dev/null --write-out '%{http_code}' \
+            --request PATCH \
+            --header "Authorization: ******" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data "$environment_payload" \
+            "$application_url/envs/bulk")"; then
+            echo "::error::Could not set the validated staging image tags in Coolify."
+            exit 1
+          fi
+          if [[ ! "$env_status" =~ ^2[0-9][0-9]$ ]]; then
+            echo "::error::Coolify rejected the staging image-tag update (HTTP $env_status)."
             exit 1
           fi
 
