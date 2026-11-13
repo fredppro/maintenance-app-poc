@@ -68,6 +68,11 @@ failure occurred before the migrator started, so no database migration ran.
 The deployment workflow will replace bootstrap tags with validated GHCR tags
 after a successful PR build and merge.
 
+A read-only Coolify `localhost` registry inspection on 2026-11-13 showed
+`ghcr.io` as **Logged in**, used by two existing applications. No registry
+credential values were viewed. The failed bootstrap pull therefore needs a
+valid published tag; it is not evidence that the GHCR login is missing.
+
 | Area | Evidence and classification | Current conclusion |
 |---|---|---|
 | Application environments | The operator confirmed in chat on 2026-10-29 that staging and production are deployed. On 2026-10-30, Coolify was manually configured to deploy application image digest `sha256:c712ad154402609445cd2912aa6131084f1dd34a97e94626d408675326186cd6`; deployment record `ds95qdvfjltaa4kn0fb5speb` reported a completed rolling update, and the staging login page loaded after refresh. On 2026-10-31, automated deployment record `s6uljmwhwbxikhvuem6kevac` succeeded with image digest `sha256:b95c781cc3793026cc95fca8ebfd9a4dfdc3678cbb3bde5396cc24a35bdf1152`; `/api/health` returned HTTP 200 and `X-Application-Revision: 7a7e55b33744325935eb5fe8d5ce7168ad1362c2`. At the 2026-10-29 inspection, Coolify showed `maintenance-staging-app`, `maintenance-staging-db` (synthetic-data PostgreSQL 17), and `garage-staging` running on `localhost`; the app had no configured health check. | **Automated staging deployment and exact served revision were verified on 2026-10-31.** Production remains operator-reported, not independently viewed; database readiness and production health remain **unverified**. Earlier dated sources: [self-hosted platform plan](../planning/self-hosted-platform-plan.md), [WireGuard and Coolify runbook](../operations/wireguard-admin-access.md). |
