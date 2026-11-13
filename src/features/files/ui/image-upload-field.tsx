@@ -292,12 +292,11 @@ export function ImageUploadField({
             </Button>
             <Button
               type="button"
-              variant="ghost"
+              variant="destructive-ghost"
               size="icon-sm"
               aria-label={value.pending ? t("discardSelected") : labels.remove}
               disabled={busy}
               onClick={removeImage}
-              className="text-muted-foreground hover:text-destructive"
             >
               <Trash2 />
             </Button>
@@ -305,8 +304,9 @@ export function ImageUploadField({
         </Attachment>
       ) : (
         <Empty
+          size="sm"
           className={cn(
-            "min-h-0 flex-none gap-3 border border-dashed p-4 transition-colors",
+            "border border-dashed transition-colors",
             dragging && "border-primary bg-primary-muted/40",
           )}
         >

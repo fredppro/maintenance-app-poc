@@ -35,18 +35,21 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCurrencySymbol } from "@/features/scheduler/utils/currency";
 import {
   calculateWorkLogEnd,
@@ -66,7 +69,7 @@ import {
   useFieldArray,
   type UseFormReturn,
 } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   formatTimeInTimeZone,
   formatDateOnlyInTimeZone,
@@ -87,9 +90,9 @@ export const materialSchema = z.object({
   price: z.preprocess(
     (value) =>
       value === "" ||
-      value === null ||
-      value === undefined ||
-      Number.isNaN(Number(value))
+        value === null ||
+        value === undefined ||
+        Number.isNaN(Number(value))
         ? undefined
         : Number(value),
     z
@@ -145,9 +148,8 @@ export function FieldInfoTooltip({
         <Button
           type="button"
           variant="ghost"
-          size="icon-sm"
+          size="icon-xs"
           aria-label={label}
-          className="size-6 p-0 text-muted-foreground pointer-coarse:size-10"
         >
           <Info />
         </Button>
@@ -245,12 +247,14 @@ export function MaintenancePointField({
           <SelectValue placeholder={t("maintenancePoint")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__none__">{t("noMaintenancePoint")}</SelectItem>
-          {points.map((point) => (
-            <SelectItem key={point.id} value={point.id}>
-              {point.name}
-            </SelectItem>
-          ))}
+          <SelectGroup>
+            <SelectItem value="__none__">{t("noMaintenancePoint")}</SelectItem>
+            {points.map((point) => (
+              <SelectItem key={point.id} value={point.id}>
+                {point.name}
+              </SelectItem>
+            ))}
+          </SelectGroup>
         </SelectContent>
       </Select>
       {isLoading && (
@@ -277,16 +281,18 @@ export function ChecklistEditor({
   onChange,
   maintenancePointField,
   readOnly = false,
+  sectionId,
 }: {
   value: ChecklistFormValue[];
   onChange?: (value: ChecklistFormValue[]) => void;
   maintenancePointField?: ReactNode;
   readOnly?: boolean;
+  sectionId?: string;
 }) {
   const t = useTranslations("Form");
   const completedCount = value.filter((item) => item.isComplete).length;
   return (
-    <FormSection title={t("checklist.title")} showSeparator>
+    <FormSection id={sectionId} title={t("checklist.title")} showSeparator>
       {maintenancePointField}
       {value.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("checklist.empty")}</p>
@@ -294,7 +300,7 @@ export function ChecklistEditor({
         <Accordion
           type="single"
           collapsible
-          defaultValue="checklist-items"
+          defaultValue={readOnly ? undefined : "checklist-items"}
           className="rounded-md border px-3"
         >
           <AccordionItem value="checklist-items" className="border-b-0">
@@ -359,6 +365,7 @@ export function DailyHoursEditor({
   timeZone,
   showValidationErrors = false,
   onChange,
+  sectionId,
 }: {
   value: DailyHoursFormValue[];
   workers: { id: string; name: string }[];
@@ -368,6 +375,7 @@ export function DailyHoursEditor({
   timeZone: string;
   showValidationErrors?: boolean;
   onChange: (value: DailyHoursFormValue[]) => void;
+  sectionId?: string;
 }) {
   const t = useTranslations("Form");
   const date = formatDateOnlyInTimeZone(startTime, timeZone);
@@ -399,6 +407,7 @@ export function DailyHoursEditor({
 
   return (
     <FormSection
+      id={sectionId}
       title={t("dailyHours.title")}
       showSeparator
       action={
@@ -456,7 +465,7 @@ export function DailyHoursEditor({
                     <Trash2 />
                   </IconButton>
                 </div>
-                <FieldGroup className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <FieldGroup className="grid grid-cols-1 gap-form sm:grid-cols-2">
                   <Field
                     data-invalid={
                       showValidationErrors && !row.workerId ? true : undefined
@@ -518,11 +527,11 @@ export function DailyHoursEditor({
                           workDate: formatDateOnlyInTimeZone(nextDate, timeZone),
                           ...(row.startTime
                             ? {
-                                startTime: formatTimeInTimeZone(
-                                  nextDate,
-                                  timeZone,
-                                ),
-                              }
+                              startTime: formatTimeInTimeZone(
+                                nextDate,
+                                timeZone,
+                              ),
+                            }
                             : {}),
                         })
                       }
@@ -557,9 +566,9 @@ export function DailyHoursEditor({
                   <Field
                     data-invalid={
                       showValidationErrors &&
-                      (row.hours < 0.25 ||
-                        row.hours > 24 ||
-                        row.hours * 4 !== Math.round(row.hours * 4))
+                        (row.hours < 0.25 ||
+                          row.hours > 24 ||
+                          row.hours * 4 !== Math.round(row.hours * 4))
                         ? true
                         : undefined
                     }
@@ -577,17 +586,17 @@ export function DailyHoursEditor({
                         aria-required="true"
                         aria-invalid={
                           showValidationErrors &&
-                          (row.hours < 0.25 ||
-                            row.hours > 24 ||
-                            row.hours * 4 !== Math.round(row.hours * 4))
+                            (row.hours < 0.25 ||
+                              row.hours > 24 ||
+                              row.hours * 4 !== Math.round(row.hours * 4))
                             ? true
                             : undefined
                         }
                         aria-describedby={
                           showValidationErrors &&
-                          (row.hours < 0.25 ||
-                            row.hours > 24 ||
-                            row.hours * 4 !== Math.round(row.hours * 4))
+                            (row.hours < 0.25 ||
+                              row.hours > 24 ||
+                              row.hours * 4 !== Math.round(row.hours * 4))
                             ? durationErrorId
                             : undefined
                         }
@@ -624,15 +633,15 @@ export function DailyHoursEditor({
                     >
                       {calculatedEnd
                         ? new Intl.DateTimeFormat(locale, {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                            timeZone,
-                          }).format(calculatedEnd)
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                          timeZone,
+                        }).format(calculatedEnd)
                         : (
-                            <span className="text-muted-foreground">
-                              {t("dailyHours.endPreview")}
-                            </span>
-                          )}
+                          <span className="text-muted-foreground">
+                            {t("dailyHours.endPreview")}
+                          </span>
+                        )}
                     </output>
                   </Field>
                 </FieldGroup>
@@ -657,7 +666,31 @@ export function DailyHoursEditor({
   );
 }
 
-/** Shared create/edit surface: side panel on tablet/desktop, full screen on mobile. */
+export type EntryFormTab = "details" | "execution" | "notifications";
+
+export function EntryTabPanel({
+  value,
+  activeTab,
+  children,
+}: {
+  value: EntryFormTab;
+  activeTab: EntryFormTab;
+  children: ReactNode;
+}) {
+  return (
+    <TabsContent
+      value={value}
+      forceMount
+      hidden={activeTab !== value}
+      data-entry-tab={value}
+      className="flex flex-col gap-section data-[state=inactive]:hidden"
+    >
+      {children}
+    </TabsContent>
+  );
+}
+
+/** Keeps all panels mounted so switching tabs cannot discard form arrays or drafts. */
 export function EntrySheet({
   open,
   onOpenChange,
@@ -669,6 +702,11 @@ export function EntrySheet({
   formId,
   onSubmit,
   onChange,
+  activeTab,
+  onTabChange,
+  tabs,
+  validationAttempt,
+  headerActions,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -680,33 +718,97 @@ export function EntrySheet({
   formId: string;
   onSubmit: React.FormEventHandler<HTMLFormElement>;
   onChange?: React.FormEventHandler<HTMLFormElement>;
+  activeTab: EntryFormTab;
+  onTabChange: (tab: EntryFormTab) => void;
+  tabs: EntryFormTab[];
+  validationAttempt: number;
+  headerActions?: ReactNode;
 }) {
+  const t = useTranslations("Form");
+  const tCommon = useTranslations("Common");
+  const formRef = useRef<HTMLFormElement>(null);
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const previousAttempt = useRef(0);
+  const invalidControl = useRef<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    if (previousAttempt.current !== validationAttempt) {
+      previousAttempt.current = validationAttempt;
+      invalidControl.current = formRef.current?.querySelector<HTMLElement>(
+        'input[aria-invalid="true"], textarea[aria-invalid="true"], button[aria-invalid="true"], select[aria-invalid="true"]',
+      ) ?? null;
+      const tabValue = invalidControl.current
+        ?.closest<HTMLElement>("[data-entry-tab]")?.dataset.entryTab;
+      const tab = tabs.find((item) => item === tabValue);
+      if (tab && tab !== activeTab) {
+        onTabChange(tab);
+        return;
+      }
+    }
+    invalidControl.current?.focus();
+    invalidControl.current = null;
+  }, [activeTab, onTabChange, tabs, validationAttempt]);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full gap-0 p-0 sm:max-w-xl lg:max-w-2xl"
+        closeLabel={tCommon("close")}
+        className="sm:max-w-[37.5rem]"
+        onOpenAutoFocus={() => {
+          returnFocus.current = document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+        }}
+        onCloseAutoFocus={(event) => {
+          if (returnFocus.current?.isConnected) {
+            event.preventDefault();
+            returnFocus.current.focus();
+          }
+        }}
       >
-        <SheetHeader className="border-b border-border px-4 py-3 pr-14 sm:px-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <SheetTitle className="text-lg">{title}</SheetTitle>
-            {meta}
+        <SheetHeader>
+          <div className="flex min-h-8 flex-wrap items-center justify-between gap-2 pr-9">
+            <div className="flex flex-wrap items-center gap-2">{meta}</div>
+            {headerActions}
           </div>
+          <SheetTitle className="break-words pr-8 text-lg">{title}</SheetTitle>
           <SheetDescription className="text-sm leading-5">
             {description}
           </SheetDescription>
         </SheetHeader>
-
-        <form
-          id={formId}
-          onSubmit={onSubmit}
-          onChange={onChange}
-          className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 py-4 sm:px-6"
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => {
+            const tab = tabs.find((item) => item === value);
+            if (tab) onTabChange(tab);
+          }}
+          className="min-h-0 flex-1 gap-0"
         >
-          {children}
-        </form>
-
-        <SheetFooter className="mt-0 flex-col-reverse gap-2 border-t border-border bg-background px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <TabsList
+            aria-label={t("sectionNavigation")}
+            className="mx-4 mb-4 w-auto shrink-0 sm:mx-6"
+          >
+            {tabs.map((tab) => (
+              <TabsTrigger key={tab} value={tab}>
+                {t(`tabs.${tab}`)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <Separator />
+          <SheetBody asChild>
+            <form
+              ref={formRef}
+              id={formId}
+              onSubmit={onSubmit}
+              onChange={onChange}
+            >
+              {children}
+            </form>
+          </SheetBody>
+        </Tabs>
+        <Separator />
+        <SheetFooter className="mt-0 justify-between">
           {footer}
         </SheetFooter>
       </SheetContent>
@@ -719,15 +821,17 @@ export function FormSection({
   action,
   children,
   showSeparator = false,
+  id,
 }: {
   title: string;
   action?: ReactNode;
   children: ReactNode;
   showSeparator?: boolean;
+  id?: string;
 }) {
   return (
     <>
-      <section className="flex flex-col gap-3">
+      <section id={id} className="scroll-mt-4 flex flex-col gap-form">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-foreground">{title}</h3>
           {action}
@@ -941,7 +1045,7 @@ export function ScheduleFields<T extends ScheduleShape>({
                 key={preset.minutes}
                 value={String(preset.minutes)}
                 aria-label={label}
-                className="h-9 px-2 text-xs pointer-coarse:h-10 sm:px-3"
+                className="px-2 text-xs sm:px-3"
               >
                 {label}
               </ToggleGroupItem>
@@ -975,9 +1079,11 @@ export function MaterialsEditor<
 >({
   form,
   locale,
+  sectionId,
 }: {
   form: UseFormReturn<T, unknown, TTransformedValues>;
   locale: AppLocale;
+  sectionId?: string;
 }) {
   const t = useTranslations("Form");
   const f = form as unknown as UseFormReturn<MaterialsShape>;
@@ -989,6 +1095,7 @@ export function MaterialsEditor<
 
   return (
     <FormSection
+      id={sectionId}
       title={t("materials")}
       action={
         <Button
@@ -1011,7 +1118,7 @@ export function MaterialsEditor<
           {fields.map((field, index) => (
             <li
               key={field.id}
-              className="grid grid-cols-6 gap-2 rounded-md border border-border bg-muted/20 p-3"
+              className="grid grid-cols-6 gap-3 rounded-md border border-border bg-muted/20 p-3"
             >
               <div className="col-span-6 -mt-1 flex items-center justify-between">
                 <span className="text-xs font-medium tabular-nums text-muted-foreground">
@@ -1023,7 +1130,7 @@ export function MaterialsEditor<
                 />
               </div>
               <Field
-                className="col-span-6 gap-1 sm:col-span-3"
+                className="col-span-6 sm:col-span-3"
                 data-invalid={!!errors?.[index]?.name || undefined}
               >
                 <FieldLabel className="text-xs" htmlFor={`material-name-${index}`}>
@@ -1038,7 +1145,7 @@ export function MaterialsEditor<
                     errors?.[index]?.name ? `material-name-error-${index}` : undefined
                   }
                   placeholder={t("itemName")}
-                  className="h-8 text-sm"
+                  controlSize="sm"
                   {...f.register(`materials.${index}.name` as const)}
                 />
                 <FieldError
@@ -1047,7 +1154,7 @@ export function MaterialsEditor<
                 />
               </Field>
 
-              <Field className="col-span-6 gap-1 sm:col-span-3">
+              <Field className="col-span-6 sm:col-span-3">
                 <FieldLabel className="text-xs" htmlFor={`material-ref-${index}`}>
                   {t("reference")}
                 </FieldLabel>
@@ -1055,13 +1162,13 @@ export function MaterialsEditor<
                   id={`material-ref-${index}`}
                   aria-label={`${t("reference")} ${index + 1}`}
                   placeholder={t("reference")}
-                  className="h-8 text-sm"
+                  controlSize="sm"
                   {...f.register(`materials.${index}.reference` as const)}
                 />
               </Field>
 
               <Field
-                className="col-span-2 gap-1"
+                className="col-span-2"
                 data-invalid={!!errors?.[index]?.quantity || undefined}
               >
                 <FieldLabel className="text-xs" htmlFor={`material-qty-${index}`}>
@@ -1079,7 +1186,8 @@ export function MaterialsEditor<
                   }
                   type="number"
                   step="0.1"
-                  className="h-8 text-right text-sm tabular-nums"
+                  controlSize="sm"
+                  className="text-right tabular-nums"
                   {...f.register(`materials.${index}.quantity` as const, {
                     valueAsNumber: true,
                   })}
@@ -1090,7 +1198,7 @@ export function MaterialsEditor<
                 />
               </Field>
 
-              <Field className="col-span-2 gap-1">
+              <Field className="col-span-2">
                 <FieldLabel
                   className="text-xs"
                   htmlFor={`material-unit-${index}`}
@@ -1113,20 +1221,20 @@ export function MaterialsEditor<
                       placeholder={t("selectUnit")}
                       searchPlaceholder={t("searchUnit")}
                       emptyText={t("noUnitFound")}
-                      className="h-8 text-sm"
+                      size="sm"
                     />
                   )}
                 />
               </Field>
 
               <Field
-                className="col-span-2 gap-1"
+                className="col-span-2"
                 data-invalid={!!errors?.[index]?.price || undefined}
               >
                 <FieldLabel className="text-xs" htmlFor={`material-price-${index}`}>
                   {t("price")}
                 </FieldLabel>
-                <InputGroup className="h-8">
+                <InputGroup controlSize="sm">
                   <InputGroupInput
                     id={`material-price-${index}`}
                     aria-label={`${t("price")} ${index + 1}`}
@@ -1140,7 +1248,8 @@ export function MaterialsEditor<
                     min="0"
                     step="0.01"
                     placeholder="0.00"
-                    className="h-8 text-right text-sm tabular-nums"
+                    controlSize="sm"
+                    className="text-right tabular-nums"
                     {...f.register(`materials.${index}.price` as const, {
                       valueAsNumber: true,
                     })}

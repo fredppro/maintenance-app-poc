@@ -1,11 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { PermissionDeniedError } from "@/lib/tenant-context";
 import { GET } from "./route";
 
-const { getTenantContext, readStoredFile } = vi.hoisted(() => ({
-  getTenantContext: vi.fn(),
-  readStoredFile: vi.fn(),
+const { getTenantContext, readStoredFile, tenantErrors } = vi.hoisted(() => {
+  class AuthenticationRequiredError extends Error {}
+  class OrganizationRequiredError extends Error {}
+  class PermissionDeniedError extends Error {}
+  class SiteSelectionRequiredError extends Error {}
+  class SiteSetupRequiredError extends Error {}
+  class TenantInactiveError extends Error {}
+
+  return {
+    getTenantContext: vi.fn(),
+    readStoredFile: vi.fn(),
+    tenantErrors: {
+      AuthenticationRequiredError,
+      OrganizationRequiredError,
+      PermissionDeniedError,
+      SiteSelectionRequiredError,
+      SiteSetupRequiredError,
+      TenantInactiveError,
+    },
+  };
+});
+vi.mock("@/lib/tenant-context", () => ({
+  getTenantContext,
+  ...tenantErrors,
 }));
-vi.mock("@/lib/tenant-context", () => ({ getTenantContext }));
 vi.mock("@/features/files/server/files", () => ({ readStoredFile }));
 
 const call = () => GET(new Request("http://x"), { params: Promise.resolve({ id: "f-1" }) });
@@ -17,8 +38,16 @@ describe("GET /api/files/[id]", () => {
   });
 
   it("rejects callers without access", async () => {
-    getTenantContext.mockRejectedValue(new Error("nope"));
+    getTenantContext.mockRejectedValue(
+      new PermissionDeniedError("viewMaintenance"),
+    );
     expect((await call()).status).toBe(403);
+  });
+
+  it("preserves unexpected tenant lookup failures", async () => {
+    const error = new Error("database unavailable");
+    getTenantContext.mockRejectedValue(error);
+    await expect(call()).rejects.toBe(error);
   });
 
   it("returns 404 for files outside the caller's organization", async () => {

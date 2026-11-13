@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { PageBody, PageHeader } from "@/components/app-shell/page-header";
+import { PageBody, PageHeader, PageRegion } from "@/components/app-shell/page-header";
 import { notFound } from "next/navigation";
 import { MemberAdministration } from "@/features/organization/ui/member-administration";
 import { getTenantContext } from "@/lib/tenant-context";
@@ -32,18 +32,20 @@ export default async function MembersPage({
 
   return (
     <PageBody>
-      <PageHeader title={t("membersTitle")} />
-      <MemberAdministration
-        actorId={tenant.userId}
-        actorRole={tenant.role}
-        members={members.map((member) => ({
-          id: member.id,
-          name: member.user.name,
-          email: member.user.email,
-          role: member.role,
-        }))}
-        invitations={invitations}
-      />
+      <PageRegion width="form">
+        <PageHeader title={t("membersTitle")} />
+        <MemberAdministration
+          actorId={tenant.userId}
+          actorRole={tenant.role}
+          members={members.map((member) => ({
+            id: member.id,
+            name: member.user.name,
+            email: member.user.email,
+            role: member.role,
+          }))}
+          invitations={invitations}
+        />
+      </PageRegion>
     </PageBody>
   );
 }

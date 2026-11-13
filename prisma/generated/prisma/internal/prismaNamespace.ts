@@ -3494,18 +3494,21 @@ export type EnumInventoryMovementTypeFieldRefInput<$PrismaModel> = FieldRefInput
  * Reference to a field of type 'InventoryMovementType[]'
  */
 export type ListEnumInventoryMovementTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InventoryMovementType[]'>
+    
 
 
 /**
  * Reference to a field of type 'MaintenanceTaskNotificationType'
  */
 export type EnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MaintenanceTaskNotificationType'>
+    
 
 
 /**
  * Reference to a field of type 'MaintenanceTaskNotificationType[]'
  */
 export type ListEnumMaintenanceTaskNotificationTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MaintenanceTaskNotificationType[]'>
+    
 
 
 /**
@@ -3850,3 +3853,4 @@ export type PrismaAction =
  * `PrismaClient` proxy available in interactive transactions.
  */
 export type TransactionClient = Omit<DefaultPrismaClient, runtime.ITXClientDenyList>
+

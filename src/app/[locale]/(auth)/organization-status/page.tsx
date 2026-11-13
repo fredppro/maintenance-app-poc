@@ -31,7 +31,9 @@ export default async function OrganizationStatusPage({
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-6">
       <div className="flex w-full max-w-md flex-col gap-4">
-        <h1 className="text-xl font-semibold">{t("title")}</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground text-balance sm:text-2xl">
+          {t("title")}
+        </h1>
         {settings.status === "SUSPENDED" ? (
           <p role="status" className="text-sm text-muted-foreground">
             {t("suspended")}

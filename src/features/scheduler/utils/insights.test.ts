@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Equipment, MaintenanceEntry } from "../types";
 import {
   countOverdueScheduledMaintenance,
+  getOverdueScheduledMaintenance,
   getNextScheduledMaintenance,
   summarizeEquipmentMaintenance,
   summarizeMaterials,
@@ -69,7 +70,7 @@ describe("summarizeMetrics", () => {
   it("counts completion, overdue and upcoming tasks", () => {
     const m = summarizeMetrics(entries, [], NOW);
     expect(m).toMatchObject({ total: 5, completionRate: 25, overdue: 1, upcoming: 2 });
-    expect(m.byType).toEqual({ preventive: 2, corrective: 1, inspection: 1 });
+    expect(m.byType).toEqual({ preventive: 2, corrective: 1, predictive: 1 });
     expect(m.byStatus).toEqual({ scheduled: 2, inProgress: 1, completed: 1, cancelled: 1 });
   });
 
@@ -142,5 +143,19 @@ describe("next scheduled maintenance", () => {
         now,
       ),
     ).toBe(1);
+  });
+
+  it("returns overdue tasks in earliest-first order", () => {
+    const now = day(0).getTime();
+    const overdue = getOverdueScheduledMaintenance(
+      [
+        entry({ id: "later", startTime: day(-1) }),
+        entry({ id: "oldest", startTime: day(-3) }),
+        entry({ id: "completed", status: "completed", startTime: day(-4) }),
+      ],
+      now,
+    );
+
+    expect(overdue.map((task) => task.id)).toEqual(["oldest", "later"]);
   });
 });

@@ -1,15 +1,34 @@
 import { Readable } from "node:stream";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { PermissionDeniedError } from "@/lib/tenant-context";
 
-const mocks = vi.hoisted(() => ({
-  findFirst: vi.fn(),
-  getTenantContext: vi.fn(),
-  recordAuditEvent: vi.fn(),
-  getStream: vi.fn(),
-}));
+const mocks = vi.hoisted(() => {
+  class AuthenticationRequiredError extends Error {}
+  class OrganizationRequiredError extends Error {}
+  class PermissionDeniedError extends Error {}
+  class SiteSelectionRequiredError extends Error {}
+  class SiteSetupRequiredError extends Error {}
+  class TenantInactiveError extends Error {}
+
+  return {
+    findFirst: vi.fn(),
+    getTenantContext: vi.fn(),
+    recordAuditEvent: vi.fn(),
+    getStream: vi.fn(),
+    tenantErrors: {
+      AuthenticationRequiredError,
+      OrganizationRequiredError,
+      PermissionDeniedError,
+      SiteSelectionRequiredError,
+      SiteSetupRequiredError,
+      TenantInactiveError,
+    },
+  };
+});
 
 vi.mock("@/lib/tenant-context", () => ({
   getTenantContext: mocks.getTenantContext,
+  ...mocks.tenantErrors,
 }));
 vi.mock("@/lib/audit", () => ({
   recordAuditEvent: mocks.recordAuditEvent,
@@ -124,13 +143,23 @@ describe("export download route", () => {
   });
 
   it("does not fetch an object for an unauthorized caller", async () => {
-    mocks.getTenantContext.mockRejectedValue(new Error("forbidden"));
+    mocks.getTenantContext.mockRejectedValue(
+      new PermissionDeniedError("manageOrganization"),
+    );
     const response = await GET(request(), {
       params: Promise.resolve({ id: "export-1" }),
     });
     expect(response.status).toBe(403);
     expect(mocks.findFirst).not.toHaveBeenCalled();
     expect(mocks.getStream).not.toHaveBeenCalled();
+  });
+
+  it("preserves unexpected tenant lookup failures", async () => {
+    const error = new Error("database unavailable");
+    mocks.getTenantContext.mockRejectedValue(error);
+    await expect(
+      GET(request(), { params: Promise.resolve({ id: "export-1" }) }),
+    ).rejects.toBe(error);
   });
 
   it("scopes export lookup to the caller's organization", async () => {

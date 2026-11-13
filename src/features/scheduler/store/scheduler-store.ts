@@ -1,4 +1,5 @@
 import { createStore } from "zustand/vanilla";
+import { getTimelineMinimumZoom, isTimelineZoom, type TimelineZoom } from "../utils/timeline-zoom";
 import { DEFAULT_ORGANIZATION_TIMEZONE } from "@/features/organization/shared/organization-settings";
 import {
   fromZonedDateTimeParts,
@@ -31,10 +32,13 @@ export interface SchedulerState {
   sites: SiteOption[];
   sections: SectionOption[];
   viewMode: ViewMode;
+  zoomLevel: TimelineZoom;
+  fitZoomLevel: number | null;
   currentDate: Date;
   timeZone: string;
   selectedEntry: MaintenanceEntry | null;
   isLoading: boolean;
+  searchQuery: string;
 
   setEquipment: (equipment: Equipment[]) => void;
   setEntries: (entries: MaintenanceEntry[]) => void;
@@ -50,6 +54,8 @@ export interface SchedulerState {
   replaceEntry: (id: string, entry: MaintenanceEntry) => void;
   removeEntry: (id: string) => void;
   setViewMode: (mode: ViewMode) => void;
+  setZoomLevel: (level: number | "fit") => void;
+  setFitZoomLevel: (level: number) => void;
   setCurrentDate: (date: Date) => void;
   setSelectedEntry: (entry: MaintenanceEntry | null) => void;
   navigateForward: () => void;
@@ -60,6 +66,7 @@ export interface SchedulerState {
     newEquipmentId?: string,
   ) => void;
   setLoading: (isLoading: boolean) => void;
+  setSearchQuery: (query: string) => void;
 }
 
 export type SchedulerStore = ReturnType<typeof createSchedulerStore>;
@@ -73,10 +80,12 @@ export type SchedulerInitialState = Partial<
     | "sites"
     | "sections"
     | "viewMode"
+    | "zoomLevel"
     | "currentDate"
     | "timeZone"
     | "selectedEntry"
     | "isLoading"
+    | "searchQuery"
   >
 >;
 
@@ -134,10 +143,13 @@ const defaultSchedulerState = (): Pick<
   | "sites"
   | "sections"
   | "viewMode"
+  | "zoomLevel"
+  | "fitZoomLevel"
   | "currentDate"
   | "timeZone"
   | "selectedEntry"
   | "isLoading"
+  | "searchQuery"
 > => ({
   equipment: [],
   entries: [],
@@ -145,13 +157,19 @@ const defaultSchedulerState = (): Pick<
   sites: [],
   sections: [],
   viewMode: "week",
+  zoomLevel: 100,
+  fitZoomLevel: null,
   currentDate: new Date(),
   timeZone: DEFAULT_ORGANIZATION_TIMEZONE,
   selectedEntry: null,
   isLoading: false,
+  searchQuery: "",
 });
 
 export function createSchedulerStore(initialState: SchedulerInitialState = {}) {
+  if (initialState.zoomLevel !== undefined && !isTimelineZoom(initialState.zoomLevel)) {
+    throw new RangeError("Unsupported timeline zoom level");
+  }
   let viewModeTimer: ReturnType<typeof setTimeout> | undefined;
 
   return createStore<SchedulerState>()((set, get) => ({
@@ -162,6 +180,23 @@ export function createSchedulerStore(initialState: SchedulerInitialState = {}) {
     setEntries: (entries) => set({ entries }),
     setWorkers: (workers) => set({ workers }),
     setLoading: (isLoading) => set({ isLoading }),
+    setSearchQuery: (searchQuery) => set({ searchQuery }),
+    setZoomLevel: (zoomLevel) => {
+      if (!isTimelineZoom(zoomLevel)) throw new RangeError("Unsupported timeline zoom level");
+      set((state) => ({
+        zoomLevel: typeof zoomLevel === "number" && zoomLevel < getTimelineMinimumZoom(state.fitZoomLevel)
+          ? "fit" : zoomLevel,
+      }));
+    },
+    setFitZoomLevel: (fitZoomLevel) => {
+      const minimum = getTimelineMinimumZoom(fitZoomLevel);
+      set((state) => {
+        const zoomLevel = typeof state.zoomLevel === "number" && state.zoomLevel < minimum
+          ? "fit" : state.zoomLevel;
+        return state.fitZoomLevel === fitZoomLevel && state.zoomLevel === zoomLevel
+          ? state : { fitZoomLevel, zoomLevel };
+      });
+    },
 
     addEquipment: (equipment) =>
       set((state) => ({

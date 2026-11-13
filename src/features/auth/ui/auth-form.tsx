@@ -152,14 +152,14 @@ export function AuthForm({
           {t("productName")}
         </Link>
         <Card variant="elevated" className="w-full">
-          <CardHeader className="gap-3">
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-primary">
-              {t("signUpEyebrow")}
-            </p>
-            <CardTitle className="text-2xl tracking-tight sm:text-3xl">
+          <CardHeader>
+            <h1
+              data-slot="card-title"
+              className="text-xl font-semibold tracking-tight text-foreground text-balance sm:text-2xl"
+            >
               {t("signUpTitle")}
-            </CardTitle>
-            <CardDescription className="text-base">
+            </h1>
+            <CardDescription>
               {t("signUpDescription")}
             </CardDescription>
           </CardHeader>
@@ -322,7 +322,7 @@ export function AuthForm({
                 <p className="text-center text-sm text-muted-foreground">
                   {t("signInPrompt")}{" "}
                   <Link
-                    className="font-medium text-primary underline underline-offset-4"
+                    className="font-medium text-link underline underline-offset-4"
                     href={
                       invitationId
                         ? `/login?invitationId=${encodeURIComponent(invitationId)}`
@@ -342,7 +342,9 @@ export function AuthForm({
   ) : (
     <Card variant="elevated" className="mx-auto w-full max-w-md">
       <CardHeader>
-        <CardTitle>{t("signInTitle")}</CardTitle>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground text-balance sm:text-2xl">
+          {t("signInTitle")}
+        </h1>
         <CardDescription>{t("signInDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -388,7 +390,7 @@ export function AuthForm({
             <p className="text-center text-sm text-muted-foreground">
               {t("createAccountPrompt")}{" "}
               <Link
-                className="text-primary underline underline-offset-4"
+                className="text-link underline underline-offset-4"
                 href={
                   invitationId
                     ? `/signup?invitationId=${encodeURIComponent(invitationId)}`
@@ -400,7 +402,7 @@ export function AuthForm({
             </p>
             <p className="text-center text-sm">
               <Link
-                className="text-primary underline underline-offset-4"
+                className="text-link underline underline-offset-4"
                 href="/reset-password"
               >
                 {t("forgotPassword")}
@@ -470,21 +472,21 @@ function SignupProductPreview() {
         </div>
       </div>
 
-      <Card className="relative mx-auto w-full max-w-md gap-0 overflow-hidden rounded-xl py-0">
-        <CardHeader className="border-b border-border bg-card px-5 py-4">
+      <Card layout="sectioned" className="relative mx-auto w-full max-w-md">
+        <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-sm">{t("previewTitle")}</CardTitle>
+              <CardTitle>{t("previewTitle")}</CardTitle>
               <CardDescription className="mt-1">
                 {t("previewDescription")}
               </CardDescription>
             </div>
-            <span className="flex size-9 items-center justify-center rounded-lg bg-primary-muted text-primary">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-primary-muted text-primary-text">
               <CalendarDays aria-hidden="true" className="size-5" />
             </span>
           </div>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 p-5">
+        <CardContent className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg border border-border bg-surface-muted p-3">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -524,7 +526,7 @@ function SignupProductPreview() {
             {[
               { label: t("previewAssetOne"), start: "col-start-1", span: "col-span-2", tone: "bg-info/10 text-info border-info/20" },
               { label: t("previewAssetTwo"), start: "col-start-3", span: "col-span-2", tone: "bg-warning/10 text-warning border-warning/20" },
-              { label: t("previewAssetThree"), start: "col-start-2", span: "col-span-3", tone: "bg-primary-muted text-primary border-primary/20" },
+              { label: t("previewAssetThree"), start: "col-start-2", span: "col-span-3", tone: "bg-primary-muted text-primary-text border-primary/20" },
             ].map((task) => (
               <div
                 key={task.label}

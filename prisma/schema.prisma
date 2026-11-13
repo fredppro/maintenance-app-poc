@@ -282,6 +282,7 @@ model MaintenanceTaskReminder {
 
   @@index([organizationId, status, nextAttemptAt])
   @@index([taskId, organizationId, notificationType, scheduledFor])
+  @@index([taskId, organizationId, createdAt, id])
 }
 
 enum InventoryMovementType {

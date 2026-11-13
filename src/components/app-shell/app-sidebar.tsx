@@ -2,7 +2,6 @@
 
 import { ChevronsUpDown, CircleUserRound, LogOut, Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -45,17 +44,12 @@ function initials(name: string) {
 export function AppSidebar({
   user,
   canManageMembers,
-  contextControl,
-  contextLabel,
   logo,
   onAccount,
   onSignOut,
 }: {
   user: AppUser;
   canManageMembers: boolean;
-  /** Site/organization switcher; falls back to a static label. */
-  contextControl?: ReactNode;
-  contextLabel: string;
   /** Organization logo shown in place of the default mark. */
   logo?: { src: string; alt: string };
   onAccount: () => void;
@@ -84,13 +78,6 @@ export function AppSidebar({
           <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
             {tDashboard("title")}
           </span>
-        </div>
-        <div className="group-data-[collapsible=icon]:hidden">
-          {contextControl ?? (
-            <p className="truncate rounded-md border border-sidebar-border px-3 py-2 text-sm text-sidebar-foreground">
-              {contextLabel}
-            </p>
-          )}
         </div>
       </SidebarHeader>
 

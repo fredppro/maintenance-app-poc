@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { PageBody, PageHeader, PageRegion } from "@/components/app-shell/page-header";
 import {
   Card,
   CardContent,
@@ -184,13 +185,11 @@ export function SessionManagement() {
   const currentSessionId = stepUpSessionId ?? currentSession?.session.id;
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 sm:p-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="text-muted-foreground">{t("description")}</p>
-      </header>
+    <PageBody>
+      <PageRegion width="form">
+        <PageHeader title={t("title")} description={t("description")} />
 
-      <Card>
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ShieldCheck aria-hidden="true" />
@@ -321,7 +320,8 @@ export function SessionManagement() {
             </>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </PageRegion>
 
       <AlertDialog
         open={selectedSession !== null}
@@ -360,6 +360,6 @@ export function SessionManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </main>
+    </PageBody>
   );
 }
