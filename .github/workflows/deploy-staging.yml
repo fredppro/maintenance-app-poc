@@ -1,8 +1,7 @@
 name: Deploy staging
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [develop]
 
 permissions:
@@ -10,7 +9,6 @@ permissions:
 
 jobs:
   locate-validation:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -18,6 +16,7 @@ jobs:
       pull-requests: read
     outputs:
       artifact_name: ${{ steps.validation.outputs.artifact_name }}
+      pull_number: ${{ steps.validation.outputs.pull_number }}
       app_build_sha: ${{ steps.validation.outputs.app_build_sha }}
       should_deploy: ${{ steps.validation.outputs.should_deploy }}
       tested_tree_sha: ${{ steps.validation.outputs.tested_tree_sha }}
@@ -30,16 +29,7 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
-            const pullRequest = context.payload.pull_request;
-            const pullNumber = pullRequest.number;
-            const headSha = pullRequest.head.sha;
-            const mergeCommitSha = pullRequest.merge_commit_sha;
-
-            if (!mergeCommitSha) {
-              core.setFailed(`Merged PR #${pullNumber} did not include a merge commit SHA.`);
-              return;
-            }
-
+            const mergeCommitSha = context.sha;
             const { data: branch } = await github.rest.repos.getBranch({
               owner,
               repo,
@@ -50,6 +40,22 @@ jobs:
               core.setOutput('should_deploy', 'false');
               return;
             }
+
+            const associatedPullRequests = await github.paginate(
+              github.rest.repos.listPullRequestsAssociatedWithCommit,
+              { owner, repo, commit_sha: mergeCommitSha, per_page: 100 }
+            );
+            const pullRequest = associatedPullRequests.find(candidate =>
+              candidate.base.ref === 'develop' &&
+              candidate.merged_at &&
+              candidate.merge_commit_sha === mergeCommitSha
+            );
+            if (!pullRequest) {
+              throw new Error(`No merged PR to develop was found for commit ${mergeCommitSha}.`);
+            }
+
+            const pullNumber = pullRequest.number;
+            const headSha = pullRequest.head.sha;
 
             const { data: mergeCommit } = await github.rest.repos.getCommit({
               owner,
@@ -99,6 +105,7 @@ jobs:
               throw new Error(`Validated image artifact ${artifactName} is missing or expired.`);
             }
 
+            core.setOutput('pull_number', String(pullNumber));
             core.setOutput('artifact_name', artifactName);
             core.setOutput('app_build_sha', headSha);
             core.setOutput('should_deploy', 'true');
@@ -131,7 +138,7 @@ jobs:
       - name: Verify and load validated images
         shell: bash
         env:
-          EXPECTED_PR: ${{ github.event.pull_request.number }}
+          EXPECTED_PR: ${{ needs.locate-validation.outputs.pull_number }}
           EXPECTED_HEAD_SHA: ${{ needs.locate-validation.outputs.app_build_sha }}
           EXPECTED_TREE_SHA: ${{ needs.locate-validation.outputs.tested_tree_sha }}
           EXPECTED_MERGE_SHA: ${{ needs.locate-validation.outputs.merge_commit_sha }}
@@ -191,7 +198,7 @@ jobs:
         id: promote
         shell: bash
         env:
-          EXPECTED_PR: ${{ github.event.pull_request.number }}
+          EXPECTED_PR: ${{ needs.locate-validation.outputs.pull_number }}
           EXPECTED_HEAD_SHA: ${{ needs.locate-validation.outputs.app_build_sha }}
           EXPECTED_MERGE_SHA: ${{ needs.locate-validation.outputs.merge_commit_sha }}
           IMAGE_NAME: ghcr.io/${{ github.repository }}

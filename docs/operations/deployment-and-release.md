@@ -15,15 +15,17 @@ Successful PR validation builds and scans the production and migration images,
 then stores them as a 30-day workflow artifact; it does not publish PR images
 to GHCR.
 
-When a PR is merged to `develop`, the separate
+When a PR is merged to `develop`, the resulting push starts the separate
 [`deploy-staging.yml`](../../.github/workflows/deploy-staging.yml) workflow
-locates the successful `Tests` and `Security` runs for that exact PR head. It
-downloads the tested images, verifies the artifact metadata and source-tree
-hash against the merged commit, then promotes those images to GHCR. It does not
-rerun tests, rebuild the images, or rescan them. Deployment fails closed if
-validation or the artifact is missing, unsuccessful, expired, or does not
-match the merged tree. If another PR has already advanced `develop`, the older
-deployment is skipped so it cannot roll staging back.
+under `refs/heads/develop`, matching the staging Environment's branch
+restriction. It locates the successful `Tests` and `Security` runs for the
+merged PR's exact head, downloads the tested images, verifies the artifact
+metadata and source-tree hash against the merged commit, then promotes those
+images to GHCR. It does not rerun tests, rebuild the images, or rescan them.
+Deployment fails closed if validation or the artifact is missing,
+unsuccessful, expired, or does not match the merged tree. If another PR has
+already advanced `develop`, the older deployment is skipped so it cannot roll
+staging back.
 
 The workflow pins the Coolify Compose source to the merged commit and updates
 the application and migrator image tags to the validated images. The staging
@@ -120,7 +122,9 @@ Complete the external network and credential setup before enabling the job:
    healthcheck. After it passes, move the staging domain to the new `app`
    service, then set `STAGING_COMPOSE_MIGRATION_ENABLED=true` before merging
    the PR so its post-merge deployment can run automatically.
-7. Restrict the `staging` Environment to the `develop` branch. A required
+7. Restrict the `staging` Environment to the `develop` branch. The deployment
+   workflow runs on the post-merge `develop` push (not the PR merge ref), so
+   this restriction can remain enabled. A required
    reviewer on that Environment pauses each deployment; leave that setting
    unset for a fully automatic merge-to-staging flow, or retain it only if
    manual approval is intentional. Protect `develop` with pull-request review
@@ -189,10 +193,10 @@ integration tests, Playwright browser tests, and app/migrator image scans.
 Coverage is uploaded as `vitest-coverage` for 14 days; validated images are
 retained for 30 days.
 
-The staging workflow runs when a PR is merged to `develop`. It checks that the
-latest successful PR validation is for the merged head, that its image
-artifact's source tree matches the merged commit, and that both test and
-security workflows succeeded. It promotes and deploys those exact images
+The staging workflow runs on the push to `develop` created by a PR merge. It
+checks that the latest successful PR validation is for the merged head, that
+its image artifact's source tree matches the merged commit, and that both test
+and security workflows succeeded. It promotes and deploys those exact images
 without repeating their validation. An expired or mismatched artifact blocks
 deployment; do not rebuild or publish an unvalidated replacement from the
 deployment workflow.
