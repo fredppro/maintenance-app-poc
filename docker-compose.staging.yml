@@ -1,0 +1,42 @@
+services:
+  migrator:
+    image: "ghcr.io/fredppro/maintenance-app-poc:${MIGRATOR_IMAGE_TAG:?MIGRATOR_IMAGE_TAG is required}"
+    restart: "no"
+    networks:
+      - coolify
+    environment:
+      DATABASE_URL: "${DATABASE_URL:?DATABASE_URL is required}"
+      MIGRATION_DATABASE_URL: "${MIGRATION_DATABASE_URL:?MIGRATION_DATABASE_URL is required}"
+
+  app:
+    image: "ghcr.io/fredppro/maintenance-app-poc:${APP_IMAGE_TAG:?APP_IMAGE_TAG is required}"
+    restart: unless-stopped
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+    networks:
+      - coolify
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "${DATABASE_URL:?DATABASE_URL is required}"
+      APP_DATABASE_URL: "${APP_DATABASE_URL:-}"
+      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}"
+      BETTER_AUTH_URL: "${BETTER_AUTH_URL:?BETTER_AUTH_URL is required}"
+      RESEND_API_KEY: "${RESEND_API_KEY:-}"
+      AUTH_EMAIL_FROM: "${AUTH_EMAIL_FROM:-}"
+      PILOT_BOOTSTRAP_EMAIL: "${PILOT_BOOTSTRAP_EMAIL:-}"
+      CRON_SECRET: "${CRON_SECRET:-}"
+      S3_ENDPOINT: "${S3_ENDPOINT:-}"
+      S3_BUCKET: "${S3_BUCKET:-}"
+      S3_REGION: "${S3_REGION:-}"
+      S3_ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID:-}"
+      S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY:-}"
+      S3_FORCE_PATH_STYLE: "${S3_FORCE_PATH_STYLE:-}"
+      STORAGE_LOCAL_DIR: "${STORAGE_LOCAL_DIR:-}"
+
+networks:
+  coolify:
+    external: true
+    name: coolify

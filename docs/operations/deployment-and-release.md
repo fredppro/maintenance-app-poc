@@ -19,12 +19,18 @@ When a PR is merged to `develop`, the separate
 [`deploy-staging.yml`](../../.github/workflows/deploy-staging.yml) workflow
 locates the successful `Tests` and `Security` runs for that exact PR head. It
 downloads the tested images, verifies the artifact metadata and source-tree
-hash against the merged commit, then promotes those images to GHCR and deploys
-the application image by digest. It does not rerun tests, rebuild the images,
-or rescan them. Deployment fails closed if validation or the artifact is
-missing, unsuccessful, expired, or does not match the merged tree. If another
-PR has already advanced `develop`, the older deployment is skipped so it cannot
-roll staging back.
+hash against the merged commit, then promotes those images to GHCR. It does not
+rerun tests, rebuild the images, or rescan them. Deployment fails closed if
+validation or the artifact is missing, unsuccessful, expired, or does not
+match the merged tree. If another PR has already advanced `develop`, the older
+deployment is skipped so it cannot roll staging back.
+
+The workflow pins the Coolify Compose source to the merged commit and updates
+the application and migrator image tags to the validated images. The staging
+Compose definition makes the app depend on successful completion of the
+migrator. Every deployment runs `prisma migrate deploy`; it applies any pending
+committed migrations and succeeds without changes when there are none. A
+migration failure prevents the new application container from starting.
 
 The GHCR package must be kept private. Staging deployment also requires the
 `staging` GitHub Environment secrets and the repository Actions variable
@@ -53,13 +59,24 @@ application image, and promotes that validated image to GHCR with the release.
 Its entrypoint runs `prisma migrate deploy`, provisions the restricted runtime
 role, and verifies that role. The image needs the target environment's
 `MIGRATION_DATABASE_URL` and `DATABASE_URL`; keep the owner credential out of
-the application runtime.
+the application runtime. In staging Compose, only the `migrator` service
+receives `MIGRATION_DATABASE_URL`; the `app` service receives the restricted
+`DATABASE_URL`.
 
-The staging deployment workflow does **not** execute the migrator. Before
-deploying a schema change, confirm that a reviewed one-shot migration step is
-configured and completed for the same commit before the application rollout.
-The repository's successful application deployment check is not evidence that
-migrations ran.
+Treat migrations as forward-only deployment steps. Prefer additive,
+backward-compatible expand/contract changes so the old app can continue serving
+while migrations run. A migration failure aborts the Compose rollout. An app
+failure after a successful migration does not roll the database back; keep the
+schema compatible with the previous app release or use a separately reviewed
+database recovery plan.
+
+The existing standalone `maintenance-staging-migrator` Coolify Docker Image
+resource is not used as the deployment gate. Coolify v4.6 can mark that
+resource's deployment finished when container launch succeeds, without proving
+the one-shot process exited successfully. See the [Coolify v4.6 deployment
+implementation](https://github.com/coollabsio/coolify/blob/v4.6.0/app/Jobs/ApplicationDeploymentJob.php).
+Keep the existing resource until the Compose replacement is configured and has
+completed a verified staging deployment; then retire it deliberately.
 
 ## Enable automated staging deployment
 
@@ -79,7 +96,31 @@ Complete the external network and credential setup before enabling the job:
 3. In the GitHub repository's `staging` Environment, add these secrets:
    - `STAGING_WIREGUARD_CONFIG`: the dedicated peer's client configuration.
    - `COOLIFY_API_TOKEN`: the least-privilege token described above.
-4. Restrict the `staging` Environment to the `develop` branch. A required
+4. Create a new staging Coolify application as **Docker Compose from Git**
+   (Coolify's Docker Image application type does not switch deployment methods
+   in place). Connect this repository, select a branch containing
+   `docker-compose.staging.yml` (the PR branch while preparing the change, or
+   `develop` after it is merged), and select that Compose file. The deploy
+   workflow pins the source to `develop` and the merged commit. Keep the
+   existing app available as a rollback resource while setting up the
+   replacement.
+5. Configure the new Compose resource to use the existing external Docker
+   network `coolify`; route the staging domain to service `app` on port `3000`.
+   Configure GHCR pull access and copy the existing staging application
+   environment values to the new resource. Set `MIGRATION_DATABASE_URL` to
+   the migration owner URL and `DATABASE_URL` to the restricted runtime URL.
+   The Compose file passes the owner URL only to `migrator`. Keep both URLs in
+   Coolify, not in GitHub Actions. Initialize `APP_IMAGE_TAG` and
+   `MIGRATOR_IMAGE_TAG` with the currently deployed image tags so Coolify can
+   validate and manually test the Compose resource; the workflow replaces
+   these values with the validated immutable tags on each deployment.
+6. Set the GitHub `staging` Environment variable `STAGING_COOLIFY_APP_UUID` to
+   the new Compose application UUID. Keep the existing app and domain in place
+   while testing the replacement with a temporary hostname or internal
+   healthcheck. After it passes, move the staging domain to the new `app`
+   service, then set `STAGING_COMPOSE_MIGRATION_ENABLED=true` before merging
+   the PR so its post-merge deployment can run automatically.
+7. Restrict the `staging` Environment to the `develop` branch. A required
    reviewer on that Environment pauses each deployment; leave that setting
    unset for a fully automatic merge-to-staging flow, or retain it only if
    manual approval is intentional. Protect `develop` with pull-request review
@@ -90,18 +131,22 @@ Complete the external network and credential setup before enabling the job:
    [CODEOWNERS](../../.github/CODEOWNERS) file routes those changes to `@fredppro`.
    Keep both deployment secrets environment-scoped; do not create repository-level
    copies. Only then set the repository Actions variable
-   `STAGING_AUTODEPLOY_ENABLED` to `true`.
+   `STAGING_AUTODEPLOY_ENABLED` to `true`. Retain the old image app and standalone
+   migrator until the Compose workflow has completed a successful deployment
+   and the new staging app has passed its smoke checks; retire them separately.
+   Keep the old migrator stopped and unrouted during cutover. Coolify displayed
+   an auto-generated `sslip.io` domain for it despite no exposed ports; remove
+   that domain when retiring the resource.
 
 The workflow's `staging` environment is an approval boundary only when required
 reviewers are configured in GitHub repository settings. A branch restriction
 alone does not require approval.
 
-The workflow targets the existing staging application UUID in
-`.github/workflows/deploy-staging.yml` and the private Coolify URL
-`http://10.242.0.1:8000`.
-It updates the repository image name and `sha256-<hex>` tag together; Coolify
-resolves that tag to the immutable digest reference. Keep `@sha256` out of the
-image-name field, or Coolify will construct an invalid doubled digest reference.
+The workflow targets the staging Compose application UUID from
+`STAGING_COOLIFY_APP_UUID` and the private Coolify URL
+`http://10.242.0.1:8000`. It pins the Compose checkout to the merged commit and
+updates `APP_IMAGE_TAG` and `MIGRATOR_IMAGE_TAG` to the validated
+`sha256-<hex>` tags. Do not put `@sha256` in either tag variable.
 Do not put WireGuard private keys or API tokens in the repository. The image
 build embeds its validated source SHA in the successful `/api/health` response header
 `X-Application-Revision`, allowing the workflow to distinguish the new
