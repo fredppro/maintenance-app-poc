@@ -107,7 +107,9 @@ branch reruns validation. The tests and security workflows do not run again
 when the PR is merged to `develop`.
 
 The [staging deployment workflow](../../.github/workflows/deploy-staging.yml)
-runs on a merged PR to `develop`. It requires successful test and security
+runs on the push to `develop` produced by a PR merge, so its GitHub Environment
+ref is `refs/heads/develop` and the `develop`-only deployment rule remains
+effective. It requires successful test and security
 runs for the exact PR head, verifies that the uploaded artifact's source tree
 matches the merged commit, then promotes those already-tested images. It does
 not rerun tests, rebuild the images, or rescan them. Missing, expired,
