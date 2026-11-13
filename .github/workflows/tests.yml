@@ -114,9 +114,6 @@ jobs:
             and (.services.app.networks | has("coolify"))
             and (.services.migrator.networks | has("coolify"))
             and .networks.coolify.external == true
-            and .services.app.networks[0] == "coolify"
-            and .services.migrator.networks[0] == "coolify"
-            and .networks.coolify.external == true
           ' <<< "$config" >/dev/null
       - uses: docker/setup-buildx-action@v3
       - name: Build production image

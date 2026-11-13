@@ -40,7 +40,10 @@ On 2026-11-13, PR #21 merged, but staging workflow run #3
 The successful test and security runs existed for the PR's latest head SHA;
 the workflow lookup depended on a PR association GitHub omitted after merge.
 The repository now has a SHA-based lookup and an automated Compose migration
-gate, but those local changes have not yet been merged or deployed.
+gate. PR #22 contains these changes but is behind `develop`; its initial
+`container-image` check failed because the Compose-validation jq expression
+treated the normalized networks object as an array. A local correction now
+checks network keys, but that correction has not yet been pushed.
 
 A read-only Coolify UI inspection on 2026-11-13 found the existing
 `maintenance-staging-migrator` Docker Image application on the `coolify` network,
@@ -53,6 +56,17 @@ verifying that a one-shot container remained alive, so this resource's
 deployment status alone is not a reliable migration-success gate. The new
 Compose dependency is intended to gate app startup on the migrator container's
 actual successful exit.
+
+An operator-approved `maintenance-staging-app-compose` resource was created
+for PR #22 on the PR branch, using `docker-compose.staging.yml` and the
+external `coolify` network. It has no public domain; the existing staging app
+was not changed. The required Coolify environment values were configured,
+except optional `APP_DATABASE_URL` and `STORAGE_LOCAL_DIR`, which are unset.
+A manual no-domain deployment attempt at 2026-11-13 22:42 UTC failed while
+pulling the bootstrap image tag because GHCR did not contain that tag. The
+failure occurred before the migrator started, so no database migration ran.
+The deployment workflow will replace bootstrap tags with validated GHCR tags
+after a successful PR build and merge.
 
 | Area | Evidence and classification | Current conclusion |
 |---|---|---|
