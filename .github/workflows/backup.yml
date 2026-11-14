@@ -21,7 +21,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: ${{ secrets.BACKUP_AWS_REGION || 'eu-west-1' }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - name: Check configuration
         id: config
         run: |
