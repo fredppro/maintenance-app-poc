@@ -115,6 +115,13 @@ jobs:
             and (.services.migrator.networks | has("coolify"))
             and .networks.coolify.external == true
           ' <<< "$config" >/dev/null
+      - name: Validate Coolify deployment authorization wiring
+        run: |
+          set -euo pipefail
+          workflow=".github/workflows/deploy-staging.yml"
+          grep -Fq 'coolify_auth_header="Authorization: Bearer $COOLIFY_API_TOKEN"' "$workflow"
+          test "$(grep -Fc -- '--header "$coolify_auth_header"' "$workflow")" -eq 3
+          ! grep -Fq 'Authorization: ******' "$workflow"
       - uses: docker/setup-buildx-action@v3
       - name: Build production image
         uses: docker/build-push-action@v6
