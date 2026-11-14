@@ -13,7 +13,11 @@ requests targeting `main` or `develop`. Pushing commits to an open PR reruns
 those checks. The `Security` workflow also checks PRs and pushes to `main`.
 Successful PR validation builds and scans the production and migration images,
 then stores them as a 30-day workflow artifact; it does not publish PR images
-to GHCR.
+to GHCR. A newer commit to the same PR cancels its older in-progress Tests and
+Security runs, avoiding wasted runner minutes. This applies only to pull
+requests; pushes to `main` and staging deployments are not superseded by this
+rule. It reduces work on stale commits, but does not reduce the number of
+workflow runs triggered by pushes.
 
 When a PR is merged to `develop`, the resulting push starts the separate
 [`deploy-staging.yml`](../../.github/workflows/deploy-staging.yml) workflow
