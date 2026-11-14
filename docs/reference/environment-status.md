@@ -222,15 +222,20 @@ On 2026-11-14, a direct request to `/api/health` returned HTTP 200 with
 `X-Application-Revision: 3dea547324af98140c47133a3305f683c742bd4f`.
 
 **Current state:** the canonical staging domain serves the Compose app and
-the new revision. The GitHub Actions run remains cancelled/failed because its
-health check ran before the domain transfer; rerun its deploy job or wait for
-the next merge-to-`develop` deployment to verify the automated end-to-end
-health check. Keep the old app resource for rollback; it is stopped and no
-longer owns the domain.
+revision `3dea547324af98140c47133a3305f683c742bd4f`. The old app resource
+remains stopped for rollback and no longer owns the domain.
 
-The status-aware deployment workflow now polls Coolify's deployment UUID
-before health verification and requires the `read` API permission in addition
-to the existing `write` and `deploy` permissions. The previously observed
-token had only `write` and `deploy`; update the GitHub `COOLIFY_API_TOKEN`
-secret with a resource-scoped token that adds `read` before merging this
-workflow change. `read:sensitive` and `root` are not required.
+The status-aware deployment workflow requires the Coolify API token to have
+`read` in addition to `write` and `deploy`; the token was updated and scoped to
+one resource. Its secret value was not viewed or recorded. `read:sensitive`
+and `root` are not required.
+
+After PR #26 merged, deploy run #8 (`43595208181`) located the validation
+artifact, promoted the images, and triggered Coolify. Its wait job failed with
+`deployment_uuid: unbound variable`: the job received the ID as
+`DEPLOYMENT_UUID`, but the shell script referenced the unset lowercase
+`deployment_uuid`. Coolify continued the deployment and
+`/api/health` returned HTTP 200 with
+`X-Application-Revision: 45464deb868c20abe23409c28a271ac15671cfa8`. The
+workflow is being simplified so the existing deploy job performs the status
+poll and health check in the same shell/job.
