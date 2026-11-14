@@ -128,6 +128,19 @@ automated staging deployment end to end. See the
 and [environment status](../reference/environment-status.md) for dated
 verification.
 
+To update the existing token, open **Keys & Tokens → API Tokens**, choose the
+token's **Token actions (`…`) → Edit**, keep **Write** and **Deploy**, add
+**Read**, and set **Access → Resources** to **Selected** with
+`maintenance-staging-app-compose` selected. Leave **Read sensitive data** and
+**Root** unselected, then save. Editing permissions and access does not change
+the token value, so the existing GitHub secret normally needs no update.
+
+If Coolify requires creating or rolling a token instead, copy its new value
+directly into the GitHub repository's **Settings → Environments → staging →
+Secrets and variables → Actions → `COOLIFY_API_TOKEN`**. Do not send the value
+in chat, logs, or repository files; revoke the old token only after the new
+secret is saved and a staging workflow succeeds.
+
 ## Stage 1: permit SSH only on the VPN interface
 
 Keep the existing public-key root session open as a recovery path. The server has UFW active with default-deny
