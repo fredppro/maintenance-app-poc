@@ -119,9 +119,13 @@ Complete the external network and credential setup before enabling the job:
 6. Set the GitHub `staging` Environment variable `STAGING_COOLIFY_APP_UUID` to
    the new Compose application UUID. Keep the existing app and domain in place
    while testing the replacement with a temporary hostname or internal
-   healthcheck. After it passes, move the staging domain to the new `app`
-   service, then set `STAGING_COMPOSE_MIGRATION_ENABLED=true` before merging
-   the PR so its post-merge deployment can run automatically.
+   healthcheck. If that is unavailable, coordinate the cutover after Coolify
+   reports the Compose deployment successful and the replacement as running:
+   move the staging domain to the new `app` service on port `3000`, then stop
+   (but do not delete) the old app. The deploy workflow checks the canonical
+   staging URL, so this route must point to the Compose app for its revision
+   check to pass. Set `STAGING_COMPOSE_MIGRATION_ENABLED=true` before merging
+   the PR that enables its post-merge deployment.
 7. Restrict the `staging` Environment to the `develop` branch. The deployment
    workflow runs on the post-merge `develop` push (not the PR merge ref), so
    this restriction can remain enabled. A required
