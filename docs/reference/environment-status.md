@@ -227,3 +227,10 @@ health check ran before the domain transfer; rerun its deploy job or wait for
 the next merge-to-`develop` deployment to verify the automated end-to-end
 health check. Keep the old app resource for rollback; it is stopped and no
 longer owns the domain.
+
+The status-aware deployment workflow now polls Coolify's deployment UUID
+before health verification and requires the `read` API permission in addition
+to the existing `write` and `deploy` permissions. The previously observed
+token had only `write` and `deploy`; update the GitHub `COOLIFY_API_TOKEN`
+secret with a resource-scoped token that adds `read` before merging this
+workflow change. `read:sensitive` and `root` are not required.

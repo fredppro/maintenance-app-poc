@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   unit:
     runs-on: ubuntu-latest
@@ -17,9 +21,9 @@ jobs:
       BETTER_AUTH_URL: http://localhost:3000
       DATABASE_URL: postgresql://maintenance_app:maintenance_app@localhost:5432/maintenance_app_test?schema=public
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .node-version
           cache: pnpm
@@ -29,7 +33,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm test:coverage
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: vitest-coverage
           path: coverage/
@@ -58,9 +62,9 @@ jobs:
       E2E_DATABASE_URL: postgresql://maintenance_app:maintenance_app@localhost:5432/maintenance_app_test?schema=public
       DATABASE_URL: postgresql://maintenance_app:maintenance_app@localhost:5432/maintenance_app_build?schema=public
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .node-version
           cache: pnpm
@@ -93,7 +97,7 @@ jobs:
     outputs:
       artifact_name: ${{ steps.save-images.outputs.artifact_name }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - name: Validate staging migration gate
         env:
           APP_IMAGE_TAG: test-app
@@ -120,11 +124,19 @@ jobs:
           set -euo pipefail
           workflow=".github/workflows/deploy-staging.yml"
           grep -Fq 'coolify_auth_header="Authorization: Bearer $COOLIFY_API_TOKEN"' "$workflow"
-          test "$(grep -Fc -- '--header "$coolify_auth_header"' "$workflow")" -eq 3
+          test "$(grep -Fc -- '--header "$coolify_auth_header"' "$workflow")" -eq 4
           ! grep -Fq 'Authorization: ******' "$workflow"
-      - uses: docker/setup-buildx-action@v3
+          grep -Fq '  wait-for-coolify:' "$workflow"
+          grep -Fq '  verify-staging:' "$workflow"
+          test "$(grep -Fc "if: needs.deploy.outputs.should_deploy == 'true'" "$workflow")" -eq 2
+          grep -Fq 'deployment_status_url="$coolify_api_url/api/v1/deployments/$deployment_uuid"' "$workflow"
+          grep -Fq 'deployment_deadline=$((SECONDS + 900))' "$workflow"
+          grep -Fq 'health_deadline=$((SECONDS + 180))' "$workflow"
+          grep -Fq 'failed|cancelled-by-user' "$workflow"
+          grep -Fq 'consecutive_successes >= 2' "$workflow"
+      - uses: docker/setup-buildx-action@v4.4.1
       - name: Build production image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7.4.0
         with:
           context: .
           file: ./Dockerfile
@@ -136,7 +148,7 @@ jobs:
           cache-from: type=gha,scope=app
           cache-to: type=gha,mode=max,scope=app
       - name: Build migration image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7.4.0
         with:
           context: .
           file: ./Dockerfile
@@ -197,7 +209,7 @@ jobs:
             '{schema_version: 1, pull_request: $pull_request, head_sha: $head_sha, tested_tree_sha: $tested_tree_sha, app_build_sha: $app_build_sha, app_image: $app_image, migrator_image: $migrator_image}' \
             > "$RUNNER_TEMP/validated-images/manifest.json"
           echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ steps.save-images.outputs.artifact_name }}
           path: ${{ runner.temp }}/validated-images/
@@ -216,14 +228,14 @@ jobs:
       IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
       MIGRATOR_IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}-migrator
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: ${{ needs.container-image.outputs.artifact_name }}
           path: ${{ runner.temp }}/validated-images
       - name: Load validated images
         run: docker load --input "${{ runner.temp }}/validated-images/images.tar"
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

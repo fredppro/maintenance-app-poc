@@ -36,11 +36,11 @@ jobs:
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         if: steps.config.outputs.run == 'true'
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6.1.1
         if: steps.config.outputs.run == 'true'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7.1.0
         if: steps.config.outputs.run == 'true'
         with:
           node-version-file: .node-version

@@ -123,7 +123,10 @@ promoted migration image before the `app` service can start. Its
 history and is a no-op when the database is already current; the workflow does
 not infer migration needs from changed files. The migrator also provisions and
 verifies the restricted runtime role. A migration failure prevents the app
-service from starting and causes the staging health/revision check to fail.
+service from starting and causes Coolify's deployment-status wait to fail
+before the health/revision job runs. After Coolify reports success, the
+separate health job requires two consecutive responses for the validated
+revision; it can be rerun without redeploying.
 
 Keep the owner `MIGRATION_DATABASE_URL` only in Coolify's staging environment
 and pass it only to the migrator service. The application receives only the

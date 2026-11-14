@@ -13,7 +13,11 @@ requests targeting `main` or `develop`. Pushing commits to an open PR reruns
 those checks. The `Security` workflow also checks PRs and pushes to `main`.
 Successful PR validation builds and scans the production and migration images,
 then stores them as a 30-day workflow artifact; it does not publish PR images
-to GHCR.
+to GHCR. A newer commit to the same PR cancels its older in-progress Tests and
+Security runs, avoiding wasted runner minutes. This applies only to pull
+requests; pushes to `main` and staging deployments are not superseded by this
+rule. It reduces work on stale commits, but does not reduce the number of
+workflow runs triggered by pushes.
 
 When a PR is merged to `develop`, the resulting push starts the separate
 [`deploy-staging.yml`](../../.github/workflows/deploy-staging.yml) workflow
@@ -33,6 +37,16 @@ Compose definition makes the app depend on successful completion of the
 migrator. Every deployment runs `prisma migrate deploy`; it applies any pending
 committed migrations and succeeds without changes when there are none. A
 migration failure prevents the new application container from starting.
+
+After triggering Coolify, a separate `wait-for-coolify` job polls the
+deployment UUID over WireGuard for up to 15 minutes with bounded exponential
+backoff. Coolify must report a finished deployment before the workflow
+proceeds. The `COOLIFY_API_TOKEN` therefore needs Coolify's `read` permission
+in addition to `write` and `deploy`; do not grant `read:sensitive` or `root`.
+A separate `verify-staging` job then requires two consecutive HTTP 200 health
+responses reporting the validated revision, with a three-minute deadline.
+Either waiting or health verification can be rerun without redeploying or
+rerunning migrations. Staging deploys remain serialized through verification.
 
 The GHCR package must be kept private. Staging deployment also requires the
 `staging` GitHub Environment secrets and the repository Actions variable
@@ -92,9 +106,9 @@ Complete the external network and credential setup before enabling the job:
    not reuse the operator Mac peer. UFW alone may not filter Docker-published
    ports, so verify the `DOCKER-USER` policy as well.
 2. Enable Coolify API access and allowlist only the dedicated peer address.
-   Create a token with `write` and `deploy` permissions, without `root` or
-   `read:sensitive`. This token applies to resources in its Coolify team; the
-   token owner must remain a team administrator.
+   Create a token with `read`, `write`, and `deploy` permissions, without
+   `root` or `read:sensitive`, and limit its resource access to the staging
+   Compose application. The token owner must remain a team administrator.
 3. In the GitHub repository's `staging` Environment, add these secrets:
    - `STAGING_WIREGUARD_CONFIG`: the dedicated peer's client configuration.
    - `COOLIFY_API_TOKEN`: the least-privilege token described above.

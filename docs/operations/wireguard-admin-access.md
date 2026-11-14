@@ -113,16 +113,33 @@ Coolify API access was enabled with its allowed-IP list set to
 `10.242.0.3/32`. The operator confirmed creation of the least-privilege token
 and storage in the `staging` Environment; its value is not recorded here.
 
-The `COOLIFY_API_TOKEN` uses Coolify's `write` and `deploy` permissions to pin
-the image digest and trigger a deployment; do not grant `root` or
-`read:sensitive`. On 2026-10-31, the issued-token list showed those two
-permissions only. The operator confirmed that the GitHub `staging` Environment
-is restricted to `develop` and that the replacement token value is saved
-there. The repository Actions variable `STAGING_AUTODEPLOY_ENABLED` is enabled;
-workflow run 24 verified the automated staging deployment end to end. See the
+The `COOLIFY_API_TOKEN` needs Coolify's `read`, `write`, and `deploy`
+permissions: `write` pins the source and image tags, `deploy` starts the
+deployment, and `read` polls its status. Do not grant `root` or
+`read:sensitive`; limit token access to the staging Compose application. On
+2026-10-31, the issued-token list showed `write` and
+`deploy` only; update or replace that token with the additional `read`
+permission before enabling the status-polling workflow. The operator confirmed
+that the GitHub `staging` Environment is restricted to `develop` and that the
+replacement token value is saved there. The repository Actions variable
+`STAGING_AUTODEPLOY_ENABLED` is enabled; workflow run 24 verified the earlier
+automated staging deployment end to end. See the
 [deployment and release runbook](deployment-and-release.md) for setup details
 and [environment status](../reference/environment-status.md) for dated
 verification.
+
+To update the existing token, open **Keys & Tokens → API Tokens**, choose the
+token's **Token actions (`…`) → Edit**, keep **Write** and **Deploy**, add
+**Read**, and set **Access → Resources** to **Selected** with
+`maintenance-staging-app-compose` selected. Leave **Read sensitive data** and
+**Root** unselected, then save. Editing permissions and access does not change
+the token value, so the existing GitHub secret normally needs no update.
+
+If Coolify requires creating or rolling a token instead, copy its new value
+directly into the GitHub repository's **Settings → Environments → staging →
+Secrets and variables → Actions → `COOLIFY_API_TOKEN`**. Do not send the value
+in chat, logs, or repository files; revoke the old token only after the new
+secret is saved and a staging workflow succeeds.
 
 ## Stage 1: permit SSH only on the VPN interface
 
