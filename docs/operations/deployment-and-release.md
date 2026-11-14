@@ -34,15 +34,15 @@ migrator. Every deployment runs `prisma migrate deploy`; it applies any pending
 committed migrations and succeeds without changes when there are none. A
 migration failure prevents the new application container from starting.
 
-After triggering Coolify, the deployment job polls the deployment UUID over
-WireGuard for up to 15 minutes with bounded exponential backoff. Coolify must
-report a finished deployment before the workflow proceeds. The `COOLIFY_API_TOKEN`
-therefore needs Coolify's `read` permission in addition to `write` and `deploy`;
-do not grant `read:sensitive` or `root`. A separate `verify-staging` job then
-requires two consecutive HTTP 200 health responses reporting the validated
-revision, with a three-minute deadline. Because verification is separate, a
-failed health check can be rerun without redeploying or rerunning migrations.
-Staging deploys remain serialized through verification.
+After triggering Coolify, a separate `wait-for-coolify` job polls the
+deployment UUID over WireGuard for up to 15 minutes with bounded exponential
+backoff. Coolify must report a finished deployment before the workflow
+proceeds. The `COOLIFY_API_TOKEN` therefore needs Coolify's `read` permission
+in addition to `write` and `deploy`; do not grant `read:sensitive` or `root`.
+A separate `verify-staging` job then requires two consecutive HTTP 200 health
+responses reporting the validated revision, with a three-minute deadline.
+Either waiting or health verification can be rerun without redeploying or
+rerunning migrations. Staging deploys remain serialized through verification.
 
 The GHCR package must be kept private. Staging deployment also requires the
 `staging` GitHub Environment secrets and the repository Actions variable
