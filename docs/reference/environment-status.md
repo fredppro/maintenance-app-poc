@@ -178,7 +178,7 @@ print, request, or record secret values.
 Related references: [documentation audit](../archive/documentation-audit.md),
 [documentation index](../README.md).
 
-## 2026-11-13 staging deployment protection failure
+## 2026-11-13 staging deployment failures
 
 After PR #22 was merged, the staging deployment workflow ran from
 `refs/pull/22/merge` and GitHub rejected the `staging` Environment deployment
@@ -186,8 +186,17 @@ because the Environment permits only the `develop` branch. The validation
 lookup job passed, but the deploy job was rejected before a successful
 deployment. Coolify showed no deployment for the merged change: its latest
 history entry was an earlier failed manual deployment, and the Compose app
-remained `Exited` with no public domain. The workflow change switches the trigger to the post-merge push to `develop`,
-preserving the Environment's
-branch restriction rather than broadening it to all branches. A new
-`develop`-ref workflow run is required; rerunning the rejected PR-ref job will
-not satisfy the protection rule.
+remained `Exited` with no public domain. The workflow was changed to trigger on
+the post-merge push to `develop`, preserving the Environment's branch
+restriction rather than broadening it to all branches.
+
+After PR #23 merged, workflow run #5 (`43530583061`) triggered on
+`refs/heads/develop` and successfully located the PR validation artifact and
+promoted both immutable images. Its Coolify deployment step then failed with
+HTTP 401 while updating image-tag environment variables. Inspection of the
+workflow found that this one API request used a literal masked authorization
+placeholder instead of the `COOLIFY_API_TOKEN`; the other Coolify requests use
+the token. No Coolify deployment was queued. The Compose resource remains
+`Exited` with no domains configured, and the existing staging app/domain was
+not changed. The workflow authorization header is corrected in source; a new
+merge-triggered run is needed to verify the fix and deployment.

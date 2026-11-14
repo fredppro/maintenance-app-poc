@@ -278,6 +278,7 @@ jobs:
 
           coolify_api_url="http://10.242.0.1:8000"
           coolify_app_uuid="$STAGING_COOLIFY_APP_UUID"
+          coolify_auth_header="Authorization: Bearer $COOLIFY_API_TOKEN"
           staging_health_url="https://staging.maintenance.isosist.com/api/health"
           wg_config_path="/etc/wireguard/staging-deploy.conf"
           response_headers="$(mktemp)"
@@ -325,7 +326,7 @@ jobs:
           if ! patch_status="$(curl --silent --show-error --max-time 30 \
             --output /dev/null --write-out '%{http_code}' \
             --request PATCH \
-            --header "Authorization: Bearer $COOLIFY_API_TOKEN" \
+            --header "$coolify_auth_header" \
             --header 'Accept: application/json' \
             --header 'Content-Type: application/json' \
             --data "$payload" \
@@ -348,7 +349,7 @@ jobs:
           if ! env_status="$(curl --silent --show-error --max-time 30 \
             --output /dev/null --write-out '%{http_code}' \
             --request PATCH \
-            --header "Authorization: ******" \
+            --header "$coolify_auth_header" \
             --header 'Accept: application/json' \
             --header 'Content-Type: application/json' \
             --data "$environment_payload" \
@@ -364,7 +365,7 @@ jobs:
           if ! deploy_status="$(curl --silent --show-error --max-time 30 \
             --output "$deployment_response" --write-out '%{http_code}' \
             --request POST \
-            --header "Authorization: Bearer $COOLIFY_API_TOKEN" \
+            --header "$coolify_auth_header" \
             --header 'Accept: application/json' \
             "$coolify_api_url/api/v1/deploy?uuid=$coolify_app_uuid")"; then
             echo "::error::Could not trigger the Coolify staging deployment."
