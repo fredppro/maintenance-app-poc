@@ -200,3 +200,30 @@ the token. No Coolify deployment was queued. The Compose resource remains
 `Exited` with no domains configured, and the existing staging app/domain was
 not changed. The workflow authorization header is corrected in source; a new
 merge-triggered run is needed to verify the fix and deployment.
+
+## 2026-11-14 staging Compose cutover
+
+PR #24 merged as `f391f313c4affe27d4a49f09cbd73e4568b3ab2d`. Deploy staging
+run #6 (`43533190556`) used the corrected token header and queued Coolify
+deployment `n2qxxitrrcwllztjh4pk9jva`, which Coolify marked successful. The
+workflow health check still failed: all 36 probes returned HTTP 200 from the
+old staging revision `6a1b8bd48cb7452eaee6cfb826cd7efb6ffa7a2c`, rather than the
+validated image revision `3dea547324af98140c47133a3305f683c742bd4f`. The run's
+second attempt was cancelled before the domain cutover.
+
+After approval to transfer the staging route while retaining the old app, the
+domain `staging.maintenance.isosist.com` was removed from
+`maintenance-staging-app` without deleting its DNS record, and assigned over
+HTTPS to the Compose `app` service on port `3000`. The automatically-added
+`www` alias was removed because it was not part of the existing staging route.
+The old app was stopped but not deleted. A subsequent Coolify deployment
+(`uagwdxvbkeub32eppwrp79zz`) was marked successful; the Compose app is running.
+On 2026-11-14, a direct request to `/api/health` returned HTTP 200 with
+`X-Application-Revision: 3dea547324af98140c47133a3305f683c742bd4f`.
+
+**Current state:** the canonical staging domain serves the Compose app and
+the new revision. The GitHub Actions run remains cancelled/failed because its
+health check ran before the domain transfer; rerun its deploy job or wait for
+the next merge-to-`develop` deployment to verify the automated end-to-end
+health check. Keep the old app resource for rollback; it is stopped and no
+longer owns the domain.
