@@ -120,8 +120,16 @@ jobs:
           set -euo pipefail
           workflow=".github/workflows/deploy-staging.yml"
           grep -Fq 'coolify_auth_header="Authorization: Bearer $COOLIFY_API_TOKEN"' "$workflow"
-          test "$(grep -Fc -- '--header "$coolify_auth_header"' "$workflow")" -eq 3
+          test "$(grep -Fc -- '--header "$coolify_auth_header"' "$workflow")" -eq 4
           ! grep -Fq 'Authorization: ******' "$workflow"
+          grep -Fq '  wait-for-coolify:' "$workflow"
+          grep -Fq '  verify-staging:' "$workflow"
+          test "$(grep -Fc "if: needs.deploy.outputs.should_deploy == 'true'" "$workflow")" -eq 2
+          grep -Fq 'deployment_status_url="$coolify_api_url/api/v1/deployments/$deployment_uuid"' "$workflow"
+          grep -Fq 'deployment_deadline=$((SECONDS + 900))' "$workflow"
+          grep -Fq 'health_deadline=$((SECONDS + 180))' "$workflow"
+          grep -Fq 'failed|cancelled-by-user' "$workflow"
+          grep -Fq 'consecutive_successes >= 2' "$workflow"
       - uses: docker/setup-buildx-action@v3
       - name: Build production image
         uses: docker/build-push-action@v6

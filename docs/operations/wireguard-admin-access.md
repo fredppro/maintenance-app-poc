@@ -113,13 +113,17 @@ Coolify API access was enabled with its allowed-IP list set to
 `10.242.0.3/32`. The operator confirmed creation of the least-privilege token
 and storage in the `staging` Environment; its value is not recorded here.
 
-The `COOLIFY_API_TOKEN` uses Coolify's `write` and `deploy` permissions to pin
-the image digest and trigger a deployment; do not grant `root` or
-`read:sensitive`. On 2026-10-31, the issued-token list showed those two
-permissions only. The operator confirmed that the GitHub `staging` Environment
-is restricted to `develop` and that the replacement token value is saved
-there. The repository Actions variable `STAGING_AUTODEPLOY_ENABLED` is enabled;
-workflow run 24 verified the automated staging deployment end to end. See the
+The `COOLIFY_API_TOKEN` needs Coolify's `read`, `write`, and `deploy`
+permissions: `write` pins the source and image tags, `deploy` starts the
+deployment, and `read` polls its status. Do not grant `root` or
+`read:sensitive`; limit token access to the staging Compose application. On
+2026-10-31, the issued-token list showed `write` and
+`deploy` only; update or replace that token with the additional `read`
+permission before enabling the status-polling workflow. The operator confirmed
+that the GitHub `staging` Environment is restricted to `develop` and that the
+replacement token value is saved there. The repository Actions variable
+`STAGING_AUTODEPLOY_ENABLED` is enabled; workflow run 24 verified the earlier
+automated staging deployment end to end. See the
 [deployment and release runbook](deployment-and-release.md) for setup details
 and [environment status](../reference/environment-status.md) for dated
 verification.

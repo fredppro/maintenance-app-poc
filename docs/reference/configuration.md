@@ -115,7 +115,7 @@ runtime, Docker build, or protected automation.
 | `PORT`, `HOSTNAME` | Production container defaults are `3000` and `0.0.0.0`. |
 | `STAGING_AUTODEPLOY_ENABLED` | GitHub Actions repository variable; staging deploy job remains gated unless it is `true`. |
 | `STAGING_COOLIFY_APP_UUID`, `STAGING_COMPOSE_MIGRATION_ENABLED` | GitHub `staging` Environment variables identifying the Compose application and keeping deploys disabled until its migration gate is configured. |
-| `COOLIFY_API_TOKEN`, `STAGING_WIREGUARD_CONFIG` | GitHub `staging` Environment secrets used only by the staging deploy workflow. |
+| `COOLIFY_API_TOKEN`, `STAGING_WIREGUARD_CONFIG` | GitHub `staging` Environment secrets used only by staging deployment. Coolify token requires `read`, `write`, and `deploy`, without `read:sensitive` or `root`. |
 | `MIGRATION_DATABASE_URL` | Coolify staging environment owner URL passed only to the migrator service; also a protected `production-maintenance` Environment secret for daily maintenance. Never pass it to the app service or GitHub staging workflow. |
 | `S3_*` | Storage variables belong in the relevant Coolify app environment; maintenance-only credentials belong in the protected `production-maintenance` GitHub Environment. Values and activation are not verified here. |
 | `APP_IMAGE_TAG`, `MIGRATOR_IMAGE_TAG` | Coolify Compose interpolation variables updated by the staging workflow to the validated immutable GHCR tags; do not set them to moving tags such as `latest`. |
