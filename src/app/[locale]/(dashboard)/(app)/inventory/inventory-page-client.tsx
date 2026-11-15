@@ -69,6 +69,8 @@ import {
 } from "@/components/ui/tabs";
 import { PageBody, PageHeader } from "@/components/app-shell/page-header";
 import { mergeVisibleReorder } from "@/components/ui/reorderable";
+import { AnimatePresence, motion } from "motion/react";
+import { motionTransitions } from "@/lib/motion";
 import {
   consumeInventory,
   createInventoryItem,
@@ -88,6 +90,7 @@ import { toast } from "sonner";
 
 type InventoryItems = Awaited<ReturnType<typeof getInventoryItems>>;
 type Suppliers = Awaited<ReturnType<typeof getMaintenanceSuppliers>>;
+
 type StockAction = {
   item: InventoryItems[number];
   kind: "receipt" | "consumption";
@@ -319,7 +322,24 @@ export function InventoryPageClient() {
           </Button>
         </div>
 
-        <TabsContent value="stock" className="flex flex-col gap-4">
+        <AnimatePresence mode="wait" initial={false}>
+          {inventoryView === "stock" ? (
+            <motion.div
+              key="stock"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -2, transition: motionTransitions.exit }}
+              transition={motionTransitions.enter}
+              className="min-w-0 flex-1"
+            >
+              <TabsContent
+                value="stock"
+                forceMount
+                aria-hidden={inventoryView !== "stock"}
+                inert={inventoryView !== "stock"}
+                tabIndex={inventoryView === "stock" ? 0 : -1}
+                className="flex flex-col gap-4"
+              >
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold tracking-tight text-foreground text-balance">
           {t("stockTitle")}
@@ -511,9 +531,25 @@ export function InventoryPageClient() {
         )}
       </section>
 
-        </TabsContent>
-
-        <TabsContent value="planned" className="flex flex-col gap-4">
+              </TabsContent>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="planned"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -2, transition: motionTransitions.exit }}
+              transition={motionTransitions.enter}
+              className="min-w-0 flex-1"
+            >
+              <TabsContent
+                value="planned"
+                forceMount
+                aria-hidden={inventoryView !== "planned"}
+                inert={inventoryView !== "planned"}
+                tabIndex={inventoryView === "planned" ? 0 : -1}
+                className="flex flex-col gap-4"
+              >
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold tracking-tight text-foreground text-balance">
           {t("plannedMaterialsTitle")}
@@ -607,7 +643,10 @@ export function InventoryPageClient() {
           </>
         )}
       </section>
-        </TabsContent>
+              </TabsContent>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Tabs>
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>

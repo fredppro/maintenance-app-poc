@@ -64,7 +64,7 @@ export function MaintenanceSearch() {
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          aria-label={tGrid("searchTasks")}
+          aria-label={`${t("placeholder")}${query ? ` ${query}` : ""} ${apple ? "⌘K" : "Ctrl+K"}`}
           aria-keyshortcuts={apple ? "Meta+K" : "Control+K"}
           className="w-control justify-start gap-2 px-0 pointer-coarse:min-w-control-lg @xl/shell:w-44 @xl/shell:px-control-padding @2xl/shell:w-56 @5xl/shell:w-72"
         >
@@ -72,7 +72,9 @@ export function MaintenanceSearch() {
           <span className="hidden min-w-0 flex-1 truncate text-left font-normal text-muted-foreground @xl/shell:block">
             {query || t("placeholder")}
           </span>
-          <Kbd className="hidden shrink-0 @xl/shell:inline-flex">{apple ? "⌘K" : "Ctrl+K"}</Kbd>
+          <Kbd aria-hidden="true" className="hidden shrink-0 @xl/shell:inline-flex">
+            {apple ? "⌘K" : "Ctrl+K"}
+          </Kbd>
         </Button>
       </DialogTrigger>
       <DialogContent showCloseButton={false} className="gap-0 overflow-hidden p-0">

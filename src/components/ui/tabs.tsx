@@ -4,6 +4,7 @@ import * as React from 'react'
 import * as TabsPrimitive from '@radix-ui/react-tabs'
 import { MotionConfig, motion } from 'motion/react'
 
+import { motionTransitions } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
 type TabsIndicatorContextValue = {
@@ -95,7 +96,7 @@ function TabsTrigger({
           data-slot="tabs-active-indicator"
           layoutId={indicator.layoutId}
           initial={false}
-          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          transition={motionTransitions.indicator}
           className="pointer-events-none absolute inset-0 rounded-control-inner border border-input bg-background shadow-sm"
         />
       )}

@@ -14,7 +14,7 @@ Most scripts here are invoked through `pnpm <name>` (see `package.json`). Run
 
 | Command | Local dev | Test / CI | Staging / production |
 |---|---|---|---|
-| `pnpm up` / `pnpm down` | Docker-only dev stack | | |
+| `pnpm run dev:docker` / `pnpm run dev:docker:down` | Docker-only dev stack | | |
 | `pnpm bootstrap` | First-time host setup | | |
 | `pnpm dev` | App with hot reload | | |
 | `pnpm build` / `pnpm start` | | Build check | Run the built app in a container or compatible host |

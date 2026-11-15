@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { PageViewTransition } from "@/components/app-shell/page-view-transition";
 import { PageBody, PageHeader, PageRegion } from "@/components/app-shell/page-header";
 import { getOrganizationSettings } from "@/features/organization/server/settings";
 import {
@@ -26,26 +27,28 @@ export default async function OrganizationPage() {
   ]);
 
   return (
-    <PageBody>
-      <PageRegion width="form">
-        <PageHeader title={t("title")} description={t("description")} />
-        <OrganizationSettingsForm initial={settings} />
-        <OrganizationExportCard
-          exports={exports.map((row) => ({
-            id: row.id,
-            status: row.status,
-            error: row.error,
-            size: row.size,
-            createdAt: row.createdAt.toISOString(),
-            heartbeatAt: row.heartbeatAt?.toISOString() ?? null,
-            expiresAt: row.expiresAt?.toISOString() ?? null,
-          }))}
-        />
-        <OrganizationDangerCard
-          isOwner={tenant.role === "owner"}
-          scheduledFor={tenantSettings?.deletionScheduledFor?.toISOString() ?? null}
-        />
-      </PageRegion>
-    </PageBody>
+    <PageViewTransition>
+      <PageBody>
+        <PageRegion width="form">
+          <PageHeader title={t("title")} description={t("description")} />
+          <OrganizationSettingsForm initial={settings} />
+          <OrganizationExportCard
+            exports={exports.map((row) => ({
+              id: row.id,
+              status: row.status,
+              error: row.error,
+              size: row.size,
+              createdAt: row.createdAt.toISOString(),
+              heartbeatAt: row.heartbeatAt?.toISOString() ?? null,
+              expiresAt: row.expiresAt?.toISOString() ?? null,
+            }))}
+          />
+          <OrganizationDangerCard
+            isOwner={tenant.role === "owner"}
+            scheduledFor={tenantSettings?.deletionScheduledFor?.toISOString() ?? null}
+          />
+        </PageRegion>
+      </PageBody>
+    </PageViewTransition>
   );
 }

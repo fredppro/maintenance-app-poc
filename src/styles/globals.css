@@ -263,6 +263,31 @@
   }
 }
 
+@keyframes route-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+::view-transition-old(root) {
+  display: none;
+}
+
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(.route-exit) {
+  animation: 150ms ease-in both route-fade reverse;
+}
+
+::view-transition-new(.route-enter) {
+  animation: 210ms ease-out 150ms both route-fade;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -271,5 +296,12 @@
     animation-iteration-count: 1 !important;
     transition-duration: 100ms !important;
     scroll-behavior: auto !important;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 }

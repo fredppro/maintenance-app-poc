@@ -49,7 +49,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { motionTransitions } from "@/lib/motion";
 import { getCurrencySymbol } from "@/features/scheduler/utils/currency";
 import {
   calculateWorkLogEnd,
@@ -77,6 +83,7 @@ import {
 } from "@/lib/time-zone";
 import * as z from "zod";
 import { MaterialUnit } from "../../../../prisma/generated/prisma/enums";
+import { motion } from "motion/react";
 import type { AppLocale } from "src/i18n/locale";
 
 export const materialSchema = z.object({
@@ -677,6 +684,8 @@ export function EntryTabPanel({
   activeTab: EntryFormTab;
   children: ReactNode;
 }) {
+  const isActive = activeTab === value
+
   return (
     <TabsContent
       value={value}
@@ -685,7 +694,14 @@ export function EntryTabPanel({
       data-entry-tab={value}
       className="flex flex-col gap-section data-[state=inactive]:hidden"
     >
-      {children}
+      <motion.div
+        initial={false}
+        animate={{ opacity: isActive ? 1 : 0 }}
+        transition={motionTransitions.enter}
+        className="flex flex-col gap-section"
+      >
+        {children}
+      </motion.div>
     </TabsContent>
   );
 }

@@ -17,7 +17,7 @@ services:
       retries: 10
       start_period: 5s
 
-  # Full dev stack with no host Node/pnpm: `pnpm up` (see README).
+  # Full dev stack with no host Node/pnpm: `pnpm run dev:docker` (see README).
   app:
     build:
       context: .

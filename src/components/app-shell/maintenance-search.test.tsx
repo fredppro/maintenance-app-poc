@@ -52,8 +52,9 @@ describe("MaintenanceSearch", () => {
   it("opens with input focus, closes with Escape and returns focus to its trigger", async () => {
     const user = userEvent.setup();
     renderSearch();
-    const trigger = screen.getByRole("button", { name: messages.Grid.searchTasks });
+    const trigger = screen.getByRole("button", { name: /Search maintenance/ });
     expect(trigger).toHaveAttribute("aria-keyshortcuts", "Meta+K");
+    expect(trigger).toHaveAccessibleName(`${messages.Search.placeholder} ⌘K`);
     expect(trigger).toHaveTextContent("⌘K");
     await user.click(trigger);
     expect(screen.getByRole("dialog", { name: "Search maintenance" })).toHaveAccessibleDescription(messages.Search.description);
@@ -69,7 +70,7 @@ describe("MaintenanceSearch", () => {
   ])("toggles with the platform shortcut on %s", async (platform, shortcut, metaKey, ctrlKey, hint) => {
     vi.spyOn(navigator, "platform", "get").mockReturnValue(platform);
     renderSearch();
-    const trigger = screen.getByRole("button", { name: messages.Grid.searchTasks });
+    const trigger = screen.getByRole("button", { name: /Search maintenance/ });
     expect(trigger).toHaveAttribute("aria-keyshortcuts", shortcut);
     expect(trigger).toHaveTextContent(hint);
     fireEvent.keyDown(document, { key: "k", metaKey, ctrlKey });
@@ -83,19 +84,19 @@ describe("MaintenanceSearch", () => {
     async (query) => {
       const user = userEvent.setup();
       renderSearch();
-      await user.click(screen.getByRole("button", { name: messages.Grid.searchTasks }));
+      await user.click(screen.getByRole("button", { name: /Search maintenance/ }));
       await user.type(screen.getByRole("combobox", { name: messages.Grid.searchTasks }), query);
       expect(screen.getByRole("option", { name: /Replace bearing/ })).toHaveTextContent("Workshop Lathe");
       expect(screen.getByLabelText("Shared schedule filter")).toHaveTextContent(query);
       await user.keyboard("{Escape}");
-      expect(screen.getByRole("button", { name: messages.Grid.searchTasks })).toHaveTextContent(query);
+      expect(screen.getByRole("button", { name: /Search maintenance/ })).toHaveTextContent(query);
     },
   );
 
   it("provides an empty state and clears both the query and timeline filter without losing focus", async () => {
     const user = userEvent.setup();
     renderSearch();
-    await user.click(screen.getByRole("button", { name: messages.Grid.searchTasks }));
+    await user.click(screen.getByRole("button", { name: /Search maintenance/ }));
     const input = screen.getByRole("combobox", { name: messages.Grid.searchTasks });
     await user.type(input, "unmatched");
     expect(screen.getByText(messages.Grid.noSearchResults)).toBeVisible();
@@ -110,7 +111,7 @@ describe("MaintenanceSearch", () => {
   it("selects search results with the keyboard and preserves encoded task routing", async () => {
     const user = userEvent.setup();
     renderSearch();
-    await user.click(screen.getByRole("button", { name: messages.Grid.searchTasks }));
+    await user.click(screen.getByRole("button", { name: /Search maintenance/ }));
     await user.type(screen.getByRole("combobox", { name: messages.Grid.searchTasks }), "bearing");
     await user.keyboard("{ArrowDown}{Enter}");
     expect(router.push).toHaveBeenCalledWith("/?taskId=bearing%20%2F%20replacement");
