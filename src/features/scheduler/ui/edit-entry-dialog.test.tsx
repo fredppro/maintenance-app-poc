@@ -1901,6 +1901,7 @@ describe("EditEntryDialog", () => {
     updateTaskMock.mockResolvedValue(taskWithHistoricalLog);
     renderDialog(taskWithHistoricalLog, [assignedWorker]);
 
+    await user.click(screen.getByRole("tab", { name: "Execution" }));
     await user.clear(screen.getByLabelText("Duration (hours)"));
     await user.type(screen.getByLabelText("Duration (hours)"), "3");
     await user.click(screen.getByRole("button", { name: "Save changes" }));
