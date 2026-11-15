@@ -21,7 +21,7 @@
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
     "test:rls": "vitest run src/lib/rls.integration.test.ts",
-    "test:e2e": "playwright5thy test",
+    "test:e2e": "playwright test",
     "test:legacy-ownership": "tsx scripts/legacy/verify-legacy-ownership.ts",
     "check": "pnpm lint && pnpm typecheck && pnpm test:run",
     "docs:check-links": "sh scripts/docs/check-markdown-links.sh",
