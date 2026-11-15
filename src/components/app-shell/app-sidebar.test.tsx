@@ -43,7 +43,7 @@ describe("AppSidebar account menu", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: "AE Alex Example alex@example.com User menu",
+        name: /AE.*Alex Example.*alex@example\.com.*User menu/,
       }),
     );
     await user.click(await screen.findByRole("menuitem", { name: "Account" }));

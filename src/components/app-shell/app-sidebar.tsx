@@ -3,7 +3,6 @@
 import { ChevronsUpDown, CircleUserRound, LogOut, Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { motion } from "motion/react";
-import { useId } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -62,10 +61,6 @@ export function AppSidebar({
   const tDashboard = useTranslations("Dashboard");
   const pathname = usePathname();
   const { setOpenMobile, isMobile } = useSidebar();
-  const userMenuAvatarId = useId();
-  const userMenuNameId = useId();
-  const userMenuEmailId = useId();
-  const userMenuLabelId = useId();
 
   return (
     <Sidebar collapsible="icon">
@@ -146,21 +141,20 @@ export function AppSidebar({
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  aria-labelledby={`${userMenuAvatarId} ${userMenuNameId} ${userMenuEmailId} ${userMenuLabelId}`}
                   className="data-[state=open]:bg-sidebar-accent"
                 >
                   <Avatar className="size-8 rounded-lg">
-                    <AvatarFallback id={userMenuAvatarId} className="rounded-lg">
+                    <AvatarFallback className="rounded-lg">
                       {initials(user.name)}
                     </AvatarFallback>
                   </Avatar>
                   <span className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-                    <span id={userMenuNameId} className="truncate font-medium">{user.name}</span>
-                    <span id={userMenuEmailId} className="truncate text-xs text-muted-foreground">
+                    <span className="truncate font-medium">{user.name}</span>
+                    <span className="truncate text-xs text-muted-foreground">
                       {user.email}
                     </span>
                   </span>
-                  <span id={userMenuLabelId} className="sr-only">
+                  <span className="sr-only">
                     {tDashboard("menu.userMenu")}
                   </span>
                   <ChevronsUpDown className="ml-auto" aria-hidden="true" />
