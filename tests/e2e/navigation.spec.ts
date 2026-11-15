@@ -41,6 +41,7 @@ test("sidebar navigates between the main areas and marks the active page", async
     ).toHaveAttribute("data-active", "true");
   }
 
+  await expect(page).toHaveTitle("Maintenance Scheduler - Equipment Service Planning");
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag21a"])
     .analyze();

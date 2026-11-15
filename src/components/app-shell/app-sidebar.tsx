@@ -141,11 +141,11 @@ export function AppSidebar({
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  aria-label={tDashboard("menu.userMenu")}
+                  aria-label={`${user.name} ${user.email} ${tDashboard("menu.userMenu")}`}
                   className="data-[state=open]:bg-sidebar-accent"
                 >
                   <Avatar className="size-8 rounded-lg">
-                    <AvatarFallback className="rounded-lg">
+                    <AvatarFallback aria-hidden="true" className="rounded-lg">
                       {initials(user.name)}
                     </AvatarFallback>
                   </Avatar>

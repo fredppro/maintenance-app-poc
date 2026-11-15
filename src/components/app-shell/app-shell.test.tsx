@@ -43,7 +43,7 @@ describe("AppShell global search", () => {
     );
     const header = screen.getByRole("banner");
     expect(header).toHaveClass("@container/shell", "px-page", "sm:px-page-desktop");
-    const search = within(header).getByRole("button", { name: messages.Grid.searchTasks });
+    const search = within(header).getByRole("button", { name: messages.Search.placeholder });
     const language = within(header).getByRole("button", { name: "Change language" });
     expect(search.nextElementSibling).toBe(language);
     expect(search).toHaveAttribute("data-size", "default");

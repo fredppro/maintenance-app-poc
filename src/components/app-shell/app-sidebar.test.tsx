@@ -41,7 +41,11 @@ describe("AppSidebar account menu", () => {
       </NextIntlClientProvider>,
     );
 
-    await user.click(screen.getByRole("button", { name: "User menu" }));
+    await user.click(
+      screen.getByRole("button", {
+        name: "Alex Example alex@example.com User menu",
+      }),
+    );
     await user.click(await screen.findByRole("menuitem", { name: "Account" }));
 
     expect(onAccount).toHaveBeenCalledOnce();
