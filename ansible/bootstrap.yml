@@ -5,6 +5,7 @@
   gather_facts: true
 
   vars:
+    # TODO(security): Load internal addresses from private configuration instead of this public playbook.
     expected_host: 10.242.0.1
     expected_hostname: maint-prod-01
     wireguard_interface: wg0

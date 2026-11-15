@@ -10,6 +10,7 @@ all:
           recovery_hostname: maint-prod-01
           bootstrap_ssh_source_cidr: 198.51.100.10/32
           operator_ssh_public_key_path: "~/.ssh/maintenance_contabo_2026.pub"
+          # TODO(security): Replace live WireGuard addresses and peer details with private configuration.
           wireguard_server_ip: 10.242.0.1
           wireguard_client_ip: 10.242.0.2
           wireguard_client_public_key: "jZiFmiKoOTCaXULSreQdyOBWoICa4wrZXrsxH3TxN3c="
