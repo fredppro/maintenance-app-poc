@@ -89,11 +89,18 @@ intentionally not included in `.env.example`.
 
 | Variable | Scope / status | Purpose and constraints |
 | --- | --- | --- |
-| `BACKUP_DATABASE_URL` | `backup.yml` and `pnpm db:backup`; required to run a database dump. | Direct/unpooled connection with enough privilege to dump the target database. Keep separate from the app runtime URL. |
-| `BACKUP_S3_URI` | Optional for the local script; required by the workflow's configuration gate. | `s3://bucket/prefix` destination for the dump and checksum. Without it, the GitHub workflow skips. |
-| `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY` | Protected backup workflow; required when uploading. | AWS-compatible storage credentials with narrowly scoped write access. The workflow maps these to standard AWS CLI variable names. |
-| `BACKUP_AWS_REGION` | Optional protected backup workflow setting; workflow default is `eu-west-1`. | Region passed to the AWS CLI. |
+| `BACKUP_DATABASE_URL` | `production-backups` GitHub Environment secret and `pnpm db:backup`; required to run a database dump. | Direct/unpooled connection with enough privilege to dump the target database. Keep separate from the app runtime URL. |
+| `BACKUP_S3_URI` | Optional local setting; required as a `production-backups` GitHub Environment secret for workflow uploads. | `s3://bucket/prefix` destination for the dump and checksum. Without it, the GitHub workflow skips. |
+| `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY` | `production-backups` GitHub Environment secrets; required when uploading. | AWS-compatible storage credentials with narrowly scoped write access. The workflow maps these to standard AWS CLI variable names. |
+| `BACKUP_AWS_REGION` | Optional `production-backups` GitHub Environment secret; workflow default is `eu-west-1`. | Region passed to the AWS CLI. |
 | `BACKUP_DIR` | Optional local backup-script setting; defaults to `./backups`. | Local output directory. It is not a retention or off-site backup policy. |
+
+Restrict the `production-backups` environment to the repository's default
+branch and require an independent reviewer before deployment. Keep backup
+credentials in this environment rather than repository-level Actions secrets.
+The workflow skips runs from refs other than the default branch, but the
+environment's branch restriction and required reviewer are the security
+boundary for its secrets.
 
 The repository does not establish that the backup workflow is active, that
 off-host retention is configured, or that an application restore has succeeded.

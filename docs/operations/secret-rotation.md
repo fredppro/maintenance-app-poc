@@ -72,12 +72,12 @@ variables and must not be changed by manually editing that file.
 |---|---|---|
 | `DATABASE_URL` | Coolify application; restricted PostgreSQL runtime role | Rotate the database role, update the URL in every relevant Coolify scope, redeploy, and smoke-test. |
 | `MIGRATION_DATABASE_URL` | Migration/owner connection; GitHub `production-maintenance` environment where configured | Rotate the database owner credential and update every migration consumer. Keep it separate from the runtime role. |
-| `BACKUP_DATABASE_URL` | Referenced as a GitHub repository Actions secret by the optional backup workflow on `develop`; configuration is unverified | Rotate the database credential it uses and update the repository secret. The workflow is not present in the default-branch workflow list and has no recorded run; verify activation before relying on or testing it. |
+| `BACKUP_DATABASE_URL` | `production-backups` GitHub Environment secret for the optional backup workflow; configuration is unverified | Rotate the database credential it uses and update the environment secret. The workflow must run only from the default branch after the environment is restricted to that branch and protected by required review. |
 | `BETTER_AUTH_SECRET` | Coolify application | Replace with a newly generated random value and redeploy. Existing sessions will be invalidated; users must sign in again. |
 | `RESEND_API_KEY` | Coolify application email delivery | Create a replacement API key in Resend, update Coolify, send a real test email, then revoke the old key. |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Coolify application and GitHub `production-maintenance` environment where configured | Create a new restricted Garage key, update all consumers, redeploy/test uploads and jobs, then delete the old Garage key. |
 | `S3_AUDIT_ACCESS_KEY_ID`, `S3_AUDIT_SECRET_ACCESS_KEY` | Operator environment for read-only storage inventory, if configured | Create a replacement key limited to listing the intended bucket; update the protected operator environment, verify an inventory run, then revoke the old key. Never reuse the application's object-write credential for inventory. |
-| `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY` | GitHub repository Actions secrets for off-host database backups, if enabled | Create a replacement least-privilege storage credential, update GitHub, run and verify the backup workflow, then revoke the old credential. |
+| `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY` | `production-backups` GitHub Environment secrets for off-host database backups, if enabled | Create a replacement least-privilege storage credential, update the environment secrets, run and verify the backup workflow, then revoke the old credential. |
 | GHCR personal access token (`read:packages`) | Coolify server registry login | Create a replacement read-only token, update the registry login in Coolify, verify an image pull/deploy, then revoke the old token in GitHub. |
 | GitHub account password and MFA | GitHub web account and token administration | Change in GitHub account security settings, revoke unfamiliar sessions, and re-check token ownership and expiry. |
 | `CNTB_OAUTH2_CLIENT_SECRET`, `CNTB_OAUTH2_USER`, `CNTB_OAUTH2_PASS` | Local Contabo Terraform/API operations | Rotate through Contabo, update the local password manager or protected shell environment, and refresh the local token cache. |
@@ -96,12 +96,17 @@ variables and must not be changed by manually editing that file.
 are configuration values, not secret keys. Change them only when their
 underlying endpoint, bucket, region, origin, or sender changes.
 
-The backup workflow on `develop` references repository Actions secrets; whether
-they are configured is unverified. The maintenance workflow uses the
-`production-maintenance` environment. In GitHub, inspect both
-**Settings → Secrets and variables → Actions → Repository secrets** and
-**Environments → production-maintenance → Environment secrets** by name. Do
-not assume a value exists just because a workflow refers to it.
+The backup workflow uses the `production-backups` environment. Configure its
+deployment branch restriction to the default branch and require an independent
+reviewer before adding its secrets. Store `BACKUP_DATABASE_URL`,
+`BACKUP_AWS_ACCESS_KEY_ID`, and `BACKUP_AWS_SECRET_ACCESS_KEY` as environment
+secrets; store `BACKUP_S3_URI` and (optionally) `BACKUP_AWS_REGION` as
+environment secrets. Remove any copies of these backup values from
+repository-level Actions secrets after confirming the environment is configured.
+The maintenance workflow uses the `production-maintenance` environment. In
+GitHub, inspect **Environments → production-backups** and
+**Environments → production-maintenance** by name. Do not assume a value exists
+just because a workflow refers to it.
 
 ### Local development and CI values
 
@@ -233,9 +238,10 @@ repository secrets there, and separately open
 **Environments → production-maintenance** for its environment secrets.
 
 - For the optional application database backup workflow, first verify that it
-  is active on the default branch and configured. If so, replace
+  is active on the default branch and the `production-backups` environment has
+  default-branch-only deployment access and required review. If so, replace
   `BACKUP_AWS_ACCESS_KEY_ID` and `BACKUP_AWS_SECRET_ACCESS_KEY` at the
-  object-storage provider, update the repository secrets, run the workflow,
+  object-storage provider, update the environment secrets, run the workflow,
   and confirm a successful backup and new object before revocation.
 - For scheduled retention jobs, update `MIGRATION_DATABASE_URL` and the S3
   pair if they changed; run the **Maintenance jobs** workflow manually and

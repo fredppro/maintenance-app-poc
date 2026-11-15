@@ -3,6 +3,7 @@ all:
     maintenance:
       hosts:
         maintenance-vps:
+          # TODO(security): Move internal addresses and peer details to private inventory.
           ansible_host: 10.242.0.1
           ansible_user: ops
           wireguard_managed_peers:

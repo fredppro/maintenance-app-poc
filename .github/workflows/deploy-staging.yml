@@ -277,6 +277,7 @@ jobs:
             exit 0
           fi
 
+          # TODO(security): Move internal addresses to protected configuration and sanitize public references.
           coolify_api_url="http://10.242.0.1:8000"
           coolify_app_uuid="$STAGING_COOLIFY_APP_UUID"
           coolify_auth_header="Authorization: Bearer $COOLIFY_API_TOKEN"
