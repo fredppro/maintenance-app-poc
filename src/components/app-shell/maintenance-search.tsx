@@ -64,11 +64,7 @@ export function MaintenanceSearch() {
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          aria-label={
-            query
-              ? `${t("placeholder")} ${query}`
-              : t("placeholder")
-          }
+          aria-label={`${t("placeholder")}${query ? ` ${query}` : ""} ${apple ? "⌘K" : "Ctrl+K"}`}
           aria-keyshortcuts={apple ? "Meta+K" : "Control+K"}
           className="w-control justify-start gap-2 px-0 pointer-coarse:min-w-control-lg @xl/shell:w-44 @xl/shell:px-control-padding @2xl/shell:w-56 @5xl/shell:w-72"
         >
