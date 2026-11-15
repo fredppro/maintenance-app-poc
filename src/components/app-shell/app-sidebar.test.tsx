@@ -46,4 +46,22 @@ describe("AppSidebar account menu", () => {
 
     expect(onAccount).toHaveBeenCalledOnce();
   });
+
+  it("renders a single animated indicator for the active navigation item", () => {
+    const { container } = render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <SidebarProvider>
+          <AppSidebar
+            user={{ name: "Alex Example", email: "alex@example.com" }}
+            canManageMembers
+            onAccount={vi.fn()}
+            onSignOut={vi.fn()}
+          />
+        </SidebarProvider>
+      </NextIntlClientProvider>,
+    );
+
+    expect(container.querySelectorAll('[data-slot="sidebar-active-indicator"]')).toHaveLength(1);
+    expect(screen.getByRole("link", { name: /schedule/i })).toHaveAttribute("aria-current", "page");
+  });
 });

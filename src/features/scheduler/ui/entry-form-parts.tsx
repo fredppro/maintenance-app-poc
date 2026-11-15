@@ -54,8 +54,8 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  tabPanelTransition,
 } from "@/components/ui/tabs";
+import { motionTransitions } from "@/lib/motion";
 import { getCurrencySymbol } from "@/features/scheduler/utils/currency";
 import {
   calculateWorkLogEnd,
@@ -697,7 +697,7 @@ export function EntryTabPanel({
       <motion.div
         initial={false}
         animate={{ opacity: isActive ? 1 : 0 }}
-        transition={tabPanelTransition.enter}
+        transition={motionTransitions.enter}
         className="flex flex-col gap-section"
       >
         {children}

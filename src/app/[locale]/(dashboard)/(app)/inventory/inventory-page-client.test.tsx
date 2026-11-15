@@ -166,6 +166,7 @@ describe("InventoryPageClient", () => {
   });
 
   it("does not leave stale content after rapid tab switches", async () => {
+    getInventoryItemsMock.mockResolvedValue([stockItem]);
     const user = userEvent.setup();
     renderPage({ entries: [] });
 

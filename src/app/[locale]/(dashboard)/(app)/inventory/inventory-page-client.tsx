@@ -66,11 +66,11 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  tabPanelTransition,
 } from "@/components/ui/tabs";
 import { PageBody, PageHeader } from "@/components/app-shell/page-header";
 import { mergeVisibleReorder } from "@/components/ui/reorderable";
 import { AnimatePresence, motion } from "motion/react";
+import { motionTransitions } from "@/lib/motion";
 import {
   consumeInventory,
   createInventoryItem,
@@ -90,6 +90,7 @@ import { toast } from "sonner";
 
 type InventoryItems = Awaited<ReturnType<typeof getInventoryItems>>;
 type Suppliers = Awaited<ReturnType<typeof getMaintenanceSuppliers>>;
+
 type StockAction = {
   item: InventoryItems[number];
   kind: "receipt" | "consumption";
@@ -327,8 +328,8 @@ export function InventoryPageClient() {
               key="stock"
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -2, transition: tabPanelTransition.exit }}
-              transition={tabPanelTransition.enter}
+              exit={{ opacity: 0, y: -2, transition: motionTransitions.exit }}
+              transition={motionTransitions.enter}
               className="min-w-0 flex-1"
             >
               <TabsContent
@@ -537,8 +538,8 @@ export function InventoryPageClient() {
               key="planned"
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -2, transition: tabPanelTransition.exit }}
-              transition={tabPanelTransition.enter}
+              exit={{ opacity: 0, y: -2, transition: motionTransitions.exit }}
+              transition={motionTransitions.enter}
               className="min-w-0 flex-1"
             >
               <TabsContent

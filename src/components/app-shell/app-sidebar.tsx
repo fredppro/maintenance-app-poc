@@ -2,6 +2,7 @@
 
 import { ChevronsUpDown, CircleUserRound, LogOut, Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { motion } from "motion/react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -26,6 +27,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Link, usePathname } from "@/i18n/routing";
+import { motionTransitions } from "@/lib/motion";
 import { isNavItemActive, NAV_GROUPS } from "./nav";
 
 export type AppUser = { name: string; email: string };
@@ -100,6 +102,7 @@ export function AppSidebar({
                         <SidebarMenuButton
                           asChild
                           isActive={active}
+                          className="relative data-[active=true]:bg-transparent"
                           tooltip={label}
                         >
                           <Link
@@ -107,8 +110,18 @@ export function AppSidebar({
                             aria-current={active ? "page" : undefined}
                             onClick={() => isMobile && setOpenMobile(false)}
                           >
-                            <item.icon aria-hidden="true" />
-                            <span>{label}</span>
+                            {active && (
+                              <motion.span
+                                aria-hidden="true"
+                                data-slot="sidebar-active-indicator"
+                                layoutId="sidebar-active-indicator"
+                                initial={false}
+                                transition={motionTransitions.indicator}
+                                className="pointer-events-none absolute inset-0 z-0 rounded-md bg-sidebar-accent"
+                              />
+                            )}
+                            <item.icon className="relative z-10" aria-hidden="true" />
+                            <span className="relative z-10">{label}</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

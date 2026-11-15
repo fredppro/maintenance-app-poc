@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { MapPin } from "lucide-react";
+import { AnimatePresence, MotionConfig, motion, useIsPresent } from "motion/react";
 import { toast } from "sonner";
 import LanguageSwitcher from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -28,6 +29,25 @@ import { usePathname, useRouter } from "@/i18n/routing";
 import { AppSidebar, type AppUser } from "./app-sidebar";
 import { findNavItem } from "./nav";
 import { MaintenanceSearch } from "./maintenance-search";
+
+function PageTransition({ children }: { children: ReactNode }) {
+  const isPresent = useIsPresent();
+
+  return (
+    <motion.div
+      data-slot="page-transition"
+      aria-hidden={!isPresent}
+      inert={!isPresent}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.16, ease: "easeOut" } }}
+      transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+      className={isPresent ? "min-h-full" : "absolute inset-0 min-h-full"}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export function AppShell({
   children,
@@ -64,61 +84,67 @@ export function AppShell({
   }
 
   return (
-    <SidebarProvider defaultOpen={defaultSidebarOpen} className="h-svh">
-      <AppSidebar
-        user={user}
-        canManageMembers={canManageMembers}
-        onAccount={() => router.push("/account")}
-        logo={
-          organizationLogoId && selected
-            ? { src: `/api/files/${organizationLogoId}`, alt: selected.organizationName }
-            : undefined
-        }
-        onSignOut={signOut}
-      />
-      <SidebarInset className="min-h-0 min-w-0">
-        <header className="@container/shell flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-page sm:px-page-desktop">
-          <SidebarTrigger aria-label={t("toggleSidebar")} />
-          <Separator orientation="vertical" className="h-5" />
-          {tenantContexts.length > 1 ? (
-            <TenantContextSelector
-              options={tenantContexts}
-              selectedSiteId={selectedSiteId}
-              label={t("switchContext")}
-              displaySelectedOrganizationName={false}
-              className="w-28 shrink-0 sm:w-40"
-            />
-          ) : (
-            <div className="flex h-control min-w-0 max-w-32 items-center gap-1.5 rounded-md border border-border-subtle bg-card px-2 text-sm font-medium sm:max-w-44">
-              <MapPin className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-              <span className="truncate">
-                {selected?.siteName ?? t("noContext")}
-              </span>
+    <MotionConfig reducedMotion="user">
+      <SidebarProvider defaultOpen={defaultSidebarOpen} className="h-svh">
+        <AppSidebar
+          user={user}
+          canManageMembers={canManageMembers}
+          onAccount={() => router.push("/account")}
+          logo={
+            organizationLogoId && selected
+              ? { src: `/api/files/${organizationLogoId}`, alt: selected.organizationName }
+              : undefined
+          }
+          onSignOut={signOut}
+        />
+        <SidebarInset className="min-h-0 min-w-0">
+          <header className="@container/shell flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-page sm:px-page-desktop">
+            <SidebarTrigger aria-label={t("toggleSidebar")} />
+            <Separator orientation="vertical" className="h-5" />
+            {tenantContexts.length > 1 ? (
+              <TenantContextSelector
+                options={tenantContexts}
+                selectedSiteId={selectedSiteId}
+                label={t("switchContext")}
+                displaySelectedOrganizationName={false}
+                className="w-28 shrink-0 sm:w-40"
+              />
+            ) : (
+              <div className="flex h-control min-w-0 max-w-32 items-center gap-1.5 rounded-md border border-border-subtle bg-card px-2 text-sm font-medium sm:max-w-44">
+                <MapPin className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span className="truncate">
+                  {selected?.siteName ?? t("noContext")}
+                </span>
+              </div>
+            )}
+            {current && (
+              <Breadcrumb className="min-w-0 flex-1">
+                <BreadcrumbList className="flex-nowrap">
+                  <BreadcrumbItem className="hidden sm:inline-flex">
+                    {t(`groups.${current.group.id}`)}
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden sm:block" />
+                  <BreadcrumbItem className="min-w-0">
+                    <BreadcrumbPage className="truncate">
+                      {t(`items.${current.item.id}`)}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            )}
+            <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+              <MaintenanceSearch />
+              <LanguageSwitcher />
+              <ThemeToggle />
             </div>
-          )}
-          {current && (
-            <Breadcrumb className="min-w-0 flex-1">
-              <BreadcrumbList className="flex-nowrap">
-                <BreadcrumbItem className="hidden sm:inline-flex">
-                  {t(`groups.${current.group.id}`)}
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden sm:block" />
-                <BreadcrumbItem className="min-w-0">
-                  <BreadcrumbPage className="truncate">
-                    {t(`items.${current.item.id}`)}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          )}
-          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
-            <MaintenanceSearch />
-            <LanguageSwitcher />
-            <ThemeToggle />
+          </header>
+          <div className="relative min-h-0 flex-1 overflow-auto">
+            <AnimatePresence mode="wait" initial={false}>
+              <PageTransition key={pathname}>{children}</PageTransition>
+            </AnimatePresence>
           </div>
-        </header>
-        <div className="min-h-0 flex-1 overflow-auto">{children}</div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    </MotionConfig>
   );
 }

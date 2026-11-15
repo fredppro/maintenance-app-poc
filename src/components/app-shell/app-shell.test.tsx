@@ -1,14 +1,16 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import messages from "@/i18n/messages/en.json";
 import { SchedulerStoreProvider } from "@/features/scheduler/store/scheduler-provider";
 import { AppShell } from "./app-shell";
 
+const pathnameState = vi.hoisted(() => ({ value: "/workers" }));
+
 vi.mock("@/i18n/routing", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
-  usePathname: () => "/workers",
+  usePathname: () => pathnameState.value,
 }));
 vi.mock("@/features/auth/client", () => ({ authClient: { signOut: vi.fn() } }));
 vi.mock("@/features/organization/ui/tenant-context-selector", () => ({
@@ -17,6 +19,10 @@ vi.mock("@/features/organization/ui/tenant-context-selector", () => ({
 vi.mock("./app-sidebar", () => ({ AppSidebar: () => null }));
 
 describe("AppShell global search", () => {
+  beforeEach(() => {
+    pathnameState.value = "/workers";
+  });
+
   it("places the search immediately before the language switcher on non-schedule pages", async () => {
     const user = userEvent.setup();
     render(
@@ -50,5 +56,34 @@ describe("AppShell global search", () => {
     await user.click(search);
     expect(screen.getByRole("dialog", { name: "Search maintenance" })).toBeVisible();
     expect(screen.getByText(messages.Grid.noSearchResults)).toBeVisible();
+  });
+
+  it("animates route changes while making exiting page content inert", async () => {
+    const shell = (page: string) => (
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <SchedulerStoreProvider>
+          <AppShell
+            user={{ name: "Alex", email: "alex@example.test" }}
+            tenantContexts={[{
+              organizationId: "org", organizationName: "Workshop",
+              siteId: "site", siteName: "Primary workshop", role: "owner",
+            }]}
+            selectedSiteId="site" canManageMembers defaultSidebarOpen
+          >
+            <h1>{page}</h1>
+          </AppShell>
+        </SchedulerStoreProvider>
+      </NextIntlClientProvider>
+    );
+
+    const { rerender } = render(shell("Workers page"));
+    pathnameState.value = "/inventory";
+    rerender(shell("Inventory page"));
+
+    const exitingPage = screen.getByText("Workers page").closest('[data-slot="page-transition"]');
+    expect(exitingPage).toHaveAttribute("aria-hidden", "true");
+    expect(exitingPage).toHaveAttribute("inert");
+    const enteringPage = await screen.findByRole("heading", { name: "Inventory page" });
+    await waitFor(() => expect(enteringPage).toBeVisible());
   });
 });
