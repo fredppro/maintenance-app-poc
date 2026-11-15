@@ -6,6 +6,11 @@ import { MotionConfig, motion } from 'motion/react'
 
 import { cn } from '@/lib/utils'
 
+export const tabPanelTransition = {
+  enter: { duration: 0.18, ease: 'easeOut' },
+  exit: { duration: 0.12, ease: 'easeOut' },
+} as const
+
 type TabsIndicatorContextValue = {
   activeValue: string | undefined
   animated: boolean

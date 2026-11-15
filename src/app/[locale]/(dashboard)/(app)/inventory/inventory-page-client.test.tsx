@@ -72,22 +72,23 @@ describe("InventoryPageClient", () => {
     expect(within(stockList).queryByText("Bearing")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "Planned materials" }));
+    const plannedList = await screen.findByRole("list", { name: "Planned materials" });
     expect(container.querySelector('[data-slot="inventory-toolbar"]')).toBe(toolbar);
     expect(screen.getByRole("textbox", { name: "Search materials…" })).toHaveValue("acme");
     expect(toolbar?.querySelector("button")).toHaveAttribute("aria-hidden", "true");
     expect(toolbar?.querySelector("button")).toBeDisabled();
     expect(
-      within(screen.getByRole("list", { name: "Planned materials" }))
+      within(plannedList)
         .getByText("No results match your search."),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Add stock item" })).not.toBeInTheDocument();
 
     await user.clear(screen.getByRole("textbox", { name: "Search materials…" }));
-    expect(screen.getByText("No materials yet")).toBeInTheDocument();
+    expect(await screen.findByText("No materials yet")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Search materials…" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Add stock item" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "Stock catalog" }));
-    expect(screen.getByRole("button", { name: "Add stock item" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Add stock item" })).toBeInTheDocument();
   });
 
   it("uses the shared scrolling body and anchored actions when creating stock", async () => {
@@ -161,15 +162,26 @@ describe("InventoryPageClient", () => {
     const user = userEvent.setup();
     renderPage({ entries: [] });
     await user.click(screen.getByRole("tab", { name: "Planned materials" }));
-    expect(screen.getByText("No materials yet")).toBeInTheDocument();
+    expect(await screen.findByText("No materials yet")).toBeInTheDocument();
+  });
+
+  it("does not leave stale content after rapid tab switches", async () => {
+    const user = userEvent.setup();
+    renderPage({ entries: [] });
+
+    await user.click(screen.getByRole("tab", { name: "Planned materials" }));
+    await user.click(screen.getByRole("tab", { name: "Stock catalog" }));
+
+    expect(await screen.findByRole("list", { name: "Stock catalog" })).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Planned materials" })).not.toBeInTheDocument();
   });
 
   it("totals the same material across tasks", async () => {
     const user = userEvent.setup();
     renderPage({ entries });
     await user.click(screen.getByRole("tab", { name: "Planned materials" }));
-    const table = screen.getByRole("table", { name: "Planned materials" });
-    const mobileList = screen.getByRole("list", { name: "Planned materials" });
+    const table = await screen.findByRole("table", { name: "Planned materials" });
+    const mobileList = await screen.findByRole("list", { name: "Planned materials" });
     expect(table.querySelector("tbody")).toHaveClass("bg-background");
     expect(mobileList).toHaveClass("lg:hidden");
     const oilRow = within(mobileList).getByText("Oil").closest("li");
@@ -186,7 +198,7 @@ describe("InventoryPageClient", () => {
     renderPage({ entries });
     await user.click(screen.getByRole("tab", { name: "Planned materials" }));
     await user.type(screen.getByRole("textbox", { name: /search materials/i }), "grea");
-    const mobileList = screen.getByRole("list", { name: "Planned materials" });
+    const mobileList = await screen.findByRole("list", { name: "Planned materials" });
     expect(within(mobileList).queryByText("Oil")).not.toBeInTheDocument();
     expect(within(mobileList).getByText("Grease")).toBeInTheDocument();
   });
