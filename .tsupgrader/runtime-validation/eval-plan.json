@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-11-15T20:14:46Z",
+  "generatedOnPlatform": "darwin",
+  "projectType": "webapp",
+  "setup": [
+    {
+      "command": "pnpm",
+      "args": ["install", "--frozen-lockfile"],
+      "prependPath": ["/Users/fpinto/.nvm/versions/node/v24.15.0/bin"],
+      "timeoutSeconds": 600
+    }
+  ],
+  "assertions": [
+    {
+      "name": "typecheck",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["run", "typecheck"],
+      "prependPath": ["/Users/fpinto/.nvm/versions/node/v24.15.0/bin"],
+      "verificationMethod": "exit-code",
+      "expected": "0",
+      "timeoutSeconds": 180
+    },
+    {
+      "name": "tests-pass",
+      "kind": "process",
+      "command": "pnpm",
+      "args": ["run", "test:run"],
+      "prependPath": ["/Users/fpinto/.nvm/versions/node/v24.15.0/bin"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 600
+    },
+    {
+      "name": "login-route-serves",
+      "kind": "http-probe",
+      "startCommand": "pnpm",
+      "startArgs": ["exec", "next", "dev", "--port", "3187"],
+      "prependPath": ["/Users/fpinto/.nvm/versions/node/v24.15.0/bin"],
+      "url": "http://127.0.0.1:3187/en/login",
+      "verificationMethod": "http-status",
+      "expected": "200",
+      "timeoutSeconds": 120
+    }
+  ]
+}

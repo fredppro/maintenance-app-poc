@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { PageViewTransition } from "@/components/app-shell/page-view-transition";
 import { PageBody, PageHeader, PageRegion } from "@/components/app-shell/page-header";
 import { notFound } from "next/navigation";
 import { MemberAdministration } from "@/features/organization/ui/member-administration";
@@ -31,21 +32,23 @@ export default async function MembersPage({
   });
 
   return (
-    <PageBody>
-      <PageRegion width="form">
-        <PageHeader title={t("membersTitle")} />
-        <MemberAdministration
-          actorId={tenant.userId}
-          actorRole={tenant.role}
-          members={members.map((member) => ({
-            id: member.id,
-            name: member.user.name,
-            email: member.user.email,
-            role: member.role,
-          }))}
-          invitations={invitations}
-        />
-      </PageRegion>
-    </PageBody>
+    <PageViewTransition>
+      <PageBody>
+        <PageRegion width="form">
+          <PageHeader title={t("membersTitle")} />
+          <MemberAdministration
+            actorId={tenant.userId}
+            actorRole={tenant.role}
+            members={members.map((member) => ({
+              id: member.id,
+              name: member.user.name,
+              email: member.user.email,
+              role: member.role,
+            }))}
+            invitations={invitations}
+          />
+        </PageRegion>
+      </PageBody>
+    </PageViewTransition>
   );
 }

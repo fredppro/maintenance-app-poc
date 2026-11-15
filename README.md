@@ -15,13 +15,13 @@ deployed; see [the environment status record](docs/reference/environment-status.
 Install Docker with Compose v2, clone, then:
 
 ```sh
-pnpm up      # or: docker compose --profile app up --build
+pnpm run dev:docker      # or: docker compose --profile app up --build
 ```
 
 This builds a pinned Node 24 image, starts PostgreSQL, applies migrations and
 serves the app with hot reload at [http://localhost:3000/en](http://localhost:3000/en).
-Stop with `pnpm down` (or `docker compose --profile app down`). Without pnpm on
-the host, use the `docker compose` form. Run other commands inside the
+Stop with `pnpm run dev:docker:down` (or `docker compose --profile app down`).
+Without pnpm on the host, use the `docker compose` form. Run other commands inside the
 container, e.g. `docker compose exec app pnpm test:run`. Uses a development-only
 auth secret unless `BETTER_AUTH_SECRET` is exported.
 

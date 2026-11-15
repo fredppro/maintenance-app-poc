@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { MapPin } from "lucide-react";
-import { AnimatePresence, MotionConfig, motion, useIsPresent } from "motion/react";
+import { MotionConfig } from "motion/react";
 import { toast } from "sonner";
 import LanguageSwitcher from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -29,25 +29,6 @@ import { usePathname, useRouter } from "@/i18n/routing";
 import { AppSidebar, type AppUser } from "./app-sidebar";
 import { findNavItem } from "./nav";
 import { MaintenanceSearch } from "./maintenance-search";
-
-function PageTransition({ children }: { children: ReactNode }) {
-  const isPresent = useIsPresent();
-
-  return (
-    <motion.div
-      data-slot="page-transition"
-      aria-hidden={!isPresent}
-      inert={!isPresent}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.16, ease: "easeOut" } }}
-      transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-      className={isPresent ? "min-h-full" : "absolute inset-0 min-h-full"}
-    >
-      {children}
-    </motion.div>
-  );
-}
 
 export function AppShell({
   children,
@@ -138,11 +119,7 @@ export function AppShell({
               <ThemeToggle />
             </div>
           </header>
-          <div className="relative min-h-0 flex-1 overflow-auto">
-            <AnimatePresence mode="wait" initial={false}>
-              <PageTransition key={pathname}>{children}</PageTransition>
-            </AnimatePresence>
-          </div>
+          <div className="min-h-0 flex-1 overflow-auto">{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </MotionConfig>
